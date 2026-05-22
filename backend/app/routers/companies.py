@@ -87,6 +87,33 @@ async def list_company_exposures(
     return {"total": total, "page": page, "page_size": page_size, "items": items}
 
 
+@router.post("/{company_id}/exposures", response_model=CompanyNodeExposure, status_code=201)
+async def create_company_exposure(company_id: str, data: CompanyNodeExposure):
+    company = await company_storage.get_company(company_id)
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    if data.company_id != company_id:
+        raise HTTPException(status_code=400, detail="company_id mismatch")
+
+    try:
+        return await company_storage.create_exposure(data)
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+
+
+@router.delete("/{company_id}/exposures/{exposure_id}", status_code=204)
+async def delete_company_exposure(company_id: str, exposure_id: str):
+    exposure = await company_storage.get_exposure(exposure_id)
+    if not exposure or exposure.company_id != company_id:
+        raise HTTPException(status_code=404, detail="Exposure not found")
+
+    deleted = await company_storage.delete_exposure(exposure_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Exposure not found")
+    return None
+
+
 @router.get("/{company_id}/nodes", response_model=List[IndustrialNode])
 async def get_company_nodes(company_id: str):
     """Return the IndustrialNodes exposed by this company."""

@@ -84,6 +84,33 @@ async def list_industry_mappings(
     return {"total": total, "page": page, "page_size": page_size, "items": items}
 
 
+@router.post("/{industry_id}/mappings", response_model=IndustryNodeMapping, status_code=201)
+async def create_industry_mapping(industry_id: str, data: IndustryNodeMapping):
+    industry = await industry_storage.get_industry(industry_id)
+    if not industry:
+        raise HTTPException(status_code=404, detail="Industry not found")
+
+    if data.industry_id != industry_id:
+        raise HTTPException(status_code=400, detail="industry_id mismatch")
+
+    try:
+        return await industry_storage.create_mapping(data)
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+
+
+@router.delete("/{industry_id}/mappings/{mapping_id}", status_code=204)
+async def delete_industry_mapping(industry_id: str, mapping_id: str):
+    mapping = await industry_storage.get_mapping(mapping_id)
+    if not mapping or mapping.industry_id != industry_id:
+        raise HTTPException(status_code=404, detail="Mapping not found")
+
+    deleted = await industry_storage.delete_mapping(mapping_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Mapping not found")
+    return None
+
+
 @router.get("/{industry_id}/nodes", response_model=List[IndustrialNode])
 async def get_industry_nodes(industry_id: str):
     """Return the IndustrialNodes mapped to this industry."""

@@ -23,6 +23,7 @@ interface GraphCanvasProps {
     confidence: string[];
   };
   highlightNodeId?: string;
+  sourceData?: { nodes: IndustrialNode[]; edges: GraphEdge[] };
 }
 
 function applyFilters(
@@ -68,6 +69,7 @@ export function GraphCanvas({
   onEdgeClick,
   filters,
   highlightNodeId,
+  sourceData,
 }: GraphCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
@@ -96,10 +98,17 @@ export function GraphCanvas({
     async function init() {
       try {
         setLoading(true);
-        const [nodesData, edgesData] = await Promise.all([
-          listNodes(1, 200),
-          listEdges(1, 500),
-        ]);
+        let nodesData: { items: IndustrialNode[] };
+        let edgesData: { items: GraphEdge[] };
+        if (sourceData) {
+          nodesData = { items: sourceData.nodes };
+          edgesData = { items: sourceData.edges };
+        } else {
+          [nodesData, edgesData] = await Promise.all([
+            listNodes(1, 200),
+            listEdges(1, 500),
+          ]);
+        }
         if (!mounted) return;
 
         const cy = cytoscape({

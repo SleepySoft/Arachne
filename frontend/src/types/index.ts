@@ -175,6 +175,129 @@ export interface SubgraphResult {
   edges: GraphEdge[];
 }
 
+// ============================================================
+// Industry Types
+// ============================================================
+
+export type IndustryType = "formal_industry" | "curated_view" | "theme_view";
+
+export type RecordStatus = "ACTIVE" | "PENDING" | "REJECTED" | "ARCHIVED";
+
+export interface Industry {
+  industry_uuid: string;
+  industry_id: string;
+  name_zh: string;
+  name_en?: string;
+  aliases: string[];
+  industry_type: IndustryType;
+  description?: string;
+  status: RecordStatus;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface IndustryNodeMapping {
+  mapping_uuid: string;
+  mapping_id: string;
+  industry_id: string;
+  node_id: string;
+  role?: string;
+  weight: number;
+  confidence: Confidence;
+  evidence: Evidence[];
+  status: RecordStatus;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PaginatedIndustries {
+  total: number;
+  page: number;
+  page_size: number;
+  items: Industry[];
+}
+
+export interface PaginatedMappings {
+  total: number;
+  page: number;
+  page_size: number;
+  items: IndustryNodeMapping[];
+}
+
+// ============================================================
+// Company Types
+// ============================================================
+
+export type CompanyType = "public" | "private" | "state_owned" | "startup" | "unknown";
+
+export type CompanyActivityType =
+  | "rnd"
+  | "design"
+  | "manufacture"
+  | "produce"
+  | "integrate"
+  | "operate"
+  | "provide_service"
+  | "procure"
+  | "use"
+  | "unknown";
+
+export interface Company {
+  company_uuid: string;
+  company_id: string;
+  name_zh: string;
+  name_en?: string;
+  aliases: string[];
+  stock_codes: string[];
+  description?: string;
+  country: string;
+  province?: string;
+  city?: string;
+  founded_year?: number;
+  employee_count?: number;
+  revenue_cny?: number;
+  market_cap_cny?: number;
+  net_profit_cny?: number;
+  company_type: CompanyType;
+  status: RecordStatus;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CompanyNodeExposure {
+  exposure_uuid: string;
+  exposure_id: string;
+  company_id: string;
+  node_id: string;
+  activity_type: CompanyActivityType;
+  role?: string;
+  weight: number;
+  confidence: Confidence;
+  evidence: Evidence[];
+  status: RecordStatus;
+  as_of_date?: string;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PaginatedCompanies {
+  total: number;
+  page: number;
+  page_size: number;
+  items: Company[];
+}
+
+export interface PaginatedExposures {
+  total: number;
+  page: number;
+  page_size: number;
+  items: CompanyNodeExposure[];
+}
+
 export const ENTITY_TYPE_COLORS: Record<EntityType, string> = {
   material: "#f87171",
   component: "#fb923c",

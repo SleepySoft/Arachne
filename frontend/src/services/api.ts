@@ -1,5 +1,7 @@
 import axios from "axios";
 import {
+  Company,
+  CompanyNodeExposure,
   GraphEdge,
   GraphRegistrationBatch,
   GraphStats,
@@ -7,8 +9,14 @@ import {
   IndustrialNode,
   IndustrialNodeCreate,
   IndustrialNodeUpdate,
+  Industry,
+  IndustryNodeMapping,
   OntologyEdgeCreate,
+  PaginatedCompanies,
   PaginatedEdges,
+  PaginatedExposures,
+  PaginatedIndustries,
+  PaginatedMappings,
   PaginatedNodes,
   SubgraphResult,
 } from "@/types";
@@ -154,4 +162,148 @@ export const getStats = async (): Promise<GraphStats> => {
 export const getConflicts = async (): Promise<unknown[]> => {
   const res = await client.get("/query/conflicts");
   return res.data;
+};
+
+// ============================================================
+// Industries
+// ============================================================
+
+export const listIndustries = async (
+  page = 1,
+  pageSize = 20,
+  industryType?: string,
+  status?: string,
+  search?: string
+): Promise<PaginatedIndustries> => {
+  const params: Record<string, unknown> = { page, page_size: pageSize };
+  if (industryType) params.industry_type = industryType;
+  if (status) params.status = status;
+  if (search) params.search = search;
+  const res = await client.get("/industries", { params });
+  return res.data;
+};
+
+export const getIndustry = async (industryId: string): Promise<Industry> => {
+  const res = await client.get(`/industries/${industryId}`);
+  return res.data;
+};
+
+export const createIndustry = async (data: Partial<Industry>): Promise<Industry> => {
+  const res = await client.post("/industries", data);
+  return res.data;
+};
+
+export const updateIndustry = async (
+  industryId: string,
+  data: Partial<Industry>
+): Promise<Industry> => {
+  const res = await client.put(`/industries/${industryId}`, data);
+  return res.data;
+};
+
+export const deleteIndustry = async (industryId: string): Promise<void> => {
+  await client.delete(`/industries/${industryId}`);
+};
+
+export const getIndustrySubgraph = async (
+  industryId: string
+): Promise<{ nodes: IndustrialNode[]; edges: GraphEdge[] }> => {
+  const res = await client.get(`/industries/${industryId}/subgraph`);
+  return res.data;
+};
+
+export const listIndustryMappings = async (
+  industryId: string,
+  page = 1,
+  pageSize = 20
+): Promise<PaginatedMappings> => {
+  const res = await client.get(`/industries/${industryId}/mappings`, {
+    params: { page, page_size: pageSize },
+  });
+  return res.data;
+};
+
+export const createIndustryMapping = async (
+  industryId: string,
+  data: Partial<IndustryNodeMapping>
+): Promise<IndustryNodeMapping> => {
+  const res = await client.post(`/industries/${industryId}/mappings`, data);
+  return res.data;
+};
+
+export const deleteIndustryMapping = async (industryId: string, mappingId: string): Promise<void> => {
+  await client.delete(`/industries/${industryId}/mappings/${mappingId}`);
+};
+
+// ============================================================
+// Companies
+// ============================================================
+
+export const listCompanies = async (
+  page = 1,
+  pageSize = 20,
+  country?: string,
+  companyType?: string,
+  status?: string,
+  search?: string
+): Promise<PaginatedCompanies> => {
+  const params: Record<string, unknown> = { page, page_size: pageSize };
+  if (country) params.country = country;
+  if (companyType) params.company_type = companyType;
+  if (status) params.status = status;
+  if (search) params.search = search;
+  const res = await client.get("/companies", { params });
+  return res.data;
+};
+
+export const getCompany = async (companyId: string): Promise<Company> => {
+  const res = await client.get(`/companies/${companyId}`);
+  return res.data;
+};
+
+export const createCompany = async (data: Partial<Company>): Promise<Company> => {
+  const res = await client.post("/companies", data);
+  return res.data;
+};
+
+export const updateCompany = async (
+  companyId: string,
+  data: Partial<Company>
+): Promise<Company> => {
+  const res = await client.put(`/companies/${companyId}`, data);
+  return res.data;
+};
+
+export const deleteCompany = async (companyId: string): Promise<void> => {
+  await client.delete(`/companies/${companyId}`);
+};
+
+export const getCompanySubgraph = async (
+  companyId: string
+): Promise<{ nodes: IndustrialNode[]; edges: GraphEdge[] }> => {
+  const res = await client.get(`/companies/${companyId}/subgraph`);
+  return res.data;
+};
+
+export const listCompanyExposures = async (
+  companyId: string,
+  page = 1,
+  pageSize = 20
+): Promise<PaginatedExposures> => {
+  const res = await client.get(`/companies/${companyId}/exposures`, {
+    params: { page, page_size: pageSize },
+  });
+  return res.data;
+};
+
+export const createCompanyExposure = async (
+  companyId: string,
+  data: Partial<CompanyNodeExposure>
+): Promise<CompanyNodeExposure> => {
+  const res = await client.post(`/companies/${companyId}/exposures`, data);
+  return res.data;
+};
+
+export const deleteCompanyExposure = async (companyId: string, exposureId: string): Promise<void> => {
+  await client.delete(`/companies/${companyId}/exposures/${exposureId}`);
 };
