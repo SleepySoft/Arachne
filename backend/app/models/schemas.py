@@ -25,6 +25,10 @@ class NodeStatus(str, Enum):
     REJECTED = "REJECTED"
 
 
+# Alias for backward compatibility with industry/company schemas
+RecordStatus = NodeStatus
+
+
 class EntityType(str, Enum):
     MATERIAL = "material"
     COMPONENT = "component"
