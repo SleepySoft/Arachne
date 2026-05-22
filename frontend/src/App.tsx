@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { GraphEdge, IndustrialNode } from "@/types";
 import { BatchUploader } from "@/components/BatchUploader";
 import { EdgeDetail } from "@/components/EdgeDetail";
@@ -40,17 +40,17 @@ export default function App() {
   });
   const [graphKey, setGraphKey] = useState(0);
 
-  const handleNodeClick = (node: IndustrialNode) => {
+  const handleNodeClick = useCallback((node: IndustrialNode) => {
     setSelectedNode(node);
     setSelectedEdge(null);
     setPanel("node-detail");
-  };
+  }, []);
 
-  const handleEdgeClick = (edge: GraphEdge) => {
+  const handleEdgeClick = useCallback((edge: GraphEdge) => {
     setSelectedEdge(edge);
     setSelectedNode(null);
     setPanel("edge-detail");
-  };
+  }, []);
 
   const refreshGraph = () => {
     setGraphKey((k) => k + 1);

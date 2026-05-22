@@ -25,6 +25,44 @@ interface GraphCanvasProps {
   highlightNodeId?: string;
 }
 
+function applyFilters(
+  cy: cytoscape.Core,
+  filters: GraphCanvasProps["filters"]
+) {
+  const entityTypeSet = new Set(filters.entityTypes);
+  const statusSet = new Set(filters.status);
+  const confidenceSet = new Set(filters.confidence);
+  const edgeNsSet = new Set(filters.edgeNamespaces);
+  const edgeTypeSet = new Set(filters.edgeTypes);
+
+  const visibleNodeIds = new Set<string>();
+
+  cy.batch(() => {
+    cy.nodes().forEach((node) => {
+      const et = node.data("entity_type");
+      const st = node.data("status");
+      const cf = node.data("confidence");
+      const show =
+        (entityTypeSet.size === 0 || entityTypeSet.has(et)) &&
+        (statusSet.size === 0 || statusSet.has(st)) &&
+        (confidenceSet.size === 0 || confidenceSet.has(cf));
+      node.toggleClass("hidden", !show);
+      if (show) visibleNodeIds.add(node.id());
+    });
+
+    cy.edges().forEach((edge) => {
+      const ns = edge.data("edge_namespace");
+      const et = edge.data("edge_type");
+      const show =
+        visibleNodeIds.has(edge.source().id()) &&
+        visibleNodeIds.has(edge.target().id()) &&
+        (edgeNsSet.size === 0 || edgeNsSet.has(ns)) &&
+        (edgeTypeSet.size === 0 || edgeTypeSet.has(et));
+      edge.toggleClass("hidden", !show);
+    });
+  });
+}
+
 export function GraphCanvas({
   onNodeClick,
   onEdgeClick,
@@ -36,7 +74,23 @@ export function GraphCanvas({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Initial load
+  const onNodeClickRef = useRef(onNodeClick);
+  const onEdgeClickRef = useRef(onEdgeClick);
+  const filtersRef = useRef(filters);
+
+  useEffect(() => {
+    onNodeClickRef.current = onNodeClick;
+  }, [onNodeClick]);
+
+  useEffect(() => {
+    onEdgeClickRef.current = onEdgeClick;
+  }, [onEdgeClick]);
+
+  useEffect(() => {
+    filtersRef.current = filters;
+  }, [filters]);
+
+  // Initial load — only once
   useEffect(() => {
     let mounted = true;
     async function init() {
@@ -121,6 +175,12 @@ export function GraphCanvas({
               },
             },
             {
+              selector: ".hidden",
+              style: {
+                display: "none",
+              },
+            },
+            {
               selector: ".highlighted",
               style: {
                 "border-color": "#facc15",
@@ -153,10 +213,10 @@ export function GraphCanvas({
         });
 
         cy.on("tap", "node", (evt) => {
-          onNodeClick(evt.target.data("raw") as IndustrialNode);
+          onNodeClickRef.current(evt.target.data("raw") as IndustrialNode);
         });
         cy.on("tap", "edge", (evt) => {
-          onEdgeClick(evt.target.data("raw") as GraphEdge);
+          onEdgeClickRef.current(evt.target.data("raw") as GraphEdge);
         });
         cy.on("tap", (evt) => {
           if (evt.target === cy) {
@@ -197,6 +257,8 @@ export function GraphCanvas({
                 });
               }
             });
+            // Apply current filters to newly added elements
+            applyFilters(cy, filtersRef.current);
             cy.layout({ name: "dagre", rankDir: "TB", fit: false } as cytoscape.LayoutOptions).run();
           } catch (err) {
             console.error("Expand failed:", err);
@@ -220,33 +282,14 @@ export function GraphCanvas({
         cyRef.current = null;
       }
     };
-  }, [onNodeClick, onEdgeClick]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Apply filters
+  // Apply filters when they change
   useEffect(() => {
     const cy = cyRef.current;
     if (!cy) return;
-
-    cy.batch(() => {
-      cy.nodes().forEach((node) => {
-        const et = node.data("entity_type");
-        const st = node.data("status");
-        const cf = node.data("confidence");
-        const show =
-          (filters.entityTypes.length === 0 || filters.entityTypes.includes(et)) &&
-          (filters.status.length === 0 || filters.status.includes(st)) &&
-          (filters.confidence.length === 0 || filters.confidence.includes(cf));
-        node.style("display", show ? "element" : "none");
-      });
-      cy.edges().forEach((edge) => {
-        const ns = edge.data("edge_namespace");
-        const et = edge.data("edge_type");
-        const show =
-          (filters.edgeNamespaces.length === 0 || filters.edgeNamespaces.includes(ns)) &&
-          (filters.edgeTypes.length === 0 || filters.edgeTypes.includes(et));
-        edge.style("display", show ? "element" : "none");
-      });
-    });
+    applyFilters(cy, filters);
   }, [filters]);
 
   // Highlight node
