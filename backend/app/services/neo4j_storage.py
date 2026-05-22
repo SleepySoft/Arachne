@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from typing import List, Optional
 
@@ -16,20 +17,31 @@ from app.models.schemas import (
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _evidence_to_db(evidence_list: List[Evidence]) -> list:
-    return [
-        {
-            "source_title": e.source_title,
-            "source_url": str(e.source_url) if e.source_url else None,
-            "quote": e.quote,
-        }
-        for e in evidence_list
-    ]
+def _evidence_to_db(evidence_list: List[Evidence]) -> str:
+    return json.dumps(
+        [
+            {
+                "source_title": e.source_title,
+                "source_url": str(e.source_url) if e.source_url else None,
+                "quote": e.quote,
+            }
+            for e in evidence_list
+        ],
+        ensure_ascii=False,
+    )
 
 
-def _evidence_from_db(raw: list) -> List[Evidence]:
+def _evidence_from_db(raw) -> List[Evidence]:
+    if not raw:
+        return []
+    try:
+        items = json.loads(raw) if isinstance(raw, str) else raw
+    except (json.JSONDecodeError, TypeError):
+        return []
+    if not isinstance(items, list):
+        return []
     out = []
-    for item in raw:
+    for item in items:
         if not item:
             continue
         url = item.get("source_url")
@@ -41,6 +53,14 @@ def _evidence_from_db(raw: list) -> List[Evidence]:
             )
         )
     return out
+
+
+def _to_datetime(value):
+    if value is None:
+        return None
+    if hasattr(value, "to_native"):
+        return value.to_native()
+    return value
 
 
 def _node_from_record(record) -> IndustrialNode:
@@ -57,8 +77,8 @@ def _node_from_record(record) -> IndustrialNode:
         confidence=props.get("confidence", "LOW"),
         status=props.get("status", "PENDING"),
         notes=props.get("notes"),
-        created_at=props.get("created_at"),
-        updated_at=props.get("updated_at"),
+        created_at=_to_datetime(props.get("created_at")),
+        updated_at=_to_datetime(props.get("updated_at")),
     )
 
 
@@ -76,8 +96,8 @@ def _edge_from_record(record) -> GraphEdge:
         "evidence": _evidence_from_db(rel.get("evidence", [])),
         "confidence": rel.get("confidence", "LOW"),
         "notes": rel.get("notes"),
-        "created_at": rel.get("created_at"),
-        "updated_at": rel.get("updated_at"),
+        "created_at": _to_datetime(rel.get("created_at")),
+        "updated_at": _to_datetime(rel.get("updated_at")),
     }
     if ns == "industrial_flow":
         return IndustrialFlowEdge(

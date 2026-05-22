@@ -14,7 +14,7 @@ from app.models.schemas import (
     RejectedOrPendingItem,
 )
 # Use memory storage when Neo4j is unavailable
-from app.services import memory_storage as neo4j_storage
+from app.services import neo4j_storage
 
 
 # ---------------------------------------------------------------------------
