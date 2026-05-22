@@ -26,8 +26,6 @@
 Arachne/
 ├── arachne_manager.py              # Python 跨平台系统管理器（启动/停止/状态/统计）
 ├── requirements.txt                # 管理器依赖（psutil + httpx）
-├── start-all.ps1                   # PowerShell 一键启动（备用）
-├── stop-all.ps1                    # PowerShell 一键停止（备用）
 ├── backend/                        # FastAPI 后端
 │   ├── app/
 │   │   ├── main.py                 # FastAPI 入口

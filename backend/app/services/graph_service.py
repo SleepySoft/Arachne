@@ -13,8 +13,11 @@ from app.models.schemas import (
     OntologyEdgeCreate,
     RejectedOrPendingItem,
 )
+from app.models.company_schema import BusinessRegistrationBatch
 # Use memory storage when Neo4j is unavailable
 from app.services import neo4j_storage
+from app.services import industry_storage
+from app.services import company_storage
 
 
 # ---------------------------------------------------------------------------
@@ -177,6 +180,106 @@ async def process_batch(batch: GraphRegistrationBatch) -> dict:
             results["rejected_or_pending_stored"] += 1
         except Exception as e:
             results["errors"].append({"type": "rejected_or_pending", "term": item.term, "error": str(e)})
+
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Business Batch Service
+# ---------------------------------------------------------------------------
+
+async def process_business_batch(batch: BusinessRegistrationBatch) -> dict:
+    """
+    Process a BusinessRegistrationBatch:
+    - Upsert industries (create if not exists, update if exists)
+    - Upsert industry_node_mappings (dedup by industry_id + node_id)
+    - Upsert companies (create if not exists, update if exists)
+    - Upsert company_node_exposures (dedup by company_id + node_id)
+    """
+    results = {
+        "batch_id": batch.batch_id,
+        "industries_created": 0,
+        "industries_updated": 0,
+        "mappings_created": 0,
+        "mappings_updated": 0,
+        "companies_created": 0,
+        "companies_updated": 0,
+        "exposures_created": 0,
+        "exposures_updated": 0,
+        "errors": [],
+    }
+
+    # Process industries
+    for ind in batch.industries_to_upsert:
+        try:
+            existing = await industry_storage.get_industry(ind.industry_id)
+            if existing:
+                update_data = ind.model_dump(
+                    exclude={"industry_id", "industry_uuid", "created_at", "updated_at"},
+                    mode="json",
+                )
+                await industry_storage.update_industry(ind.industry_id, update_data)
+                results["industries_updated"] += 1
+            else:
+                await industry_storage.create_industry(ind)
+                results["industries_created"] += 1
+        except Exception as e:
+            results["errors"].append({"type": "industry", "id": ind.industry_id, "error": str(e)})
+
+    # Process industry node mappings
+    for mapping in batch.industry_node_mappings_to_upsert:
+        try:
+            existing = await industry_storage.get_mapping_by_industry_and_node(
+                mapping.industry_id, mapping.node_id
+            )
+            if existing:
+                update_data = mapping.model_dump(
+                    exclude={"mapping_id", "mapping_uuid", "industry_id", "node_id", "created_at", "updated_at"},
+                    mode="json",
+                )
+                await industry_storage.update_mapping(existing.mapping_id, update_data)
+                results["mappings_updated"] += 1
+            else:
+                await industry_storage.create_mapping(mapping)
+                results["mappings_created"] += 1
+        except Exception as e:
+            results["errors"].append({"type": "mapping", "id": mapping.mapping_id, "error": str(e)})
+
+    # Process companies
+    for comp in batch.companies_to_upsert:
+        try:
+            existing = await company_storage.get_company(comp.company_id)
+            if existing:
+                update_data = comp.model_dump(
+                    exclude={"company_id", "company_uuid", "created_at", "updated_at"},
+                    mode="json",
+                )
+                await company_storage.update_company(comp.company_id, update_data)
+                results["companies_updated"] += 1
+            else:
+                await company_storage.create_company(comp)
+                results["companies_created"] += 1
+        except Exception as e:
+            results["errors"].append({"type": "company", "id": comp.company_id, "error": str(e)})
+
+    # Process company node exposures
+    for exposure in batch.company_node_exposures_to_upsert:
+        try:
+            existing = await company_storage.get_exposure_by_company_and_node(
+                exposure.company_id, exposure.node_id
+            )
+            if existing:
+                update_data = exposure.model_dump(
+                    exclude={"exposure_id", "exposure_uuid", "company_id", "node_id", "created_at", "updated_at"},
+                    mode="json",
+                )
+                await company_storage.update_exposure(existing.exposure_id, update_data)
+                results["exposures_updated"] += 1
+            else:
+                await company_storage.create_exposure(exposure)
+                results["exposures_created"] += 1
+        except Exception as e:
+            results["errors"].append({"type": "exposure", "id": exposure.exposure_id, "error": str(e)})
 
     return results
 

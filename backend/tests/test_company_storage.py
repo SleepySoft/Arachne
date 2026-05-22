@@ -80,7 +80,7 @@ class TestCompanyCRUD:
         fetched = await company_storage.get_company(sample_company.company_id)
         assert fetched is not None
         assert fetched.province == "陕西"
-        assert founded := fetched.founded_year == 2000
+        assert fetched.founded_year == 2000
 
     async def test_update(self, sample_company):
         if not await _postgres_available():

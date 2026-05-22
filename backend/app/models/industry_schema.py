@@ -22,7 +22,7 @@ IndustrialNode
 from __future__ import annotations
 
 from enum import Enum
-from uuid import UUID
+from uuid import UUID, uuid4
 from typing import List, Optional, Literal
 from datetime import datetime, date
 
@@ -43,7 +43,7 @@ class IndustryType(str, Enum):
 
 
 class Industry(BaseModel):
-    industry_uuid: UUID
+    industry_uuid: UUID = Field(default_factory=uuid4)
 
     industry_id: str = Field(
         ...,
@@ -85,7 +85,7 @@ class Industry(BaseModel):
 
 
 class IndustryNodeMapping(BaseModel):
-    mapping_uuid: UUID
+    mapping_uuid: UUID = Field(default_factory=uuid4)
 
     mapping_id: str = Field(
         ...,

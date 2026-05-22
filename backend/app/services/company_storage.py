@@ -277,6 +277,49 @@ async def get_exposure(exposure_id: str) -> Optional[CompanyNodeExposure]:
         return _row_to_exposure(row)
 
 
+async def get_exposure_by_company_and_node(
+    company_id: str, node_id: str
+) -> Optional[CompanyNodeExposure]:
+    pool = await get_postgres_pool()
+    if pool is None:
+        return None
+
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT * FROM company_node_exposures WHERE company_id = $1 AND node_id = $2",
+            company_id,
+            node_id,
+        )
+        if row is None:
+            return None
+        return _row_to_exposure(row)
+
+
+async def update_exposure(exposure_id: str, data: dict) -> Optional[CompanyNodeExposure]:
+    pool = await get_postgres_pool()
+    if pool is None:
+        return None
+
+    allowed = {"activity_type", "role", "weight", "confidence", "evidence", "status", "as_of_date", "notes"}
+    fields = {k: v for k, v in data.items() if k in allowed}
+    if not fields:
+        return await get_exposure(exposure_id)
+
+    set_clauses = [f"{k} = ${i + 2}" for i, k in enumerate(fields.keys())]
+    sql = f"""
+        UPDATE company_node_exposures
+        SET {', '.join(set_clauses)}, updated_at = NOW()
+        WHERE exposure_id = $1
+        RETURNING *
+    """
+
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(sql, exposure_id, *fields.values())
+        if row is None:
+            return None
+        return _row_to_exposure(row)
+
+
 async def delete_exposure(exposure_id: str) -> bool:
     pool = await get_postgres_pool()
     if pool is None:

@@ -74,7 +74,7 @@ IndustrialNode
 from __future__ import annotations
 
 from enum import Enum
-from uuid import UUID
+from uuid import UUID, uuid4
 from typing import List, Optional, Literal
 from datetime import datetime, date
 
@@ -116,8 +116,16 @@ class CompanyActivityType(str, Enum):
     UNKNOWN = "unknown"
 
 
+class CompanyType(str, Enum):
+    PUBLIC = "public"
+    PRIVATE = "private"
+    STATE_OWNED = "state_owned"
+    STARTUP = "startup"
+    UNKNOWN = "unknown"
+
+
 class Company(BaseModel):
-    company_uuid: UUID
+    company_uuid: UUID = Field(default_factory=uuid4)
 
     company_id: str = Field(
         ...,
@@ -145,6 +153,24 @@ class Company(BaseModel):
 
     description: Optional[str] = None
 
+    country: str = Field(default="CN")
+
+    province: Optional[str] = None
+
+    city: Optional[str] = None
+
+    founded_year: Optional[int] = None
+
+    employee_count: Optional[int] = None
+
+    revenue_cny: Optional[float] = None
+
+    market_cap_cny: Optional[float] = None
+
+    net_profit_cny: Optional[float] = None
+
+    company_type: CompanyType = Field(default=CompanyType.UNKNOWN)
+
     status: RecordStatus = Field(
         default=RecordStatus.ACTIVE
     )
@@ -164,7 +190,7 @@ class Company(BaseModel):
 
 
 class CompanyNodeExposure(BaseModel):
-    exposure_uuid: UUID
+    exposure_uuid: UUID = Field(default_factory=uuid4)
 
     exposure_id: str = Field(
         ...,

@@ -242,6 +242,49 @@ async def get_mapping(mapping_id: str) -> Optional[IndustryNodeMapping]:
         return _row_to_mapping(row)
 
 
+async def get_mapping_by_industry_and_node(
+    industry_id: str, node_id: str
+) -> Optional[IndustryNodeMapping]:
+    pool = await get_postgres_pool()
+    if pool is None:
+        return None
+
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT * FROM industry_node_mappings WHERE industry_id = $1 AND node_id = $2",
+            industry_id,
+            node_id,
+        )
+        if row is None:
+            return None
+        return _row_to_mapping(row)
+
+
+async def update_mapping(mapping_id: str, data: dict) -> Optional[IndustryNodeMapping]:
+    pool = await get_postgres_pool()
+    if pool is None:
+        return None
+
+    allowed = {"role", "weight", "confidence", "evidence", "status", "notes"}
+    fields = {k: v for k, v in data.items() if k in allowed}
+    if not fields:
+        return await get_mapping(mapping_id)
+
+    set_clauses = [f"{k} = ${i + 2}" for i, k in enumerate(fields.keys())]
+    sql = f"""
+        UPDATE industry_node_mappings
+        SET {', '.join(set_clauses)}, updated_at = NOW()
+        WHERE mapping_id = $1
+        RETURNING *
+    """
+
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(sql, mapping_id, *fields.values())
+        if row is None:
+            return None
+        return _row_to_mapping(row)
+
+
 async def delete_mapping(mapping_id: str) -> bool:
     pool = await get_postgres_pool()
     if pool is None:
