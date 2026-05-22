@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.database import close_async_driver, init_db
+from app.database_postgres import close_postgres_pool, init_postgres_tables
 from app.routers import batches, edges, nodes, query
 
 settings = get_settings()
@@ -13,8 +14,10 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+    await init_postgres_tables()
     yield
     await close_async_driver()
+    await close_postgres_pool()
 
 
 app = FastAPI(

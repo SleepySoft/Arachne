@@ -122,6 +122,10 @@ neo4j_logs/
 /plugins/
 /certificates/
 
+# Neo4j local installation
+neo4j-community-*/
+*.zip
+
 # --------------------------------------------------------
 # OS / IDE
 # --------------------------------------------------------
