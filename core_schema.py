@@ -1,3 +1,5 @@
+# core_schema.py
+
 from __future__ import annotations
 
 import json
@@ -23,7 +25,7 @@ class Confidence(str, Enum):
     LOW = "LOW"
 
 
-class NodeStatus(str, Enum):
+class RecordStatus(str, Enum):
     # 已确认节点：可进入正式产业图
     ACTIVE = "ACTIVE"
 
@@ -32,6 +34,9 @@ class NodeStatus(str, Enum):
 
     # 已拒绝节点：不应作为基础产业实体进入图中
     REJECTED = "REJECTED"
+
+    # 已归档（删除）节点
+    ARCHIVED = "ARCHIVED"
 
 
 class EntityType(str, Enum):
@@ -197,8 +202,8 @@ class IndustrialNode(BaseModel):
     confidence: Confidence = Field(
         default=Confidence.LOW
     )
-    status: NodeStatus = Field(
-        default=NodeStatus.PENDING
+    status: RecordStatus = Field(
+        default=RecordStatus.PENDING
     )
     notes: Optional[str] = None
 
@@ -215,7 +220,7 @@ class IndustrialNode(BaseModel):
         if self.confidence == Confidence.HIGH and not self.evidence:
             raise ValueError("HIGH confidence node must have evidence")
 
-        if self.status == NodeStatus.ACTIVE and not self.evidence:
+        if self.status == RecordStatus.ACTIVE and not self.evidence:
             raise ValueError("ACTIVE node must have evidence")
 
         return self
