@@ -27,7 +27,7 @@ async def create_edge(data: GraphEdgeCreate):
 @router.get("", response_model=PaginatedEdges)
 async def list_edges(
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=1000),
     edge_namespace: Optional[str] = None,
     edge_type: Optional[str] = None,
     from_node: Optional[str] = None,

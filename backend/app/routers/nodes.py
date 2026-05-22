@@ -24,7 +24,7 @@ async def create_node(data: IndustrialNodeCreate):
 @router.get("", response_model=PaginatedNodes)
 async def list_nodes(
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=1000),
     entity_type: Optional[str] = None,
     status: Optional[str] = None,
     search: Optional[str] = None,

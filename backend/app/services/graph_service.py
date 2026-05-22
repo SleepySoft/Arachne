@@ -13,7 +13,8 @@ from app.models.schemas import (
     OntologyEdgeCreate,
     RejectedOrPendingItem,
 )
-from app.services import neo4j_storage
+# Use memory storage when Neo4j is unavailable
+from app.services import memory_storage as neo4j_storage
 
 
 # ---------------------------------------------------------------------------
