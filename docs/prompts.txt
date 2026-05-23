@@ -49,7 +49,7 @@
 
 本电脑已通过环境变量“TUSHARE_TOKEN”配置了TUSHARE的token。
 
-使用tushare，拉取所有A股股票信息。
+使用tushare，获取 data/stock_batches/batch_001.json 中各家公司的股票信息。
 对每一个股票，考察其公司的原材料（输入）和产出，分析和构建产业图，同时构建对应的公司视图。
 
 在构建过程中，原则上除了发生程序上的错误，原则上不得修改代码。

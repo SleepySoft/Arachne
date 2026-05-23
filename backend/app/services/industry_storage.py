@@ -220,7 +220,7 @@ async def create_mapping(data: IndustryNodeMapping) -> IndustryNodeMapping:
             data.role,
             data.weight,
             data.confidence.value,
-            json.dumps(data.evidence) if data.evidence else "[]",
+            json.dumps([e.model_dump(mode='json') for e in data.evidence]) if data.evidence else "[]",
             data.status.value,
             data.notes,
         )
@@ -269,6 +269,10 @@ async def update_mapping(mapping_id: str, data: dict) -> Optional[IndustryNodeMa
     fields = {k: v for k, v in data.items() if k in allowed}
     if not fields:
         return await get_mapping(mapping_id)
+
+    # Convert evidence list to JSON string if present
+    if "evidence" in fields and fields["evidence"] is not None:
+        fields["evidence"] = json.dumps([e.model_dump(mode='json') for e in fields["evidence"]])
 
     set_clauses = [f"{k} = ${i + 2}" for i, k in enumerate(fields.keys())]
     sql = f"""

@@ -13,7 +13,7 @@ class Settings:
 
     POSTGRES_URL: str = os.getenv(
         "POSTGRES_URL",
-        "postgresql://postgres:postgres@localhost:5432/arachne"
+        "postgresql://postgres:postgres@localhost:5433/arachne"
     )
 
     API_V1_STR: str = "/api/v1"

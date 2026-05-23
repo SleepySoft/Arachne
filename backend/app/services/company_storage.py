@@ -254,7 +254,7 @@ async def create_exposure(data: CompanyNodeExposure) -> CompanyNodeExposure:
             data.role,
             data.weight,
             data.confidence.value,
-            json.dumps(data.evidence) if data.evidence else "[]",
+            json.dumps([e.model_dump(mode='json') for e in data.evidence]) if data.evidence else "[]",
             data.status.value,
             data.as_of_date,
             data.notes,
@@ -304,6 +304,10 @@ async def update_exposure(exposure_id: str, data: dict) -> Optional[CompanyNodeE
     fields = {k: v for k, v in data.items() if k in allowed}
     if not fields:
         return await get_exposure(exposure_id)
+
+    # Convert evidence list to JSON string if present
+    if "evidence" in fields and fields["evidence"] is not None:
+        fields["evidence"] = json.dumps([e.model_dump(mode='json') for e in fields["evidence"]])
 
     set_clauses = [f"{k} = ${i + 2}" for i, k in enumerate(fields.keys())]
     sql = f"""

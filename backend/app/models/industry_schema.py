@@ -60,6 +60,11 @@ class Industry(BaseModel):
 
     name_en: Optional[str] = None
 
+    aliases: List[str] = Field(
+        default_factory=list,
+        description="行业别名"
+    )
+
     industry_type: IndustryType = Field(
         default=IndustryType.CURATED_VIEW
     )

@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, Query
 from app.models.company_schema import Company, CompanyNodeExposure
 from app.models.schemas import IndustrialNode
 from app.services import company_storage
+from app.services.neo4j_storage import _to_datetime, _evidence_from_db
 from app.database import get_async_driver
 
 router = APIRouter()
@@ -140,6 +141,9 @@ async def get_company_nodes(company_id: str):
         nodes = []
         for record in records:
             props = dict(record["n"])
+            props["created_at"] = _to_datetime(props.get("created_at"))
+            props["updated_at"] = _to_datetime(props.get("updated_at"))
+            props["evidence"] = _evidence_from_db(props.get("evidence"))
             nodes.append(IndustrialNode(**props))
         return nodes
 
@@ -171,6 +175,9 @@ async def get_company_subgraph(company_id: str):
         nodes = []
         for record in node_records:
             props = dict(record["n"])
+            props["created_at"] = _to_datetime(props.get("created_at"))
+            props["updated_at"] = _to_datetime(props.get("updated_at"))
+            props["evidence"] = _evidence_from_db(props.get("evidence"))
             nodes.append(IndustrialNode(**props))
 
         # Fetch edges between exposed nodes
@@ -178,16 +185,28 @@ async def get_company_subgraph(company_id: str):
             """
             MATCH (a:IndustrialNode)-[r:INDUSTRIAL_FLOW]->(b:IndustrialNode)
             WHERE a.node_id IN $node_ids AND b.node_id IN $node_ids
-            RETURN r, a.node_id AS from_node, b.node_id AS to_node
+            RETURN a.node_id AS from_node, b.node_id AS to_node,
+                   r.edge_id AS edge_id, r.edge_type AS edge_type,
+                   r.description AS description, r.confidence AS confidence,
+                   r.notes AS notes, r.evidence AS evidence,
+                   r.created_at AS created_at, r.updated_at AS updated_at
             """,
             node_ids=node_ids,
         )
         edge_records = await edge_result.data()
         edges = []
         for record in edge_records:
-            rel = dict(record["r"])
-            rel["from_node"] = record["from_node"]
-            rel["to_node"] = record["to_node"]
-            edges.append(rel)
+            edges.append({
+                "from_node": record["from_node"],
+                "to_node": record["to_node"],
+                "edge_id": record["edge_id"],
+                "edge_type": record["edge_type"],
+                "description": record["description"],
+                "confidence": record["confidence"],
+                "notes": record["notes"],
+                "evidence": _evidence_from_db(record.get("evidence")),
+                "created_at": _to_datetime(record.get("created_at")),
+                "updated_at": _to_datetime(record.get("updated_at")),
+            })
 
         return {"nodes": nodes, "edges": edges}
