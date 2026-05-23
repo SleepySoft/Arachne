@@ -81,6 +81,7 @@ export function GraphCanvas({
   const onNodeClickRef = useRef(onNodeClick);
   const onEdgeClickRef = useRef(onEdgeClick);
   const filtersRef = useRef(filters);
+  const sourceDataRef = useRef(sourceData);
 
   useEffect(() => {
     onNodeClickRef.current = onNodeClick;
@@ -93,6 +94,10 @@ export function GraphCanvas({
   useEffect(() => {
     filtersRef.current = filters;
   }, [filters]);
+
+  useEffect(() => {
+    sourceDataRef.current = sourceData;
+  }, [sourceData]);
 
   // Initial load — only once
   useEffect(() => {
@@ -203,6 +208,17 @@ export function GraphCanvas({
               style: { opacity: 0.15 },
             },
             {
+              selector: ".external",
+              style: {
+                opacity: 0.35,
+                "background-color": "#475569",
+                "line-color": "#475569",
+                "target-arrow-color": "#475569",
+                color: "#475569",
+                "text-background-color": "#0f172a",
+              },
+            },
+            {
               selector: ":selected",
               style: {
                 "border-color": "#22d3ee",
@@ -223,8 +239,89 @@ export function GraphCanvas({
           maxZoom: 3,
         });
 
-        cy.on("tap", "node", (evt) => {
-          onNodeClickRef.current(evt.target.data("raw") as IndustrialNode);
+        cy.on("tap", "node", async (evt) => {
+          const node = evt.target;
+          const rawData = node.data("raw") as IndustrialNode;
+          onNodeClickRef.current(rawData);
+
+//           console.log("👉 [1/5] 点击了节点:", node.id(), rawData?.canonical_name_zh);
+//           console.log("👉 [2/5] 检查环境条件 sourceDataRef.current:", !!sourceDataRef.current);
+
+          // 🚨 嫌疑犯1：如果你希望所有页面（不管有没有传入 sourceData）都能点击扩展，
+          // 请把下面这个 if (sourceDataRef.current) 判断删掉！
+          if (sourceDataRef.current) {
+            try {
+              const nodeId = node.id();
+//               console.log("👉 [3/5] 开始请求邻居接口 (getNeighbors)...");
+              const { nodes, edges } = await getNeighbors(nodeId);
+//               console.log(`👉 [4/5] 接口返回: ${nodes.length} 个节点, ${edges.length} 条边`);
+
+              cy.elements(".external").remove();
+              const existingIds = new Set(cy.nodes().map((n) => n.id()));
+
+              const centerPos = node.position();
+              const radius = Math.max(120, nodes.length * 15);
+              let angle = 0;
+              // 防止除以 0 的 NaN 错误
+              const angleStep = nodes.length > 0 ? (2 * Math.PI) / nodes.length : 0;
+
+              let addedNodesCount = 0;
+              let addedEdgesCount = 0;
+
+              cy.batch(() => {
+                nodes.forEach((n) => {
+                  if (!existingIds.has(n.node_id)) {
+                    cy.add({
+                      data: {
+                        id: n.node_id,
+                        label: n.canonical_name_zh,
+                        entity_type: n.entity_type,
+                        status: n.status,
+                        confidence: n.confidence,
+                        raw: n,
+                      },
+                      classes: "external",
+                      position: {
+                        x: centerPos.x + radius * Math.cos(angle),
+                        y: centerPos.y + radius * Math.sin(angle),
+                      }
+                    });
+                    angle += angleStep;
+                    addedNodesCount++;
+                  }
+                });
+
+                edges.forEach((e) => {
+                  if (!cy.getElementById(e.edge_id).length) {
+                    const sourceInGraph = cy.getElementById(e.from_node).length > 0;
+                    const targetInGraph = cy.getElementById(e.to_node).length > 0;
+                    if (sourceInGraph && targetInGraph) {
+                      cy.add({
+                        data: {
+                          id: e.edge_id,
+                          source: e.from_node,
+                          target: e.to_node,
+                          edge_namespace: e.edge_namespace,
+                          edge_type: e.edge_type,
+                          label: e.edge_type,
+                          raw: e,
+                        },
+                        classes: "external",
+                      });
+                      addedEdgesCount++;
+                    }
+                  }
+                });
+              });
+
+//               console.log(`👉 [5/5] 成功将 ${addedNodesCount} 个节点和 ${addedEdgesCount} 条边加入画布，并标记为 .external`);
+
+            } catch (err) {
+              console.error("❌ 扩展节点请求失败或渲染异常:", err);
+            }
+          } else {
+//             console.warn("⚠️ 拦截：当前 sourceDataRef.current 为空，跳过了半透明扩展逻辑！");
+          }
         });
         cy.on("tap", "edge", (evt) => {
           onEdgeClickRef.current(evt.target.data("raw") as GraphEdge);
@@ -232,6 +329,7 @@ export function GraphCanvas({
         cy.on("tap", (evt) => {
           if (evt.target === cy) {
             cy.elements().removeClass("highlighted dimmed");
+            cy.elements(".external").remove();
           }
         });
         cy.on("dbltap", "node", async (evt) => {

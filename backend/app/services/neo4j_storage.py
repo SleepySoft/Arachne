@@ -517,7 +517,7 @@ async def get_neighbors(node_id: str) -> tuple[List[IndustrialNode], List[GraphE
         node_result = await session.run(
             """
             MATCH (n:IndustrialNode {node_id: $node_id})-[r]-(m:IndustrialNode)
-            RETURN DISTINCT m AS node
+            RETURN DISTINCT m AS n
             """,
             node_id=node_id,
         )
