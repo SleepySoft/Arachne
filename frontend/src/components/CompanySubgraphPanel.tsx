@@ -15,7 +15,7 @@ import {
   getComputationJob,
   listCompanySubgraphs,
 } from "@/services/api";
-import { CompanySubgraph } from "@/types";
+import { CompanySubgraph, CompanySubgraphEdge, CompanySubgraphRelation } from "@/types";
 
 interface CompanySubgraphPanelProps {
   companyId: string;
@@ -173,6 +173,36 @@ export function CompanySubgraphPanel({
   );
 }
 
+const EDGE_TYPE_LABELS: Record<string, string> = {
+  INDUSTRIAL_FLOW: "产业流",
+  ONTOLOGY: "本体关系",
+};
+
+const RELATION_TYPE_LABELS: Record<string, string> = {
+  inferred_industrial: "产业推断",
+  evidenced_business: "商业关系",
+  similarity_peer: "同业相似",
+  person_relation: "人事关联",
+};
+
+const RELATION_SUBTYPE_LABELS: Record<string, string> = {
+  upstream_of: "上游",
+  downstream_of: "下游",
+  supplier: "供应商",
+  customer: "客户",
+  partner: "合作伙伴",
+  peer: "同业",
+  shareholder: "股东",
+};
+
+function formatEdgeLabel(e: CompanySubgraphEdge): string {
+  return e.edge_type_label || EDGE_TYPE_LABELS[e.edge_type] || e.edge_type;
+}
+
+function formatRelationLabel(rel: CompanySubgraphRelation): string {
+  return RELATION_SUBTYPE_LABELS[rel.relation_subtype || ""] || RELATION_TYPE_LABELS[rel.relation_type] || rel.relation_type;
+}
+
 function SubgraphVersionItem({
   subgraph,
   isSelected,
@@ -263,7 +293,7 @@ function SubgraphVersionItem({
                 {detail.edges.map((e) => (
                   <div key={e.edge_id} className="text-[10px] text-slate-400">
                     {e.from_node} → {e.to_node}{" "}
-                    <span className="text-slate-500">({e.edge_type_label || e.edge_type})</span>
+                    <span className="text-slate-500">({formatEdgeLabel(e)})</span>
                   </div>
                 ))}
               </div>
@@ -277,7 +307,7 @@ function SubgraphVersionItem({
                 {detail.relations.map((rel) => (
                   <div key={`${rel.from_company_id}-${rel.to_company_id}-${rel.relation_type}`} className="text-[10px] text-slate-400">
                     {rel.from_company_id} → {rel.to_company_id}{" "}
-                    <span className="text-slate-500">({rel.relation_subtype || rel.relation_type})</span>
+                    <span className="text-slate-500">({formatRelationLabel(rel)})</span>
                   </div>
                 ))}
               </div>

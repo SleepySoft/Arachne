@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { X } from "lucide-react";
 import { GraphEdge, IndustrialNode, Industry, Company } from "@/types";
 import { BatchUploader } from "@/components/BatchUploader";
 import { CompanyDetail } from "@/components/CompanyDetail";
 import { CompanyForm } from "@/components/CompanyForm";
+import { CompanySubgraphPanel } from "@/components/CompanySubgraphPanel";
 import { CompanyNetworkCanvas } from "@/components/CompanyNetworkCanvas";
 import { CompanySidebar } from "@/components/CompanySidebar";
-import { getCompany, getCompanyNetwork } from "@/services/api";
+import { getCompany, getCompanyNetwork, computeAllCompanyRelations } from "@/services/api";
 import { EdgeDetail } from "@/components/EdgeDetail";
 import { EdgeForm } from "@/components/EdgeForm";
 import { FilterPanel } from "@/components/FilterPanel";
@@ -37,8 +40,31 @@ export type PanelType =
   | "company-detail"
   | "company-create"
   | "company-edit"
+  | "company-subgraphs"
   | "node-companies"
   | "node-industries";
+
+function GlobalRecomputeButton() {
+  const mutation = useMutation({
+    mutationFn: computeAllCompanyRelations,
+    onSuccess: (data) => {
+      alert("全局关系重算任务已启动，job_id: " + data.job_id);
+    },
+    onError: (err: unknown) => {
+      alert("重算失败: " + (err instanceof Error ? err.message : String(err)));
+    },
+  });
+
+  return (
+    <button
+      onClick={() => mutation.mutate()}
+      disabled={mutation.isPending}
+      className="rounded px-2 py-0.5 text-[10px] text-amber-400 hover:bg-amber-900/20 disabled:opacity-50"
+    >
+      {mutation.isPending ? "重算中..." : "全局重算关系"}
+    </button>
+  );
+}
 
 export default function App() {
   const [viewMode, setViewMode] = useState<ViewMode>("graph");
@@ -253,6 +279,19 @@ export default function App() {
             >
               产业图
             </button>
+            <button
+              onClick={() => {
+                if (selectedCompany) {
+                  setPanel("company-subgraphs");
+                } else {
+                  alert("请先选择一个公司");
+                }
+              }}
+              className={`rounded px-2 py-0.5 text-[10px] ${panel === "company-subgraphs" ? "bg-cyan-900/30 text-cyan-400" : "text-slate-400 hover:bg-slate-800"}`}
+            >
+              子图版本
+            </button>
+            <GlobalRecomputeButton />
           </div>
         )
       }
@@ -385,6 +424,26 @@ export default function App() {
               setPanel("company-detail");
             }}
           />
+        ) : panel === "company-subgraphs" && selectedCompany ? (
+          <div className="flex h-full flex-col">
+            <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+              <h3 className="truncate pr-2 text-sm font-semibold text-slate-100">
+                {selectedCompany.name_zh} — 子图版本
+              </h3>
+              <button
+                onClick={() => setPanel("none")}
+                className="flex h-7 w-7 items-center justify-center rounded text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <CompanySubgraphPanel
+                companyId={selectedCompany.company_id}
+                onLoadSubgraph={handleLoadSubgraph}
+              />
+            </div>
+          </div>
         ) : panel === "node-companies" && contextMenu.node ? (
           <NodeCompaniesPanel
             nodeId={contextMenu.node.node_id}

@@ -41,6 +41,23 @@ const RELATION_COLORS: Record<string, string> = {
   person_relation: "#f472b6",
 };
 
+const RELATION_TYPE_LABELS: Record<string, string> = {
+  inferred_industrial: "产业推断",
+  evidenced_business: "商业关系",
+  similarity_peer: "同业相似",
+  person_relation: "人事关联",
+};
+
+const RELATION_SUBTYPE_LABELS: Record<string, string> = {
+  upstream_of: "上游",
+  downstream_of: "下游",
+  supplier: "供应商",
+  customer: "客户",
+  partner: "合作伙伴",
+  peer: "同业",
+  shareholder: "股东",
+};
+
 export function CompanyNetworkCanvas({ nodes, edges, onNodeClick }: CompanyNetworkCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
@@ -73,7 +90,7 @@ export function CompanyNetworkCanvas({ nodes, edges, onNodeClick }: CompanyNetwo
             relation_type: e.relation_type,
             relation_subtype: e.relation_subtype,
             strength: e.strength,
-            label: e.relation_subtype || e.relation_type,
+            label: RELATION_SUBTYPE_LABELS[e.relation_subtype || ""] || RELATION_TYPE_LABELS[e.relation_type] || e.relation_type,
             raw: e,
           },
         })),

@@ -106,7 +106,7 @@ export function CompanySidebar({ selectedId, onSelect, onCreate }: CompanySideba
                     </div>
                     <div className="mt-0.5 flex items-center gap-1.5">
                       <span className="text-[10px] text-slate-500">{TYPE_LABELS[co.company_type]}</span>
-                      {co.stock_codes.length > 0 && (
+                      {co.stock_codes && co.stock_codes.length > 0 && (
                         <span className="text-[10px] text-slate-600">{co.stock_codes[0]}</span>
                       )}
                       <span

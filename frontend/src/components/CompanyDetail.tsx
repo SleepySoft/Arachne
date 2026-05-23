@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit2, Trash2, X, Link2, Plus, Crosshair } from "lucide-react";
 import { Company } from "@/types";
 import { deleteCompany, getCompanySubgraph, listCompanyExposures } from "@/services/api";
-import { CompanySubgraphPanel } from "@/components/CompanySubgraphPanel";
 
 interface CompanyDetailProps {
   company: Company;
@@ -171,10 +170,7 @@ export function CompanyDetail({
           </div>
         </div>
 
-        <CompanySubgraphPanel
-          companyId={company.company_id}
-          onLoadSubgraph={onLoadSubgraph}
-        />
+
       </div>
     </div>
   );
