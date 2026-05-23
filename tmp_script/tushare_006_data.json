@@ -1,0 +1,219 @@
+{
+  "000088.SZ": {
+    "basic": [
+      {
+        "ts_code": "000088.SZ",
+        "employees": 895,
+        "reg_capital": 519948.3346,
+        "setup_date": "19970721",
+        "website": "www.yantian-port.com",
+        "email": "caoq@ytport.com;yph000088@ytport.com;luojt@yantian-port.com"
+      }
+    ],
+    "finance": [
+      {
+        "ts_code": "000088.SZ",
+        "ann_date": "20250424",
+        "end_date": "20241231",
+        "netprofit_yoy": 21.7445,
+        "grossprofit_margin": 24.3441
+      }
+    ]
+  },
+  "000089.SZ": {
+    "basic": [
+      {
+        "ts_code": "000089.SZ",
+        "employees": 5446,
+        "reg_capital": 205076.9509,
+        "setup_date": "19980410",
+        "website": "www.szairport.com",
+        "email": "szjc@szairport.com"
+      }
+    ],
+    "finance": [
+      {
+        "ts_code": "000089.SZ",
+        "ann_date": "20250425",
+        "end_date": "20241231",
+        "netprofit_yoy": 11.6834,
+        "grossprofit_margin": 21.295
+      }
+    ]
+  },
+  "000090.SZ": {
+    "basic": [
+      {
+        "ts_code": "000090.SZ",
+        "employees": 10052,
+        "reg_capital": 186854.5434,
+        "setup_date": "19931206",
+        "website": "www.tagen.cn",
+        "email": "qiujiayu@tagen.cn;yuxiaoluo@tagen.cn;zhangmingshao@tagen.cn;info@tagen.cn"
+      }
+    ],
+    "finance": [
+      {
+        "ts_code": "000090.SZ",
+        "ann_date": "20250422",
+        "end_date": "20241231",
+        "netprofit_yoy": -59.0926,
+        "grossprofit_margin": 15.9312
+      }
+    ]
+  },
+  "000096.SZ": {
+    "basic": [
+      {
+        "ts_code": "000096.SZ",
+        "employees": 328,
+        "reg_capital": 52800.0,
+        "setup_date": "19990218",
+        "website": "www.gj000096.com",
+        "email": "gjnygf@126.com"
+      }
+    ],
+    "finance": [
+      {
+        "ts_code": "000096.SZ",
+        "ann_date": "20250429",
+        "end_date": "20241231",
+        "netprofit_yoy": 9.9961,
+        "grossprofit_margin": 9.0908
+      }
+    ]
+  },
+  "000099.SZ": {
+    "basic": [
+      {
+        "ts_code": "000099.SZ",
+        "employees": 1094,
+        "reg_capital": 77577.0137,
+        "setup_date": "19990211",
+        "website": "www.cohc.citic",
+        "email": "xushutian@cohc.citic;ouyangmingzhi@cohc.citic;liuweiran@cohc.citic"
+      }
+    ],
+    "finance": [
+      {
+        "ts_code": "000099.SZ",
+        "ann_date": "20250318",
+        "end_date": "20241231",
+        "netprofit_yoy": 26.8091,
+        "grossprofit_margin": 23.042
+      }
+    ]
+  },
+  "000100.SZ": {
+    "basic": [
+      {
+        "ts_code": "000100.SZ",
+        "employees": 71419,
+        "reg_capital": 2080086.2447,
+        "setup_date": "19820311",
+        "website": "www.tcltech.com",
+        "email": "ir@tcl.com"
+      }
+    ],
+    "finance": [
+      {
+        "ts_code": "000100.SZ",
+        "ann_date": "20250429",
+        "end_date": "20241231",
+        "netprofit_yoy": -29.3834,
+        "grossprofit_margin": 11.5884
+      }
+    ]
+  },
+  "000151.SZ": {
+    "basic": [
+      {
+        "ts_code": "000151.SZ",
+        "employees": 698,
+        "reg_capital": 35090.6286,
+        "setup_date": "19990301",
+        "website": "www.complant-ltd.com",
+        "email": "complant@gt.cn;complant@complant-ltd.com"
+      }
+    ],
+    "finance": [
+      {
+        "ts_code": "000151.SZ",
+        "ann_date": "20250424",
+        "end_date": "20241231",
+        "netprofit_yoy": -16.3273,
+        "grossprofit_margin": -6.3823
+      }
+    ]
+  },
+  "000153.SZ": {
+    "basic": [
+      {
+        "ts_code": "000153.SZ",
+        "employees": 4542,
+        "reg_capital": 46468.5522,
+        "setup_date": "19970830",
+        "website": "www.bbcayy.com",
+        "email": "xlyyzj@163.com;xlyyzj@sohu.com"
+      }
+    ],
+    "finance": [
+      {
+        "ts_code": "000153.SZ",
+        "ann_date": "20250411",
+        "end_date": "20241231",
+        "netprofit_yoy": 0.9726,
+        "grossprofit_margin": 21.7634
+      },
+      {
+        "ts_code": "000153.SZ",
+        "ann_date": "20250411",
+        "end_date": "20241231",
+        "netprofit_yoy": 0.9726,
+        "grossprofit_margin": 21.7634
+      }
+    ]
+  },
+  "000155.SZ": {
+    "basic": [
+      {
+        "ts_code": "000155.SZ",
+        "employees": 2139,
+        "reg_capital": 184616.8342,
+        "setup_date": "19971020",
+        "website": "www.cndl155.com",
+        "email": "ojc@cndl155.com;fujia620@163.com;mail@cndl155.com"
+      }
+    ],
+    "finance": [
+      {
+        "ts_code": "000155.SZ",
+        "ann_date": "20250428",
+        "end_date": "20241231",
+        "netprofit_yoy": -8.8458,
+        "grossprofit_margin": 50.0753
+      }
+    ]
+  },
+  "000156.SZ": {
+    "basic": [
+      {
+        "ts_code": "000156.SZ",
+        "employees": 11086,
+        "reg_capital": 185293.2442,
+        "setup_date": "19940630",
+        "website": "www.wasu.com",
+        "email": "000156@wasu.com"
+      }
+    ],
+    "finance": [
+      {
+        "ts_code": "000156.SZ",
+        "ann_date": "20250320",
+        "end_date": "20241231",
+        "netprofit_yoy": -22.4967,
+        "grossprofit_margin": 30.4084
+      }
+    ]
+  }
+}
