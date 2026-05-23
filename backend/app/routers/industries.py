@@ -184,7 +184,8 @@ async def get_industry_subgraph(industry_id: str):
             MATCH (a:IndustrialNode)-[r:INDUSTRIAL_FLOW]->(b:IndustrialNode)
             WHERE a.node_id IN $node_ids AND b.node_id IN $node_ids
             RETURN a.node_id AS from_node, b.node_id AS to_node,
-                   r.edge_id AS edge_id, r.edge_type AS edge_type,
+                   r.edge_id AS edge_id, r.edge_namespace AS edge_namespace,
+                   r.edge_type AS edge_type,
                    r.description AS description, r.confidence AS confidence,
                    r.notes AS notes, r.evidence AS evidence,
                    r.created_at AS created_at, r.updated_at AS updated_at
@@ -198,6 +199,7 @@ async def get_industry_subgraph(industry_id: str):
                 "from_node": record["from_node"],
                 "to_node": record["to_node"],
                 "edge_id": record["edge_id"],
+                "edge_namespace": record["edge_namespace"],
                 "edge_type": record["edge_type"],
                 "description": record["description"],
                 "confidence": record["confidence"],
