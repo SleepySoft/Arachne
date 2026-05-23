@@ -218,7 +218,7 @@ export function GraphCanvas({
             rankSep: 80,
             padding: 20,
           } as cytoscape.LayoutOptions,
-          wheelSensitivity: 0.3,
+          wheelSensitivity: 1.0,
           minZoom: 0.2,
           maxZoom: 3,
         });
