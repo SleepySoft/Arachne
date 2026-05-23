@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Annotated, List, Optional, Union, Literal
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, HttpUrl, field_validator, model_validator
+from pydantic import BaseModel, Field, HttpUrl, computed_field, field_validator, model_validator
 
 
 # ============================================================
@@ -51,6 +51,26 @@ class IndustrialFlowType(str, Enum):
     INFORMATION_FLOW = "information_flow"
     CAPABILITY_SUPPLY = "capability_supply"
     SERVICE_FLOW = "service_flow"
+
+
+# ============================================================
+# Edge Type Labels (shared mapping)
+# ============================================================
+
+EDGE_TYPE_LABELS: dict[str, str] = {
+    # IndustrialFlowType
+    "material_flow": "物料流",
+    "composition": "组成/构成",
+    "energy_flow": "能量流",
+    "information_flow": "信息流",
+    "capability_supply": "能力供给",
+    "service_flow": "服务流",
+    # OntologyType
+    "alias_of": "别名/同义",
+    "is_a": "是一种",
+    "variant_of": "变体",
+    "related_term": "相关术语",
+}
 
 
 class OntologyType(str, Enum):
@@ -278,6 +298,11 @@ class IndustrialFlowEdge(BaseEdge):
     edge_namespace: Literal["industrial_flow"] = "industrial_flow"
     edge_type: IndustrialFlowType
 
+    @computed_field
+    @property
+    def edge_type_label(self) -> str:
+        return EDGE_TYPE_LABELS.get(self.edge_type.value, self.edge_type.value)
+
     @model_validator(mode="after")
     def validate_industrial_flow_policy(self) -> "IndustrialFlowEdge":
         if not self.description.strip():
@@ -327,6 +352,11 @@ class IndustrialFlowEdgeUpdate(BaseModel):
 class OntologyEdge(BaseEdge):
     edge_namespace: Literal["ontology"] = "ontology"
     edge_type: OntologyType
+
+    @computed_field
+    @property
+    def edge_type_label(self) -> str:
+        return EDGE_TYPE_LABELS.get(self.edge_type.value, self.edge_type.value)
 
     @model_validator(mode="after")
     def validate_ontology_policy(self) -> "OntologyEdge":

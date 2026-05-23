@@ -88,6 +88,7 @@ export interface BaseEdge {
   notes?: string;
   created_at?: string;
   updated_at?: string;
+  edge_type_label?: string;
 }
 
 export interface IndustrialFlowEdge extends BaseEdge {
@@ -325,4 +326,19 @@ export const CONFIDENCE_OPACITY: Record<Confidence, number> = {
   HIGH: 1.0,
   MEDIUM: 0.75,
   LOW: 0.5,
+};
+
+export const EDGE_TYPE_LABELS: Record<string, string> = {
+  // IndustrialFlowType
+  material_flow: "物料流",
+  composition: "组成/构成",
+  energy_flow: "能量流",
+  information_flow: "信息流",
+  capability_supply: "能力供给",
+  service_flow: "服务流",
+  // OntologyType
+  alias_of: "别名/同义",
+  is_a: "是一种",
+  variant_of: "变体",
+  related_term: "相关术语",
 };

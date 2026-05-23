@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import {
   Confidence,
   EdgeNamespace,
+  EDGE_TYPE_LABELS,
   GraphEdge,
   IndustrialFlowEdgeCreate,
   OntologyEdgeCreate,
@@ -190,7 +191,7 @@ export function EdgeForm({ mode, edge, onClose, onSuccess }: EdgeFormProps) {
           >
             {typeOptions.map((t) => (
               <option key={t} value={t}>
-                {t}
+                {EDGE_TYPE_LABELS[t] || t}
               </option>
             ))}
           </select>

@@ -52,7 +52,7 @@ export function EdgeDetail({ edge, onEdit, onClose, onRefresh }: EdgeDetailProps
       <div className="space-y-3">
         <Field label="edge_id" value={edge.edge_id} mono />
         <Field label="命名空间" value={edge.edge_namespace} badge />
-        <Field label="类型" value={edge.edge_type} badge />
+        <Field label="类型" value={`${edge.edge_type_label || edge.edge_type} (${edge.edge_type})`} badge />
         <Field label="起点" value={edge.from_node} mono />
         <Field label="终点" value={edge.to_node} mono />
         <Field label="置信度" value={edge.confidence} badge />
