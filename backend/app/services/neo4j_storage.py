@@ -18,17 +18,25 @@ from app.models.schemas import (
 # ---------------------------------------------------------------------------
 
 def _evidence_to_db(evidence_list: List[Evidence]) -> str:
-    return json.dumps(
-        [
-            {
-                "source_title": e.source_title,
-                "source_url": str(e.source_url) if e.source_url else None,
-                "quote": e.quote,
-            }
-            for e in evidence_list
-        ],
-        ensure_ascii=False,
-    )
+    items = []
+    for e in evidence_list:
+        if isinstance(e, dict):
+            items.append(
+                {
+                    "source_title": e.get("source_title", ""),
+                    "source_url": str(e.get("source_url")) if e.get("source_url") else None,
+                    "quote": e.get("quote", ""),
+                }
+            )
+        else:
+            items.append(
+                {
+                    "source_title": e.source_title,
+                    "source_url": str(e.source_url) if e.source_url else None,
+                    "quote": e.quote,
+                }
+            )
+    return json.dumps(items, ensure_ascii=False)
 
 
 def _evidence_from_db(raw) -> List[Evidence]:
