@@ -1,9 +1,11 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { GraphEdge, IndustrialNode, Industry, Company } from "@/types";
 import { BatchUploader } from "@/components/BatchUploader";
 import { CompanyDetail } from "@/components/CompanyDetail";
 import { CompanyForm } from "@/components/CompanyForm";
+import { CompanyNetworkCanvas } from "@/components/CompanyNetworkCanvas";
 import { CompanySidebar } from "@/components/CompanySidebar";
+import { getCompanyNetwork } from "@/services/api";
 import { EdgeDetail } from "@/components/EdgeDetail";
 import { EdgeForm } from "@/components/EdgeForm";
 import { FilterPanel } from "@/components/FilterPanel";
@@ -82,6 +84,13 @@ export default function App() {
   // Highlight node ids for industry/company focus on full graph
   const [highlightNodeIds, setHighlightNodeIds] = useState<string[] | undefined>(undefined);
 
+  // Company network view state
+  const [companyNetworkVisible, setCompanyNetworkVisible] = useState(false);
+  const [companyNetworkData, setCompanyNetworkData] = useState<{
+    nodes: { company_id: string; name_zh: string; company_type: string; status: string }[];
+    edges: { from_company_id: string; to_company_id: string; relation_type: string; relation_subtype: string | null; strength: number; confidence: string }[];
+  } | null>(null);
+
   const handleNodeClick = useCallback((node: IndustrialNode) => {
     setSelectedNode(node);
     setSelectedEdge(null);
@@ -113,10 +122,18 @@ export default function App() {
     setSelectedEdge(null);
     setSelectedIndustry(null);
     setSelectedCompany(null);
+    setCompanyNetworkVisible(mode === "companies");
     if (mode === "graph") {
       setSubgraphData(undefined);
     }
   };
+
+  // Load company network data when entering companies view
+  useEffect(() => {
+    if (viewMode === "companies") {
+      getCompanyNetwork().then(setCompanyNetworkData).catch(() => setCompanyNetworkData(null));
+    }
+  }, [viewMode]);
 
   const handleSelectIndustry = (industry: Industry) => {
     setSelectedIndustry(industry);
@@ -178,16 +195,28 @@ export default function App() {
         )
       }
       centerCanvas={
-        <GraphCanvas
-          key={graphKey}
-          onNodeClick={handleNodeClick}
-          onEdgeClick={handleEdgeClick}
-          onNodeContextMenu={handleNodeContextMenu}
-          filters={activeFilters}
-          highlightNodeId={selectedNode?.node_id}
-          highlightNodeIds={highlightNodeIds}
-          sourceData={subgraphData}
-        />
+        viewMode === "companies" && companyNetworkVisible && companyNetworkData ? (
+          <CompanyNetworkCanvas
+            nodes={companyNetworkData.nodes}
+            edges={companyNetworkData.edges}
+            onNodeClick={(company) => {
+              // Find full company data from sidebar list or fetch it
+              setSelectedCompany(company as unknown as Company);
+              setPanel("company-detail");
+            }}
+          />
+        ) : (
+          <GraphCanvas
+            key={graphKey}
+            onNodeClick={handleNodeClick}
+            onEdgeClick={handleEdgeClick}
+            onNodeContextMenu={handleNodeContextMenu}
+            filters={activeFilters}
+            highlightNodeId={selectedNode?.node_id}
+            highlightNodeIds={highlightNodeIds}
+            sourceData={subgraphData}
+          />
+        )
       }
       searchPanel={
         viewMode === "graph" ? (
@@ -200,13 +229,26 @@ export default function App() {
             onCreateEdge={() => setPanel("edge-create")}
             onUploadBatch={() => setPanel("batch-upload")}
           />
-        ) : (
+        ) : viewMode === "industries" ? (
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-500">
-              {viewMode === "industries"
-                ? "点击左侧行业在图谱中查看其子图"
-                : "点击左侧公司在图谱中查看其临时子图"}
+              点击左侧行业在图谱中查看其子图
             </span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCompanyNetworkVisible(true)}
+              className={`rounded px-2 py-0.5 text-[10px] ${companyNetworkVisible ? "bg-cyan-900/30 text-cyan-400" : "text-slate-400 hover:bg-slate-800"}`}
+            >
+              公司关系网络
+            </button>
+            <button
+              onClick={() => setCompanyNetworkVisible(false)}
+              className={`rounded px-2 py-0.5 text-[10px] ${!companyNetworkVisible ? "bg-cyan-900/30 text-cyan-400" : "text-slate-400 hover:bg-slate-800"}`}
+            >
+              产业图
+            </button>
           </div>
         )
       }

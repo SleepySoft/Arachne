@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit2, Trash2, X, Link2, Plus, Crosshair } from "lucide-react";
 import { Company } from "@/types";
 import { deleteCompany, getCompanySubgraph, listCompanyExposures } from "@/services/api";
+import { CompanySubgraphPanel } from "@/components/CompanySubgraphPanel";
 
 interface CompanyDetailProps {
   company: Company;
@@ -45,8 +46,8 @@ export function CompanyDetail({
 }: CompanyDetailProps) {
   const queryClient = useQueryClient();
 
-  const { data: subgraph } = useQuery({
-    queryKey: ["company-subgraph", company.company_id],
+  const { data: tempSubgraph } = useQuery({
+    queryKey: ["company-temp-subgraph", company.company_id],
     queryFn: () => getCompanySubgraph(company.company_id),
   });
 
@@ -71,9 +72,9 @@ export function CompanyDetail({
         <div className="flex items-center gap-1">
           <button
             onClick={() => {
-              if (subgraph) onLoadSubgraph(subgraph.nodes, subgraph.edges);
+              if (tempSubgraph) onLoadSubgraph(tempSubgraph.nodes, tempSubgraph.edges);
             }}
-            title="加载子图"
+            title="加载临时子图"
             className="flex h-7 w-7 items-center justify-center rounded text-slate-400 hover:bg-slate-800 hover:text-cyan-400"
           >
             <Link2 className="h-3.5 w-3.5" />
@@ -169,6 +170,11 @@ export function CompanyDetail({
             )}
           </div>
         </div>
+
+        <CompanySubgraphPanel
+          companyId={company.company_id}
+          onLoadSubgraph={onLoadSubgraph}
+        />
       </div>
     </div>
   );

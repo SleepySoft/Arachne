@@ -299,6 +299,97 @@ export interface PaginatedExposures {
   items: CompanyNodeExposure[];
 }
 
+// ============================================================
+// Company Subgraph Types (公司子图域)
+// ============================================================
+
+export type SubgraphRelationType =
+  | "inferred_industrial"
+  | "evidenced_business"
+  | "similarity_peer"
+  | "person_relation";
+
+export type SubgraphRelationSubtype =
+  | "upstream_of"
+  | "downstream_of"
+  | "supplier"
+  | "customer"
+  | "partner"
+  | "peer"
+  | "shareholder"
+  | "executive";
+
+export interface CompanySubgraphNode {
+  node_id: string;
+  canonical_name_zh: string;
+  entity_type: string;
+  activity_type: string;
+  weight: number;
+  role?: string;
+  exposure_confidence?: string;
+}
+
+export interface CompanySubgraphEdge {
+  edge_id: string;
+  from_node: string;
+  to_node: string;
+  edge_namespace: string;
+  edge_type: string;
+  edge_type_label?: string;
+  description?: string;
+  confidence?: string;
+}
+
+export interface CompanySubgraphRelation {
+  relation_id?: number;
+  from_company_id: string;
+  to_company_id: string;
+  relation_type: SubgraphRelationType;
+  relation_subtype?: SubgraphRelationSubtype;
+  strength: number;
+  confidence: Confidence;
+  evidence: Evidence[];
+  notes?: string;
+}
+
+export interface CompanySubgraph {
+  subgraph_uuid: string;
+  subgraph_id: string;
+  company_id: string;
+  version_name?: string;
+  description?: string;
+  status: RecordStatus;
+  nodes_summary?: { total: number; by_entity_type: Record<string, number> };
+  edges_summary?: { total: number; by_edge_namespace: Record<string, number> };
+  relations_summary?: { total: number; by_relation_type: Record<string, number> };
+  created_at?: string;
+  updated_at?: string;
+  nodes: CompanySubgraphNode[];
+  edges: CompanySubgraphEdge[];
+  relations: CompanySubgraphRelation[];
+}
+
+export interface PaginatedCompanySubgraphs {
+  total: number;
+  page: number;
+  page_size: number;
+  items: CompanySubgraph[];
+}
+
+export interface ComputationJob {
+  job_id: string;
+  job_type: string;
+  target_id?: string;
+  status: string;
+  total_items?: number;
+  processed_items: number;
+  result_summary?: Record<string, unknown>;
+  error_message?: string;
+  created_at?: string;
+  started_at?: string;
+  completed_at?: string;
+}
+
 export const ENTITY_TYPE_COLORS: Record<EntityType, string> = {
   material: "#f87171",
   component: "#fb923c",
