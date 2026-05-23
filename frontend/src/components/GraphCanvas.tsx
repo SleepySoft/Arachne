@@ -239,36 +239,52 @@ export function GraphCanvas({
           maxZoom: 3,
         });
 
+        // ==========================================
+        // 1. 节点单击事件：预览 (Peek) 与顺藤摸瓜 (Auto-Pin)
+        // ==========================================
         cy.on("tap", "node", async (evt) => {
           const node = evt.target;
           const rawData = node.data("raw") as IndustrialNode;
           onNodeClickRef.current(rawData);
 
-//           console.log("👉 [1/5] 点击了节点:", node.id(), rawData?.canonical_name_zh);
-//           console.log("👉 [2/5] 检查环境条件 sourceDataRef.current:", !!sourceDataRef.current);
-
-          // 🚨 嫌疑犯1：如果你希望所有页面（不管有没有传入 sourceData）都能点击扩展，
-          // 请把下面这个 if (sourceDataRef.current) 判断删掉！
+          // 仅在存在源数据(子图模式)时，开启探索视野功能
           if (sourceDataRef.current) {
             try {
-              const nodeId = node.id();
-//               console.log("👉 [3/5] 开始请求邻居接口 (getNeighbors)...");
-              const { nodes, edges } = await getNeighbors(nodeId);
-//               console.log(`👉 [4/5] 接口返回: ${nodes.length} 个节点, ${edges.length} 条边`);
+              // 【设计理由: 顺藤摸瓜与防孤岛】
+              // 如果用户点击了一个半透明(external)的预览节点，说明他对此路径感兴趣。
+              // 我们在此刻将该节点及其与主图相连的边 "转正" (固化)，防止后续清理时断链产生孤岛。
+              if (node.hasClass("external")) {
+                node.removeClass("external");
+                node.connectedEdges().forEach((edge) => {
+                  const source = edge.source();
+                  const target = edge.target();
+                  // 如果边的两端有任何一端是实体节点(转正节点)，说明这是一条有效通路，将边也转正
+                  if (!source.hasClass("external") || !target.hasClass("external")) {
+                    edge.removeClass("external");
+                  }
+                });
+              }
 
+              const nodeId = node.id();
+              const { nodes, edges } = await getNeighbors(nodeId);
+
+              // 【设计理由: 保持视野清晰】
+              // 每次新的单击预览，都会清理掉之前没有被固化的半透明节点，防止画面被杂乱的虚线填满。
+              // 注意：因为上面的 Auto-Pin 逻辑，当前点击的节点如果原本是 external，已经被转正了，所以这里不会误杀它。
               cy.elements(".external").remove();
+
+              // 必须在清理完旧 external 之后再计算 existingIds，防止共用节点被排除。
               const existingIds = new Set(cy.nodes().map((n) => n.id()));
 
+              // 【设计理由: 环状局部布局 (Radial Layout)】
+              // 为了不触发全局重排(会致使画面剧烈跳动)，我们将新节点以环状均匀分布在被点击节点的周围。
               const centerPos = node.position();
-              const radius = Math.max(120, nodes.length * 15);
+              const radius = Math.max(120, nodes.length * 15); // 根据节点数量动态调整半径，防止拥挤
               let angle = 0;
-              // 防止除以 0 的 NaN 错误
               const angleStep = nodes.length > 0 ? (2 * Math.PI) / nodes.length : 0;
 
-              let addedNodesCount = 0;
-              let addedEdgesCount = 0;
-
               cy.batch(() => {
+                // 渲染邻居节点
                 nodes.forEach((n) => {
                   if (!existingIds.has(n.node_id)) {
                     cy.add({
@@ -280,21 +296,22 @@ export function GraphCanvas({
                         confidence: n.confidence,
                         raw: n,
                       },
-                      classes: "external",
+                      classes: "external", // 标记为半透明预览节点
                       position: {
                         x: centerPos.x + radius * Math.cos(angle),
                         y: centerPos.y + radius * Math.sin(angle),
-                      }
+                      },
                     });
                     angle += angleStep;
-                    addedNodesCount++;
                   }
                 });
 
+                // 渲染连接边
                 edges.forEach((e) => {
                   if (!cy.getElementById(e.edge_id).length) {
                     const sourceInGraph = cy.getElementById(e.from_node).length > 0;
                     const targetInGraph = cy.getElementById(e.to_node).length > 0;
+                    // 只有边的两端节点都在画布上时，才渲染这条边
                     if (sourceInGraph && targetInGraph) {
                       cy.add({
                         data: {
@@ -303,72 +320,102 @@ export function GraphCanvas({
                           target: e.to_node,
                           edge_namespace: e.edge_namespace,
                           edge_type: e.edge_type,
-                          label: e.edge_type_label || e.edge_type,
+                          label: e.edge_type,
                           raw: e,
                         },
                         classes: "external",
                       });
-                      addedEdgesCount++;
                     }
                   }
                 });
               });
-
-//               console.log(`👉 [5/5] 成功将 ${addedNodesCount} 个节点和 ${addedEdgesCount} 条边加入画布，并标记为 .external`);
-
             } catch (err) {
-              console.error("❌ 扩展节点请求失败或渲染异常:", err);
+              console.error("Show external neighbors failed:", err);
             }
-          } else {
-//             console.warn("⚠️ 拦截：当前 sourceDataRef.current 为空，跳过了半透明扩展逻辑！");
           }
         });
+
+        // ==========================================
+        // 2. 边单击事件：单纯透传数据
+        // ==========================================
         cy.on("tap", "edge", (evt) => {
           onEdgeClickRef.current(evt.target.data("raw") as GraphEdge);
         });
+
+        // ==========================================
+        // 3. 画布空白处单击事件：重置图谱状态
+        // ==========================================
         cy.on("tap", (evt) => {
           if (evt.target === cy) {
+            // 【设计理由: 提供安全的撤退路径】
+            // 点空白处取消所有高亮，并清理掉所有临时的半透明预览节点
             cy.elements().removeClass("highlighted dimmed");
             cy.elements(".external").remove();
           }
         });
+
+        // ==========================================
+        // 4. 节点双击事件：展开、完全固化与重排
+        // ==========================================
         cy.on("dbltap", "node", async (evt) => {
-          const nodeId = evt.target.id();
+          const node = evt.target;
+          const nodeId = node.id();
+
+          // 【设计理由: 双击即固化】
+          // 无论这个节点之前是不是预览节点，既然用户双击了它，就立刻把它变成主图实体。
+          node.removeClass("external");
+
           try {
             const { nodes, edges } = await getNeighbors(nodeId);
-            const existingIds = new Set(cy.nodes().map((n) => n.id()));
-            nodes.forEach((n) => {
-              if (!existingIds.has(n.node_id)) {
-                cy.add({
-                  data: {
-                    id: n.node_id,
-                    label: n.canonical_name_zh,
-                    entity_type: n.entity_type,
-                    status: n.status,
-                    confidence: n.confidence,
-                    raw: n,
-                  },
-                });
-              }
+
+            cy.batch(() => {
+              nodes.forEach((n) => {
+                const existingNode = cy.getElementById(n.node_id);
+                if (existingNode.length > 0) {
+                  // 如果节点已存在(比如刚才还是半透明的)，剥夺其 external 标记使其永久化
+                  existingNode.removeClass("external");
+                } else {
+                  // 如果完全是新节点，直接作为实体节点加入 (不带 classes)
+                  cy.add({
+                    data: {
+                      id: n.node_id,
+                      label: n.canonical_name_zh,
+                      entity_type: n.entity_type,
+                      status: n.status,
+                      confidence: n.confidence,
+                      raw: n,
+                    },
+                  });
+                }
+              });
+
+              edges.forEach((e) => {
+                const existingEdge = cy.getElementById(e.edge_id);
+                if (existingEdge.length > 0) {
+                  // 存在的边同样转正
+                  existingEdge.removeClass("external");
+                } else {
+                  cy.add({
+                    data: {
+                      id: e.edge_id,
+                      source: e.from_node,
+                      target: e.to_node,
+                      edge_namespace: e.edge_namespace,
+                      edge_type: e.edge_type,
+                      label: e.edge_type,
+                      raw: e,
+                    },
+                  });
+                }
+              });
             });
-            edges.forEach((e) => {
-              if (!cy.getElementById(e.edge_id).length) {
-                cy.add({
-                  data: {
-                    id: e.edge_id,
-                    source: e.from_node,
-                    target: e.to_node,
-                    edge_namespace: e.edge_namespace,
-                    edge_type: e.edge_type,
-                    label: e.edge_type_label || e.edge_type,
-                    raw: e,
-                  },
-                });
-              }
-            });
-            // Apply current filters to newly added elements
+
+            // 【设计理由: 重整骨架】
+            // 双击代表一次完整的子图合并操作，此时重新应用过滤器，并触发 dagre 全局重排，
+            // 把之前由于“顺藤摸瓜”可能拉扯乱的局部拓扑结构重新梳理平整。
             applyFilters(cy, filtersRef.current);
             cy.layout({ name: "dagre", rankDir: "TB", fit: false } as cytoscape.LayoutOptions).run();
+
           } catch (err) {
             console.error("Expand failed:", err);
           }
