@@ -327,7 +327,7 @@ export function GraphCanvas({
                           target: e.to_node,
                           edge_namespace: e.edge_namespace,
                           edge_type: e.edge_type,
-                          label: e.edge_type,
+                          label: e.edge_type_label || e.edge_type,
                           raw: e,
                         },
                         classes: "external",
@@ -409,7 +409,7 @@ export function GraphCanvas({
                       target: e.to_node,
                       edge_namespace: e.edge_namespace,
                       edge_type: e.edge_type,
-                      label: e.edge_type,
+                      label: e.edge_type_label || e.edge_type,
                       raw: e,
                     },
                   });
