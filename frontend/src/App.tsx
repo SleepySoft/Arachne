@@ -5,7 +5,7 @@ import { CompanyDetail } from "@/components/CompanyDetail";
 import { CompanyForm } from "@/components/CompanyForm";
 import { CompanyNetworkCanvas } from "@/components/CompanyNetworkCanvas";
 import { CompanySidebar } from "@/components/CompanySidebar";
-import { getCompanyNetwork } from "@/services/api";
+import { getCompany, getCompanyNetwork } from "@/services/api";
 import { EdgeDetail } from "@/components/EdgeDetail";
 import { EdgeForm } from "@/components/EdgeForm";
 import { FilterPanel } from "@/components/FilterPanel";
@@ -199,9 +199,13 @@ export default function App() {
           <CompanyNetworkCanvas
             nodes={companyNetworkData.nodes}
             edges={companyNetworkData.edges}
-            onNodeClick={(company) => {
-              // Find full company data from sidebar list or fetch it
-              setSelectedCompany(company as unknown as Company);
+            onNodeClick={async (company) => {
+              try {
+                const full = await getCompany(company.company_id);
+                setSelectedCompany(full);
+              } catch {
+                setSelectedCompany(company as unknown as Company);
+              }
               setPanel("company-detail");
             }}
           />

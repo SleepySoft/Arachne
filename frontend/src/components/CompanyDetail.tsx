@@ -119,7 +119,7 @@ export function CompanyDetail({
         <div className="space-y-2">
           <Field label="ID" value={company.company_id} badge />
           <Field label="英文名" value={company.name_en} />
-          {company.stock_codes.length > 0 && (
+          {company.stock_codes && company.stock_codes.length > 0 && (
             <Field label="股票代码" value={company.stock_codes.join(" / ")} badge />
           )}
           <Field label="类型" value={company.company_type} badge />
@@ -131,7 +131,7 @@ export function CompanyDetail({
           <Field label="市值" value={formatCurrency(company.market_cap_cny)} />
           <Field label="净利润" value={formatCurrency(company.net_profit_cny)} />
           <Field label="状态" value={company.status} badge />
-          {company.aliases.length > 0 && <Field label="别名" value={company.aliases.join("、")} />}
+          {company.aliases && company.aliases.length > 0 && <Field label="别名" value={company.aliases.join("、")} />}
           <Field label="描述" value={company.description} />
           {company.notes && <Field label="备注" value={company.notes} />}
         </div>
