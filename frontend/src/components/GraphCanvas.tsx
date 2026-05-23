@@ -15,6 +15,7 @@ cytoscape.use(dagre);
 interface GraphCanvasProps {
   onNodeClick: (node: IndustrialNode) => void;
   onEdgeClick: (edge: GraphEdge) => void;
+  onNodeContextMenu?: (node: IndustrialNode, x: number, y: number) => void;
   filters: {
     edgeNamespaces: string[];
     edgeTypes: string[];
@@ -68,6 +69,7 @@ function applyFilters(
 export function GraphCanvas({
   onNodeClick,
   onEdgeClick,
+  onNodeContextMenu,
   filters,
   highlightNodeId,
   highlightNodeIds,
@@ -80,6 +82,7 @@ export function GraphCanvas({
 
   const onNodeClickRef = useRef(onNodeClick);
   const onEdgeClickRef = useRef(onEdgeClick);
+  const onNodeContextMenuRef = useRef(onNodeContextMenu);
   const filtersRef = useRef(filters);
   const sourceDataRef = useRef(sourceData);
 
@@ -90,6 +93,10 @@ export function GraphCanvas({
   useEffect(() => {
     onEdgeClickRef.current = onEdgeClick;
   }, [onEdgeClick]);
+
+  useEffect(() => {
+    onNodeContextMenuRef.current = onNodeContextMenu;
+  }, [onNodeContextMenu]);
 
   useEffect(() => {
     filtersRef.current = filters;
@@ -255,7 +262,7 @@ export function GraphCanvas({
               // 我们在此刻将该节点及其与主图相连的边 "转正" (固化)，防止后续清理时断链产生孤岛。
               if (node.hasClass("external")) {
                 node.removeClass("external");
-                node.connectedEdges().forEach((edge) => {
+                node.connectedEdges().forEach((edge: cytoscape.EdgeSingular) => {
                   const source = edge.source();
                   const target = edge.target();
                   // 如果边的两端有任何一端是实体节点(转正节点)，说明这是一条有效通路，将边也转正
@@ -336,7 +343,21 @@ export function GraphCanvas({
         });
 
         // ==========================================
-        // 2. 边单击事件：单纯透传数据
+        // 2. 节点右键事件：触发上下文菜单
+        // ==========================================
+        cy.on("cxttap", "node", (evt) => {
+          evt.originalEvent.preventDefault();
+          const node = evt.target;
+          const rawData = node.data("raw") as IndustrialNode;
+          const clientX = evt.originalEvent.clientX;
+          const clientY = evt.originalEvent.clientY;
+          if (onNodeContextMenuRef.current) {
+            onNodeContextMenuRef.current(rawData, clientX, clientY);
+          }
+        });
+
+        // ==========================================
+        // 3. 边单击事件：单纯透传数据
         // ==========================================
         cy.on("tap", "edge", (evt) => {
           onEdgeClickRef.current(evt.target.data("raw") as GraphEdge);

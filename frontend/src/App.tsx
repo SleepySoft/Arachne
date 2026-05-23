@@ -13,7 +13,10 @@ import { IndustryForm } from "@/components/IndustryForm";
 import { IndustrySidebar } from "@/components/IndustrySidebar";
 import { Layout } from "@/components/Layout";
 import { NodeDetail } from "@/components/NodeDetail";
+import { NodeContextMenu } from "@/components/NodeContextMenu";
+import { NodeCompaniesPanel } from "@/components/NodeCompaniesPanel";
 import { NodeForm } from "@/components/NodeForm";
+import { NodeIndustriesPanel } from "@/components/NodeIndustriesPanel";
 import { SearchPanel } from "@/components/SearchPanel";
 import { StatsBar, ViewMode } from "@/components/StatsBar";
 
@@ -31,7 +34,9 @@ export type PanelType =
   | "industry-edit"
   | "company-detail"
   | "company-create"
-  | "company-edit";
+  | "company-edit"
+  | "node-companies"
+  | "node-industries";
 
 export default function App() {
   const [viewMode, setViewMode] = useState<ViewMode>("graph");
@@ -48,6 +53,14 @@ export default function App() {
 
   // Panel state
   const [panel, setPanel] = useState<PanelType>("none");
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    node: IndustrialNode | null;
+  }>({ visible: false, x: 0, y: 0, node: null });
 
   // Filters
   const [activeFilters, setActiveFilters] = useState({
@@ -73,7 +86,15 @@ export default function App() {
     setSelectedNode(node);
     setSelectedEdge(null);
     setPanel("node-detail");
+    setContextMenu((prev) => ({ ...prev, visible: false }));
   }, []);
+
+  const handleNodeContextMenu = useCallback(
+    (node: IndustrialNode, x: number, y: number) => {
+      setContextMenu({ visible: true, x, y, node });
+    },
+    []
+  );
 
   const handleEdgeClick = useCallback((edge: GraphEdge) => {
     setSelectedEdge(edge);
@@ -125,19 +146,20 @@ export default function App() {
   };
 
   return (
-    <Layout
-      topBar={
-        <StatsBar
-          viewMode={viewMode}
-          onChangeView={handleViewChange}
-          isSubgraphView={subgraphData !== undefined || highlightNodeIds !== undefined}
-          onResetToFullGraph={() => {
-            setSubgraphData(undefined);
-            setHighlightNodeIds(undefined);
-            setGraphKey((k) => k + 1);
-          }}
-        />
-      }
+    <>
+      <Layout
+        topBar={
+          <StatsBar
+            viewMode={viewMode}
+            onChangeView={handleViewChange}
+            isSubgraphView={subgraphData !== undefined || highlightNodeIds !== undefined}
+            onResetToFullGraph={() => {
+              setSubgraphData(undefined);
+              setHighlightNodeIds(undefined);
+              setGraphKey((k) => k + 1);
+            }}
+          />
+        }
       leftSidebar={
         viewMode === "graph" ? (
           <FilterPanel filters={activeFilters} onChange={setActiveFilters} />
@@ -160,6 +182,7 @@ export default function App() {
           key={graphKey}
           onNodeClick={handleNodeClick}
           onEdgeClick={handleEdgeClick}
+          onNodeContextMenu={handleNodeContextMenu}
           filters={activeFilters}
           highlightNodeId={selectedNode?.node_id}
           highlightNodeIds={highlightNodeIds}
@@ -316,8 +339,45 @@ export default function App() {
               setPanel("company-detail");
             }}
           />
+        ) : panel === "node-companies" && contextMenu.node ? (
+          <NodeCompaniesPanel
+            nodeId={contextMenu.node.node_id}
+            nodeName={contextMenu.node.canonical_name_zh}
+            onClose={() => setPanel("none")}
+            onSelectCompany={(company) => {
+              setSelectedCompany(company);
+              setPanel("company-detail");
+            }}
+          />
+        ) : panel === "node-industries" && contextMenu.node ? (
+          <NodeIndustriesPanel
+            nodeId={contextMenu.node.node_id}
+            nodeName={contextMenu.node.canonical_name_zh}
+            onClose={() => setPanel("none")}
+            onSelectIndustry={(industry) => {
+              setSelectedIndustry(industry);
+              setPanel("industry-detail");
+            }}
+          />
         ) : null
       }
     />
+    {contextMenu.visible && contextMenu.node && (
+      <NodeContextMenu
+        x={contextMenu.x}
+        y={contextMenu.y}
+        nodeName={contextMenu.node.canonical_name_zh}
+        onShowCompanies={() => {
+          setPanel("node-companies");
+          setContextMenu((prev) => ({ ...prev, visible: false }));
+        }}
+        onShowIndustries={() => {
+          setPanel("node-industries");
+          setContextMenu((prev) => ({ ...prev, visible: false }));
+        }}
+        onClose={() => setContextMenu((prev) => ({ ...prev, visible: false }))}
+      />
+    )}
+  </>
   );
 }

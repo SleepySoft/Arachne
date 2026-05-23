@@ -212,3 +212,19 @@ async def get_company_subgraph(company_id: str):
             })
 
         return {"nodes": nodes, "edges": edges}
+
+
+@router.get("/by-node/{node_id}", response_model=dict)
+async def get_companies_by_node(node_id: str):
+    """返回暴露到该产业节点的所有公司及其暴露关系。"""
+    exposures, _ = await company_storage.list_exposures_by_node(node_id, limit=1000)
+    if not exposures:
+        return {"node_id": node_id, "companies": [], "exposures": []}
+
+    companies = []
+    for e in exposures:
+        c = await company_storage.get_company(e.company_id)
+        if c:
+            companies.append(c)
+
+    return {"node_id": node_id, "companies": companies, "exposures": exposures}

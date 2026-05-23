@@ -210,3 +210,19 @@ async def get_industry_subgraph(industry_id: str):
             })
 
         return {"nodes": nodes, "edges": edges}
+
+
+@router.get("/by-node/{node_id}", response_model=dict)
+async def get_industries_by_node(node_id: str):
+    """返回映射了该产业节点的所有行业及其映射关系。"""
+    mappings, _ = await industry_storage.list_mappings_by_node(node_id, limit=1000)
+    if not mappings:
+        return {"node_id": node_id, "industries": [], "mappings": []}
+
+    industries = []
+    for m in mappings:
+        ind = await industry_storage.get_industry(m.industry_id)
+        if ind:
+            industries.append(ind)
+
+    return {"node_id": node_id, "industries": industries, "mappings": mappings}

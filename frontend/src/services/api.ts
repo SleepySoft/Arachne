@@ -307,3 +307,21 @@ export const createCompanyExposure = async (
 export const deleteCompanyExposure = async (companyId: string, exposureId: string): Promise<void> => {
   await client.delete(`/companies/${companyId}/exposures/${exposureId}`);
 };
+
+export const getCompaniesByNode = async (nodeId: string): Promise<{
+  node_id: string;
+  companies: Company[];
+  exposures: CompanyNodeExposure[];
+}> => {
+  const res = await client.get(`/companies/by-node/${nodeId}`);
+  return res.data;
+};
+
+export const getIndustriesByNode = async (nodeId: string): Promise<{
+  node_id: string;
+  industries: Industry[];
+  mappings: IndustryNodeMapping[];
+}> => {
+  const res = await client.get(`/industries/by-node/${nodeId}`);
+  return res.data;
+};
