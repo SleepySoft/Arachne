@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Edit2, Trash2, X, Link2, Plus } from "lucide-react";
+import { Edit2, Trash2, X, Link2, Plus, Crosshair } from "lucide-react";
 import { Company } from "@/types";
 import { deleteCompany, getCompanySubgraph, listCompanyExposures } from "@/services/api";
 
@@ -9,6 +9,7 @@ interface CompanyDetailProps {
   onClose: () => void;
   onRefresh: () => void;
   onLoadSubgraph: (nodes: unknown[], edges: unknown[]) => void;
+  onHighlightNodes: (nodeIds: string[]) => void;
   onAddExposure: () => void;
 }
 
@@ -39,6 +40,7 @@ export function CompanyDetail({
   onClose,
   onRefresh,
   onLoadSubgraph,
+  onHighlightNodes,
   onAddExposure,
 }: CompanyDetailProps) {
   const queryClient = useQueryClient();
@@ -71,10 +73,20 @@ export function CompanyDetail({
             onClick={() => {
               if (subgraph) onLoadSubgraph(subgraph.nodes, subgraph.edges);
             }}
-            title="在图中查看"
+            title="加载子图"
             className="flex h-7 w-7 items-center justify-center rounded text-slate-400 hover:bg-slate-800 hover:text-cyan-400"
           >
             <Link2 className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={() => {
+              const nodeIds = exposuresData?.items.map((e) => e.node_id) ?? [];
+              if (nodeIds.length > 0) onHighlightNodes(nodeIds);
+            }}
+            title="在图中高亮"
+            className="flex h-7 w-7 items-center justify-center rounded text-slate-400 hover:bg-slate-800 hover:text-yellow-400"
+          >
+            <Crosshair className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={onEdit}

@@ -23,6 +23,7 @@ interface GraphCanvasProps {
     confidence: string[];
   };
   highlightNodeId?: string;
+  highlightNodeIds?: string[];
   sourceData?: { nodes: IndustrialNode[]; edges: GraphEdge[] };
 }
 
@@ -69,6 +70,7 @@ export function GraphCanvas({
   onEdgeClick,
   filters,
   highlightNodeId,
+  highlightNodeIds,
   sourceData,
 }: GraphCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -301,7 +303,7 @@ export function GraphCanvas({
     applyFilters(cy, filters);
   }, [filters]);
 
-  // Highlight node
+  // Highlight single node
   useEffect(() => {
     const cy = cyRef.current;
     if (!cy) return;
@@ -319,6 +321,32 @@ export function GraphCanvas({
       }
     }
   }, [highlightNodeId]);
+
+  // Highlight multiple nodes (industry/company focus)
+  useEffect(() => {
+    const cy = cyRef.current;
+    if (!cy) return;
+    cy.elements().removeClass("highlighted dimmed");
+    if (highlightNodeIds && highlightNodeIds.length > 0) {
+      const targets = cy.collection();
+      highlightNodeIds.forEach((id) => {
+        const el = cy.getElementById(id);
+        if (el.length) targets.merge(el);
+      });
+      if (targets.length > 0) {
+        targets.addClass("highlighted");
+        // Also highlight edges between selected nodes
+        const targetEdges = targets.edgesWith(targets);
+        targetEdges.addClass("highlighted");
+        cy.elements().not(targets).not(targetEdges).addClass("dimmed");
+        cy.animate({
+          fit: { eles: targets, padding: 100 },
+          duration: 500,
+          easing: "ease-out",
+        });
+      }
+    }
+  }, [highlightNodeIds]);
 
   return (
     <div className="relative h-full w-full bg-slate-950">

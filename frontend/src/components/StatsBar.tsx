@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Building2, Factory, GitBranch, Layers } from "lucide-react";
+import { Activity, Building2, Factory, GitBranch, Layers, Maximize2 } from "lucide-react";
 import { getStats } from "@/services/api";
 
 export type ViewMode = "graph" | "industries" | "companies";
@@ -7,9 +7,11 @@ export type ViewMode = "graph" | "industries" | "companies";
 interface StatsBarProps {
   viewMode: ViewMode;
   onChangeView: (mode: ViewMode) => void;
+  isSubgraphView?: boolean;
+  onResetToFullGraph?: () => void;
 }
 
-export function StatsBar({ viewMode, onChangeView }: StatsBarProps) {
+export function StatsBar({ viewMode, onChangeView, isSubgraphView, onResetToFullGraph }: StatsBarProps) {
   const { data } = useQuery({
     queryKey: ["stats"],
     queryFn: getStats,
@@ -24,6 +26,17 @@ export function StatsBar({ viewMode, onChangeView }: StatsBarProps) {
           <span className="text-lg font-bold tracking-tight text-slate-100">Arachne</span>
           <span className="ml-1 text-xs font-medium text-slate-500">统一产业本体图</span>
         </div>
+
+        {/* Subgraph reset badge */}
+        {isSubgraphView && (
+          <button
+            onClick={onResetToFullGraph}
+            className="ml-3 flex items-center gap-1 rounded-md bg-amber-600/20 px-2.5 py-1 text-xs font-medium text-amber-400 hover:bg-amber-600/30 transition-colors"
+          >
+            <Maximize2 className="h-3 w-3" />
+            返回全图
+          </button>
+        )}
 
         {/* View Switcher */}
         <div className="ml-4 flex items-center rounded-lg border border-slate-700 bg-slate-800 p-0.5">

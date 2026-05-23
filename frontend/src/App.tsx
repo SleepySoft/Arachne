@@ -66,6 +66,9 @@ export default function App() {
     undefined
   );
 
+  // Highlight node ids for industry/company focus on full graph
+  const [highlightNodeIds, setHighlightNodeIds] = useState<string[] | undefined>(undefined);
+
   const handleNodeClick = useCallback((node: IndustrialNode) => {
     setSelectedNode(node);
     setSelectedEdge(null);
@@ -97,11 +100,13 @@ export default function App() {
   const handleSelectIndustry = (industry: Industry) => {
     setSelectedIndustry(industry);
     setPanel("industry-detail");
+    setHighlightNodeIds(undefined);
   };
 
   const handleSelectCompany = (company: Company) => {
     setSelectedCompany(company);
     setPanel("company-detail");
+    setHighlightNodeIds(undefined);
   };
 
   const handleLoadSubgraph = (nodes: unknown[], edges: unknown[]) => {
@@ -110,11 +115,29 @@ export default function App() {
       edges: edges as GraphEdge[],
     });
     setGraphKey((k) => k + 1);
+    setHighlightNodeIds(undefined);
+  };
+
+  const handleHighlightNodes = (nodeIds: string[]) => {
+    setHighlightNodeIds(nodeIds);
+    // Clear subgraph to show full graph with highlights
+    setSubgraphData(undefined);
   };
 
   return (
     <Layout
-      topBar={<StatsBar viewMode={viewMode} onChangeView={handleViewChange} />}
+      topBar={
+        <StatsBar
+          viewMode={viewMode}
+          onChangeView={handleViewChange}
+          isSubgraphView={subgraphData !== undefined || highlightNodeIds !== undefined}
+          onResetToFullGraph={() => {
+            setSubgraphData(undefined);
+            setHighlightNodeIds(undefined);
+            setGraphKey((k) => k + 1);
+          }}
+        />
+      }
       leftSidebar={
         viewMode === "graph" ? (
           <FilterPanel filters={activeFilters} onChange={setActiveFilters} />
@@ -139,6 +162,7 @@ export default function App() {
           onEdgeClick={handleEdgeClick}
           filters={activeFilters}
           highlightNodeId={selectedNode?.node_id}
+          highlightNodeIds={highlightNodeIds}
           sourceData={subgraphData}
         />
       }
@@ -238,6 +262,7 @@ export default function App() {
             }}
             onRefresh={refreshGraph}
             onLoadSubgraph={handleLoadSubgraph}
+            onHighlightNodes={handleHighlightNodes}
             onAddMapping={() => alert("添加映射功能待实现")}
           />
         ) : panel === "industry-create" ? (
@@ -269,6 +294,7 @@ export default function App() {
             }}
             onRefresh={refreshGraph}
             onLoadSubgraph={handleLoadSubgraph}
+            onHighlightNodes={handleHighlightNodes}
             onAddExposure={() => alert("添加暴露功能待实现")}
           />
         ) : panel === "company-create" ? (
