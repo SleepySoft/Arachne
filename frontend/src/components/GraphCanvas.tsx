@@ -343,21 +343,7 @@ export function GraphCanvas({
         });
 
         // ==========================================
-        // 2. 节点右键事件：触发上下文菜单
-        // ==========================================
-        cy.on("cxttap", "node", (evt) => {
-          evt.originalEvent.preventDefault();
-          const node = evt.target;
-          const rawData = node.data("raw") as IndustrialNode;
-          const clientX = evt.originalEvent.clientX;
-          const clientY = evt.originalEvent.clientY;
-          if (onNodeContextMenuRef.current) {
-            onNodeContextMenuRef.current(rawData, clientX, clientY);
-          }
-        });
-
-        // ==========================================
-        // 3. 边单击事件：单纯透传数据
+        // 2. 边单击事件：单纯透传数据
         // ==========================================
         cy.on("tap", "edge", (evt) => {
           onEdgeClickRef.current(evt.target.data("raw") as GraphEdge);
@@ -526,7 +512,38 @@ export function GraphCanvas({
           <div className="text-sm text-red-400">错误: {error}</div>
         </div>
       )}
-      <div ref={containerRef} className="h-full w-full" />
+      <div
+        ref={containerRef}
+        className="h-full w-full"
+        onContextMenu={(e) => {
+          e.preventDefault();
+          const cy = cyRef.current;
+          if (!cy || cy.nodes().length === 0) return;
+
+          const rect = containerRef.current!.getBoundingClientRect();
+          const mouseX = e.clientX - rect.left;
+          const mouseY = e.clientY - rect.top;
+
+          // 找到鼠标位置下的节点（使用渲染坐标 hit-test）
+          const clickedNode = cy.nodes().toArray().find((node) => {
+            const bb = node.renderedBoundingBox({
+              includeOverlays: false,
+              includeLabels: false,
+            });
+            return (
+              mouseX >= bb.x1 &&
+              mouseX <= bb.x2 &&
+              mouseY >= bb.y1 &&
+              mouseY <= bb.y2
+            );
+          });
+
+          if (clickedNode && onNodeContextMenuRef.current) {
+            const rawData = clickedNode.data("raw") as IndustrialNode;
+            onNodeContextMenuRef.current(rawData, e.clientX, e.clientY);
+          }
+        }}
+      />
     </div>
   );
 }
