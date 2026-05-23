@@ -3,7 +3,7 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
 
 from app.models.industry_schema import Industry, IndustryNodeMapping
-from app.models.schemas import IndustrialNode, GraphEdge
+from app.models.schemas import EDGE_TYPE_LABELS, IndustrialNode, GraphEdge
 from app.services import industry_storage
 from app.services.neo4j_storage import _to_datetime, _evidence_from_db
 from app.database import get_async_driver
@@ -201,6 +201,7 @@ async def get_industry_subgraph(industry_id: str):
                 "edge_id": record["edge_id"],
                 "edge_namespace": record["edge_namespace"],
                 "edge_type": record["edge_type"],
+                "edge_type_label": EDGE_TYPE_LABELS.get(record["edge_type"], record["edge_type"]),
                 "description": record["description"],
                 "confidence": record["confidence"],
                 "notes": record["notes"],
