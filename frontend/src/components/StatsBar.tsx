@@ -1,77 +1,91 @@
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Building2, Factory, GitBranch, Layers, Maximize2 } from "lucide-react";
+import { Activity, Building2, GitBranch, Layers, Network } from "lucide-react";
 import { getStats } from "@/services/api";
+import { getCompanyNetwork } from "@/services/api";
+import { useEffect, useState } from "react";
 
-export type ViewMode = "graph" | "industries" | "companies";
+export type MainView = "industrial_graph" | "company_graph";
 
 interface StatsBarProps {
-  viewMode: ViewMode;
-  onChangeView: (mode: ViewMode) => void;
-  isSubgraphView?: boolean;
-  onResetToFullGraph?: () => void;
+  mainView: MainView;
+  onChangeMainView: (view: MainView) => void;
 }
 
-export function StatsBar({ viewMode, onChangeView, isSubgraphView, onResetToFullGraph }: StatsBarProps) {
-  const { data } = useQuery({
+export function StatsBar({ mainView, onChangeMainView }: StatsBarProps) {
+  const { data: graphStats } = useQuery({
     queryKey: ["stats"],
     queryFn: getStats,
     refetchInterval: 30000,
   });
 
+  const [companyNetworkStats, setCompanyNetworkStats] = useState<{ nodes: number; edges: number } | null>(null);
+
+  useEffect(() => {
+    if (mainView === "company_graph") {
+      getCompanyNetwork()
+        .then((data) => setCompanyNetworkStats({ nodes: data.nodes.length, edges: data.edges.length }))
+        .catch(() => setCompanyNetworkStats(null));
+    }
+  }, [mainView]);
+
   return (
     <div className="flex h-full items-center justify-between px-4">
       <div className="flex items-center gap-3">
+        {/* Logo */}
         <div className="flex items-center gap-2">
           <Layers className="h-5 w-5 text-cyan-400" />
           <span className="text-lg font-bold tracking-tight text-slate-100">Arachne</span>
-          <span className="ml-1 text-xs font-medium text-slate-500">统一产业本体图</span>
+          <span className="ml-1 text-xs font-medium text-slate-500">
+            {mainView === "industrial_graph" ? "产业本体图" : "公司关系网络"}
+          </span>
         </div>
 
-        {/* Subgraph reset badge */}
-        {isSubgraphView && (
-          <button
-            onClick={onResetToFullGraph}
-            className="ml-3 flex items-center gap-1 rounded-md bg-amber-600/20 px-2.5 py-1 text-xs font-medium text-amber-400 hover:bg-amber-600/30 transition-colors"
-          >
-            <Maximize2 className="h-3 w-3" />
-            返回全图
-          </button>
-        )}
-
-        {/* View Switcher */}
+        {/* Main View Switcher */}
         <div className="ml-4 flex items-center rounded-lg border border-slate-700 bg-slate-800 p-0.5">
           <ViewTab
-            active={viewMode === "graph"}
-            onClick={() => onChangeView("graph")}
+            active={mainView === "industrial_graph"}
+            onClick={() => onChangeMainView("industrial_graph")}
             icon={<GitBranch className="h-3 w-3" />}
             label="产业图"
           />
           <ViewTab
-            active={viewMode === "industries"}
-            onClick={() => onChangeView("industries")}
-            icon={<Factory className="h-3 w-3" />}
-            label="行业"
-          />
-          <ViewTab
-            active={viewMode === "companies"}
-            onClick={() => onChangeView("companies")}
-            icon={<Building2 className="h-3 w-3" />}
-            label="公司"
+            active={mainView === "company_graph"}
+            onClick={() => onChangeMainView("company_graph")}
+            icon={<Network className="h-3 w-3" />}
+            label="公司视图"
           />
         </div>
       </div>
 
+      {/* Stats — contextual by view */}
       <div className="flex items-center gap-6">
-        <StatItem
-          icon={<Activity className="h-4 w-4 text-emerald-400" />}
-          label="节点"
-          value={data?.total_nodes ?? "—"}
-        />
-        <StatItem
-          icon={<GitBranch className="h-4 w-4 text-amber-400" />}
-          label="关系"
-          value={data?.total_edges ?? "—"}
-        />
+        {mainView === "industrial_graph" ? (
+          <>
+            <StatItem
+              icon={<Activity className="h-4 w-4 text-emerald-400" />}
+              label="节点"
+              value={graphStats?.total_nodes ?? "—"}
+            />
+            <StatItem
+              icon={<GitBranch className="h-4 w-4 text-amber-400" />}
+              label="关系"
+              value={graphStats?.total_edges ?? "—"}
+            />
+          </>
+        ) : (
+          <>
+            <StatItem
+              icon={<Building2 className="h-4 w-4 text-cyan-400" />}
+              label="公司"
+              value={companyNetworkStats?.nodes ?? "—"}
+            />
+            <StatItem
+              icon={<Network className="h-4 w-4 text-amber-400" />}
+              label="推断关系"
+              value={companyNetworkStats?.edges ?? "—"}
+            />
+          </>
+        )}
       </div>
     </div>
   );
@@ -91,7 +105,7 @@ function ViewTab({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+      className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
         active
           ? "bg-cyan-600 text-white"
           : "text-slate-400 hover:bg-slate-700 hover:text-slate-200"
