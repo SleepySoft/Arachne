@@ -2,8 +2,6 @@ import axios from "axios";
 import {
   Company,
   CompanyNodeExposure,
-  CompanySubgraph,
-  CompanySubgraphRelation,
   ComputationJob,
   GraphEdge,
   GraphRegistrationBatch,
@@ -16,7 +14,6 @@ import {
   IndustryNodeMapping,
   OntologyEdgeCreate,
   PaginatedCompanies,
-  PaginatedCompanySubgraphs,
   PaginatedEdges,
   PaginatedExposures,
   PaginatedIndustries,
@@ -330,75 +327,46 @@ export const getIndustriesByNode = async (nodeId: string): Promise<{
   return res.data;
 };
 
-// ============================================================
-// Company Subgraph APIs
-// ============================================================
-
-export const computeCompanySubgraph = async (
-  companyId: string,
-  data?: { version_name?: string; description?: string }
-): Promise<{ job_id: string; status: string; company_id: string; created_at: string }> => {
-  const params = new URLSearchParams();
-  if (data?.version_name) params.append("version_name", data.version_name);
-  if (data?.description) params.append("description", data.description);
-  const res = await client.post(`/companies/${companyId}/subgraphs/compute?${params.toString()}`, {});
-  return res.data;
-};
-
-export const listCompanySubgraphs = async (
-  companyId: string,
-  page = 1,
-  pageSize = 20
-): Promise<PaginatedCompanySubgraphs> => {
-  const res = await client.get(`/companies/${companyId}/subgraphs`, {
-    params: { page, page_size: pageSize },
-  });
-  return res.data;
-};
-
-export const getCompanySubgraphDetail = async (
-  companyId: string,
-  subgraphId: string
-): Promise<CompanySubgraph> => {
-  const res = await client.get(`/companies/${companyId}/subgraphs/${subgraphId}`);
-  return res.data;
-};
-
-export const deleteCompanySubgraph = async (companyId: string, subgraphId: string): Promise<void> => {
-  await client.delete(`/companies/${companyId}/subgraphs/${subgraphId}`);
-};
-
 export const getComputationJob = async (jobId: string): Promise<ComputationJob> => {
   const res = await client.get(`/computation-jobs/${jobId}`);
   return res.data;
 };
 
-export const addSubgraphRelation = async (
-  companyId: string,
-  subgraphId: string,
-  data: Partial<CompanySubgraphRelation>
-): Promise<CompanySubgraphRelation> => {
-  const res = await client.post(`/companies/${companyId}/subgraphs/${subgraphId}/relations`, data);
-  return res.data;
-};
+// ============================================================
+// Company View APIs (全局公司视图)
+// ============================================================
 
-export const deleteSubgraphRelation = async (
-  companyId: string,
-  subgraphId: string,
-  relationId: number
-): Promise<void> => {
-  await client.delete(`/companies/${companyId}/subgraphs/${subgraphId}/relations/${relationId}`);
-};
-
-export const computeAllCompanyRelations = async (): Promise<{ job_id: string; status: string; created_at: string }> => {
-  const res = await client.post("/companies/compute-relations", {});
+export const computeCompanyView = async (): Promise<{ job_id: string; status: string; created_at: string }> => {
+  const res = await client.post("/company-view/compute", {});
   return res.data;
 };
 
 export const getCompanyNetwork = async (): Promise<{
   nodes: { company_id: string; name_zh: string; company_type: string; status: string }[];
-  edges: { from_company_id: string; to_company_id: string; relation_type: string; relation_subtype: string | null; strength: number; confidence: string }[];
+  edges: { from_company_id: string; to_company_id: string; path_count: number; strength: number; confidence: string }[];
 }> => {
-  const res = await client.get("/companies/network");
+  const res = await client.get("/company-view/network");
+  return res.data;
+};
+
+export const getCompanyUpstream = async (companyId: string): Promise<{
+  company_id: string;
+  name_zh: string;
+  company_type: string;
+  path_count: number;
+  strength: number;
+}[]> => {
+  const res = await client.get(`/company-view/${companyId}/upstream`);
+  return res.data;
+};
+
+export const getCompanyDownstream = async (companyId: string): Promise<{
+  company_id: string;
+  name_zh: string;
+  company_type: string;
+  path_count: number;
+  strength: number;
+}[]> => {
+  const res = await client.get(`/company-view/${companyId}/downstream`);
   return res.data;
 };

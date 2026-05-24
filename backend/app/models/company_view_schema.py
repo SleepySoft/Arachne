@@ -7,9 +7,9 @@
 
 注意：以下所有模型定义的是"公司视图"域，与核心产业图域（IndustrialNode, GraphEdge 等）严格隔离。
 
-CompanySubgraphNode 是对 IndustrialNode 的**引用视图**，不是节点本身。
-CompanySubgraphEdge 是对 GraphEdge 的**投影视图**，不是边本身。
-CompanySubgraphRelation 是视图域内**推导/录入**的关系，只存在于视图上下文。
+CompanyViewNode 是对 IndustrialNode 的**引用视图**，不是节点本身。
+CompanyViewEdge 是对 GraphEdge 的**投影视图**，不是边本身。
+CompanyViewRelation 是视图域内**推导/录入**的关系，只存在于视图上下文。
 
 严禁将这些模型与核心产业图模型混用或互相继承。
 ================================================================================
@@ -34,7 +34,6 @@ from app.models.schemas import Evidence, Confidence, RecordStatus
 class CompanyRelationType(str, Enum):
     INFERRED_INDUSTRIAL = "inferred_industrial"
     EVIDENCED_BUSINESS = "evidenced_business"
-    SIMILARITY_PEER = "similarity_peer"
     PERSON_RELATION = "person_relation"      # ← 预留：人的关系
 
 
@@ -44,7 +43,6 @@ class CompanyRelationSubtype(str, Enum):
     SUPPLIER = "supplier"
     CUSTOMER = "customer"
     PARTNER = "partner"
-    PEER = "peer"
     SHAREHOLDER = "shareholder"              # ← 预留
     EXECUTIVE = "executive"                  # ← 预留
 

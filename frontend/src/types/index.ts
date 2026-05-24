@@ -306,7 +306,6 @@ export interface PaginatedExposures {
 export type SubgraphRelationType =
   | "inferred_industrial"
   | "evidenced_business"
-  | "similarity_peer"
   | "person_relation";
 
 export type SubgraphRelationSubtype =
@@ -315,7 +314,6 @@ export type SubgraphRelationSubtype =
   | "supplier"
   | "customer"
   | "partner"
-  | "peer"
   | "shareholder"
   | "executive";
 

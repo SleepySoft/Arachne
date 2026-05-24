@@ -14,8 +14,7 @@ interface CompanyNetworkNode {
 interface CompanyNetworkEdge {
   from_company_id: string;
   to_company_id: string;
-  relation_type: string;
-  relation_subtype: string | null;
+  path_count: number;
   strength: number;
   confidence: string;
 }
@@ -34,29 +33,7 @@ const COMPANY_TYPE_COLORS: Record<string, string> = {
   unknown: "#64748b",
 };
 
-const RELATION_COLORS: Record<string, string> = {
-  inferred_industrial: "#22d3ee",
-  evidenced_business: "#fbbf24",
-  similarity_peer: "#a3e635",
-  person_relation: "#f472b6",
-};
-
-const RELATION_TYPE_LABELS: Record<string, string> = {
-  inferred_industrial: "产业推断",
-  evidenced_business: "商业关系",
-  similarity_peer: "同业相似",
-  person_relation: "人事关联",
-};
-
-const RELATION_SUBTYPE_LABELS: Record<string, string> = {
-  upstream_of: "上游",
-  downstream_of: "下游",
-  supplier: "供应商",
-  customer: "客户",
-  partner: "合作伙伴",
-  peer: "同业",
-  shareholder: "股东",
-};
+const UPSTREAM_COLOR = "#22d3ee";
 
 export function CompanyNetworkCanvas({ nodes, edges, onNodeClick }: CompanyNetworkCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -87,10 +64,9 @@ export function CompanyNetworkCanvas({ nodes, edges, onNodeClick }: CompanyNetwo
             id: `rel_${i}`,
             source: e.from_company_id,
             target: e.to_company_id,
-            relation_type: e.relation_type,
-            relation_subtype: e.relation_subtype,
+            path_count: e.path_count,
             strength: e.strength,
-            label: RELATION_SUBTYPE_LABELS[e.relation_subtype || ""] || RELATION_TYPE_LABELS[e.relation_type] || e.relation_type,
+            label: `上游 (${e.path_count})`,
             raw: e,
           },
         })),
@@ -120,20 +96,13 @@ export function CompanyNetworkCanvas({ nodes, edges, onNodeClick }: CompanyNetwo
         {
           selector: "edge",
           style: {
-            "line-color": (ele: cytoscape.EdgeSingular) =>
-              RELATION_COLORS[ele.data("relation_type")] || "#94a3b8",
-            "target-arrow-color": (ele: cytoscape.EdgeSingular) =>
-              RELATION_COLORS[ele.data("relation_type")] || "#94a3b8",
+            "line-color": UPSTREAM_COLOR,
+            "target-arrow-color": UPSTREAM_COLOR,
             "target-arrow-shape": "triangle",
             "arrow-scale": 0.8,
             width: 1.5,
             "curve-style": "bezier",
-            "line-style": (ele: cytoscape.EdgeSingular) => {
-              const rt = ele.data("relation_type");
-              if (rt === "similarity_peer") return "dotted";
-              if (rt === "evidenced_business") return "dashed";
-              return "solid";
-            },
+            "line-style": "solid",
             label: "data(label)",
             "font-size": "8px",
             color: "#94a3b8",
