@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { GraphEdge, IndustrialNode, Industry, Company } from "@/types";
 import { BatchUploader } from "@/components/BatchUploader";
 import { CompanyDetail } from "@/components/CompanyDetail";
@@ -92,8 +92,41 @@ export default function App() {
     nodes: { company_id: string; name_zh: string; company_type: string; status: string }[];
     edges: { from_company_id: string; to_company_id: string; path_count: number; strength: number; confidence: string }[];
   } | null>(null);
+  const [previewData, setPreviewData] = useState<{
+    centerId: string;
+    nodes: { company_id: string; name_zh: string; company_type: string; status: string }[];
+    edges: { from_company_id: string; to_company_id: string; path_count: number; strength: number; confidence: string }[];
+  } | null>(null);
   const [focusCompanyId, setFocusCompanyId] = useState<string | null>(null);
   const [isDrawingGlobal, setIsDrawingGlobal] = useState(false);
+
+  // Merge local + preview data for canvas
+  const allCompanyNodes = useMemo(() => {
+    const map = new Map<string, { company_id: string; name_zh: string; company_type: string; status: string }>();
+    localNetworkData?.nodes.forEach((n) => map.set(n.company_id, n));
+    previewData?.nodes.forEach((n) => {
+      if (!map.has(n.company_id)) map.set(n.company_id, n);
+    });
+    return Array.from(map.values());
+  }, [localNetworkData, previewData]);
+
+  const allCompanyEdges = useMemo(() => {
+    const seen = new Set<string>();
+    const edges: { from_company_id: string; to_company_id: string; path_count: number; strength: number; confidence: string }[] = [];
+    const key = (e: { from_company_id: string; to_company_id: string }) => `${e.from_company_id}->${e.to_company_id}`;
+    localNetworkData?.edges.forEach((e) => {
+      if (!seen.has(key(e))) { seen.add(key(e)); edges.push(e); }
+    });
+    previewData?.edges.forEach((e) => {
+      if (!seen.has(key(e))) { seen.add(key(e)); edges.push(e); }
+    });
+    return edges;
+  }, [localNetworkData, previewData]);
+
+  const previewNodeIds = useMemo(() => {
+    const localIds = new Set(localNetworkData?.nodes.map((n) => n.company_id) ?? []);
+    return previewData?.nodes.map((n) => n.company_id).filter((id) => !localIds.has(id)) ?? [];
+  }, [localNetworkData, previewData]);
 
   // ------------------------------------------------------------------
   // Handlers
@@ -132,6 +165,7 @@ export default function App() {
       setCompanyDisplayMode("empty");
       setFocusCompanyId(null);
       setLocalNetworkData(null);
+      setPreviewData(null);
     }
   };
 
@@ -148,8 +182,15 @@ export default function App() {
     setHighlightNodeIds(undefined);
 
     if (mainView === "company_graph") {
-      if (companyDisplayMode === "empty" || companyDisplayMode === "local") {
+      if (companyDisplayMode === "empty") {
         loadLocalNetwork(company);
+      } else if (companyDisplayMode === "local") {
+        if (previewData?.centerId === company.company_id) {
+          // Sidebar selects the preview center node: fix it
+          loadLocalNetwork(company);
+        } else {
+          loadLocalNetwork(company);
+        }
       } else if (companyDisplayMode === "global") {
         setFocusCompanyId(company.company_id);
       }
@@ -232,6 +273,7 @@ export default function App() {
       });
       setCompanyDisplayMode("local");
       setFocusCompanyId(company.company_id);
+      setPreviewData(null);
     } catch {
       // Fallback: show just the company node
       setLocalNetworkData({
@@ -245,10 +287,50 @@ export default function App() {
       });
       setCompanyDisplayMode("local");
       setFocusCompanyId(company.company_id);
+      setPreviewData(null);
     }
   };
 
   // Click on a node inside the company network canvas
+  const loadPreview = async (companyId: string) => {
+    try {
+      const [upstream, downstream] = await Promise.all([
+        getCompanyUpstream(companyId),
+        getCompanyDownstream(companyId),
+      ]);
+
+      const nodeMap = new Map<string, { company_id: string; name_zh: string; company_type: string; status: string }>();
+
+      // Ensure the center company itself is in the node map
+      const existingNode = localNetworkData?.nodes.find((n) => n.company_id === companyId)
+        || previewData?.nodes.find((n) => n.company_id === companyId);
+      nodeMap.set(companyId, existingNode || { company_id: companyId, name_zh: companyId, company_type: "unknown", status: "ACTIVE" });
+
+      upstream.forEach((u) => {
+        if (!nodeMap.has(u.company_id)) {
+          nodeMap.set(u.company_id, { company_id: u.company_id, name_zh: u.name_zh, company_type: u.company_type || "unknown", status: "ACTIVE" });
+        }
+      });
+      downstream.forEach((d) => {
+        if (!nodeMap.has(d.company_id)) {
+          nodeMap.set(d.company_id, { company_id: d.company_id, name_zh: d.name_zh, company_type: d.company_type || "unknown", status: "ACTIVE" });
+        }
+      });
+
+      const previewEdges: { from_company_id: string; to_company_id: string; path_count: number; strength: number; confidence: string }[] = [];
+      upstream.forEach((u) => {
+        previewEdges.push({ from_company_id: u.company_id, to_company_id: companyId, path_count: u.path_count, strength: u.strength, confidence: "MEDIUM" });
+      });
+      downstream.forEach((d) => {
+        previewEdges.push({ from_company_id: companyId, to_company_id: d.company_id, path_count: d.path_count, strength: d.strength, confidence: "MEDIUM" });
+      });
+
+      setPreviewData({ centerId: companyId, nodes: Array.from(nodeMap.values()), edges: previewEdges });
+    } catch {
+      setPreviewData(null);
+    }
+  };
+
   const handleCompanyNodeClick = async (companyNode: { company_id: string; name_zh: string; company_type: string; status: string }) => {
     try {
       const full = await getCompany(companyNode.company_id);
@@ -259,12 +341,23 @@ export default function App() {
     setPanel("company-detail");
 
     if (companyDisplayMode === "global") {
-      setFocusCompanyId(companyNode.company_id);
-    } else if (companyDisplayMode === "local") {
-      // Expand local network by loading the clicked company's neighbors
-      const centerCompany = selectedCompany;
-      if (centerCompany && centerCompany.company_id !== companyNode.company_id) {
+      if (focusCompanyId === companyNode.company_id) {
+        // Second click on same node in global mode: enter local mode
         loadLocalNetwork(companyNode as unknown as Company);
+      } else {
+        setFocusCompanyId(companyNode.company_id);
+      }
+    } else if (companyDisplayMode === "local") {
+      const centerId = focusCompanyId;
+      if (companyNode.company_id === centerId) {
+        // Click center node: cancel preview
+        setPreviewData(null);
+      } else if (previewData?.centerId === companyNode.company_id) {
+        // Click preview center node again: fix it (make it the new center)
+        loadLocalNetwork(companyNode as unknown as Company);
+      } else {
+        // Click other node: load its upstream/downstream as preview
+        await loadPreview(companyNode.company_id);
       }
     }
   };
@@ -543,9 +636,10 @@ export default function App() {
         />
       ) : companyDisplayMode === "local" && localNetworkData ? (
         <CompanyNetworkCanvas
-          nodes={localNetworkData.nodes}
-          edges={localNetworkData.edges}
+          nodes={allCompanyNodes}
+          edges={allCompanyEdges}
           highlightCompanyId={focusCompanyId}
+          previewNodeIds={previewNodeIds}
           onNodeClick={handleCompanyNodeClick}
         />
       ) : companyDisplayMode === "global" && companyNetworkData ? (

@@ -25,6 +25,7 @@ interface CompanyNetworkCanvasProps {
   onNodeClick?: (company: CompanyNetworkNode) => void;
   highlightCompanyId?: string | null;
   dimUnrelated?: boolean;
+  previewNodeIds?: string[];
 }
 
 const COMPANY_TYPE_COLORS: Record<string, string> = {
@@ -43,6 +44,7 @@ export function CompanyNetworkCanvas({
   onNodeClick,
   highlightCompanyId,
   dimUnrelated,
+  previewNodeIds,
 }: CompanyNetworkCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
@@ -100,7 +102,6 @@ export function CompanyNetworkCanvas({
             "text-background-opacity": 0.85,
             "text-background-padding": "2px 4px",
             "text-background-shape": "roundrectangle",
-
           },
         },
         {
@@ -121,7 +122,6 @@ export function CompanyNetworkCanvas({
             "text-background-padding": "1px 3px",
             "text-rotation": "autorotate",
             "text-margin-y": -6,
-
           },
         },
         {
@@ -146,6 +146,21 @@ export function CompanyNetworkCanvas({
           selector: "edge.dimmed",
           style: {
             opacity: 0.04,
+          },
+        },
+        {
+          selector: ".preview",
+          style: {
+            opacity: 0.35,
+            "border-style": "dashed",
+            "border-color": "#64748b",
+          },
+        },
+        {
+          selector: "edge.preview",
+          style: {
+            opacity: 0.2,
+            "line-style": "dashed",
           },
         },
       ],
@@ -182,7 +197,6 @@ export function CompanyNetworkCanvas({
     const cy = cyRef.current;
     if (!cy) return;
 
-    // Reset all classes
     cy.nodes().removeClass("highlighted dimmed");
     cy.edges().removeClass("dimmed");
 
@@ -194,22 +208,44 @@ export function CompanyNetworkCanvas({
     targetNode.addClass("highlighted");
 
     if (dimUnrelated) {
-      // Neighborhood = connected nodes + edges
       const neighborhood = targetNode.neighborhood();
-      cy.nodes()
-        .not(targetNode)
-        .not(neighborhood)
-        .addClass("dimmed");
+      cy.nodes().not(targetNode).not(neighborhood).addClass("dimmed");
       cy.edges().not(neighborhood).addClass("dimmed");
     }
 
-    // Center view on highlighted node smoothly
     cy.animate({
       fit: { eles: targetNode.union(targetNode.neighborhood()), padding: 80 },
       duration: 400,
       easing: "ease-out",
     });
   }, [highlightCompanyId, dimUnrelated]);
+
+  // Apply preview classes
+  useEffect(() => {
+    const cy = cyRef.current;
+    if (!cy) return;
+
+    cy.nodes().removeClass("preview");
+    cy.edges().removeClass("preview");
+
+    if (!previewNodeIds || previewNodeIds.length === 0) return;
+
+    previewNodeIds.forEach((id) => {
+      const node = cy.getElementById(id);
+      if (node && node.length > 0) {
+        node.addClass("preview");
+      }
+    });
+
+    // Mark edges connected to preview nodes as preview too
+    cy.edges().forEach((edge) => {
+      const src = edge.source().id();
+      const tgt = edge.target().id();
+      if (previewNodeIds.includes(src) || previewNodeIds.includes(tgt)) {
+        edge.addClass("preview");
+      }
+    });
+  }, [previewNodeIds]);
 
   if (nodes.length === 0) {
     return (
