@@ -57,7 +57,7 @@ async def compute_company_view(job_id: str) -> dict:
                 """
                 SELECT company_id, node_id
                 FROM company_node_exposures
-                WHERE status = 'ACTIVE'
+                WHERE status IN ('ACTIVE', 'PENDING')
                 ORDER BY company_id
                 """
             )

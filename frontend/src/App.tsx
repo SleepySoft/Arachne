@@ -266,7 +266,11 @@ export default function App() {
         ) : (
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setCompanyNetworkVisible(true)}
+              onClick={() => {
+                setCompanyNetworkVisible(true);
+                // Refresh network data when toggling to company view
+                getCompanyNetwork().then(setCompanyNetworkData).catch(() => setCompanyNetworkData(null));
+              }}
               className={`rounded px-2 py-0.5 text-[10px] ${companyNetworkVisible ? "bg-cyan-900/30 text-cyan-400" : "text-slate-400 hover:bg-slate-800"}`}
             >
               公司关系网络

@@ -18,6 +18,7 @@ from app.models.company_schema import BusinessRegistrationBatch
 from app.services import neo4j_storage
 from app.services import industry_storage
 from app.services import company_storage
+from app.database_postgres import get_postgres_pool
 
 
 # ---------------------------------------------------------------------------
@@ -280,6 +281,36 @@ async def process_business_batch(batch: BusinessRegistrationBatch) -> dict:
                 results["exposures_created"] += 1
         except Exception as e:
             results["errors"].append({"type": "exposure", "id": exposure.exposure_id, "error": str(e)})
+
+    # ------------------------------------------------------------------
+    # Auto-activate companies and exposures created/updated in this batch
+    # so that they are visible to the company-view computation.
+    # ------------------------------------------------------------------
+    company_ids_in_batch = {c.company_id for c in batch.companies_to_upsert}
+    exposure_ids_in_batch = {e.exposure_id for e in batch.company_node_exposures_to_upsert}
+
+    if company_ids_in_batch or exposure_ids_in_batch:
+        pool = await get_postgres_pool()
+        if pool is not None:
+            async with pool.acquire() as conn:
+                if company_ids_in_batch:
+                    await conn.execute(
+                        """
+                        UPDATE companies
+                        SET status = 'ACTIVE', updated_at = NOW()
+                        WHERE company_id = ANY($1) AND status = 'PENDING'
+                        """,
+                        list(company_ids_in_batch),
+                    )
+                if exposure_ids_in_batch:
+                    await conn.execute(
+                        """
+                        UPDATE company_node_exposures
+                        SET status = 'ACTIVE', updated_at = NOW()
+                        WHERE exposure_id = ANY($1) AND status = 'PENDING'
+                        """,
+                        list(exposure_ids_in_batch),
+                    )
 
     return results
 
