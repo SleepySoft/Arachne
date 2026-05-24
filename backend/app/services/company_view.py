@@ -355,10 +355,10 @@ async def compute_company_subgraph(
                     edge.get("confidence"),
                 )
 
-        # --- Phase C: Derive similarity_peer relations ---
-        peer_relations = await _derive_similarity_peer(company_id, node_ids)
+        # --- Phase C: Derive inferred_industrial relations (upstream / downstream) ---
+        industrial_relations = await _derive_inferred_industrial_for_company(company_id, node_ids)
         async with pool.acquire() as conn:
-            for rel in peer_relations:
+            for rel in industrial_relations:
                 await conn.execute(
                     """
                     INSERT INTO company_subgraph_relations
@@ -379,7 +379,7 @@ async def compute_company_subgraph(
 
         node_count = len(node_ids)
         edge_count = len(edges)
-        relation_count = len(peer_relations)
+        relation_count = len(industrial_relations)
 
         await _update_summary(subgraph_id, node_count, edge_count, relation_count)
         await complete_job(job_id, {
@@ -485,43 +485,105 @@ async def _fetch_industrial_flow_edges(node_ids: List[str]) -> List[dict]:
     ]
 
 
-async def _derive_similarity_peer(company_id: str, node_ids: List[str]) -> List[CompanySubgraphRelation]:
+async def _derive_inferred_industrial_for_company(
+    company_id: str, node_ids: List[str]
+) -> List[CompanySubgraphRelation]:
     """
-    Derive similarity_peer relations:
-    Other companies that expose the same node with the same activity_type.
+    Derive inferred_industrial relations for a single company:
+    - upstream: other companies whose exposed nodes flow INTO this company's nodes
+    - downstream: other companies whose exposed nodes receive flow FROM this company's nodes
     """
     if not node_ids:
+        return []
+
+    driver = get_async_driver()
+
+    # 1. Find upstream external nodes (ext -> current company's node)
+    upstream_external_nodes: set[str] = set()
+    async with driver.session() as session:
+        result = await session.run(
+            """
+            MATCH (ext:IndustrialNode)-[r:INDUSTRIAL_FLOW]->(n:IndustrialNode)
+            WHERE n.node_id IN $node_ids
+            RETURN ext.node_id AS external_node_id
+            """,
+            node_ids=node_ids,
+        )
+        async for record in result:
+            upstream_external_nodes.add(record["external_node_id"])
+
+    # 2. Find downstream external nodes (current company's node -> ext)
+    downstream_external_nodes: set[str] = set()
+    async with driver.session() as session:
+        result = await session.run(
+            """
+            MATCH (n:IndustrialNode)-[r:INDUSTRIAL_FLOW]->(ext:IndustrialNode)
+            WHERE n.node_id IN $node_ids
+            RETURN ext.node_id AS external_node_id
+            """,
+            node_ids=node_ids,
+        )
+        async for record in result:
+            downstream_external_nodes.add(record["external_node_id"])
+
+    if not upstream_external_nodes and not downstream_external_nodes:
         return []
 
     pool = await get_postgres_pool()
     if pool is None:
         return []
 
-    async with pool.acquire() as conn:
-        rows = await conn.fetch(
-            """
-            SELECT DISTINCT a.company_id AS peer_company_id
-            FROM company_node_exposures a
-            JOIN company_node_exposures b
-              ON a.node_id = b.node_id AND a.activity_type = b.activity_type
-            WHERE b.company_id = $1
-              AND a.company_id != $1
-              AND a.status = 'ACTIVE' AND b.status = 'ACTIVE'
-            """,
-            company_id,
-        )
+    relations: List[CompanySubgraphRelation] = []
 
-    relations = []
-    for r in rows:
-        peer_id = r["peer_company_id"]
-        relations.append(CompanySubgraphRelation(
-            from_company_id=company_id,
-            to_company_id=peer_id,
-            relation_type=SubgraphRelationType.SIMILARITY_PEER,
-            relation_subtype=SubgraphRelationSubtype.PEER,
-            strength=1.0,
-            confidence=Confidence.HIGH,
-        ))
+    # 3. Resolve upstream companies
+    if upstream_external_nodes:
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT DISTINCT company_id
+                FROM company_node_exposures
+                WHERE node_id = ANY($1)
+                  AND company_id != $2
+                  AND status = 'ACTIVE'
+                """,
+                list(upstream_external_nodes),
+                company_id,
+            )
+        for r in rows:
+            relations.append(CompanySubgraphRelation(
+                from_company_id=r["company_id"],
+                to_company_id=company_id,
+                relation_type=SubgraphRelationType.INFERRED_INDUSTRIAL,
+                relation_subtype=SubgraphRelationSubtype.UPSTREAM_OF,
+                strength=1.0,
+                confidence=Confidence.MEDIUM,
+                notes="Derived from industrial flow: upstream company's exposed nodes flow into this company's nodes",
+            ))
+
+    # 4. Resolve downstream companies
+    if downstream_external_nodes:
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT DISTINCT company_id
+                FROM company_node_exposures
+                WHERE node_id = ANY($1)
+                  AND company_id != $2
+                  AND status = 'ACTIVE'
+                """,
+                list(downstream_external_nodes),
+                company_id,
+            )
+        for r in rows:
+            relations.append(CompanySubgraphRelation(
+                from_company_id=company_id,
+                to_company_id=r["company_id"],
+                relation_type=SubgraphRelationType.INFERRED_INDUSTRIAL,
+                relation_subtype=SubgraphRelationSubtype.UPSTREAM_OF,
+                strength=1.0,
+                confidence=Confidence.MEDIUM,
+                notes="Derived from industrial flow: this company's exposed nodes flow into downstream company's nodes",
+            ))
 
     return relations
 
