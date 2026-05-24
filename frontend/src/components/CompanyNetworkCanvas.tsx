@@ -23,6 +23,8 @@ interface CompanyNetworkCanvasProps {
   nodes: CompanyNetworkNode[];
   edges: CompanyNetworkEdge[];
   onNodeClick?: (company: CompanyNetworkNode) => void;
+  highlightCompanyId?: string | null;
+  dimUnrelated?: boolean;
 }
 
 const COMPANY_TYPE_COLORS: Record<string, string> = {
@@ -35,7 +37,13 @@ const COMPANY_TYPE_COLORS: Record<string, string> = {
 
 const UPSTREAM_COLOR = "#22d3ee";
 
-export function CompanyNetworkCanvas({ nodes, edges, onNodeClick }: CompanyNetworkCanvasProps) {
+export function CompanyNetworkCanvas({
+  nodes,
+  edges,
+  onNodeClick,
+  highlightCompanyId,
+  dimUnrelated,
+}: CompanyNetworkCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
   const onNodeClickRef = useRef(onNodeClick);
@@ -44,6 +52,7 @@ export function CompanyNetworkCanvas({ nodes, edges, onNodeClick }: CompanyNetwo
     onNodeClickRef.current = onNodeClick;
   }, [onNodeClick]);
 
+  // Build / rebuild cytoscape instance when nodes/edges change
   useEffect(() => {
     if (!containerRef.current) return;
     if (nodes.length === 0) return;
@@ -61,7 +70,7 @@ export function CompanyNetworkCanvas({ nodes, edges, onNodeClick }: CompanyNetwo
         })),
         ...edges.map((e, i) => ({
           data: {
-            id: `rel_${i}`,
+            id: `rel_${e.from_company_id}_${e.to_company_id}_${i}`,
             source: e.from_company_id,
             target: e.to_company_id,
             path_count: e.path_count,
@@ -91,6 +100,7 @@ export function CompanyNetworkCanvas({ nodes, edges, onNodeClick }: CompanyNetwo
             "text-background-opacity": 0.85,
             "text-background-padding": "2px 4px",
             "text-background-shape": "roundrectangle",
+
           },
         },
         {
@@ -111,13 +121,31 @@ export function CompanyNetworkCanvas({ nodes, edges, onNodeClick }: CompanyNetwo
             "text-background-padding": "1px 3px",
             "text-rotation": "autorotate",
             "text-margin-y": -6,
+
           },
         },
         {
-          selector: ":selected",
+          selector: ".highlighted",
           style: {
             "border-color": "#facc15",
-            "border-width": 3,
+            "border-width": 4,
+            width: 48,
+            height: 48,
+            "font-size": "12px",
+            "font-weight": "bold",
+            "z-index": 999,
+          },
+        },
+        {
+          selector: ".dimmed",
+          style: {
+            opacity: 0.1,
+          },
+        },
+        {
+          selector: "edge.dimmed",
+          style: {
+            opacity: 0.04,
           },
         },
       ],
@@ -148,6 +176,40 @@ export function CompanyNetworkCanvas({ nodes, edges, onNodeClick }: CompanyNetwo
       cyRef.current = null;
     };
   }, [nodes, edges]);
+
+  // Apply highlight / dim when highlightCompanyId or dimUnrelated changes
+  useEffect(() => {
+    const cy = cyRef.current;
+    if (!cy) return;
+
+    // Reset all classes
+    cy.nodes().removeClass("highlighted dimmed");
+    cy.edges().removeClass("dimmed");
+
+    if (!highlightCompanyId) return;
+
+    const targetNode = cy.getElementById(highlightCompanyId);
+    if (!targetNode || targetNode.length === 0) return;
+
+    targetNode.addClass("highlighted");
+
+    if (dimUnrelated) {
+      // Neighborhood = connected nodes + edges
+      const neighborhood = targetNode.neighborhood();
+      cy.nodes()
+        .not(targetNode)
+        .not(neighborhood)
+        .addClass("dimmed");
+      cy.edges().not(neighborhood).addClass("dimmed");
+    }
+
+    // Center view on highlighted node smoothly
+    cy.animate({
+      fit: { eles: targetNode.union(targetNode.neighborhood()), padding: 80 },
+      duration: 400,
+      easing: "ease-out",
+    });
+  }, [highlightCompanyId, dimUnrelated]);
 
   if (nodes.length === 0) {
     return (

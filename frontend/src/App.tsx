@@ -1,11 +1,17 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { GraphEdge, IndustrialNode, Industry, Company } from "@/types";
 import { BatchUploader } from "@/components/BatchUploader";
 import { CompanyDetail } from "@/components/CompanyDetail";
 import { CompanyForm } from "@/components/CompanyForm";
+import { CompanyGraphEmptyState } from "@/components/CompanyGraphEmptyState";
 import { CompanyNetworkCanvas } from "@/components/CompanyNetworkCanvas";
 import { CompanySidebar } from "@/components/CompanySidebar";
-import { getCompany, getCompanyNetwork } from "@/services/api";
+import {
+  getCompany,
+  getCompanyNetwork,
+  getCompanyUpstream,
+  getCompanyDownstream,
+} from "@/services/api";
 import { EdgeDetail } from "@/components/EdgeDetail";
 import { EdgeForm } from "@/components/EdgeForm";
 import { FilterPanel } from "@/components/FilterPanel";
@@ -47,7 +53,7 @@ export default function App() {
   // ------------------------------------------------------------------
   const [mainView, setMainView] = useState<MainView>("industrial_graph");
   const [industrialSubView, setIndustrialSubView] = useState<"filter" | "industry" | "company">("filter");
-  const [companySubView, setCompanySubView] = useState<"version" | "company_list">("version");
+  const [companySubView, setCompanySubView] = useState<"version" | "company_list">("company_list");
 
   // ------------------------------------------------------------------
   // Industrial graph state
@@ -77,19 +83,17 @@ export default function App() {
   // ------------------------------------------------------------------
   // Company graph state
   // ------------------------------------------------------------------
+  const [companyDisplayMode, setCompanyDisplayMode] = useState<"empty" | "global" | "local">("empty");
   const [companyNetworkData, setCompanyNetworkData] = useState<{
     nodes: { company_id: string; name_zh: string; company_type: string; status: string }[];
     edges: { from_company_id: string; to_company_id: string; path_count: number; strength: number; confidence: string }[];
   } | null>(null);
-
-  // ------------------------------------------------------------------
-  // Load company network when entering company graph
-  // ------------------------------------------------------------------
-  useEffect(() => {
-    if (mainView === "company_graph") {
-      getCompanyNetwork().then(setCompanyNetworkData).catch(() => setCompanyNetworkData(null));
-    }
-  }, [mainView]);
+  const [localNetworkData, setLocalNetworkData] = useState<{
+    nodes: { company_id: string; name_zh: string; company_type: string; status: string }[];
+    edges: { from_company_id: string; to_company_id: string; path_count: number; strength: number; confidence: string }[];
+  } | null>(null);
+  const [focusCompanyId, setFocusCompanyId] = useState<string | null>(null);
+  const [isDrawingGlobal, setIsDrawingGlobal] = useState(false);
 
   // ------------------------------------------------------------------
   // Handlers
@@ -115,7 +119,6 @@ export default function App() {
 
   const handleChangeMainView = (view: MainView) => {
     setMainView(view);
-    // Reset panel and selections when switching workspaces
     setPanel("none");
     setSelectedNode(null);
     setSelectedEdge(null);
@@ -124,6 +127,11 @@ export default function App() {
     if (view === "industrial_graph") {
       setSubgraphData(undefined);
       setHighlightNodeIds(undefined);
+    } else {
+      // Reset company view state when switching to company graph
+      setCompanyDisplayMode("empty");
+      setFocusCompanyId(null);
+      setLocalNetworkData(null);
     }
   };
 
@@ -133,10 +141,132 @@ export default function App() {
     setHighlightNodeIds(undefined);
   };
 
+  // Select company from sidebar (context-aware)
   const handleSelectCompany = (company: Company) => {
     setSelectedCompany(company);
     setPanel("company-detail");
     setHighlightNodeIds(undefined);
+
+    if (mainView === "company_graph") {
+      if (companyDisplayMode === "empty" || companyDisplayMode === "local") {
+        loadLocalNetwork(company);
+      } else if (companyDisplayMode === "global") {
+        setFocusCompanyId(company.company_id);
+      }
+    }
+  };
+
+  // Load local network centered on a company
+  const loadLocalNetwork = async (company: Company) => {
+    try {
+      const [upstream, downstream] = await Promise.all([
+        getCompanyUpstream(company.company_id),
+        getCompanyDownstream(company.company_id),
+      ]);
+
+      const nodeMap = new Map<string, { company_id: string; name_zh: string; company_type: string; status: string }>();
+
+      // Add center company
+      nodeMap.set(company.company_id, {
+        company_id: company.company_id,
+        name_zh: company.name_zh,
+        company_type: company.company_type || "unknown",
+        status: "ACTIVE",
+      });
+
+      // Add upstream companies
+      upstream.forEach((u) => {
+        if (!nodeMap.has(u.company_id)) {
+          nodeMap.set(u.company_id, {
+            company_id: u.company_id,
+            name_zh: u.name_zh,
+            company_type: u.company_type || "unknown",
+            status: "ACTIVE",
+          });
+        }
+      });
+
+      // Add downstream companies
+      downstream.forEach((d) => {
+        if (!nodeMap.has(d.company_id)) {
+          nodeMap.set(d.company_id, {
+            company_id: d.company_id,
+            name_zh: d.name_zh,
+            company_type: d.company_type || "unknown",
+            status: "ACTIVE",
+          });
+        }
+      });
+
+      const localEdges: {
+        from_company_id: string;
+        to_company_id: string;
+        path_count: number;
+        strength: number;
+        confidence: string;
+      }[] = [];
+
+      upstream.forEach((u) => {
+        localEdges.push({
+          from_company_id: u.company_id,
+          to_company_id: company.company_id,
+          path_count: u.path_count,
+          strength: u.strength,
+          confidence: "MEDIUM",
+        });
+      });
+
+      downstream.forEach((d) => {
+        localEdges.push({
+          from_company_id: company.company_id,
+          to_company_id: d.company_id,
+          path_count: d.path_count,
+          strength: d.strength,
+          confidence: "MEDIUM",
+        });
+      });
+
+      setLocalNetworkData({
+        nodes: Array.from(nodeMap.values()),
+        edges: localEdges,
+      });
+      setCompanyDisplayMode("local");
+      setFocusCompanyId(company.company_id);
+    } catch {
+      // Fallback: show just the company node
+      setLocalNetworkData({
+        nodes: [{
+          company_id: company.company_id,
+          name_zh: company.name_zh,
+          company_type: company.company_type || "unknown",
+          status: "ACTIVE",
+        }],
+        edges: [],
+      });
+      setCompanyDisplayMode("local");
+      setFocusCompanyId(company.company_id);
+    }
+  };
+
+  // Click on a node inside the company network canvas
+  const handleCompanyNodeClick = async (companyNode: { company_id: string; name_zh: string; company_type: string; status: string }) => {
+    try {
+      const full = await getCompany(companyNode.company_id);
+      setSelectedCompany(full);
+    } catch {
+      setSelectedCompany(companyNode as unknown as Company);
+    }
+    setPanel("company-detail");
+
+    if (companyDisplayMode === "global") {
+      setFocusCompanyId(companyNode.company_id);
+    } else if (companyDisplayMode === "local") {
+      // Expand local network by loading the clicked company's neighbors
+      const centerCompany = selectedCompany;
+      if (centerCompany && centerCompany.company_id !== companyNode.company_id) {
+        loadLocalNetwork(companyNode as unknown as Company);
+      }
+    }
   };
 
   const handleLoadSubgraph = (nodes: unknown[], edges: unknown[]) => {
@@ -191,24 +321,25 @@ export default function App() {
   const companyLeftSidebar = (
     <div className="flex h-full flex-col">
       <div className="flex border-b border-slate-700">
-        <SubTab active={companySubView === "version"} onClick={() => setCompanySubView("version")} label="版本" />
         <SubTab active={companySubView === "company_list"} onClick={() => setCompanySubView("company_list")} label="公司列表" />
+        <SubTab active={companySubView === "version"} onClick={() => setCompanySubView("version")} label="版本" />
       </div>
       <div className="flex-1 overflow-auto">
-        {companySubView === "version" && (
-          <CompanyViewVersions
-            onClose={() => { /* no-op in sidebar mode */ }}
-            onViewNetwork={() => {
-              /* already in company graph, just refresh */
-              getCompanyNetwork().then(setCompanyNetworkData).catch(() => setCompanyNetworkData(null));
-            }}
-          />
-        )}
         {companySubView === "company_list" && (
           <CompanySidebar
             selectedId={selectedCompany?.company_id}
             onSelect={handleSelectCompany}
             onCreate={() => setPanel("company-create")}
+          />
+        )}
+        {companySubView === "version" && (
+          <CompanyViewVersions
+            onViewNetwork={() => {
+              // After recompute completes, stay in empty mode — user must click "Draw Global" manually
+              setCompanyDisplayMode("empty");
+              setFocusCompanyId(null);
+              setLocalNetworkData(null);
+            }}
           />
         )}
       </div>
@@ -254,11 +385,27 @@ export default function App() {
 
   const companySearchPanel = (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-slate-500">
-        {companySubView === "version"
-          ? "选择版本查看关系网络，或点击重新计算生成新版本"
-          : "点击左侧公司在关系网络中高亮该节点"}
-      </span>
+      {companyDisplayMode === "empty" && (
+        <span className="text-xs text-slate-500">选择一个公司开始浏览，或绘制全局图</span>
+      )}
+      {companyDisplayMode === "local" && (
+        <span className="text-xs text-slate-500">局部网络视图 — 点击节点可切换中心公司</span>
+      )}
+      {companyDisplayMode === "global" && (
+        <span className="text-xs text-slate-500">全局网络视图 — 点击节点高亮其关联关系</span>
+      )}
+      {companyDisplayMode !== "empty" && (
+        <button
+          onClick={() => {
+            setCompanyDisplayMode("empty");
+            setFocusCompanyId(null);
+            setLocalNetworkData(null);
+          }}
+          className="ml-auto flex items-center gap-1 rounded-md bg-amber-600/20 px-2.5 py-1 text-xs font-medium text-amber-400 hover:bg-amber-600/30 transition-colors"
+        >
+          清空视图
+        </button>
+      )}
     </div>
   );
 
@@ -371,6 +518,63 @@ export default function App() {
     ) : null;
 
   // ------------------------------------------------------------------
+  // Center Canvas
+  // ------------------------------------------------------------------
+  const centerCanvas =
+    mainView === "company_graph" ? (
+      companyDisplayMode === "empty" ? (
+        <CompanyGraphEmptyState
+          companyCount={companyNetworkData?.nodes.length ?? 200}
+          relationCount={companyNetworkData?.edges.length ?? 1142}
+          onDrawGlobal={() => {
+            setIsDrawingGlobal(true);
+            getCompanyNetwork()
+              .then((data) => {
+                setCompanyNetworkData(data);
+                setCompanyDisplayMode("global");
+                setFocusCompanyId(null);
+                setIsDrawingGlobal(false);
+              })
+              .catch(() => {
+                setIsDrawingGlobal(false);
+              });
+          }}
+          isLoading={isDrawingGlobal}
+        />
+      ) : companyDisplayMode === "local" && localNetworkData ? (
+        <CompanyNetworkCanvas
+          nodes={localNetworkData.nodes}
+          edges={localNetworkData.edges}
+          highlightCompanyId={focusCompanyId}
+          onNodeClick={handleCompanyNodeClick}
+        />
+      ) : companyDisplayMode === "global" && companyNetworkData ? (
+        <CompanyNetworkCanvas
+          nodes={companyNetworkData.nodes}
+          edges={companyNetworkData.edges}
+          highlightCompanyId={focusCompanyId}
+          dimUnrelated={!!focusCompanyId}
+          onNodeClick={handleCompanyNodeClick}
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center bg-slate-950">
+          <div className="text-sm text-slate-500">加载中...</div>
+        </div>
+      )
+    ) : (
+      <GraphCanvas
+        key={graphKey}
+        onNodeClick={handleNodeClick}
+        onEdgeClick={handleEdgeClick}
+        onNodeContextMenu={handleNodeContextMenu}
+        filters={activeFilters}
+        highlightNodeId={selectedNode?.node_id}
+        highlightNodeIds={highlightNodeIds}
+        sourceData={subgraphData}
+      />
+    );
+
+  // ------------------------------------------------------------------
   // Render
   // ------------------------------------------------------------------
   return (
@@ -378,34 +582,7 @@ export default function App() {
       <Layout
         topBar={<StatsBar mainView={mainView} onChangeMainView={handleChangeMainView} />}
         leftSidebar={mainView === "industrial_graph" ? industrialLeftSidebar : companyLeftSidebar}
-        centerCanvas={
-          mainView === "company_graph" && companyNetworkData ? (
-            <CompanyNetworkCanvas
-              nodes={companyNetworkData.nodes}
-              edges={companyNetworkData.edges}
-              onNodeClick={async (company) => {
-                try {
-                  const full = await getCompany(company.company_id);
-                  setSelectedCompany(full);
-                } catch {
-                  setSelectedCompany(company as unknown as Company);
-                }
-                setPanel("company-detail");
-              }}
-            />
-          ) : (
-            <GraphCanvas
-              key={graphKey}
-              onNodeClick={handleNodeClick}
-              onEdgeClick={handleEdgeClick}
-              onNodeContextMenu={handleNodeContextMenu}
-              filters={activeFilters}
-              highlightNodeId={selectedNode?.node_id}
-              highlightNodeIds={highlightNodeIds}
-              sourceData={subgraphData}
-            />
-          )
-        }
+        centerCanvas={centerCanvas}
         searchPanel={mainView === "industrial_graph" ? industrialSearchPanel : companySearchPanel}
         rightPanel={rightPanel}
       />

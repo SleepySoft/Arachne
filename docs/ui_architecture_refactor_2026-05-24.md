@@ -156,7 +156,73 @@ const [companySubView, setCompanySubView] = useState<CompanySubView>("version");
 
 ---
 
-## 7. 兼容性说明
+## 7. 公司视图交互优化（第二次迭代）
+
+### 7.1 问题
+
+第一次重构后，公司视图仍然存在以下问题：
+- **全局图过于复杂**: 200 家公司 × 1142 条关系同时渲染，性能差且视觉混乱。
+- **自动加载全局图**: 进入公司视图即自动加载全部数据，用户没有选择权。
+- **缺乏渐进式探索**: 用户无法像浏览行业子图那样，从某个公司开始逐步发掘其上下游。
+
+### 7.2 新交互模型
+
+```
+公司视图默认状态: EMPTY（空画布）
+  ↓ 用户从左侧公司列表点击公司
+  → LOCAL 模式: 仅显示该公司 + 其上下游公司（局部网络）
+  ↓ 用户点击画布中的公司节点
+  → 以该公司为中心重建局部网络
+
+  ↓ 用户点击"绘制全局图"
+  → GLOBAL 模式: 显示完整 200 公司网络
+  ↓ 用户点击画布中的公司节点 / 或从列表选择公司
+  → 高亮该公司，非关联节点变半透明（dim）
+```
+
+### 7.3 状态机
+
+```
+          ┌─────────────┐
+          │    EMPTY    │ ← 默认状态，显示提示
+          └──────┬──────┘
+                 │ 点击公司 / 点击"绘制全局图"
+        ┌────────┴────────┐
+        ↓                 ↓
+  ┌──────────┐     ┌──────────┐
+  │   LOCAL  │     │  GLOBAL  │
+  │ 局部网络  │     │ 全局网络  │
+  └────┬─────┘     └────┬─────┘
+       │                │
+       │ 点击节点        │ 点击节点
+       │                │
+       └──────→ 切换中心公司 / 高亮 + dim
+```
+
+### 7.4 关键实现
+
+| 组件 | 变更 |
+|------|------|
+| `CompanyGraphEmptyState.tsx` | 新增空状态组件，显示统计信息和"绘制全局图"按钮 |
+| `CompanyNetworkCanvas.tsx` | 新增 `highlightCompanyId` + `dimUnrelated` props；使用 cytoscape class 实现高亮/变暗动画 |
+| `App.tsx` | 新增 `companyDisplayMode` / `localNetworkData` / `focusCompanyId` 状态；`loadLocalNetwork()` 函数调用 upstream/downstream API 构建局部网络 |
+
+### 7.5 局部网络加载流程
+
+1. 用户从左侧列表点击公司 `C`
+2. 并行调用 `GET /company-view/{C}/upstream` 和 `GET /company-view/{C}/downstream`
+3. 将返回的公司列表 + 中心公司去重后构建 `nodes` 数组
+4. 根据 path_count / strength 构建 `edges` 数组
+5. 传入 `CompanyNetworkCanvas`，以 `C` 为 `highlightCompanyId`
+
+### 7.6 高亮 / Dim 效果
+
+- **高亮节点**: 金色边框、放大至 48px、加粗字体
+- **关联节点/边**: 正常显示
+- **非关联节点/边**: opacity 0.1（全局模式下）
+- **自动居中**: 高亮后 cytoscape `animate({ fit: ... })` 平滑聚焦
+
+## 8. 兼容性说明
 
 - **后端 API 无变更**: 本次重构纯前端，所有 `/api/v1/*` 端点保持不变。
 - **路由无变更**: 无 URL 路由变化，状态完全由 React 前端管理。
