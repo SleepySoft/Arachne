@@ -253,7 +253,7 @@ export default function App() {
               }}
               className={`rounded px-2 py-0.5 text-[10px] ${companyNetworkVisible ? "bg-cyan-900/30 text-cyan-400" : "text-slate-400 hover:bg-slate-800"}`}
             >
-              公司关系网络
+              关系网络
             </button>
             <button
               onClick={() => setCompanyNetworkVisible(false)}
@@ -265,7 +265,7 @@ export default function App() {
               onClick={() => setPanel("company-view-versions")}
               className="rounded px-2 py-0.5 text-[10px] text-amber-400 hover:bg-amber-900/20"
             >
-              版本管理
+              版本
             </button>
           </div>
         )
@@ -402,6 +402,10 @@ export default function App() {
         ) : panel === "company-view-versions" ? (
           <CompanyViewVersions
             onClose={() => setPanel("none")}
+            onViewNetwork={() => {
+              setCompanyNetworkVisible(true);
+              getCompanyNetwork().then(setCompanyNetworkData).catch(() => setCompanyNetworkData(null));
+            }}
           />
         ) : panel === "node-companies" && contextMenu.node ? (
           <NodeCompaniesPanel

@@ -364,6 +364,10 @@ export const createCompanyViewVersion = async (): Promise<{ job_id: string; stat
   return res.data;
 };
 
+export const deleteCompanyViewVersion = async (versionId: number): Promise<void> => {
+  await client.delete(`/company-view/versions/${versionId}`);
+};
+
 export const getCompanyUpstream = async (companyId: string): Promise<{
   company_id: string;
   name_zh: string;

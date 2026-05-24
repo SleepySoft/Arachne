@@ -264,3 +264,18 @@ async def list_company_view_versions(
         "page": page,
         "page_size": page_size,
     }
+
+
+async def delete_company_view_version(version_id: int) -> bool:
+    """Delete a company view version by ID."""
+    pool = await get_postgres_pool()
+    if pool is None:
+        return False
+
+    async with pool.acquire() as conn:
+        result = await conn.execute(
+            "DELETE FROM company_view_versions WHERE version_id = $1",
+            version_id,
+        )
+    # asyncpg returns e.g. 'DELETE 1' or 'DELETE 0'
+    return "DELETE 1" in result

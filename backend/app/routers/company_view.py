@@ -34,6 +34,15 @@ async def get_company_view_versions(
     return await view_service.list_company_view_versions(page=page, page_size=page_size)
 
 
+@router.delete("/versions/{version_id}", status_code=204)
+async def delete_company_view_version(version_id: int):
+    """Delete a company view version."""
+    deleted = await view_service.delete_company_view_version(version_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Version not found")
+    return None
+
+
 @router.post("/versions", response_model=dict)
 async def create_company_view_version(background_tasks: BackgroundTasks):
     """
