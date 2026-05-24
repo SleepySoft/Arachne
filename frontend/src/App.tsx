@@ -102,9 +102,14 @@ export default function App() {
   const [companyDisplayMode, setCompanyDisplayMode] = useState<"empty" | "global" | "local">("empty");
   const [companyNetworkData, setCompanyNetworkData] = useState<{ nodes: CNode[]; edges: CEdge[] } | null>(null);
 
-  // Investigation chain: permanently visible nodes/edges on the canvas
-  const [chainNodes, setChainNodes] = useState<Map<string, CNode>>(new Map());
-  const [chainEdges, setChainEdges] = useState<CEdge[]>([]);
+  // orderedChain: exploration path (max 2, oldest auto-removed)
+  const [orderedChain, setOrderedChain] = useState<string[]>([]);
+  // fixedIds: double-click pinned nodes, never auto-removed
+  const [fixedIds, setFixedIds] = useState<Set<string>>(new Set());
+  // nodeStore: cache of all nodes ever loaded
+  const [nodeStore, setNodeStore] = useState<Map<string, CNode>>(new Map());
+  // permanentEdges: edges between visible permanent nodes
+  const [permanentEdges, setPermanentEdges] = useState<CEdge[]>([]);
 
   // Current focus: the node whose upstream/downstream are shown as preview
   const [currentFocusId, setCurrentFocusId] = useState<string | null>(null);
@@ -117,31 +122,42 @@ export default function App() {
   // ------------------------------------------------------------------
   // Derived data for canvas
   // ------------------------------------------------------------------
+  const permanentIds = useMemo(() => {
+    const ids = new Set<string>([...orderedChain, ...fixedIds]);
+    return ids;
+  }, [orderedChain, fixedIds]);
+
   const allCompanyNodes = useMemo(() => {
-    const map = new Map<string, CNode>(chainNodes);
+    const map = new Map<string, CNode>();
+    permanentIds.forEach((id) => {
+      const node = nodeStore.get(id);
+      if (node) map.set(id, node);
+    });
     previewData?.nodes.forEach((n) => {
       if (!map.has(n.company_id)) map.set(n.company_id, n);
     });
     return Array.from(map.values());
-  }, [chainNodes, previewData]);
+  }, [permanentIds, nodeStore, previewData]);
 
   const allCompanyEdges = useMemo(() => {
     const seen = new Set<string>();
     const edges: CEdge[] = [];
     const key = (e: CEdge) => `${e.from_company_id}->${e.to_company_id}`;
-    chainEdges.forEach((e) => {
-      if (!seen.has(key(e))) { seen.add(key(e)); edges.push(e); }
+    // Permanent edges (both ends still visible)
+    permanentEdges.forEach((e) => {
+      if (permanentIds.has(e.from_company_id) && permanentIds.has(e.to_company_id)) {
+        if (!seen.has(key(e))) { seen.add(key(e)); edges.push(e); }
+      }
     });
     previewData?.edges.forEach((e) => {
       if (!seen.has(key(e))) { seen.add(key(e)); edges.push(e); }
     });
     return edges;
-  }, [chainEdges, previewData]);
+  }, [permanentEdges, permanentIds, previewData]);
 
   const previewNodeIds = useMemo(() => {
-    const chainIds = new Set(chainNodes.keys());
-    return previewData?.nodes.map((n) => n.company_id).filter((id) => !chainIds.has(id)) ?? [];
-  }, [chainNodes, previewData]);
+    return previewData?.nodes.map((n) => n.company_id).filter((id) => !permanentIds.has(id)) ?? [];
+  }, [previewData, permanentIds]);
 
   // ------------------------------------------------------------------
   // Handlers
@@ -177,8 +193,10 @@ export default function App() {
       setHighlightNodeIds(undefined);
     } else {
       setCompanyDisplayMode("empty");
-      setChainNodes(new Map());
-      setChainEdges([]);
+      setOrderedChain([]);
+      setFixedIds(new Set());
+      setNodeStore(new Map());
+      setPermanentEdges([]);
       setCurrentFocusId(null);
       setPreviewData(null);
     }
@@ -203,8 +221,7 @@ export default function App() {
         setCurrentFocusId(company.company_id);
         loadPreview(company.company_id);
       } else if (companyDisplayMode === "local") {
-        // If already in local mode, switch focus to this company
-        if (chainNodes.has(company.company_id)) {
+        if (orderedChain.includes(company.company_id) || fixedIds.has(company.company_id)) {
           setCurrentFocusId(company.company_id);
           loadPreview(company.company_id);
         } else {
@@ -222,10 +239,13 @@ export default function App() {
       company_type: company.company_type || "unknown",
       status: "ACTIVE",
     };
-    setChainNodes(new Map([[company.company_id, node]]));
-    setChainEdges([]);
+    setOrderedChain([company.company_id]);
+    setFixedIds(new Set());
+    setNodeStore(new Map([[company.company_id, node]]));
+    setPermanentEdges([]);
     setCurrentFocusId(company.company_id);
     setCompanyDisplayMode("local");
+    setPreviewData(null);
     loadPreview(company.company_id);
   };
 
@@ -240,7 +260,7 @@ export default function App() {
       const nodeMap = new Map<string, CNode>();
 
       // Ensure the center company itself is in the node map
-      const existingNode = chainNodes.get(companyId) || previewData?.nodes.find((n) => n.company_id === companyId);
+      const existingNode = nodeStore.get(companyId) || previewData?.nodes.find((n) => n.company_id === companyId);
       nodeMap.set(companyId, existingNode || { company_id: companyId, name_zh: companyId, company_type: "unknown", status: "ACTIVE" });
 
       upstream.forEach((u) => {
@@ -260,6 +280,15 @@ export default function App() {
       });
       downstream.forEach((d) => {
         edges.push({ from_company_id: companyId, to_company_id: d.company_id, path_count: d.path_count, strength: d.strength, confidence: "MEDIUM" });
+      });
+
+      // Cache preview nodes in nodeStore
+      setNodeStore((prev) => {
+        const next = new Map(prev);
+        nodeMap.forEach((n, id) => {
+          if (!next.has(id)) next.set(id, n);
+        });
+        return next;
       });
 
       setPreviewData({ centerId: companyId, nodes: Array.from(nodeMap.values()), edges });
@@ -283,7 +312,6 @@ export default function App() {
 
     if (companyDisplayMode === "global") {
       if (currentFocusId === cid) {
-        // Double-click logic: switch to local investigation mode
         startInvestigation(companyNode as unknown as Company);
       } else {
         setCurrentFocusId(cid);
@@ -294,25 +322,34 @@ export default function App() {
 
     if (companyDisplayMode !== "local") return;
 
-    if (chainNodes.has(cid)) {
-      // Click a chain node: switch focus to it, load its preview
+    const chainIndex = orderedChain.indexOf(cid);
+
+    if (chainIndex >= 0) {
+      // Click a chain node: truncate to this node
+      const newChain = orderedChain.slice(0, chainIndex + 1);
+      setOrderedChain(newChain);
       setCurrentFocusId(cid);
       loadPreview(cid);
     } else if (previewData && cid !== previewData.centerId) {
-      // Click a preview node (not the center): add to chain, switch focus
-      setChainNodes((prev) => {
+      // Click a preview node: append to chain
+      const newChain = [...orderedChain, cid];
+      setOrderedChain(newChain);
+
+      // Cache node
+      setNodeStore((prev) => {
         const next = new Map(prev);
         next.set(cid, companyNode);
         return next;
       });
 
-      // Add edges connecting this node to the chain
+      // Add connecting edges to permanentEdges
+      const visibleIds = new Set([...orderedChain, ...fixedIds]);
       const newEdges = previewData.edges.filter((e) =>
-        (e.from_company_id === cid && chainNodes.has(e.to_company_id)) ||
-        (e.to_company_id === cid && chainNodes.has(e.from_company_id))
+        (e.from_company_id === cid && visibleIds.has(e.to_company_id)) ||
+        (e.to_company_id === cid && visibleIds.has(e.from_company_id))
       );
       if (newEdges.length > 0) {
-        setChainEdges((prev) => {
+        setPermanentEdges((prev) => {
           const seen = new Set(prev.map((e) => `${e.from_company_id}->${e.to_company_id}`));
           return [...prev, ...newEdges.filter((e) => !seen.has(`${e.from_company_id}->${e.to_company_id}`))];
         });
@@ -335,8 +372,15 @@ export default function App() {
     if (companyDisplayMode !== "local") return;
 
     if (previewData && previewData.centerId === cid) {
-      // Double-click the current focus node: fix all current preview nodes/edges into the chain
-      setChainNodes((prev) => {
+      // Double-click the current focus node: pin all current preview nodes
+      const previewNodeIds = previewData.nodes.map((n) => n.company_id);
+      setFixedIds((prev) => {
+        const next = new Set(prev);
+        previewNodeIds.forEach((id) => next.add(id));
+        return next;
+      });
+
+      setNodeStore((prev) => {
         const next = new Map(prev);
         previewData.nodes.forEach((n) => {
           if (!next.has(n.company_id)) next.set(n.company_id, n);
@@ -344,7 +388,7 @@ export default function App() {
         return next;
       });
 
-      setChainEdges((prev) => {
+      setPermanentEdges((prev) => {
         const seen = new Set(prev.map((e) => `${e.from_company_id}->${e.to_company_id}`));
         const newEdges = previewData.edges.filter((e) => !seen.has(`${e.from_company_id}->${e.to_company_id}`));
         return [...prev, ...newEdges];
@@ -421,8 +465,10 @@ export default function App() {
           <CompanyViewVersions
             onViewNetwork={() => {
               setCompanyDisplayMode("empty");
-              setChainNodes(new Map());
-              setChainEdges([]);
+              setOrderedChain([]);
+              setFixedIds(new Set());
+              setNodeStore(new Map());
+              setPermanentEdges([]);
               setCurrentFocusId(null);
               setPreviewData(null);
             }}
@@ -475,12 +521,24 @@ export default function App() {
         <span className="text-xs text-slate-500">选择一个公司开始浏览，或绘制全局图</span>
       )}
       {companyDisplayMode === "local" && (
-        <span className="text-xs text-slate-500">
-          {currentFocusId
-            ? `当前考察: ${chainNodes.get(currentFocusId)?.name_zh || currentFocusId}`
-            : "局部网络视图"}
-          {previewData ? " — 关联节点临时半透明显示" : ""}
-        </span>
+        <div className="flex items-center gap-1 overflow-hidden">
+          {orderedChain.map((id, idx) => (
+            <span key={id} className="flex items-center gap-1">
+              {idx > 0 && <span className="text-slate-600">→</span>}
+              <span className={`text-xs ${id === currentFocusId ? "text-cyan-400 font-medium" : "text-slate-400"}`}>
+                {nodeStore.get(id)?.name_zh || id}
+              </span>
+            </span>
+          ))}
+          {fixedIds.size > 0 && (
+            <span className="text-xs text-amber-500 ml-1">
+              (+{fixedIds.size} 固定)
+            </span>
+          )}
+          {previewData && (
+            <span className="text-xs text-slate-500 ml-1">— 关联节点临时显示</span>
+          )}
+        </div>
       )}
       {companyDisplayMode === "global" && (
         <span className="text-xs text-slate-500">全局网络视图 — 点击节点高亮，双击开始考察</span>
@@ -489,8 +547,10 @@ export default function App() {
         <button
           onClick={() => {
             setCompanyDisplayMode("empty");
-            setChainNodes(new Map());
-            setChainEdges([]);
+            setOrderedChain([]);
+            setFixedIds(new Set());
+            setNodeStore(new Map());
+            setPermanentEdges([]);
             setCurrentFocusId(null);
             setPreviewData(null);
           }}

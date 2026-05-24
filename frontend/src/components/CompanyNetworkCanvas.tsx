@@ -39,6 +39,57 @@ const COMPANY_TYPE_COLORS: Record<string, string> = {
 
 const UPSTREAM_COLOR = "#22d3ee";
 
+function edgeKey(e: CompanyNetworkEdge) {
+  return `${e.from_company_id}→${e.to_company_id}`;
+}
+
+function computeManualLayout(
+  nodes: CompanyNetworkNode[],
+  edges: CompanyNetworkEdge[],
+  focusId: string
+): Record<string, { x: number; y: number }> {
+  const positions: Record<string, { x: number; y: number }> = {};
+  const upstreamIds: string[] = [];
+  const downstreamIds: string[] = [];
+
+  edges.forEach((e) => {
+    if (e.from_company_id === focusId && !downstreamIds.includes(e.to_company_id)) {
+      downstreamIds.push(e.to_company_id);
+    }
+    if (e.to_company_id === focusId && !upstreamIds.includes(e.from_company_id)) {
+      upstreamIds.push(e.from_company_id);
+    }
+  });
+
+  positions[focusId] = { x: 0, y: 0 };
+
+  upstreamIds.forEach((id, i) => {
+    const count = upstreamIds.length;
+    const spacing = 160;
+    const totalWidth = (count - 1) * spacing;
+    positions[id] = { x: -totalWidth / 2 + i * spacing, y: -260 };
+  });
+
+  downstreamIds.forEach((id, i) => {
+    const count = downstreamIds.length;
+    const spacing = 160;
+    const totalWidth = (count - 1) * spacing;
+    positions[id] = { x: -totalWidth / 2 + i * spacing, y: 260 };
+  });
+
+  const otherIds = nodes
+    .map((n) => n.company_id)
+    .filter((id) => id !== focusId && !upstreamIds.includes(id) && !downstreamIds.includes(id));
+
+  otherIds.forEach((id, i) => {
+    const row = Math.floor(i / 2);
+    const offsetY = i % 2 === 0 ? -90 : 90;
+    positions[id] = { x: -420 - row * 220, y: offsetY + row * 40 };
+  });
+
+  return positions;
+}
+
 export function CompanyNetworkCanvas({
   nodes,
   edges,
@@ -52,6 +103,7 @@ export function CompanyNetworkCanvas({
   const cyRef = useRef<cytoscape.Core | null>(null);
   const onNodeClickRef = useRef(onNodeClick);
   const onNodeDblClickRef = useRef(onNodeDblClick);
+  const highlightRef = useRef(highlightCompanyId);
 
   useEffect(() => {
     onNodeClickRef.current = onNodeClick;
@@ -61,34 +113,17 @@ export function CompanyNetworkCanvas({
     onNodeDblClickRef.current = onNodeDblClick;
   }, [onNodeDblClick]);
 
-  // Build / rebuild cytoscape instance when nodes/edges change
+  useEffect(() => {
+    highlightRef.current = highlightCompanyId;
+  }, [highlightCompanyId]);
+
+  // 初始化 Cytoscape 实例
   useEffect(() => {
     if (!containerRef.current) return;
-    if (nodes.length === 0) return;
 
     const cy = cytoscape({
       container: containerRef.current,
-      elements: [
-        ...nodes.map((n) => ({
-          data: {
-            id: n.company_id,
-            label: n.name_zh,
-            company_type: n.company_type,
-            raw: n,
-          },
-        })),
-        ...edges.map((e, i) => ({
-          data: {
-            id: `rel_${e.from_company_id}_${e.to_company_id}_${i}`,
-            source: e.from_company_id,
-            target: e.to_company_id,
-            path_count: e.path_count,
-            strength: e.strength,
-            label: `上游 (${e.path_count})`,
-            raw: e,
-          },
-        })),
-      ],
+      elements: [],
       style: [
         {
           selector: "node",
@@ -171,14 +206,6 @@ export function CompanyNetworkCanvas({
           },
         },
       ],
-      layout: {
-        name: "dagre",
-        rankDir: "TB",
-        nodeSep: 50,
-        edgeSep: 20,
-        rankSep: 80,
-        padding: 20,
-      } as cytoscape.LayoutOptions,
       wheelSensitivity: 1.0,
       minZoom: 0.2,
       maxZoom: 3,
@@ -204,9 +231,124 @@ export function CompanyNetworkCanvas({
       cy.destroy();
       cyRef.current = null;
     };
+  }, []);
+
+  // 核心变更：节点增删与局部布局动画
+  useEffect(() => {
+    const cy = cyRef.current;
+    if (!cy) return;
+
+    if (nodes.length === 0) {
+      cy.elements().remove();
+      return;
+    }
+
+    const isLocalMode = previewNodeIds !== undefined;
+
+    // 清除视图和节点的已有动画队列，防止乱跳
+    cy.stop(true, true);
+    cy.nodes().stop(true, true);
+
+    const oldPositions: Record<string, { x: number; y: number }> = {};
+    cy.nodes().forEach((n) => {
+      oldPositions[n.id()] = { ...n.position() };
+    });
+
+    const newNodeIds = new Set(nodes.map((n) => n.company_id));
+    const existingNodeIds = new Set(cy.nodes().map((n) => n.id()));
+
+    cy.remove(cy.nodes().filter((n) => !newNodeIds.has(n.id())));
+
+    const addedNodes = nodes.filter((n) => !existingNodeIds.has(n.company_id));
+    if (addedNodes.length > 0) {
+      cy.add(
+        addedNodes.map((n) => ({
+          data: {
+            id: n.company_id,
+            label: n.name_zh,
+            company_type: n.company_type,
+            raw: n,
+          },
+        }))
+      );
+    }
+
+    const newEdgeKeys = new Set(edges.map(edgeKey));
+    cy.edges().forEach((edge) => {
+      const key = `${edge.source().id()}→${edge.target().id()}`;
+      if (!newEdgeKeys.has(key)) {
+        cy.remove(edge);
+      }
+    });
+
+    const existingEdgeKeys = new Set(
+      cy.edges().map((e) => `${e.source().id()}→${e.target().id()}`)
+    );
+    const edgesToAdd = edges.filter((e) => !existingEdgeKeys.has(edgeKey(e)));
+    if (edgesToAdd.length > 0) {
+      cy.add(
+        edgesToAdd.map((e) => ({
+          data: {
+            id: edgeKey(e),
+            source: e.from_company_id,
+            target: e.to_company_id,
+            path_count: e.path_count,
+            strength: e.strength,
+            label: `上游 (${e.path_count})`,
+            raw: e,
+          },
+        }))
+      );
+    }
+
+    if (isLocalMode && highlightRef.current) {
+      const positions = computeManualLayout(nodes, edges, highlightRef.current);
+
+      cy.nodes().forEach((n) => {
+        const id = n.id();
+        const target = positions[id];
+        if (!target) return;
+
+        const current = oldPositions[id];
+        if (!current) {
+          n.position(target);
+        } else {
+          n.animate({
+            position: target,
+            duration: 400,
+            easing: "ease-out",
+          });
+        }
+      });
+
+      // 核心修改：只适应焦点和它的上下游节点，不要去 fit 全局，防止随着链条变长画面越缩越小
+      const focusNode = cy.getElementById(highlightRef.current);
+      const elementsToFit = focusNode.length > 0
+        ? focusNode.union(focusNode.neighborhood())
+        : cy.nodes();
+
+      cy.animate({
+        fit: { eles: elementsToFit, padding: 100 },
+        duration: 400,
+        easing: "ease-out",
+      });
+    } else if (!isLocalMode) {
+      cy.layout({
+        name: "dagre",
+        rankDir: "TB",
+        nodeSep: 50,
+        edgeSep: 20,
+        rankSep: 80,
+        padding: 20,
+        fit: true,
+        animate: true,
+        animationDuration: 400,
+        animationEasing: "ease-out",
+      } as cytoscape.LayoutOptions).run();
+    }
   }, [nodes, edges]);
 
-  // Apply highlight / dim when highlightCompanyId or dimUnrelated changes
+  // 核心变更：高亮控制剥离出相机的控制逻辑
   useEffect(() => {
     const cy = cyRef.current;
     if (!cy) return;
@@ -227,14 +369,21 @@ export function CompanyNetworkCanvas({
       cy.edges().not(neighborhood).addClass("dimmed");
     }
 
-    cy.animate({
-      fit: { eles: targetNode.union(targetNode.neighborhood()), padding: 80 },
-      duration: 400,
-      easing: "ease-out",
-    });
-  }, [highlightCompanyId, dimUnrelated]);
+    // 判断是否在局部考察模式中
+    const isLocalMode = previewNodeIds !== undefined;
 
-  // Apply preview classes
+    // 如果在局部考察模式中，相机移动的控制权完全交给 Layout Hook 避免冲突跳跃
+    // 只有在全局模式中单纯点击高亮时，才由 Highlight Hook 进行相机聚焦
+    if (!isLocalMode) {
+      cy.stop(true, true); // 触发前同样清空队列
+      cy.animate({
+        fit: { eles: targetNode.union(targetNode.neighborhood()), padding: 80 },
+        duration: 400,
+        easing: "ease-out",
+      });
+    }
+  }, [highlightCompanyId, dimUnrelated, previewNodeIds]); // 添加 previewNodeIds 依赖以正确识别模式
+
   useEffect(() => {
     const cy = cyRef.current;
     if (!cy) return;
@@ -251,7 +400,6 @@ export function CompanyNetworkCanvas({
       }
     });
 
-    // Mark edges connected to preview nodes as preview too
     cy.edges().forEach((edge) => {
       const src = edge.source().id();
       const tgt = edge.target().id();
