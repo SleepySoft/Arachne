@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import List
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 
 from app.services import company_view as view_service
 from app.services import company_view_neo4j as neo4j_view
@@ -22,7 +22,43 @@ router = APIRouter()
 
 
 # ---------------------------------------------------------------------------
-# Global Computation
+# Version Management
+# ---------------------------------------------------------------------------
+
+@router.get("/versions", response_model=dict)
+async def get_company_view_versions(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+):
+    """List historical company view computation versions."""
+    return await view_service.list_company_view_versions(page=page, page_size=page_size)
+
+
+@router.post("/versions", response_model=dict)
+async def create_company_view_version(background_tasks: BackgroundTasks):
+    """
+    Trigger a new company view computation and record it as a new version.
+    Returns immediately with a job_id for polling.
+    """
+    job = await create_job(
+        job_type="company_view_compute",
+        total_items=0,
+    )
+
+    background_tasks.add_task(
+        view_service.compute_company_view,
+        job["job_id"],
+    )
+
+    return {
+        "job_id": job["job_id"],
+        "status": job["status"],
+        "created_at": job["created_at"],
+    }
+
+
+# ---------------------------------------------------------------------------
+# Legacy Global Computation (kept for backward compat)
 # ---------------------------------------------------------------------------
 
 @router.post("/compute", response_model=dict)

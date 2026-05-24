@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
 import { GraphEdge, IndustrialNode, Industry, Company } from "@/types";
 import { BatchUploader } from "@/components/BatchUploader";
 import { CompanyDetail } from "@/components/CompanyDetail";
 import { CompanyForm } from "@/components/CompanyForm";
 import { CompanyNetworkCanvas } from "@/components/CompanyNetworkCanvas";
 import { CompanySidebar } from "@/components/CompanySidebar";
-import { getCompany, getCompanyNetwork, computeCompanyView } from "@/services/api";
+import { getCompany, getCompanyNetwork } from "@/services/api";
 import { EdgeDetail } from "@/components/EdgeDetail";
 import { EdgeForm } from "@/components/EdgeForm";
 import { FilterPanel } from "@/components/FilterPanel";
@@ -22,6 +21,7 @@ import { NodeForm } from "@/components/NodeForm";
 import { NodeIndustriesPanel } from "@/components/NodeIndustriesPanel";
 import { SearchPanel } from "@/components/SearchPanel";
 import { StatsBar, ViewMode } from "@/components/StatsBar";
+import { CompanyViewVersions } from "@/components/CompanyViewVersions";
 
 export type PanelType =
   | "none"
@@ -38,31 +38,11 @@ export type PanelType =
   | "company-detail"
   | "company-create"
   | "company-edit"
-
+  | "company-view-versions"
   | "node-companies"
   | "node-industries";
 
-function GlobalRecomputeButton() {
-  const mutation = useMutation({
-    mutationFn: computeCompanyView,
-    onSuccess: (data) => {
-      alert("全局关系重算任务已启动，job_id: " + data.job_id);
-    },
-    onError: (err: unknown) => {
-      alert("重算失败: " + (err instanceof Error ? err.message : String(err)));
-    },
-  });
 
-  return (
-    <button
-      onClick={() => mutation.mutate()}
-      disabled={mutation.isPending}
-      className="rounded px-2 py-0.5 text-[10px] text-amber-400 hover:bg-amber-900/20 disabled:opacity-50"
-    >
-      {mutation.isPending ? "重算中..." : "全局重算关系"}
-    </button>
-  );
-}
 
 export default function App() {
   const [viewMode, setViewMode] = useState<ViewMode>("graph");
@@ -281,7 +261,12 @@ export default function App() {
             >
               产业图
             </button>
-            <GlobalRecomputeButton />
+            <button
+              onClick={() => setPanel("company-view-versions")}
+              className="rounded px-2 py-0.5 text-[10px] text-amber-400 hover:bg-amber-900/20"
+            >
+              版本管理
+            </button>
           </div>
         )
       }
@@ -413,6 +398,10 @@ export default function App() {
               setSelectedCompany(co);
               setPanel("company-detail");
             }}
+          />
+        ) : panel === "company-view-versions" ? (
+          <CompanyViewVersions
+            onClose={() => setPanel("none")}
           />
         ) : panel === "node-companies" && contextMenu.node ? (
           <NodeCompaniesPanel

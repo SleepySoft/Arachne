@@ -349,6 +349,21 @@ export const getCompanyNetwork = async (): Promise<{
   return res.data;
 };
 
+export const listCompanyViewVersions = async (page = 1, pageSize = 20): Promise<{
+  items: import("@/types").CompanyViewVersion[];
+  total: number;
+  page: number;
+  page_size: number;
+}> => {
+  const res = await client.get("/company-view/versions", { params: { page, page_size: pageSize } });
+  return res.data;
+};
+
+export const createCompanyViewVersion = async (): Promise<{ job_id: string; status: string; created_at: string }> => {
+  const res = await client.post("/company-view/versions", {});
+  return res.data;
+};
+
 export const getCompanyUpstream = async (companyId: string): Promise<{
   company_id: string;
   name_zh: string;

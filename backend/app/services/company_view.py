@@ -8,6 +8,7 @@
   1. 从 PostgreSQL 读取公司暴露节点
   2. 通过产业图（Neo4j INDUSTRIAL_FLOW）推导公司间上下游关系
   3. 将结果写入 Neo4j 全局公司视图（Company 节点 + INFERRED_UPSTREAM 关系）
+  4. 维护版本历史（company_view_versions）
 
 本域与产业图域、公司 CRUD 域隔离。
 ================================================================================
@@ -15,7 +16,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from app.database import get_async_driver
 from app.database_postgres import get_postgres_pool
@@ -134,6 +135,19 @@ async def compute_company_view(job_id: str) -> dict:
             "created_relations": created_count,
         })
 
+        # 6. Record version snapshot
+        await _record_version(
+            job_id=job_id,
+            status="completed",
+            total_companies=len(companies),
+            total_relations=created_count,
+            total_pairs=total_pairs,
+            processed_pairs=processed,
+            synced_companies=synced_count,
+            cleared_relations=cleared_count,
+            created_relations=created_count,
+        )
+
         return {
             "total_companies": len(companies),
             "created_relations": created_count,
@@ -141,4 +155,112 @@ async def compute_company_view(job_id: str) -> dict:
 
     except Exception as exc:
         await fail_job(job_id, str(exc))
+        await _record_version(
+            job_id=job_id,
+            status="failed",
+            error_message=str(exc),
+        )
         raise
+
+
+# ---------------------------------------------------------------------------
+# Version Management
+# ---------------------------------------------------------------------------
+
+async def _record_version(
+    job_id: str,
+    status: str,
+    total_companies: Optional[int] = None,
+    total_relations: Optional[int] = None,
+    total_pairs: Optional[int] = None,
+    processed_pairs: Optional[int] = None,
+    synced_companies: Optional[int] = None,
+    cleared_relations: Optional[int] = None,
+    created_relations: Optional[int] = None,
+    error_message: Optional[str] = None,
+) -> None:
+    """Insert a version record into company_view_versions."""
+    pool = await get_postgres_pool()
+    if pool is None:
+        return
+
+    completed_at = None
+    if status == "completed":
+        from datetime import datetime, timezone
+        completed_at = datetime.now(timezone.utc)
+
+    async with pool.acquire() as conn:
+        await conn.execute(
+            """
+            INSERT INTO company_view_versions (
+                job_id, status, total_companies, total_relations,
+                total_pairs, processed_pairs, synced_companies,
+                cleared_relations, created_relations, error_message,
+                completed_at
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            """,
+            job_id, status, total_companies, total_relations,
+            total_pairs, processed_pairs, synced_companies,
+            cleared_relations, created_relations, error_message,
+            completed_at,
+        )
+
+
+async def list_company_view_versions(
+    page: int = 1,
+    page_size: int = 20,
+) -> dict:
+    """Return paginated list of company view versions."""
+    pool = await get_postgres_pool()
+    if pool is None:
+        return {"items": [], "total": 0, "page": page, "page_size": page_size}
+
+    offset = (page - 1) * page_size
+
+    async with pool.acquire() as conn:
+        total_row = await conn.fetchrow(
+            "SELECT COUNT(*) FROM company_view_versions"
+        )
+        total = total_row[0] if total_row else 0
+
+        rows = await conn.fetch(
+            """
+            SELECT version_id, version_uuid, job_id, status,
+                   total_companies, total_relations, total_pairs,
+                   processed_pairs, synced_companies, cleared_relations,
+                   created_relations, error_message,
+                   created_at, completed_at
+            FROM company_view_versions
+            ORDER BY version_id DESC
+            LIMIT $1 OFFSET $2
+            """,
+            page_size, offset,
+        )
+
+    items = [
+        {
+            "version_id": r["version_id"],
+            "version_uuid": str(r["version_uuid"]),
+            "job_id": r["job_id"],
+            "status": r["status"],
+            "total_companies": r["total_companies"],
+            "total_relations": r["total_relations"],
+            "total_pairs": r["total_pairs"],
+            "processed_pairs": r["processed_pairs"],
+            "synced_companies": r["synced_companies"],
+            "cleared_relations": r["cleared_relations"],
+            "created_relations": r["created_relations"],
+            "error_message": r["error_message"],
+            "created_at": r["created_at"].isoformat() if r["created_at"] else None,
+            "completed_at": r["completed_at"].isoformat() if r["completed_at"] else None,
+        }
+        for r in rows
+    ]
+
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+    }
