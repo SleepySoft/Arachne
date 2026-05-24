@@ -46,8 +46,8 @@ export function EdgeForm({ mode, edge, onClose, onSuccess }: EdgeFormProps) {
   const [error, setError] = useState("");
 
   const { data: nodesData } = useQuery({
-    queryKey: ["nodes", 1, 200],
-    queryFn: () => listNodes(1, 200),
+    queryKey: ["nodes", 1, 1000],
+    queryFn: () => listNodes(1, 1000),
   });
 
   const nodeOptions = nodesData?.items || [];

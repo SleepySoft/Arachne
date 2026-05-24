@@ -119,11 +119,30 @@ export function GraphCanvas({
           edgesData = { items: sourceData.edges };
         } else {
           [nodesData, edgesData] = await Promise.all([
-            listNodes(1, 200),
-            listEdges(1, 500),
+            listNodes(1, 1000),
+            listEdges(1, 1000),
           ]);
         }
         if (!mounted) return;
+
+        const nodeIdSet = new Set(nodesData.items.map((n) => n.node_id));
+        const validEdges = edgesData.items.filter((e) => {
+          const ok = nodeIdSet.has(e.from_node) && nodeIdSet.has(e.to_node);
+          if (!ok) {
+            // eslint-disable-next-line no-console
+            console.warn(
+              `Skipping edge \`${e.edge_id}\`: source or target node not in loaded node set`
+            );
+          }
+          return ok;
+        });
+        const skippedEdges = edgesData.items.length - validEdges.length;
+        if (skippedEdges > 0) {
+          // eslint-disable-next-line no-console
+          console.warn(
+            `${skippedEdges} edge(s) skipped because their endpoint nodes were not loaded (increase page_size or implement full pagination)`
+          );
+        }
 
         const cy = cytoscape({
           container: containerRef.current,
@@ -138,7 +157,7 @@ export function GraphCanvas({
                 raw: n,
               },
             })),
-            ...edgesData.items.map((e) => ({
+            ...validEdges.map((e) => ({
               data: {
                 id: e.edge_id,
                 source: e.from_node,
