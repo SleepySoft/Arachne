@@ -23,6 +23,7 @@ interface CompanyNetworkCanvasProps {
   nodes: CompanyNetworkNode[];
   edges: CompanyNetworkEdge[];
   onNodeClick?: (company: CompanyNetworkNode) => void;
+  onNodeDblClick?: (company: CompanyNetworkNode) => void;
   highlightCompanyId?: string | null;
   dimUnrelated?: boolean;
   previewNodeIds?: string[];
@@ -42,6 +43,7 @@ export function CompanyNetworkCanvas({
   nodes,
   edges,
   onNodeClick,
+  onNodeDblClick,
   highlightCompanyId,
   dimUnrelated,
   previewNodeIds,
@@ -49,10 +51,15 @@ export function CompanyNetworkCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
   const onNodeClickRef = useRef(onNodeClick);
+  const onNodeDblClickRef = useRef(onNodeDblClick);
 
   useEffect(() => {
     onNodeClickRef.current = onNodeClick;
   }, [onNodeClick]);
+
+  useEffect(() => {
+    onNodeDblClickRef.current = onNodeDblClick;
+  }, [onNodeDblClick]);
 
   // Build / rebuild cytoscape instance when nodes/edges change
   useEffect(() => {
@@ -181,6 +188,13 @@ export function CompanyNetworkCanvas({
       const rawData = evt.target.data("raw") as CompanyNetworkNode;
       if (onNodeClickRef.current) {
         onNodeClickRef.current(rawData);
+      }
+    });
+
+    cy.on("dbltap", "node", (evt) => {
+      const rawData = evt.target.data("raw") as CompanyNetworkNode;
+      if (onNodeDblClickRef.current) {
+        onNodeDblClickRef.current(rawData);
       }
     });
 
