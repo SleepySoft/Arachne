@@ -124,3 +124,12 @@ async def get_company_downstream(company_id: str):
     """Return direct downstream companies (customers) of the given company."""
     downstream = await neo4j_view.get_downstream_companies(company_id)
     return downstream
+
+
+@router.get("/relations/{from_company_id}/{to_company_id}/paths", response_model=dict)
+async def get_company_relation_paths(from_company_id: str, to_company_id: str):
+    """
+    Return the industrial graph paths that support an inferred relation
+    between two companies.
+    """
+    return await view_service.get_relation_paths(from_company_id, to_company_id)

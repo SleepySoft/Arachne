@@ -17,6 +17,8 @@ interface CompanyNetworkEdge {
   path_count: number;
   strength: number;
   confidence: string;
+  relation_type?: string;
+  relation_subtype?: string;
 }
 
 interface CompanyNetworkCanvasProps {
@@ -24,6 +26,7 @@ interface CompanyNetworkCanvasProps {
   edges: CompanyNetworkEdge[];
   onNodeClick?: (company: CompanyNetworkNode) => void;
   onNodeDblClick?: (company: CompanyNetworkNode) => void;
+  onEdgeClick?: (edge: CompanyNetworkEdge) => void;
   highlightCompanyId?: string | null;
   dimUnrelated?: boolean;
   previewNodeIds?: string[];
@@ -37,7 +40,46 @@ const COMPANY_TYPE_COLORS: Record<string, string> = {
   unknown: "#64748b",
 };
 
-const UPSTREAM_COLOR = "#22d3ee";
+/** Map relation_type -> visual style config */
+const RELATION_STYLE_MAP: Record<
+  string,
+  {
+    color: string;
+    lineStyle: "solid" | "dashed" | "dotted";
+    arrowShape: string;
+    label: (e: CompanyNetworkEdge) => string;
+  }
+> = {
+  inferred_industrial: {
+    color: "#22d3ee",
+    lineStyle: "solid",
+    arrowShape: "triangle",
+    label: (e) => `产业上游 (${e.path_count})`,
+  },
+  evidenced_business: {
+    color: "#a3e635",
+    lineStyle: "solid",
+    arrowShape: "triangle",
+    label: (e) => {
+      const map: Record<string, string> = {
+        supplier: "供应商",
+        customer: "客户",
+        partner: "合作伙伴",
+      };
+      return `${map[e.relation_subtype || ""] || "业务关系"}${e.path_count > 1 ? ` (${e.path_count})` : ""}`;
+    },
+  },
+  person_relation: {
+    color: "#f472b6",
+    lineStyle: "dotted",
+    arrowShape: "vee",
+    label: () => "人事关联",
+  },
+};
+
+function getRelationStyle(e: CompanyNetworkEdge) {
+  return RELATION_STYLE_MAP[e.relation_type || "inferred_industrial"] || RELATION_STYLE_MAP.inferred_industrial;
+}
 
 function edgeKey(e: CompanyNetworkEdge) {
   return `${e.from_company_id}→${e.to_company_id}`;
@@ -95,6 +137,7 @@ export function CompanyNetworkCanvas({
   edges,
   onNodeClick,
   onNodeDblClick,
+  onEdgeClick,
   highlightCompanyId,
   dimUnrelated,
   previewNodeIds,
@@ -103,6 +146,7 @@ export function CompanyNetworkCanvas({
   const cyRef = useRef<cytoscape.Core | null>(null);
   const onNodeClickRef = useRef(onNodeClick);
   const onNodeDblClickRef = useRef(onNodeDblClick);
+  const onEdgeClickRef = useRef(onEdgeClick);
   const highlightRef = useRef(highlightCompanyId);
 
   useEffect(() => {
@@ -112,6 +156,10 @@ export function CompanyNetworkCanvas({
   useEffect(() => {
     onNodeDblClickRef.current = onNodeDblClick;
   }, [onNodeDblClick]);
+
+  useEffect(() => {
+    onEdgeClickRef.current = onEdgeClick;
+  }, [onEdgeClick]);
 
   useEffect(() => {
     highlightRef.current = highlightCompanyId;
@@ -149,13 +197,9 @@ export function CompanyNetworkCanvas({
         {
           selector: "edge",
           style: {
-            "line-color": UPSTREAM_COLOR,
-            "target-arrow-color": UPSTREAM_COLOR,
-            "target-arrow-shape": "triangle",
             "arrow-scale": 0.8,
             width: 1.5,
             "curve-style": "bezier",
-            "line-style": "solid",
             label: "data(label)",
             "font-size": "8px",
             color: "#94a3b8",
@@ -164,6 +208,36 @@ export function CompanyNetworkCanvas({
             "text-background-padding": "1px 3px",
             "text-rotation": "autorotate",
             "text-margin-y": -6,
+          },
+        },
+        // Inferred industrial relations (default)
+        {
+          selector: ".relation-inferred_industrial",
+          style: {
+            "line-color": "#22d3ee",
+            "target-arrow-color": "#22d3ee",
+            "target-arrow-shape": "triangle",
+            "line-style": "solid",
+          },
+        },
+        // Evidenced business relations
+        {
+          selector: ".relation-evidenced_business",
+          style: {
+            "line-color": "#a3e635",
+            "target-arrow-color": "#a3e635",
+            "target-arrow-shape": "triangle",
+            "line-style": "solid",
+          },
+        },
+        // Person relations
+        {
+          selector: ".relation-person_relation",
+          style: {
+            "line-color": "#f472b6",
+            "target-arrow-color": "#f472b6",
+            "target-arrow-shape": "vee",
+            "line-style": "dotted",
           },
         },
         {
@@ -215,6 +289,13 @@ export function CompanyNetworkCanvas({
       const rawData = evt.target.data("raw") as CompanyNetworkNode;
       if (onNodeClickRef.current) {
         onNodeClickRef.current(rawData);
+      }
+    });
+
+    cy.on("tap", "edge", (evt) => {
+      const rawData = evt.target.data("raw") as CompanyNetworkEdge;
+      if (onEdgeClickRef.current) {
+        onEdgeClickRef.current(rawData);
       }
     });
 
@@ -287,17 +368,21 @@ export function CompanyNetworkCanvas({
     const edgesToAdd = edges.filter((e) => !existingEdgeKeys.has(edgeKey(e)));
     if (edgesToAdd.length > 0) {
       cy.add(
-        edgesToAdd.map((e) => ({
-          data: {
-            id: edgeKey(e),
-            source: e.from_company_id,
-            target: e.to_company_id,
-            path_count: e.path_count,
-            strength: e.strength,
-            label: `上游 (${e.path_count})`,
-            raw: e,
-          },
-        }))
+        edgesToAdd.map((e) => {
+          const style = getRelationStyle(e);
+          return {
+            data: {
+              id: edgeKey(e),
+              source: e.from_company_id,
+              target: e.to_company_id,
+              path_count: e.path_count,
+              strength: e.strength,
+              label: style.label(e),
+              raw: e,
+            },
+            classes: `relation-${e.relation_type || "inferred_industrial"}`,
+          };
+        })
       );
     }
 

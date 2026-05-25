@@ -28,6 +28,7 @@ import { NodeIndustriesPanel } from "@/components/NodeIndustriesPanel";
 import { SearchPanel } from "@/components/SearchPanel";
 import { StatsBar, MainView } from "@/components/StatsBar";
 import { CompanyViewVersions } from "@/components/CompanyViewVersions";
+import { CompanyRelationDetail } from "@/components/CompanyRelationDetail";
 
 export type PanelType =
   | "none"
@@ -45,7 +46,8 @@ export type PanelType =
   | "company-create"
   | "company-edit"
   | "node-companies"
-  | "node-industries";
+  | "node-industries"
+  | "company-relation-detail";
 
 // Company network node type used for canvas
 interface CNode {
@@ -61,6 +63,8 @@ interface CEdge {
   path_count: number;
   strength: number;
   confidence: string;
+  relation_type?: string;
+  relation_subtype?: string;
 }
 
 export default function App() {
@@ -78,6 +82,7 @@ export default function App() {
   const [selectedEdge, setSelectedEdge] = useState<GraphEdge | null>(null);
   const [selectedIndustry, setSelectedIndustry] = useState<Industry | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [selectedRelation, setSelectedRelation] = useState<CEdge | null>(null);
   const [panel, setPanel] = useState<PanelType>("none");
   const [contextMenu, setContextMenu] = useState<{
     visible: boolean;
@@ -398,6 +403,12 @@ export default function App() {
     }
   };
 
+  // Click on an edge inside the company network canvas
+  const handleCompanyEdgeClick = (edge: CEdge) => {
+    setSelectedRelation(edge);
+    setPanel("company-relation-detail");
+  };
+
   const handleLoadSubgraph = (nodes: unknown[], edges: unknown[]) => {
     setSubgraphData({
       nodes: nodes as IndustrialNode[],
@@ -631,6 +642,15 @@ export default function App() {
         onClose={() => setPanel("industry-detail")}
         onSuccess={(ind) => { setSelectedIndustry(ind); setPanel("industry-detail"); }}
       />
+    ) : panel === "company-relation-detail" && selectedRelation ? (
+      <CompanyRelationDetail
+        fromCompanyId={selectedRelation.from_company_id}
+        toCompanyId={selectedRelation.to_company_id}
+        relationType={selectedRelation.relation_type}
+        relationSubtype={selectedRelation.relation_subtype}
+        pathCount={selectedRelation.path_count}
+        onClose={() => { setPanel("none"); setSelectedRelation(null); }}
+      />
     ) : panel === "company-detail" && selectedCompany ? (
       <CompanyDetail
         company={selectedCompany}
@@ -700,6 +720,7 @@ export default function App() {
           previewNodeIds={previewNodeIds}
           onNodeClick={handleCompanyNodeClick}
           onNodeDblClick={handleCompanyNodeDblClick}
+          onEdgeClick={handleCompanyEdgeClick}
         />
       ) : companyDisplayMode === "global" && companyNetworkData ? (
         <CompanyNetworkCanvas
@@ -709,6 +730,7 @@ export default function App() {
           dimUnrelated={!!currentFocusId}
           onNodeClick={handleCompanyNodeClick}
           onNodeDblClick={handleCompanyNodeDblClick}
+          onEdgeClick={handleCompanyEdgeClick}
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center bg-slate-950">

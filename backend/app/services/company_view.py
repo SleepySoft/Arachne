@@ -88,7 +88,7 @@ async def compute_company_view(job_id: str) -> dict:
 
         # 4. Compute pairwise industrial flows
         driver = get_async_driver()
-        relations_to_create: List[Tuple[str, str, int]] = []
+        relations_to_create: List[Tuple[str, str, int, str, Optional[str]]] = []
         processed = 0
 
         for i, company_a in enumerate(companies):
@@ -115,9 +115,9 @@ async def compute_company_view(job_id: str) -> dict:
                     ba_count = record["ba_count"] if record else 0
 
                 if ab_count > 0:
-                    relations_to_create.append((company_a, company_b, ab_count))
+                    relations_to_create.append((company_a, company_b, ab_count, "inferred_industrial", "upstream_of"))
                 if ba_count > 0:
-                    relations_to_create.append((company_b, company_a, ba_count))
+                    relations_to_create.append((company_b, company_a, ba_count, "inferred_industrial", "upstream_of"))
 
                 processed += 1
                 if processed % 10 == 0:
@@ -264,6 +264,60 @@ async def list_company_view_versions(
         "page": page,
         "page_size": page_size,
     }
+
+
+async def get_relation_paths(from_company_id: str, to_company_id: str) -> dict:
+    """
+    Return the industrial graph paths that support an inferred relation
+    between two companies.
+
+    1. Fetch both companies' exposed nodes from PostgreSQL
+    2. Query Neo4j for INDUSTRIAL_FLOW paths between those node sets
+    """
+    from app.services import company_view_neo4j as neo4j_view
+
+    pool = await get_postgres_pool()
+    if pool is None:
+        raise RuntimeError("PostgreSQL not available")
+
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT company_id, node_id
+            FROM company_node_exposures
+            WHERE company_id IN ($1, $2)
+              AND status IN ('ACTIVE', 'PENDING')
+            ORDER BY company_id
+            """,
+            from_company_id,
+            to_company_id,
+        )
+
+    from_nodes: List[str] = []
+    to_nodes: List[str] = []
+    for r in rows:
+        if r["company_id"] == from_company_id:
+            from_nodes.append(r["node_id"])
+        elif r["company_id"] == to_company_id:
+            to_nodes.append(r["node_id"])
+
+    if not from_nodes or not to_nodes:
+        return {
+            "from_company_id": from_company_id,
+            "to_company_id": to_company_id,
+            "from_company_name": from_company_id,
+            "to_company_name": to_company_id,
+            "relation_type": "inferred_industrial",
+            "total_paths": 0,
+            "paths": [],
+        }
+
+    return await neo4j_view.get_inferred_paths(
+        from_company_id=from_company_id,
+        to_company_id=to_company_id,
+        from_node_ids=from_nodes,
+        to_node_ids=to_nodes,
+    )
 
 
 async def delete_company_view_version(version_id: int) -> bool:

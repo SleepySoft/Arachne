@@ -343,7 +343,7 @@ export const computeCompanyView = async (): Promise<{ job_id: string; status: st
 
 export const getCompanyNetwork = async (): Promise<{
   nodes: { company_id: string; name_zh: string; company_type: string; status: string }[];
-  edges: { from_company_id: string; to_company_id: string; path_count: number; strength: number; confidence: string }[];
+  edges: { from_company_id: string; to_company_id: string; path_count: number; strength: number; confidence: string; relation_type?: string; relation_subtype?: string }[];
 }> => {
   const res = await client.get("/company-view/network");
   return res.data;
@@ -374,6 +374,8 @@ export const getCompanyUpstream = async (companyId: string): Promise<{
   company_type: string;
   path_count: number;
   strength: number;
+  relation_type?: string;
+  relation_subtype?: string;
 }[]> => {
   const res = await client.get(`/company-view/${companyId}/upstream`);
   return res.data;
@@ -385,7 +387,31 @@ export const getCompanyDownstream = async (companyId: string): Promise<{
   company_type: string;
   path_count: number;
   strength: number;
+  relation_type?: string;
+  relation_subtype?: string;
 }[]> => {
   const res = await client.get(`/company-view/${companyId}/downstream`);
+  return res.data;
+};
+
+export interface CompanyRelationPath {
+  from_node: { node_id: string; canonical_name_zh: string };
+  to_node: { node_id: string; canonical_name_zh: string };
+  edge_type: string;
+}
+
+export const getCompanyRelationPaths = async (
+  fromCompanyId: string,
+  toCompanyId: string
+): Promise<{
+  from_company_id: string;
+  to_company_id: string;
+  from_company_name: string;
+  to_company_name: string;
+  relation_type: string;
+  total_paths: number;
+  paths: CompanyRelationPath[];
+}> => {
+  const res = await client.get(`/company-view/relations/${fromCompanyId}/${toCompanyId}/paths`);
   return res.data;
 };

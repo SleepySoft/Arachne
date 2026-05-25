@@ -106,13 +106,13 @@ async def clear_inferred_relations() -> int:
 
 
 async def batch_create_inferred_relations(
-    relations: List[Tuple[str, str, int]],
+    relations: List[Tuple[str, str, int, str, Optional[str]]],
 ) -> int:
     """
     Batch-create INFERRED_UPSTREAM relationships.
 
     Args:
-        relations: List of (from_company_id, to_company_id, path_count)
+        relations: List of (from_company_id, to_company_id, path_count, relation_type, relation_subtype)
 
     Returns:
         Number of relationships created.
@@ -134,8 +134,10 @@ async def batch_create_inferred_relations(
                 "to_id": t_id,
                 "path_count": p_count,
                 "strength": min(1.0, max(0.1, min(1.0, p_count * 0.2))),
+                "relation_type": r_type,
+                "relation_subtype": r_subtype or "",
             }
-            for f_id, t_id, p_count in chunk
+            for f_id, t_id, p_count, r_type, r_subtype in chunk
         ]
 
         async with driver.session() as session:
@@ -147,7 +149,9 @@ async def batch_create_inferred_relations(
                     path_count: rel.path_count,
                     strength: rel.strength,
                     confidence: 'MEDIUM',
-                    derived_at: datetime()
+                    derived_at: datetime(),
+                    relation_type: rel.relation_type,
+                    relation_subtype: rel.relation_subtype
                 }]->(b)
                 RETURN count(*) AS cnt
                 """,
@@ -190,7 +194,9 @@ async def get_company_network() -> dict:
                    b.company_id AS to_company_id,
                    r.path_count AS path_count,
                    r.strength AS strength,
-                   r.confidence AS confidence
+                   r.confidence AS confidence,
+                   r.relation_type AS relation_type,
+                   r.relation_subtype AS relation_subtype
             ORDER BY a.company_id, b.company_id
             """
         )
@@ -213,6 +219,8 @@ async def get_company_network() -> dict:
             "path_count": r["path_count"] or 1,
             "strength": float(r["strength"] or 1.0),
             "confidence": r["confidence"] or "MEDIUM",
+            "relation_type": r.get("relation_type") or "inferred_industrial",
+            "relation_subtype": r.get("relation_subtype") or "upstream_of",
         }
         for r in edge_records
     ]
@@ -234,7 +242,9 @@ async def get_upstream_companies(company_id: str) -> List[dict]:
                    upstream.name_zh AS name_zh,
                    upstream.company_type AS company_type,
                    r.path_count AS path_count,
-                   r.strength AS strength
+                   r.strength AS strength,
+                   r.relation_type AS relation_type,
+                   r.relation_subtype AS relation_subtype
             ORDER BY r.strength DESC, upstream.name_zh
             """,
             company_id=company_id,
@@ -248,9 +258,79 @@ async def get_upstream_companies(company_id: str) -> List[dict]:
             "company_type": r["company_type"] or "unknown",
             "path_count": r["path_count"] or 1,
             "strength": float(r["strength"] or 1.0),
+            "relation_type": r.get("relation_type") or "inferred_industrial",
+            "relation_subtype": r.get("relation_subtype") or "upstream_of",
         }
         for r in records
     ]
+
+
+async def get_inferred_paths(
+    from_company_id: str,
+    to_company_id: str,
+    from_node_ids: List[str],
+    to_node_ids: List[str],
+) -> dict:
+    """
+    Return the industrial graph paths that support an inferred relation
+    between two companies.
+
+    Queries Neo4j for direct INDUSTRIAL_FLOW edges from any node exposed
+    by from_company to any node exposed by to_company.
+    """
+    driver = get_async_driver()
+
+    async with driver.session() as session:
+        # Get company names
+        name_result = await session.run(
+            """
+            MATCH (a:Company {company_id: $from_id}), (b:Company {company_id: $to_id})
+            RETURN a.name_zh AS from_name, b.name_zh AS to_name
+            """,
+            from_id=from_company_id,
+            to_id=to_company_id,
+        )
+        name_record = await name_result.single()
+
+        # Get industrial flow paths
+        path_result = await session.run(
+            """
+            MATCH (src:IndustrialNode)-[r:INDUSTRIAL_FLOW]->(tgt:IndustrialNode)
+            WHERE src.node_id IN $from_nodes AND tgt.node_id IN $to_nodes
+            RETURN src.node_id AS from_node_id,
+                   src.canonical_name_zh AS from_node_name,
+                   tgt.node_id AS to_node_id,
+                   tgt.canonical_name_zh AS to_node_name,
+                   r.edge_type AS edge_type
+            ORDER BY src.canonical_name_zh, tgt.canonical_name_zh
+            """,
+            from_nodes=from_node_ids,
+            to_nodes=to_node_ids,
+        )
+        path_records = await path_result.data()
+
+    return {
+        "from_company_id": from_company_id,
+        "to_company_id": to_company_id,
+        "from_company_name": name_record["from_name"] if name_record else from_company_id,
+        "to_company_name": name_record["to_name"] if name_record else to_company_id,
+        "relation_type": "inferred_industrial",
+        "total_paths": len(path_records),
+        "paths": [
+            {
+                "from_node": {
+                    "node_id": r["from_node_id"],
+                    "canonical_name_zh": r["from_node_name"] or r["from_node_id"],
+                },
+                "to_node": {
+                    "node_id": r["to_node_id"],
+                    "canonical_name_zh": r["to_node_name"] or r["to_node_id"],
+                },
+                "edge_type": r["edge_type"] or "industrial_flow",
+            }
+            for r in path_records
+        ],
+    }
 
 
 async def get_downstream_companies(company_id: str) -> List[dict]:
@@ -267,7 +347,9 @@ async def get_downstream_companies(company_id: str) -> List[dict]:
                    downstream.name_zh AS name_zh,
                    downstream.company_type AS company_type,
                    r.path_count AS path_count,
-                   r.strength AS strength
+                   r.strength AS strength,
+                   r.relation_type AS relation_type,
+                   r.relation_subtype AS relation_subtype
             ORDER BY r.strength DESC, downstream.name_zh
             """,
             company_id=company_id,
@@ -281,6 +363,8 @@ async def get_downstream_companies(company_id: str) -> List[dict]:
             "company_type": r["company_type"] or "unknown",
             "path_count": r["path_count"] or 1,
             "strength": float(r["strength"] or 1.0),
+            "relation_type": r.get("relation_type") or "inferred_industrial",
+            "relation_subtype": r.get("relation_subtype") or "upstream_of",
         }
         for r in records
     ]
