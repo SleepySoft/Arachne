@@ -23,7 +23,7 @@ pytestmark = pytest.mark.asyncio
 async def _postgres_available() -> bool:
     try:
         import asyncpg
-        url = os.getenv("POSTGRES_URL", "postgresql://postgres:postgres@localhost:5432/arachne")
+        url = os.getenv("POSTGRES_URL", "postgresql://postgres:postgres@localhost:5433/arachne")
         conn = await asyncpg.connect(url)
         await conn.close()
         return True
