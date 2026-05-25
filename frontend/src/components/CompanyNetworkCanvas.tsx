@@ -52,7 +52,7 @@ const RELATION_STYLE_MAP: Record<
 > = {
   inferred_industrial: {
     color: "#22d3ee",
-    lineStyle: "solid",
+    lineStyle: "dashed",
     arrowShape: "triangle",
     label: (e) => `产业上游 (${e.path_count})`,
   },
@@ -210,17 +210,16 @@ export function CompanyNetworkCanvas({
             "text-margin-y": -6,
           },
         },
-        // Inferred industrial relations (default)
+        // Relation types — permanent line styles
         {
           selector: ".relation-inferred_industrial",
           style: {
             "line-color": "#22d3ee",
             "target-arrow-color": "#22d3ee",
             "target-arrow-shape": "triangle",
-            "line-style": "solid",
+            "line-style": "dashed",
           },
         },
-        // Evidenced business relations
         {
           selector: ".relation-evidenced_business",
           style: {
@@ -230,7 +229,6 @@ export function CompanyNetworkCanvas({
             "line-style": "solid",
           },
         },
-        // Person relations
         {
           selector: ".relation-person_relation",
           style: {
@@ -240,6 +238,21 @@ export function CompanyNetworkCanvas({
             "line-style": "dotted",
           },
         },
+        // Preview state — only opacity, never line-style
+        {
+          selector: ".preview",
+          style: {
+            opacity: 0.35,
+            "border-color": "#475569",
+          },
+        },
+        {
+          selector: "edge.preview",
+          style: {
+            opacity: 0.25,
+          },
+        },
+        // Highlighted node
         {
           selector: ".highlighted",
           style: {
@@ -252,31 +265,30 @@ export function CompanyNetworkCanvas({
             "z-index": 999,
           },
         },
+        // Dimmed
         {
           selector: ".dimmed",
           style: {
-            opacity: 0.1,
+            opacity: 0.08,
           },
         },
         {
           selector: "edge.dimmed",
           style: {
-            opacity: 0.04,
+            opacity: 0.03,
           },
         },
+        // Selected edge — bright and thick, overrides everything
         {
-          selector: ".preview",
+          selector: "edge:selected",
           style: {
-            opacity: 0.35,
-            "border-style": "dashed",
-            "border-color": "#64748b",
-          },
-        },
-        {
-          selector: "edge.preview",
-          style: {
-            opacity: 0.2,
-            "line-style": "dashed",
+            "line-color": "#facc15",
+            "target-arrow-color": "#facc15",
+            width: 3.5,
+            opacity: 1,
+            "z-index": 999,
+            "text-background-color": "#1e293b",
+            "text-background-opacity": 1,
           },
         },
       ],
@@ -293,6 +305,9 @@ export function CompanyNetworkCanvas({
     });
 
     cy.on("tap", "edge", (evt) => {
+      // Unselect all other edges so only one is highlighted at a time
+      cy.edges().unselect();
+      evt.target.select();
       const rawData = evt.target.data("raw") as CompanyNetworkEdge;
       if (onEdgeClickRef.current) {
         onEdgeClickRef.current(rawData);
@@ -433,7 +448,7 @@ export function CompanyNetworkCanvas({
     }
   }, [nodes, edges]);
 
-  // 核心变更：高亮控制剥离出相机的控制逻辑
+  // 高亮控制
   useEffect(() => {
     const cy = cyRef.current;
     if (!cy) return;
@@ -467,7 +482,7 @@ export function CompanyNetworkCanvas({
         easing: "ease-out",
       });
     }
-  }, [highlightCompanyId, dimUnrelated, previewNodeIds]); // 添加 previewNodeIds 依赖以正确识别模式
+  }, [highlightCompanyId, dimUnrelated, previewNodeIds]);
 
   useEffect(() => {
     const cy = cyRef.current;
