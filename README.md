@@ -73,47 +73,160 @@ Arachne/
     └── prompt.md
 ```
 
-## 快速开始
+## 部署指南
+
+Arachne 系统由三个核心组件构成：
+
+| 组件 | 技术 | 默认端口 | 说明 |
+|------|------|----------|------|
+| **Neo4j** | Neo4j 5.x Community | 7474 (HTTP)、7687 (Bolt) | 图数据库，存储工业节点与关系 |
+| **Backend** | Python 3.12 + FastAPI | 8000 | REST API 服务 |
+| **Frontend** | Node.js 20 + Vite + React | 3000 | 图可视化 Web 应用 |
+
+以下提供三种部署方式，按推荐程度排序。
+
+---
+
+## 方案一：Docker Compose 部署（推荐用于服务器）
+
+所有组件容器化，一键启动，适合 Linux 服务器或支持 Docker Desktop 的 Windows/macOS 环境。
 
 ### 前置条件
 
-- Python 3.12+
-- Node.js 20+
-- Java 17+（Neo4j 需要）
+- Docker 24.0+ 与 Docker Compose v2+
+- 端口 7474、7687、8000、3000 未被占用
 
-### 安装管理器依赖
+### 部署步骤
 
 ```bash
+# 1. 进入项目目录
 cd Arachne
-pip install -r requirements.txt
+
+# 2. 启动全部服务（后台运行）
+docker-compose up -d
+
+# 3. 查看服务状态
+docker-compose ps
+
+# 4. 查看日志
+docker-compose logs -f backend
 ```
 
-### 一键启动全系统
+### 服务说明
+
+| 容器名 | 构建来源 | 内部端口 | 暴露端口 |
+|--------|----------|----------|----------|
+| `arachne-neo4j` | 官方镜像 `neo4j:5-community` | 7474 / 7687 | 7474 / 7687 |
+| `arachne-backend` | `./backend/Dockerfile` | 8000 | 8000 |
+| `arachne-frontend` | `./frontend/Dockerfile`（nginx 托管） | 80 | 3000 |
+
+### 环境变量
+
+后端通过 `docker-compose.yml` 注入以下环境变量：
+
+```yaml
+NEO4J_URI: bolt://neo4j:7687
+NEO4J_USER: neo4j
+NEO4J_PASSWORD: arachne123
+```
+
+如需修改 Neo4j 密码，请同时修改 `docker-compose.yml` 中的 `NEO4J_AUTH` 和后端的 `NEO4J_PASSWORD`。
+
+### 停止与清理
 
 ```bash
-python arachne_manager.py start
+# 停止服务
+docker-compose down
+
+# 停止并清除数据卷（谨慎使用）
+docker-compose down -v
 ```
 
-输出示例：
+---
 
+## 方案二：Windows 本地开发部署（推荐）
+
+项目已包含 Windows 本地运行所需的一切（Neo4j 压缩包、PowerShell 启动脚本、Python 虚拟环境）。
+
+### 前置条件
+
+| 软件 | 版本 | 用途 | 下载/验证 |
+|------|------|------|----------|
+| Python | 3.12+ | 后端运行环境 | `python --version` |
+| Node.js | 20+ | 前端构建与运行 | `node --version` |
+| Java | 17+ | Neo4j 运行需要 JRE | `java --version` |
+
+> 本项目在 Windows PowerShell 环境下开发与测试，PowerShell 执行策略警告（Execution Policy）为良性提示，不影响运行。
+
+### 步骤 1：安装 Neo4j（本地）
+
+项目根目录已附带 `neo4j-community-5.26.0-windows.zip`，解压即可使用：
+
+```powershell
+# 如尚未解压
+Expand-Archive -Path neo4j-community-5.26.0-windows.zip -DestinationPath .
+
+# 设置初始密码（首次运行前）
+cd neo4j-community-5.26.0
+.\bin\neo4j-admin.bat dbms set-initial-password arachne123
 ```
-Starting neo4j...
-  Neo4j started on port 7687
-Starting backend...
-  Backend started on port 8000
-Starting frontend...
-  Frontend started on port 3000
 
-────────────────────────────────────────────────────────────
-Arachne System Status
-────────────────────────────────────────────────────────────
-  RUNNING   neo4j        PID=52152  port=7687  browser=http://localhost:7474
-  RUNNING   backend      PID=51520  port=8000  docs=http://localhost:8000/docs  nodes=36  edges=37
-  RUNNING   frontend     PID=50096  port=3000  url=http://localhost:3000
-────────────────────────────────────────────────────────────
+Neo4j 数据持久化在 `neo4j-community-5.26.0/data/` 目录，删除该目录可重置数据库。
+
+### 步骤 2：安装后端依赖
+
+```powershell
+cd backend
+
+# 创建虚拟环境（如尚未创建）
+python -m venv venv
+
+# 安装依赖
+.\venv\Scripts\pip install -r requirements.txt
 ```
 
-### 访问服务
+`backend/requirements.txt` 核心依赖：
+
+| 包名 | 版本 | 说明 |
+|------|------|------|
+| fastapi | 0.111.0 | Web 框架 |
+| uvicorn[standard] | 0.30.0 | ASGI 服务器 |
+| pydantic | 2.7.4 | 数据校验 |
+| neo4j | 5.21.0 | Neo4j 异步驱动 |
+| asyncpg | 0.31.0 | PostgreSQL 异步驱动（可选） |
+| python-dotenv | 1.0.1 | 环境变量加载 |
+
+### 步骤 3：安装前端依赖
+
+```powershell
+cd frontend
+npm install
+```
+
+`frontend/package.json` 核心依赖：
+
+| 包名 | 版本 | 说明 |
+|------|------|------|
+| react / react-dom | 18.3.1 | UI 框架 |
+| vite | 5.3.1 | 构建工具 |
+| typescript | 5.4.5 | 类型系统 |
+| cytoscape | 3.29.2 | 图可视化引擎 |
+| axios | 1.7.2 | HTTP 客户端 |
+| tailwindcss | 3.4.4 | CSS 工具库 |
+
+### 步骤 4：一键启动
+
+```powershell
+# 在项目根目录执行
+.\start-all.ps1
+```
+
+`start-all.ps1` 将依次完成：
+1. 启动 Neo4j（端口 7687 / 7474）
+2. 启动 FastAPI 后端（端口 8000），若数据库为空则自动导入 `data/seed_industry_graph.json`
+3. 启动 Vite 前端开发服务器（端口 3000）
+
+### 步骤 5：访问服务
 
 | 服务 | 地址 | 说明 |
 |------|------|------|
@@ -121,43 +234,44 @@ Arachne System Status
 | API 文档 | http://localhost:8000/docs | Swagger UI |
 | Neo4j Browser | http://localhost:7474 | 图数据库管理界面（neo4j / arachne123） |
 
-### 一键停止
+### 停止服务
 
-```bash
-python arachne_manager.py stop
+```powershell
+.\stop-all.ps1
 ```
 
-### 查看图谱统计
+---
+
+## 方案三：Python 管理器部署
+
+`arachne_manager.py` 是跨平台的 Python 进程管理器（Windows / Linux / macOS）。
+
+### 安装管理器依赖
 
 ```bash
-python arachne_manager.py stats
+cd Arachne
+pip install -r requirements.txt   # 安装 psutil + httpx
 ```
 
-### 查看各组件状态
-
-```bash
-python arachne_manager.py status
-```
-
-### 查看 Neo4j 日志
-
-```bash
-python arachne_manager.py logs neo4j
-```
-
-## 管理器命令详解
-
-`arachne_manager.py` 是跨平台（Windows / Linux / macOS）的系统管理程序，替代了 Shell 脚本：
+### 管理器命令
 
 ```bash
 python arachne_manager.py <command> [target]
 
-# 命令
-status                    # 显示所有组件状态
-start [all|neo4j|backend|frontend]
-stop  [all|neo4j|backend|frontend]
-stats                     # 从后端获取图谱统计
-logs neo4j                # 显示 Neo4j 最近日志
+# 启动全部
+python arachne_manager.py start
+
+# 停止全部
+python arachne_manager.py stop
+
+# 查看状态
+python arachne_manager.py status
+
+# 查看图谱统计
+python arachne_manager.py stats
+
+# 查看 Neo4j 日志
+python arachne_manager.py logs neo4j
 ```
 
 **特性：**
@@ -166,34 +280,47 @@ logs neo4j                # 显示 Neo4j 最近日志
 - 后端启动后自动检测空库并导入 seed 数据
 - 停止时先发送 SIGTERM，5 秒内未退出则强制 Kill
 
-## 手动启动（开发调试用）
+---
 
-如果只需要启动单个组件进行调试：
+## 方案四：手动分步启动（开发调试）
 
-### Neo4j
+适合只启动单个组件进行调试的场景。
+
+### 手动启动 Neo4j
 
 ```bash
 # Windows
 cd neo4j-community-5.26.0
 .\bin\neo4j.bat console
 
-# 默认密码已设为 arachne123
-# 修改密码：.\bin\neo4j-admin.bat dbms set-initial-password <新密码>
+# 默认账号: neo4j / arachne123
+# 修改密码: .\bin\neo4j-admin.bat dbms set-initial-password <新密码>
 ```
 
-### 后端
+### 手动启动后端
 
 ```bash
 cd backend
 .\venv\Scripts\python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### 前端
+后端支持以下环境变量（通过 `.env` 文件或系统环境变量设置）：
+
+| 变量名 | 默认值 | 说明 |
+|--------|--------|------|
+| `NEO4J_URI` | `bolt://localhost:7687` | Neo4j Bolt 连接地址 |
+| `NEO4J_USER` | `neo4j` | Neo4j 用户名 |
+| `NEO4J_PASSWORD` | `arachne123` | Neo4j 密码 |
+| `POSTGRES_URL` | `postgresql://postgres:postgres@localhost:5433/arachne` | PostgreSQL 连接（可选） |
+
+### 手动启动前端
 
 ```bash
 cd frontend
 npx vite --host
 ```
+
+前端通过 `vite.config.ts` 或 `src/services/api.ts` 配置后端 API 地址，默认指向 `http://localhost:8000`。
 
 ## CLI 工具
 
