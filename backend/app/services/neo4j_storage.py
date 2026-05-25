@@ -308,6 +308,8 @@ async def create_industrial_flow_edge(edge: IndustrialFlowEdge) -> IndustrialFlo
             now=now,
         )
         record = await result.single()
+        if record is None:
+            raise ValueError(f"Cannot create edge: from_node '{edge.from_node}' or to_node '{edge.to_node}' does not exist")
         return _edge_from_record(record)
 
 
@@ -346,6 +348,8 @@ async def create_ontology_edge(edge: OntologyEdge) -> OntologyEdge:
             now=now,
         )
         record = await result.single()
+        if record is None:
+            raise ValueError(f"Cannot create edge: from_node '{edge.from_node}' or to_node '{edge.to_node}' does not exist")
         return _edge_from_record(record)
 
 

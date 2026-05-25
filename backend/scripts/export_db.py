@@ -6,7 +6,7 @@ Export all Neo4j and PostgreSQL data to JSON files.
 
 Usage:
     cd backend && python scripts/export_db.py
-    cd backend && python scripts/export_db.py --output-dir ../data/backup/myexport
+    cd backend && python scripts/export_db.py --output-dir ../data/ArachneData/newest
     cd backend && python scripts/export_db.py --no-company-view
 
 Output structure:
