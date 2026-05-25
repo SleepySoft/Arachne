@@ -49,7 +49,7 @@
 
 本电脑已通过环境变量“TUSHARE_TOKEN”配置了TUSHARE的token。
 
-for NNN from 11 to 15:
+for NNN from 26 to 30:
     使用tushare，获取 data/stock_batches/batch_NNN.json 中各家公司的股票信息。
     对每一个股票，考察其公司的原材料（输入）和产出，分析和构建产业图，同时构建对应的公司视图。
 
