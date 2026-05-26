@@ -31,6 +31,7 @@ import { StatsBar, MainView } from "@/components/StatsBar";
 import { CompanyViewVersions } from "@/components/CompanyViewVersions";
 import { CompanyMaterialModal } from "@/components/CompanyMaterialModal";
 import { ExplorationCanvas, ExplorationNode as ENode, ExplorationEdge as EEdge } from "@/components/ExplorationCanvas";
+import { MaterialConnectionPanel } from "@/components/MaterialConnectionPanel";
 import { CompanyRelationDetail } from "@/components/CompanyRelationDetail";
 
 export type PanelType =
@@ -133,6 +134,10 @@ export default function App() {
 
   // Exploration graph data (for manual mode)
   const [explorationData, setExplorationData] = useState<{ nodes: ENode[]; edges: EEdge[] } | null>(null);
+
+  // Material panel state (for manual exploration mode)
+  const [materialPanelOpen, setMaterialPanelOpen] = useState(false);
+  const [selectedMaterialNode, setSelectedMaterialNode] = useState<{ id: string; name: string } | null>(null);
 
   // Material modal state
   const [materialModalOpen, setMaterialModalOpen] = useState(false);
@@ -351,10 +356,114 @@ export default function App() {
       }
       setPanel("company-detail");
       setCurrentFocusId(node.id);
+      setMaterialPanelOpen(false);
     } else {
-      // Material node clicked: highlight it (Phase 2 will load connected companies)
+      // Material node clicked: open connection panel
       setCurrentFocusId(node.id);
+      setSelectedMaterialNode({ id: node.id, name: node.label });
+      setMaterialPanelOpen(true);
     }
+  };
+
+  // Add selected companies to the exploration graph
+  const handleAddCompaniesToExploration = (companies: { id: string; label: string; direction: "peer" | "upstream" | "downstream"; via_node_id?: string; via_node_name?: string; activity_type: string }[]) => {
+    if (!explorationData || !selectedMaterialNode) return;
+
+    const newNodes: ENode[] = [];
+    const newEdges: EEdge[] = [];
+    const existingNodeIds = new Set(explorationData.nodes.map((n) => n.id));
+    const existingEdgeKeys = new Set(explorationData.edges.map((e) => `${e.source}→${e.target}`));
+
+    companies.forEach((c) => {
+      // Add company node if not exists
+      if (!existingNodeIds.has(c.id)) {
+        newNodes.push({
+          id: c.id,
+          type: "company",
+          label: c.label,
+          company_type: "unknown",
+          activity_type: c.activity_type,
+        });
+        existingNodeIds.add(c.id);
+      }
+
+      if (c.direction === "peer") {
+        // Peer: company -> material (same exposure as anchor)
+        const edgeKey = `${c.id}→${selectedMaterialNode.id}`;
+        if (!existingEdgeKeys.has(edgeKey)) {
+          newEdges.push({
+            source: c.id,
+            target: selectedMaterialNode.id,
+            type: "exposure",
+            activity_type: c.activity_type,
+          });
+          existingEdgeKeys.add(edgeKey);
+        }
+      } else if (c.direction === "upstream" && c.via_node_id) {
+        // Upstream: add via_node if not exists, then company -> via_node, via_node -> material
+        if (!existingNodeIds.has(c.via_node_id)) {
+          newNodes.push({
+            id: c.via_node_id,
+            type: "material",
+            label: c.via_node_name || c.via_node_id,
+          });
+          existingNodeIds.add(c.via_node_id);
+        }
+        const companyEdgeKey = `${c.id}→${c.via_node_id}`;
+        if (!existingEdgeKeys.has(companyEdgeKey)) {
+          newEdges.push({
+            source: c.id,
+            target: c.via_node_id,
+            type: "exposure",
+            activity_type: c.activity_type,
+          });
+          existingEdgeKeys.add(companyEdgeKey);
+        }
+        const flowEdgeKey = `${c.via_node_id}→${selectedMaterialNode.id}`;
+        if (!existingEdgeKeys.has(flowEdgeKey)) {
+          newEdges.push({
+            source: c.via_node_id,
+            target: selectedMaterialNode.id,
+            type: "industrial_flow",
+          });
+          existingEdgeKeys.add(flowEdgeKey);
+        }
+      } else if (c.direction === "downstream" && c.via_node_id) {
+        // Downstream: add via_node if not exists, then material -> via_node, company -> via_node
+        if (!existingNodeIds.has(c.via_node_id)) {
+          newNodes.push({
+            id: c.via_node_id,
+            type: "material",
+            label: c.via_node_name || c.via_node_id,
+          });
+          existingNodeIds.add(c.via_node_id);
+        }
+        const companyEdgeKey = `${c.id}→${c.via_node_id}`;
+        if (!existingEdgeKeys.has(companyEdgeKey)) {
+          newEdges.push({
+            source: c.id,
+            target: c.via_node_id,
+            type: "exposure",
+            activity_type: c.activity_type,
+          });
+          existingEdgeKeys.add(companyEdgeKey);
+        }
+        const flowEdgeKey = `${selectedMaterialNode.id}→${c.via_node_id}`;
+        if (!existingEdgeKeys.has(flowEdgeKey)) {
+          newEdges.push({
+            source: selectedMaterialNode.id,
+            target: c.via_node_id,
+            type: "industrial_flow",
+          });
+          existingEdgeKeys.add(flowEdgeKey);
+        }
+      }
+    });
+
+    setExplorationData({
+      nodes: [...explorationData.nodes, ...newNodes],
+      edges: [...explorationData.edges, ...newEdges],
+    });
   };
 
   // Click on a node inside the company network canvas
@@ -897,6 +1006,16 @@ export default function App() {
             setCompanyDisplayMode("local");
             setCurrentFocusId(selectedCompany.company_id);
           }}
+        />
+      )}
+      {materialPanelOpen && selectedMaterialNode && selectedCompany && (
+        <MaterialConnectionPanel
+          nodeId={selectedMaterialNode.id}
+          nodeName={selectedMaterialNode.name}
+          anchorCompanyId={selectedCompany.company_id}
+          isOpen={materialPanelOpen}
+          onClose={() => setMaterialPanelOpen(false)}
+          onAddCompanies={handleAddCompaniesToExploration}
         />
       )}
     </>

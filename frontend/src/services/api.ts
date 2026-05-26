@@ -444,6 +444,21 @@ export const getMaterialConnections = async (companyId: string): Promise<Materia
   return res.data;
 };
 
+export interface ConnectedCompanies {
+  node_id: string;
+  node_name: string;
+  peers: { id: string; type: string; label: string; activity_type: string; weight: number }[];
+  upstream: { id: string; type: string; label: string; via_node_id: string; via_node_name: string; activity_type: string; weight: number }[];
+  downstream: { id: string; type: string; label: string; via_node_id: string; via_node_name: string; activity_type: string; weight: number }[];
+}
+
+export const getMaterialCompanies = async (nodeId: string, excludeCompanyId?: string): Promise<ConnectedCompanies> => {
+  const res = await client.get(`/companies/nodes/${nodeId}/connected-companies`, {
+    params: excludeCompanyId ? { exclude_company_id: excludeCompanyId } : undefined,
+  });
+  return res.data;
+};
+
 export const getCompanyRelationPaths = async (
   fromCompanyId: string,
   toCompanyId: string
