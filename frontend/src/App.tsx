@@ -398,7 +398,11 @@ export default function App() {
           target: selectedMaterialNode.id,
           type: "exposure",
           activity_type: c.activity_type,
-          label: c.direction === "peer" ? undefined : `via ${c.via_node_name || c.via_node_id || c.direction}`,
+          label: c.direction === "peer"
+            ? undefined
+            : c.direction === "upstream"
+              ? `原料: ${c.via_node_name || c.via_node_id}`
+              : `下游: ${c.via_node_name || c.via_node_id}`,
         });
         existingEdgeKeys.add(edgeKey);
       }
@@ -670,7 +674,7 @@ export default function App() {
             selectedExplorationEdge ? (
               <span className="text-xs text-slate-300">
                 {selectedExplorationEdge.type === "exposure"
-                  ? `${selectedExplorationEdge.source} exposes ${selectedExplorationEdge.target} (${selectedExplorationEdge.activity_type || ""})`
+                  ? `${selectedExplorationEdge.source} → ${selectedExplorationEdge.target}${selectedExplorationEdge.label ? " (" + selectedExplorationEdge.label + ")" : ""}`
                   : `${selectedExplorationEdge.source} → ${selectedExplorationEdge.target} (${selectedExplorationEdge.edge_type || "industrial_flow"})`}
               </span>
             ) : (
