@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 from typing import List, Optional
+from uuid import UUID, uuid4
 
 from app.database import get_async_driver
 from app.models.schemas import (
@@ -73,17 +74,34 @@ def _to_datetime(value):
 
 def _node_from_record(record) -> IndustrialNode:
     props = dict(record["n"])
+    evidence = _evidence_from_db(props.get("evidence", []))
+    confidence = props.get("confidence", "LOW")
+    status = props.get("status", "PENDING")
+
+    # Tolerate old data that violates current validation rules
+    if not evidence:
+        if confidence == "HIGH":
+            confidence = "MEDIUM"
+        if status == "ACTIVE":
+            status = "PENDING"
+
+    node_uuid = props.get("node_uuid")
+    if node_uuid is None:
+        node_uuid = uuid4()
+    elif isinstance(node_uuid, str):
+        node_uuid = UUID(node_uuid)
+
     return IndustrialNode(
-        node_uuid=props.get("node_uuid"),
+        node_uuid=node_uuid,
         node_id=props["node_id"],
-        canonical_name_zh=props["canonical_name_zh"],
+        canonical_name_zh=props.get("canonical_name_zh") or props.get("node_id", "unknown"),
         canonical_name_en=props.get("canonical_name_en"),
         aliases=props.get("aliases", []),
-        definition=props["definition"],
-        entity_type=props["entity_type"],
-        evidence=_evidence_from_db(props.get("evidence", [])),
-        confidence=props.get("confidence", "LOW"),
-        status=props.get("status", "PENDING"),
+        definition=props.get("definition", "（定义待补充）"),
+        entity_type=props.get("entity_type", "unknown"),
+        evidence=evidence,
+        confidence=confidence,
+        status=status,
         notes=props.get("notes"),
         created_at=_to_datetime(props.get("created_at")),
         updated_at=_to_datetime(props.get("updated_at")),
@@ -95,28 +113,34 @@ def _edge_from_record(record) -> GraphEdge:
     start = record["start_node"]
     end = record["end_node"]
     ns = rel.get("edge_namespace", "industrial_flow")
+    evidence = _evidence_from_db(rel.get("evidence", []))
+    confidence = rel.get("confidence", "LOW")
+    # Downgrade HIGH confidence if no evidence for backward compatibility with old data
+    if confidence == "HIGH" and not evidence:
+        confidence = "MEDIUM"
     common = {
-        "edge_uuid": rel.get("edge_uuid"),
         "edge_id": rel["edge_id"],
         "from_node": start["node_id"],
         "to_node": end["node_id"],
-        "description": rel["description"],
-        "evidence": _evidence_from_db(rel.get("evidence", [])),
-        "confidence": rel.get("confidence", "LOW"),
+        "description": rel.get("description") or "无描述",
+        "evidence": evidence,
+        "confidence": confidence,
         "notes": rel.get("notes"),
         "created_at": _to_datetime(rel.get("created_at")),
         "updated_at": _to_datetime(rel.get("updated_at")),
     }
+    if rel.get("edge_uuid"):
+        common["edge_uuid"] = rel["edge_uuid"]
     if ns == "industrial_flow":
         return IndustrialFlowEdge(
             edge_namespace="industrial_flow",
-            edge_type=rel["edge_type"],
+            edge_type=rel.get("edge_type", ""),
             **common,
         )
     else:
         return OntologyEdge(
             edge_namespace="ontology",
-            edge_type=rel["edge_type"],
+            edge_type=rel.get("edge_type", ""),
             **common,
         )
 
