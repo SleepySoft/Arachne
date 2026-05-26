@@ -46,7 +46,7 @@ def _row_to_company(row: dict) -> Company:
 
 def _row_to_exposure(row: dict) -> CompanyNodeExposure:
     evidence_raw = row.get("evidence") or []
-    if isinstance(evidence_raw, str):
+    while isinstance(evidence_raw, str):
         evidence_raw = json.loads(evidence_raw)
     return CompanyNodeExposure(
         exposure_id=row["exposure_id"],

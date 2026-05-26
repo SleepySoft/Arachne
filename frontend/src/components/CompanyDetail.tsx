@@ -45,9 +45,10 @@ export function CompanyDetail({
 }: CompanyDetailProps) {
   const queryClient = useQueryClient();
 
-  const { data: exposuresData } = useQuery({
+  const { data: exposuresData, error: exposuresError } = useQuery({
     queryKey: ["company-exposures", company.company_id, 1, 50],
     queryFn: () => listCompanyExposures(company.company_id, 1, 50),
+    refetchOnMount: "always",
   });
 
   const deleteMutation = useMutation({
@@ -134,6 +135,9 @@ export function CompanyDetail({
             <h4 className="text-xs font-semibold text-slate-300">
               产业暴露 ({exposuresData?.total ?? 0})
             </h4>
+            {exposuresError && (
+              <span className="text-[10px] text-red-400">加载失败</span>
+            )}
             <button
               onClick={onAddExposure}
               className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-cyan-400 hover:bg-cyan-900/20"

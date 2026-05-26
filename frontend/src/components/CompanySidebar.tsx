@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Building, Landmark, Search, Store, TrendingUp } from "lucide-react";
+import { Building, Landmark, RefreshCw, Search, Store, TrendingUp } from "lucide-react";
 import { Company, CompanyType } from "@/types";
 import { listCompanies } from "@/services/api";
 
@@ -31,9 +31,10 @@ export function CompanySidebar({ selectedId, onSelect, onCreate }: CompanySideba
   const [companyType, setCompanyType] = useState<CompanyType | "">("");
   const [status, setStatus] = useState("");
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["companies", 1, 50, undefined, companyType || undefined, status || undefined, search || undefined],
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ["companies", 1, 50, companyType || null, status || null, search || null],
     queryFn: () => listCompanies(1, 50, undefined, companyType || undefined, status || undefined, search || undefined),
+    refetchOnMount: "always",
   });
 
   return (
@@ -82,11 +83,22 @@ export function CompanySidebar({ selectedId, onSelect, onCreate }: CompanySideba
       <div className="flex-1 overflow-y-auto px-2 pb-2">
         {isLoading ? (
           <div className="py-4 text-center text-xs text-slate-500">加载中...</div>
-        ) : data?.items.length === 0 ? (
+        ) : error ? (
+          <div className="py-4 text-center">
+            <div className="text-xs text-red-400 mb-2">加载失败</div>
+            <button
+              onClick={() => refetch()}
+              className="flex items-center gap-1 mx-auto rounded bg-slate-800 px-2 py-1 text-xs text-slate-300 hover:bg-slate-700"
+            >
+              <RefreshCw className="h-3 w-3" />
+              重试
+            </button>
+          </div>
+        ) : !data || data.items.length === 0 ? (
           <div className="py-4 text-center text-xs text-slate-500">无结果</div>
         ) : (
           <div className="space-y-1">
-            {data?.items.map((co) => {
+            {data.items.map((co) => {
               const Icon = TYPE_ICONS[co.company_type];
               const isActive = co.company_id === selectedId;
               return (

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, Factory, Search, Tags } from "lucide-react";
+import { Building2, Factory, RefreshCw, Search, Tags } from "lucide-react";
 import { Industry, IndustryType } from "@/types";
 import { listIndustries } from "@/services/api";
 
@@ -27,9 +27,10 @@ export function IndustrySidebar({ selectedId, onSelect, onCreate }: IndustrySide
   const [industryType, setIndustryType] = useState<IndustryType | "">("");
   const [status, setStatus] = useState("");
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["industries", 1, 50, industryType || undefined, status || undefined, search || undefined],
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ["industries", 1, 50, industryType || null, status || null, search || null],
     queryFn: () => listIndustries(1, 50, industryType || undefined, status || undefined, search || undefined),
+    refetchOnMount: "always",
   });
 
   return (
@@ -81,11 +82,22 @@ export function IndustrySidebar({ selectedId, onSelect, onCreate }: IndustrySide
       <div className="flex-1 overflow-y-auto px-2 pb-2">
         {isLoading ? (
           <div className="py-4 text-center text-xs text-slate-500">加载中...</div>
-        ) : data?.items.length === 0 ? (
+        ) : error ? (
+          <div className="py-4 text-center">
+            <div className="text-xs text-red-400 mb-2">加载失败</div>
+            <button
+              onClick={() => refetch()}
+              className="flex items-center gap-1 mx-auto rounded bg-slate-800 px-2 py-1 text-xs text-slate-300 hover:bg-slate-700"
+            >
+              <RefreshCw className="h-3 w-3" />
+              重试
+            </button>
+          </div>
+        ) : !data || data.items.length === 0 ? (
           <div className="py-4 text-center text-xs text-slate-500">无结果</div>
         ) : (
           <div className="space-y-1">
-            {data?.items.map((ind) => {
+            {data.items.map((ind) => {
               const Icon = TYPE_ICONS[ind.industry_type];
               const isActive = ind.industry_id === selectedId;
               return (

@@ -37,7 +37,7 @@ def _row_to_industry(row: dict) -> Industry:
 
 def _row_to_mapping(row: dict) -> IndustryNodeMapping:
     evidence_raw = row.get("evidence") or []
-    if isinstance(evidence_raw, str):
+    while isinstance(evidence_raw, str):
         evidence_raw = json.loads(evidence_raw)
     return IndustryNodeMapping(
         mapping_id=row["mapping_id"],
