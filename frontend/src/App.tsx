@@ -11,6 +11,7 @@ import {
   getCompanyNetwork,
   getCompanyUpstream,
   getCompanyDownstream,
+  getExplorationGraph,
 } from "@/services/api";
 import { EdgeDetail } from "@/components/EdgeDetail";
 import { EdgeForm } from "@/components/EdgeForm";
@@ -29,6 +30,7 @@ import { SearchPanel } from "@/components/SearchPanel";
 import { StatsBar, MainView } from "@/components/StatsBar";
 import { CompanyViewVersions } from "@/components/CompanyViewVersions";
 import { CompanyMaterialModal } from "@/components/CompanyMaterialModal";
+import { ExplorationCanvas, ExplorationNode as ENode, ExplorationEdge as EEdge } from "@/components/ExplorationCanvas";
 import { CompanyRelationDetail } from "@/components/CompanyRelationDetail";
 
 export type PanelType =
@@ -125,6 +127,13 @@ export default function App() {
 
   const [isDrawingGlobal, setIsDrawingGlobal] = useState(false);
 
+  // Company explore mode: "bulk" = auto-load all upstream/downstream (current behavior)
+  // "manual" = heterogeneous graph exploration (company + material nodes)
+  const [companyExploreMode, setCompanyExploreMode] = useState<"bulk" | "manual">("bulk");
+
+  // Exploration graph data (for manual mode)
+  const [explorationData, setExplorationData] = useState<{ nodes: ENode[]; edges: EEdge[] } | null>(null);
+
   // Material modal state
   const [materialModalOpen, setMaterialModalOpen] = useState(false);
 
@@ -208,6 +217,7 @@ export default function App() {
       setPermanentEdges([]);
       setCurrentFocusId(null);
       setPreviewData(null);
+      setExplorationData(null);
     }
   };
 
@@ -223,25 +233,35 @@ export default function App() {
     setPanel("company-detail");
     setHighlightNodeIds(undefined);
 
-    if (mainView === "company_graph") {
-      if (companyDisplayMode === "empty") {
-        startInvestigation(company);
-      } else if (companyDisplayMode === "global") {
+    if (mainView !== "company_graph") return;
+
+    const isManual = companyExploreMode === "manual";
+
+    if (isManual) {
+      // Manual/exploration mode: load heterogeneous graph centered on this company
+      setCompanyDisplayMode("local");
+      setCurrentFocusId(company.company_id);
+      loadExplorationGraph(company.company_id);
+      return;
+    }
+
+    if (companyDisplayMode === "empty") {
+      startInvestigation(company, true);
+    } else if (companyDisplayMode === "global") {
+      setCurrentFocusId(company.company_id);
+      loadPreview(company.company_id);
+    } else if (companyDisplayMode === "local") {
+      if (orderedChain.includes(company.company_id) || fixedIds.has(company.company_id)) {
         setCurrentFocusId(company.company_id);
         loadPreview(company.company_id);
-      } else if (companyDisplayMode === "local") {
-        if (orderedChain.includes(company.company_id) || fixedIds.has(company.company_id)) {
-          setCurrentFocusId(company.company_id);
-          loadPreview(company.company_id);
-        } else {
-          startInvestigation(company);
-        }
+      } else {
+        startInvestigation(company, true);
       }
     }
   };
 
   // Start a new investigation chain from a company
-  const startInvestigation = (company: Company) => {
+  const startInvestigation = (company: Company, autoPreview: boolean = true) => {
     const node: CNode = {
       company_id: company.company_id,
       name_zh: company.name_zh,
@@ -255,7 +275,17 @@ export default function App() {
     setCurrentFocusId(company.company_id);
     setCompanyDisplayMode("local");
     setPreviewData(null);
-    loadPreview(company.company_id);
+    if (autoPreview) loadPreview(company.company_id);
+  };
+
+  // Load exploration graph (heterogeneous: company + material nodes)
+  const loadExplorationGraph = async (companyId: string) => {
+    try {
+      const data = await getExplorationGraph(companyId);
+      setExplorationData(data);
+    } catch {
+      setExplorationData(null);
+    }
   };
 
   // Load preview (temporary translucent network) for a given company
@@ -306,9 +336,31 @@ export default function App() {
     }
   };
 
+  // Click on a node inside the exploration canvas (manual mode)
+  const handleExplorationNodeClick = async (node: ENode) => {
+    if (node.type === "company") {
+      try {
+        const full = await getCompany(node.id);
+        setSelectedCompany(full);
+      } catch {
+        setSelectedCompany({
+          company_id: node.id,
+          name_zh: node.label,
+          company_type: node.company_type || "unknown",
+        } as Company);
+      }
+      setPanel("company-detail");
+      setCurrentFocusId(node.id);
+    } else {
+      // Material node clicked: highlight it (Phase 2 will load connected companies)
+      setCurrentFocusId(node.id);
+    }
+  };
+
   // Click on a node inside the company network canvas
   const handleCompanyNodeClick = async (companyNode: CNode) => {
     const cid = companyNode.company_id;
+    const isManual = companyExploreMode === "manual";
 
     // Always update detail panel
     try {
@@ -321,10 +373,10 @@ export default function App() {
 
     if (companyDisplayMode === "global") {
       if (currentFocusId === cid) {
-        startInvestigation(companyNode as unknown as Company);
+        startInvestigation(companyNode as unknown as Company, !isManual);
       } else {
         setCurrentFocusId(cid);
-        loadPreview(cid);
+        if (!isManual) loadPreview(cid);
       }
       return;
     }
@@ -338,7 +390,7 @@ export default function App() {
       const newChain = orderedChain.slice(0, chainIndex + 1);
       setOrderedChain(newChain);
       setCurrentFocusId(cid);
-      loadPreview(cid);
+      if (!isManual) loadPreview(cid);
     } else if (previewData && cid !== previewData.centerId) {
       // Click a preview node: append to chain
       const newChain = [...orderedChain, cid];
@@ -532,6 +584,30 @@ export default function App() {
 
   const companySearchPanel = (
     <div className="flex items-center gap-2">
+      <div className="flex items-center rounded border border-slate-700 bg-slate-800/50 overflow-hidden">
+        <button
+          onClick={() => setCompanyExploreMode("bulk")}
+          className={`px-2 py-1 text-[10px] font-medium transition-colors ${
+            companyExploreMode === "bulk"
+              ? "bg-cyan-600/20 text-cyan-400"
+              : "text-slate-500 hover:text-slate-300"
+          }`}
+          title="自动加载全部上下游关联"
+        >
+          全量
+        </button>
+        <button
+          onClick={() => setCompanyExploreMode("manual")}
+          className={`px-2 py-1 text-[10px] font-medium transition-colors ${
+            companyExploreMode === "manual"
+              ? "bg-cyan-600/20 text-cyan-400"
+              : "text-slate-500 hover:text-slate-300"
+          }`}
+          title="只显示通过物料关联面板选择的公司"
+        >
+          探索
+        </button>
+      </div>
       {companyDisplayMode === "empty" && (
         <span className="text-xs text-slate-500">选择一个公司开始浏览，或绘制全局图</span>
       )}
@@ -717,15 +793,24 @@ export default function App() {
           isLoading={isDrawingGlobal}
         />
       ) : companyDisplayMode === "local" ? (
-        <CompanyNetworkCanvas
-          nodes={allCompanyNodes}
-          edges={allCompanyEdges}
-          highlightCompanyId={currentFocusId}
-          previewNodeIds={previewNodeIds}
-          onNodeClick={handleCompanyNodeClick}
-          onNodeDblClick={handleCompanyNodeDblClick}
-          onEdgeClick={handleCompanyEdgeClick}
-        />
+        companyExploreMode === "manual" ? (
+          <ExplorationCanvas
+            nodes={explorationData?.nodes ?? []}
+            edges={explorationData?.edges ?? []}
+            onNodeClick={handleExplorationNodeClick}
+            highlightNodeId={currentFocusId}
+          />
+        ) : (
+          <CompanyNetworkCanvas
+            nodes={allCompanyNodes}
+            edges={allCompanyEdges}
+            highlightCompanyId={currentFocusId}
+            previewNodeIds={previewNodeIds}
+            onNodeClick={handleCompanyNodeClick}
+            onNodeDblClick={handleCompanyNodeDblClick}
+            onEdgeClick={handleCompanyEdgeClick}
+          />
+        )
       ) : companyDisplayMode === "global" && companyNetworkData ? (
         <CompanyNetworkCanvas
           nodes={companyNetworkData.nodes}

@@ -400,6 +400,30 @@ export interface CompanyRelationPath {
   edge_type: string;
 }
 
+export interface ExplorationGraph {
+  nodes: {
+    id: string;
+    type: "company" | "material";
+    label: string;
+    company_type?: string;
+    node_type?: string;
+  }[];
+  edges: {
+    source: string;
+    target: string;
+    type: "exposure" | "industrial_flow";
+    label?: string;
+    activity_type?: string;
+    edge_type?: string;
+    strength?: number;
+  }[];
+}
+
+export const getExplorationGraph = async (companyId: string): Promise<ExplorationGraph> => {
+  const res = await client.get(`/companies/${companyId}/exploration-graph`);
+  return res.data;
+};
+
 export interface MaterialConnection {
   company_id: string;
   company_name: string;

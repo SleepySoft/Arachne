@@ -1,0 +1,332 @@
+import { useEffect, useRef } from "react";
+import cytoscape from "cytoscape";
+import dagre from "cytoscape-dagre";
+
+cytoscape.use(dagre);
+
+export interface ExplorationNode {
+  id: string;
+  type: "company" | "material";
+  label: string;
+  company_type?: string;
+  node_type?: string;
+  activity_type?: string;
+  weight?: number;
+}
+
+export interface ExplorationEdge {
+  source: string;
+  target: string;
+  type: "exposure" | "industrial_flow";
+  label?: string;
+  activity_type?: string;
+  edge_type?: string;
+  strength?: number;
+}
+
+interface ExplorationCanvasProps {
+  nodes: ExplorationNode[];
+  edges: ExplorationEdge[];
+  onNodeClick?: (node: ExplorationNode) => void;
+  onEdgeClick?: (edge: ExplorationEdge) => void;
+  highlightNodeId?: string | null;
+}
+
+const COMPANY_TYPE_COLORS: Record<string, string> = {
+  public: "#22d3ee",
+  private: "#a3e635",
+  state_owned: "#f87171",
+  startup: "#fbbf24",
+  unknown: "#64748b",
+};
+
+function edgeKey(e: ExplorationEdge) {
+  return `${e.source}→${e.target}`;
+}
+
+export function ExplorationCanvas({
+  nodes,
+  edges,
+  onNodeClick,
+  onEdgeClick,
+  highlightNodeId,
+}: ExplorationCanvasProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cyRef = useRef<cytoscape.Core | null>(null);
+  const onNodeClickRef = useRef(onNodeClick);
+  const onEdgeClickRef = useRef(onEdgeClick);
+  const highlightRef = useRef(highlightNodeId);
+
+  useEffect(() => {
+    onNodeClickRef.current = onNodeClick;
+  }, [onNodeClick]);
+
+  useEffect(() => {
+    onEdgeClickRef.current = onEdgeClick;
+  }, [onEdgeClick]);
+
+  useEffect(() => {
+    highlightRef.current = highlightNodeId;
+  }, [highlightNodeId]);
+
+  // Initialize Cytoscape
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const cy = cytoscape({
+      container: containerRef.current,
+      elements: [],
+      style: [
+        {
+          selector: "node",
+          style: {
+            "border-width": 2,
+            "border-color": "#1e293b",
+            label: "data(label)",
+            "font-size": "10px",
+            "text-valign": "bottom",
+            "text-halign": "center",
+            "text-margin-y": 4,
+            color: "#cbd5e1",
+            "text-background-color": "#0f172a",
+            "text-background-opacity": 0.85,
+            "text-background-padding": "2px 4px",
+            "text-background-shape": "roundrectangle",
+          },
+        },
+        // Company nodes: circle
+        {
+          selector: "node[type='company']",
+          style: {
+            shape: "ellipse",
+            width: 36,
+            height: 36,
+            "background-color": (ele: cytoscape.NodeSingular) =>
+              COMPANY_TYPE_COLORS[ele.data("company_type")] || "#64748b",
+          },
+        },
+        // Material nodes: round-rectangle
+        {
+          selector: "node[type='material']",
+          style: {
+            shape: "round-rectangle",
+            width: (ele: cytoscape.NodeSingular) => Math.max(80, (ele.data("label") || "").length * 8 + 16),
+            height: 28,
+            "background-color": "#f59e0b",
+            "background-opacity": 0.2,
+            "border-color": "#f59e0b",
+            "border-width": 1.5,
+            color: "#fbbf24",
+            "font-size": "9px",
+          },
+        },
+        // Anchor company: larger
+        {
+          selector: "node[anchor='true']",
+          style: {
+            width: 48,
+            height: 48,
+            "border-width": 3,
+            "border-color": "#facc15",
+            "font-size": "12px",
+            "font-weight": "bold",
+          },
+        },
+        {
+          selector: "edge",
+          style: {
+            "arrow-scale": 0.8,
+            width: 1.5,
+            "curve-style": "bezier",
+            label: "data(label)",
+            "font-size": "8px",
+            color: "#94a3b8",
+            "text-background-color": "#0f172a",
+            "text-background-opacity": 0.85,
+            "text-background-padding": "1px 3px",
+            "text-rotation": "autorotate",
+            "text-margin-y": -6,
+          },
+        },
+        // Exposure edge: dashed, no arrow
+        {
+          selector: "edge[type='exposure']",
+          style: {
+            "line-color": "#64748b",
+            "line-style": "dashed",
+            "target-arrow-shape": "none",
+          },
+        },
+        // Industrial flow edge: solid with arrow
+        {
+          selector: "edge[type='industrial_flow']",
+          style: {
+            "line-color": "#38bdf8",
+            "target-arrow-color": "#38bdf8",
+            "target-arrow-shape": "triangle",
+            "line-style": "solid",
+          },
+        },
+        // Highlighted node
+        {
+          selector: ".highlighted",
+          style: {
+            "border-color": "#facc15",
+            "border-width": 4,
+            "z-index": 999,
+          },
+        },
+        // Selected edge
+        {
+          selector: "edge:selected",
+          style: {
+            "line-color": "#facc15",
+            "target-arrow-color": "#facc15",
+            width: 3.5,
+            opacity: 1,
+            "z-index": 999,
+          },
+        },
+      ],
+      wheelSensitivity: 1.0,
+      minZoom: 0.2,
+      maxZoom: 3,
+    });
+
+    cy.on("tap", "node", (evt) => {
+      const rawData = evt.target.data("raw") as ExplorationNode;
+      if (onNodeClickRef.current) {
+        onNodeClickRef.current(rawData);
+      }
+    });
+
+    cy.on("tap", "edge", (evt) => {
+      cy.edges().unselect();
+      evt.target.select();
+      const rawData = evt.target.data("raw") as ExplorationEdge;
+      if (onEdgeClickRef.current) {
+        onEdgeClickRef.current(rawData);
+      }
+    });
+
+    cyRef.current = cy;
+
+    return () => {
+      cy.destroy();
+      cyRef.current = null;
+    };
+  }, []);
+
+  // Update elements
+  useEffect(() => {
+    const cy = cyRef.current;
+    if (!cy) return;
+
+    if (nodes.length === 0) {
+      cy.elements().remove();
+      return;
+    }
+
+    cy.stop(true, true);
+
+    const newNodeIds = new Set(nodes.map((n) => n.id));
+    const existingNodeIds = new Set(cy.nodes().map((n) => n.id()));
+
+    cy.remove(cy.nodes().filter((n) => !newNodeIds.has(n.id())));
+
+    const addedNodes = nodes.filter((n) => !existingNodeIds.has(n.id));
+    if (addedNodes.length > 0) {
+      cy.add(
+        addedNodes.map((n) => ({
+          data: {
+            id: n.id,
+            label: n.label,
+            type: n.type,
+            company_type: n.company_type,
+            node_type: n.node_type,
+            activity_type: n.activity_type,
+            weight: n.weight,
+            anchor: n.id === highlightRef.current,
+            raw: n,
+          },
+        }))
+      );
+    }
+
+    const newEdgeKeys = new Set(edges.map(edgeKey));
+    cy.edges().forEach((edge) => {
+      const key = `${edge.source().id()}→${edge.target().id()}`;
+      if (!newEdgeKeys.has(key)) {
+        cy.remove(edge);
+      }
+    });
+
+    const existingEdgeKeys = new Set(
+      cy.edges().map((e) => `${e.source().id()}→${e.target().id()}`)
+    );
+    const edgesToAdd = edges.filter((e) => !existingEdgeKeys.has(edgeKey(e)));
+    if (edgesToAdd.length > 0) {
+      cy.add(
+        edgesToAdd.map((e) => ({
+          data: {
+            id: edgeKey(e),
+            source: e.source,
+            target: e.target,
+            type: e.type,
+            label: e.label,
+            activity_type: e.activity_type,
+            edge_type: e.edge_type,
+            strength: e.strength,
+            raw: e,
+          },
+        }))
+      );
+    }
+
+    // Run dagre layout
+    (cy.layout({
+      name: "dagre",
+      rankDir: "TB",
+      nodeSep: 60,
+      edgeSep: 20,
+      rankSep: 100,
+      padding: 20,
+      fit: true,
+      animate: true,
+      animationDuration: 400,
+      animationEasing: "ease-out",
+    } as cytoscape.LayoutOptions)).run();
+
+    // Highlight
+    cy.nodes().removeClass("highlighted");
+    if (highlightRef.current) {
+      const target = cy.getElementById(highlightRef.current);
+      if (target && target.length > 0) {
+        target.addClass("highlighted");
+      }
+    }
+  }, [nodes, edges]);
+
+  // Highlight effect
+  useEffect(() => {
+    const cy = cyRef.current;
+    if (!cy) return;
+    cy.nodes().removeClass("highlighted");
+    if (highlightNodeId) {
+      const target = cy.getElementById(highlightNodeId);
+      if (target && target.length > 0) {
+        target.addClass("highlighted");
+      }
+    }
+  }, [highlightNodeId]);
+
+  if (nodes.length === 0) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-slate-950">
+        <div className="text-sm text-slate-500">选择一个公司开始探索</div>
+      </div>
+    );
+  }
+
+  return <div ref={containerRef} className="h-full w-full bg-slate-950" />;
+}
