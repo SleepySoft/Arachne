@@ -390,76 +390,17 @@ export default function App() {
         existingNodeIds.add(c.id);
       }
 
-      if (c.direction === "peer") {
-        // Peer: company -> material (same exposure as anchor)
-        const edgeKey = `${c.id}→${selectedMaterialNode.id}`;
-        if (!existingEdgeKeys.has(edgeKey)) {
-          newEdges.push({
-            source: c.id,
-            target: selectedMaterialNode.id,
-            type: "exposure",
-            activity_type: c.activity_type,
-          });
-          existingEdgeKeys.add(edgeKey);
-        }
-      } else if (c.direction === "upstream" && c.via_node_id) {
-        // Upstream: add via_node if not exists, then company -> via_node, via_node -> material
-        if (!existingNodeIds.has(c.via_node_id)) {
-          newNodes.push({
-            id: c.via_node_id,
-            type: "material",
-            label: c.via_node_name || c.via_node_id,
-          });
-          existingNodeIds.add(c.via_node_id);
-        }
-        const companyEdgeKey = `${c.id}→${c.via_node_id}`;
-        if (!existingEdgeKeys.has(companyEdgeKey)) {
-          newEdges.push({
-            source: c.id,
-            target: c.via_node_id,
-            type: "exposure",
-            activity_type: c.activity_type,
-          });
-          existingEdgeKeys.add(companyEdgeKey);
-        }
-        const flowEdgeKey = `${c.via_node_id}→${selectedMaterialNode.id}`;
-        if (!existingEdgeKeys.has(flowEdgeKey)) {
-          newEdges.push({
-            source: c.via_node_id,
-            target: selectedMaterialNode.id,
-            type: "industrial_flow",
-          });
-          existingEdgeKeys.add(flowEdgeKey);
-        }
-      } else if (c.direction === "downstream" && c.via_node_id) {
-        // Downstream: add via_node if not exists, then material -> via_node, company -> via_node
-        if (!existingNodeIds.has(c.via_node_id)) {
-          newNodes.push({
-            id: c.via_node_id,
-            type: "material",
-            label: c.via_node_name || c.via_node_id,
-          });
-          existingNodeIds.add(c.via_node_id);
-        }
-        const companyEdgeKey = `${c.id}→${c.via_node_id}`;
-        if (!existingEdgeKeys.has(companyEdgeKey)) {
-          newEdges.push({
-            source: c.id,
-            target: c.via_node_id,
-            type: "exposure",
-            activity_type: c.activity_type,
-          });
-          existingEdgeKeys.add(companyEdgeKey);
-        }
-        const flowEdgeKey = `${selectedMaterialNode.id}→${c.via_node_id}`;
-        if (!existingEdgeKeys.has(flowEdgeKey)) {
-          newEdges.push({
-            source: selectedMaterialNode.id,
-            target: c.via_node_id,
-            type: "industrial_flow",
-          });
-          existingEdgeKeys.add(flowEdgeKey);
-        }
+      // All directions connect directly to the selected material node
+      const edgeKey = `${c.id}→${selectedMaterialNode.id}`;
+      if (!existingEdgeKeys.has(edgeKey)) {
+        newEdges.push({
+          source: c.id,
+          target: selectedMaterialNode.id,
+          type: "exposure",
+          activity_type: c.activity_type,
+          label: c.direction === "peer" ? undefined : `via ${c.via_node_name || c.via_node_id || c.direction}`,
+        });
+        existingEdgeKeys.add(edgeKey);
       }
     });
 

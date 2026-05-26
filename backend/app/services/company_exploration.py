@@ -109,36 +109,11 @@ async def get_exploration_graph(company_id: str) -> dict:
             "role": role_map.get(m["id"]),
         })
 
-    # 5. Fetch industrial_flow edges among exposed nodes + 1-hop neighbors
-    industrial_edges: List[dict] = []
-    async with driver.session() as session:
-        # Edges where both ends are in exposed nodes
-        result = await session.run(
-            """
-            MATCH (a:IndustrialNode)-[r:INDUSTRIAL_FLOW]->(b:IndustrialNode)
-            WHERE a.node_id IN $node_ids AND b.node_id IN $node_ids
-            RETURN a.node_id AS source, b.node_id AS target, r.edge_type AS edge_type
-            """,
-            node_ids=exposed_node_ids,
-        )
-        records = await result.data()
-        seen_pairs = set()
-        for r in records:
-            pair = (r["source"], r["target"])
-            if pair not in seen_pairs:
-                seen_pairs.add(pair)
-                industrial_edges.append({
-                    "source": r["source"],
-                    "target": r["target"],
-                    "type": "industrial_flow",
-                    "edge_type": r["edge_type"] or "material_flow",
-                })
-
     nodes = [anchor] + material_nodes
 
     return {
         "nodes": nodes,
-        "edges": exposure_edges + industrial_edges,
+        "edges": exposure_edges,
     }
 
 
