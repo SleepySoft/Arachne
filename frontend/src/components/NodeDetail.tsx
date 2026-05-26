@@ -2,6 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Edit2, Trash2, X } from "lucide-react";
 import { IndustrialNode } from "@/types";
 import { deleteNode } from "@/services/api";
+import { NodeEdgeList } from "./NodeEdgeList";
 
 interface NodeDetailProps {
   node: IndustrialNode;
@@ -107,6 +108,13 @@ export function NodeDetail({ node, onEdit, onClose, onRefresh }: NodeDetailProps
             <div className="mt-1 text-xs text-slate-400">{node.notes}</div>
           </div>
         )}
+
+        <div className="border-t border-slate-800 pt-3">
+          <NodeEdgeList
+            nodeId={node.node_id}
+            onRefreshGraph={onRefresh}
+          />
+        </div>
       </div>
     </div>
   );

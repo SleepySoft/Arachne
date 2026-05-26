@@ -14,6 +14,8 @@ import { createEdge, listNodes, updateEdge } from "@/services/api";
 interface EdgeFormProps {
   mode: "create" | "edit";
   edge?: GraphEdge;
+  defaultFromNode?: string;
+  defaultToNode?: string;
   onClose: () => void;
   onSuccess: (edge: GraphEdge) => void;
 }
@@ -32,12 +34,12 @@ const INDUSTRIAL_FLOW_TYPES = [
 const ONTOLOGY_TYPES = ["alias_of", "is_a", "variant_of", "related_term"];
 const CONFIDENCES = ["HIGH", "MEDIUM", "LOW"];
 
-export function EdgeForm({ mode, edge, onClose, onSuccess }: EdgeFormProps) {
+export function EdgeForm({ mode, edge, defaultFromNode, defaultToNode, onClose, onSuccess }: EdgeFormProps) {
   const [namespace, setNamespace] = useState<EdgeNamespace>(edge?.edge_namespace || "industrial_flow");
   const [form, setForm] = useState({
     edge_id: edge?.edge_id || "",
-    from_node: edge?.from_node || "",
-    to_node: edge?.to_node || "",
+    from_node: edge?.from_node || defaultFromNode || "",
+    to_node: edge?.to_node || defaultToNode || "",
     edge_type: edge?.edge_type || "material_flow",
     description: edge?.description || "",
     confidence: edge?.confidence || "LOW",
