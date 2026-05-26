@@ -400,6 +400,26 @@ export interface CompanyRelationPath {
   edge_type: string;
 }
 
+export interface MaterialConnection {
+  company_id: string;
+  company_name: string;
+  exposures: {
+    node_id: string;
+    node_name: string;
+    activity_type: string;
+    weight: number;
+    role?: string;
+    peers: { company_id: string; name_zh: string; activity_type: string; weight: number }[];
+    upstream: { company_id: string; name_zh: string; node_id: string; node_name: string; activity_type: string; weight: number }[];
+    downstream: { company_id: string; name_zh: string; node_id: string; node_name: string; activity_type: string; weight: number }[];
+  }[];
+}
+
+export const getMaterialConnections = async (companyId: string): Promise<MaterialConnection> => {
+  const res = await client.get(`/companies/${companyId}/material-connections`);
+  return res.data;
+};
+
 export const getCompanyRelationPaths = async (
   fromCompanyId: string,
   toCompanyId: string

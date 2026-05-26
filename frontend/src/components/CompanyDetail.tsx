@@ -1,15 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Edit2, Trash2, X, Link2, Plus, Crosshair } from "lucide-react";
+import { Edit2, Trash2, X, Crosshair, Plus, Link2 } from "lucide-react";
 import { Company } from "@/types";
-import { deleteCompany, getCompanySubgraph, listCompanyExposures } from "@/services/api";
+import { deleteCompany, listCompanyExposures } from "@/services/api";
 
 interface CompanyDetailProps {
   company: Company;
   onEdit: () => void;
   onClose: () => void;
   onRefresh: () => void;
-  onLoadSubgraph: (nodes: unknown[], edges: unknown[]) => void;
-  onHighlightNodes: (nodeIds: string[]) => void;
+  onFocusInGraph?: (companyId: string) => void;
+  onOpenMaterialModal?: () => void;
   onAddExposure: () => void;
 }
 
@@ -39,16 +39,11 @@ export function CompanyDetail({
   onEdit,
   onClose,
   onRefresh,
-  onLoadSubgraph,
-  onHighlightNodes,
+  onFocusInGraph,
+  onOpenMaterialModal,
   onAddExposure,
 }: CompanyDetailProps) {
   const queryClient = useQueryClient();
-
-  const { data: tempSubgraph } = useQuery({
-    queryKey: ["company-temp-subgraph", company.company_id],
-    queryFn: () => getCompanySubgraph(company.company_id),
-  });
 
   const { data: exposuresData } = useQuery({
     queryKey: ["company-exposures", company.company_id, 1, 50],
@@ -71,22 +66,21 @@ export function CompanyDetail({
         <div className="flex items-center gap-1">
           <button
             onClick={() => {
-              if (tempSubgraph) onLoadSubgraph(tempSubgraph.nodes, tempSubgraph.edges);
-            }}
-            title="加载临时子图"
-            className="flex h-7 w-7 items-center justify-center rounded text-slate-400 hover:bg-slate-800 hover:text-cyan-400"
-          >
-            <Link2 className="h-3.5 w-3.5" />
-          </button>
-          <button
-            onClick={() => {
-              const nodeIds = exposuresData?.items.map((e) => e.node_id) ?? [];
-              if (nodeIds.length > 0) onHighlightNodes(nodeIds);
+              onFocusInGraph?.(company.company_id);
             }}
             title="在图中高亮"
             className="flex h-7 w-7 items-center justify-center rounded text-slate-400 hover:bg-slate-800 hover:text-yellow-400"
           >
             <Crosshair className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={() => {
+              onOpenMaterialModal?.();
+            }}
+            title="物料关联探索"
+            className="flex h-7 w-7 items-center justify-center rounded text-slate-400 hover:bg-slate-800 hover:text-cyan-400"
+          >
+            <Link2 className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={onEdit}

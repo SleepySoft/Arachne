@@ -28,6 +28,7 @@ import { NodeIndustriesPanel } from "@/components/NodeIndustriesPanel";
 import { SearchPanel } from "@/components/SearchPanel";
 import { StatsBar, MainView } from "@/components/StatsBar";
 import { CompanyViewVersions } from "@/components/CompanyViewVersions";
+import { CompanyMaterialModal } from "@/components/CompanyMaterialModal";
 import { CompanyRelationDetail } from "@/components/CompanyRelationDetail";
 
 export type PanelType =
@@ -123,6 +124,9 @@ export default function App() {
   const [previewData, setPreviewData] = useState<{ centerId: string; nodes: CNode[]; edges: CEdge[] } | null>(null);
 
   const [isDrawingGlobal, setIsDrawingGlobal] = useState(false);
+
+  // Material modal state
+  const [materialModalOpen, setMaterialModalOpen] = useState(false);
 
   // ------------------------------------------------------------------
   // Derived data for canvas
@@ -657,8 +661,8 @@ export default function App() {
         onEdit={() => setPanel("company-edit")}
         onClose={() => { setPanel("none"); setSelectedCompany(null); }}
         onRefresh={refreshGraph}
-        onLoadSubgraph={handleLoadSubgraph}
-        onHighlightNodes={handleHighlightNodes}
+        onFocusInGraph={(id) => setCurrentFocusId(id)}
+        onOpenMaterialModal={() => setMaterialModalOpen(true)}
         onAddExposure={() => alert("添加暴露功能待实现")}
       />
     ) : panel === "company-create" ? (
@@ -770,6 +774,44 @@ export default function App() {
           onShowCompanies={() => { setPanel("node-companies"); setContextMenu((prev) => ({ ...prev, visible: false })); }}
           onShowIndustries={() => { setPanel("node-industries"); setContextMenu((prev) => ({ ...prev, visible: false })); }}
           onClose={() => setContextMenu((prev) => ({ ...prev, visible: false }))}
+        />
+      )}
+      {selectedCompany && materialModalOpen && (
+        <CompanyMaterialModal
+          companyId={selectedCompany.company_id}
+          companyName={selectedCompany.name_zh}
+          isOpen={materialModalOpen}
+          onClose={() => setMaterialModalOpen(false)}
+          onAddToView={(nodes, edges) => {
+            setNodeStore((prev) => {
+              const next = new Map(prev);
+              nodes.forEach((n) => {
+                if (!next.has(n.company_id)) next.set(n.company_id, n);
+              });
+              return next;
+            });
+            setPermanentEdges((prev) => {
+              const seen = new Set(prev.map((e) => `${e.from_company_id}->${e.to_company_id}`));
+              const newEdges = edges.filter((e) => !seen.has(`${e.from_company_id}->${e.to_company_id}`));
+              return [...prev, ...newEdges];
+            });
+            if (selectedCompany) {
+              setNodeStore((prev) => {
+                const next = new Map(prev);
+                if (!next.has(selectedCompany.company_id)) {
+                  next.set(selectedCompany.company_id, {
+                    company_id: selectedCompany.company_id,
+                    name_zh: selectedCompany.name_zh,
+                    company_type: selectedCompany.company_type || "unknown",
+                    status: "ACTIVE",
+                  });
+                }
+                return next;
+              });
+            }
+            setCompanyDisplayMode("local");
+            setCurrentFocusId(selectedCompany.company_id);
+          }}
         />
       )}
     </>
