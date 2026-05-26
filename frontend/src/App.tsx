@@ -142,6 +142,9 @@ export default function App() {
   // Material modal state
   const [materialModalOpen, setMaterialModalOpen] = useState(false);
 
+  // Selected exploration edge for detail display
+  const [selectedExplorationEdge, setSelectedExplorationEdge] = useState<EEdge | null>(null);
+
   // ------------------------------------------------------------------
   // Derived data for canvas
   // ------------------------------------------------------------------
@@ -722,21 +725,35 @@ export default function App() {
       )}
       {companyDisplayMode === "local" && (
         <div className="flex items-center gap-1 overflow-hidden">
-          {orderedChain.map((id, idx) => (
-            <span key={id} className="flex items-center gap-1">
-              {idx > 0 && <span className="text-slate-600">→</span>}
-              <span className={`text-xs ${id === currentFocusId ? "text-cyan-400 font-medium" : "text-slate-400"}`}>
-                {nodeStore.get(id)?.name_zh || id}
+          {companyExploreMode === "manual" ? (
+            selectedExplorationEdge ? (
+              <span className="text-xs text-slate-300">
+                {selectedExplorationEdge.type === "exposure"
+                  ? `${selectedExplorationEdge.source} exposes ${selectedExplorationEdge.target} (${selectedExplorationEdge.activity_type || ""})`
+                  : `${selectedExplorationEdge.source} → ${selectedExplorationEdge.target} (${selectedExplorationEdge.edge_type || "industrial_flow"})`}
               </span>
-            </span>
-          ))}
-          {fixedIds.size > 0 && (
-            <span className="text-xs text-amber-500 ml-1">
-              (+{fixedIds.size} 固定)
-            </span>
-          )}
-          {previewData && (
-            <span className="text-xs text-slate-500 ml-1">— 关联节点临时显示</span>
+            ) : (
+              <span className="text-xs text-slate-500">点击物料节点探索关联公司，点击边查看连接详情</span>
+            )
+          ) : (
+            <>
+              {orderedChain.map((id, idx) => (
+                <span key={id} className="flex items-center gap-1">
+                  {idx > 0 && <span className="text-slate-600">→</span>}
+                  <span className={`text-xs ${id === currentFocusId ? "text-cyan-400 font-medium" : "text-slate-400"}`}>
+                    {nodeStore.get(id)?.name_zh || id}
+                  </span>
+                </span>
+              ))}
+              {fixedIds.size > 0 && (
+                <span className="text-xs text-amber-500 ml-1">
+                  (+{fixedIds.size} 固定)
+                </span>
+              )}
+              {previewData && (
+                <span className="text-xs text-slate-500 ml-1">— 关联节点临时显示</span>
+              )}
+            </>
           )}
         </div>
       )}
@@ -753,6 +770,9 @@ export default function App() {
             setPermanentEdges([]);
             setCurrentFocusId(null);
             setPreviewData(null);
+            setExplorationData(null);
+            setSelectedExplorationEdge(null);
+            setMaterialPanelOpen(false);
           }}
           className="ml-auto flex items-center gap-1 rounded-md bg-amber-600/20 px-2.5 py-1 text-xs font-medium text-amber-400 hover:bg-amber-600/30 transition-colors"
         >
@@ -907,6 +927,7 @@ export default function App() {
             nodes={explorationData?.nodes ?? []}
             edges={explorationData?.edges ?? []}
             onNodeClick={handleExplorationNodeClick}
+            onEdgeClick={(edge) => setSelectedExplorationEdge(edge)}
             highlightNodeId={currentFocusId}
           />
         ) : (
