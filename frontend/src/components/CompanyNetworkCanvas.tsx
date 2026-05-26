@@ -339,7 +339,7 @@ export function CompanyNetworkCanvas({
       return;
     }
 
-    const isLocalMode = previewNodeIds !== undefined;
+    const isLocalMode = !!previewNodeIds && previewNodeIds.length > 0;
 
     // 清除视图和节点的已有动画队列，防止乱跳
     cy.stop(true, true);
@@ -470,7 +470,7 @@ export function CompanyNetworkCanvas({
     }
 
     // 判断是否在局部考察模式中
-    const isLocalMode = previewNodeIds !== undefined;
+    const isLocalMode = !!previewNodeIds && previewNodeIds.length > 0;
 
     // 如果在局部考察模式中，相机移动的控制权完全交给 Layout Hook 避免冲突跳跃
     // 只有在全局模式中单纯点击高亮时，才由 Highlight Hook 进行相机聚焦
