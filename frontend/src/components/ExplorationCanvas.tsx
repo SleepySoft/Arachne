@@ -1,8 +1,6 @@
 import { useEffect, useRef } from "react";
 import cytoscape from "cytoscape";
-import dagre from "cytoscape-dagre";
-
-cytoscape.use(dagre);
+// dagre is already registered by CompanyNetworkCanvas
 
 export interface ExplorationNode {
   id: string;
@@ -109,7 +107,7 @@ export function ExplorationCanvas({
         {
           selector: "node[type='material']",
           style: {
-            shape: "round-rectangle",
+            shape: "roundrectangle",
             width: (ele: cytoscape.NodeSingular) => Math.max(80, (ele.data("label") || "").length * 8 + 16),
             height: 28,
             "background-color": "#f59e0b",
@@ -320,13 +318,15 @@ export function ExplorationCanvas({
     }
   }, [highlightNodeId]);
 
-  if (nodes.length === 0) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-slate-950">
-        <div className="text-sm text-slate-500">选择一个公司开始探索</div>
+      <div className="relative h-full w-full bg-slate-950">
+        <div ref={containerRef} className="h-full w-full" />
+
+        {nodes.length === 0 && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-slate-950">
+            <div className="text-sm text-slate-500">选择一个公司开始探索</div>
+          </div>
+        )}
       </div>
     );
-  }
-
-  return <div ref={containerRef} className="h-full w-full bg-slate-950" />;
 }
