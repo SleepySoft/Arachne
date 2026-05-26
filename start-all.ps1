@@ -41,8 +41,8 @@ if (Test-Port 7687) {
 
 # ── Backend ────────────────────────────────────────────
 Write-Host "[2/3] Starting Backend (FastAPI)..." -ForegroundColor Cyan
-if (Test-Port 8005) {
-    Write-Host "  Backend already running on port 8005" -ForegroundColor Yellow
+if (Test-Port 16060) {
+    Write-Host "  Backend already running on port 16060" -ForegroundColor Yellow
 } else {
     $backendDir = Join-Path $projectRoot "backend"
     $venvPython = Join-Path $backendDir "venv\Scripts\python.exe"
@@ -50,16 +50,16 @@ if (Test-Port 8005) {
         Write-Host "  ERROR: Python venv not found at $venvPython" -ForegroundColor Red
         exit 1
     }
-    Start-Process -FilePath $venvPython -ArgumentList "-m uvicorn app.main:app --host 0.0.0.0 --port 8005" -WindowStyle Hidden -WorkingDirectory $backendDir
-    if (-not (Wait-ForPort 8005 "Backend" 30)) { exit 1 }
+    Start-Process -FilePath $venvPython -ArgumentList "-m uvicorn app.main:app --host 0.0.0.0 --port 16060" -WindowStyle Hidden -WorkingDirectory $backendDir
+    if (-not (Wait-ForPort 16060 "Backend" 30)) { exit 1 }
     # Seed data if graph is empty
     try {
-        $resp = Invoke-RestMethod -Uri "http://localhost:8005/api/v1/query/stats" -TimeoutSec 5
+        $resp = Invoke-RestMethod -Uri "http://localhost:16060/api/v1/query/stats" -TimeoutSec 5
         if ($resp.total_nodes -eq 0) {
             Write-Host "  Seeding data..." -ForegroundColor DarkGray
             $payload = Get-Content (Join-Path $projectRoot "data\seed_industry_graph.json") -Raw -Encoding UTF8 | ConvertFrom-Json -Depth 10
             $body = $payload | ConvertTo-Json -Depth 10 -Compress
-            Invoke-RestMethod -Uri "http://localhost:8005/api/v1/batches" -Method POST -ContentType "application/json" -Body $body -TimeoutSec 30 | Out-Null
+            Invoke-RestMethod -Uri "http://localhost:16060/api/v1/batches" -Method POST -ContentType "application/json" -Body $body -TimeoutSec 30 | Out-Null
             Write-Host "  Seed data loaded" -ForegroundColor Green
         }
     } catch {
@@ -81,7 +81,7 @@ if (Test-Port 3000) {
 Write-Host ""
 Write-Host "All services are running!" -ForegroundColor Green
 Write-Host "  Neo4j Browser:  http://localhost:7474"
-Write-Host "  Backend API:    http://localhost:8005/docs"
+Write-Host "  Backend API:    http://localhost:16060/docs"
 Write-Host "  Frontend App:   http://localhost:3000"
 Write-Host ""
 Write-Host "To stop everything, run: .\stop-all.ps1" -ForegroundColor DarkGray
