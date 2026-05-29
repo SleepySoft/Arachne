@@ -1,0 +1,1094 @@
+{
+  "batch_id": "batch_124_business",
+  "task_description": "Batch 124 business registration",
+  "companies_to_upsert": [
+    {
+      "company_id": "sz_002090",
+      "name_zh": "金智科技",
+      "name_en": "Wiscom System Co., Ltd.",
+      "country": "CN",
+      "province": "江苏",
+      "city": "南京市",
+      "stock_codes": [
+        "002090.SZ"
+      ],
+      "description": "电力自动化业务、高校信息化业务",
+      "founded_year": 1995,
+      "employee_count": 833
+    },
+    {
+      "company_id": "sz_002091",
+      "name_zh": "江苏国泰",
+      "name_en": "Jiangsu Guotai International Group Co., Ltd.",
+      "country": "CN",
+      "province": "江苏",
+      "city": "张家港市",
+      "stock_codes": [
+        "002091.SZ"
+      ],
+      "description": "纺织品、轻工、机电、化工等产品的进出口贸易",
+      "founded_year": 1998,
+      "employee_count": 33150
+    },
+    {
+      "company_id": "sz_002092",
+      "name_zh": "中泰化学",
+      "name_en": "Xinjiang Zhongtai Chemical Co., Ltd.",
+      "country": "CN",
+      "province": "新疆",
+      "city": "乌鲁木齐市",
+      "stock_codes": [
+        "002092.SZ"
+      ],
+      "description": "聚氯乙烯树脂、离子膜烧碱等化工产品",
+      "founded_year": 2001,
+      "employee_count": 23576
+    },
+    {
+      "company_id": "sh_601991",
+      "name_zh": "大唐发电",
+      "name_en": "Datang International Power Generation Co., Ltd.",
+      "country": "CN",
+      "province": "北京",
+      "city": "北京市",
+      "stock_codes": [
+        "601991.SH"
+      ],
+      "description": "建设、经营电厂，销售电力、热力",
+      "founded_year": 1994,
+      "employee_count": 25801
+    },
+    {
+      "company_id": "sz_002095",
+      "name_zh": "生意宝",
+      "name_en": "Toocle Inc.",
+      "country": "CN",
+      "province": "浙江",
+      "city": "杭州市",
+      "stock_codes": [
+        "002095.SZ"
+      ],
+      "description": "B2B电子商务",
+      "founded_year": 2000,
+      "employee_count": 403
+    },
+    {
+      "company_id": "sz_002094",
+      "name_zh": "青岛金王",
+      "name_en": "Qingdao Kingking Applied Chemistry Co., Ltd.",
+      "country": "CN",
+      "province": "山东",
+      "city": "青岛市",
+      "stock_codes": [
+        "002094.SZ"
+      ],
+      "description": "蜡烛、蜡烛制品、日用化学品",
+      "founded_year": 1993,
+      "employee_count": 3295
+    },
+    {
+      "company_id": "sz_002093",
+      "name_zh": "国脉科技",
+      "name_en": "Guomai Technologies Inc.",
+      "country": "CN",
+      "province": "福建",
+      "city": "福州市",
+      "stock_codes": [
+        "002093.SZ"
+      ],
+      "description": "电信网络服务、系统集成",
+      "founded_year": 1996,
+      "employee_count": 442
+    },
+    {
+      "company_id": "sz_002102",
+      "name_zh": "能特科技",
+      "name_en": "Nente Bio-engineering Co., Ltd.",
+      "country": "CN",
+      "province": "湖北",
+      "city": "荆州市",
+      "stock_codes": [
+        "002102.SZ"
+      ],
+      "description": "医药中间体、黄金探矿及采矿",
+      "founded_year": 2002,
+      "employee_count": 498
+    },
+    {
+      "company_id": "sz_002101",
+      "name_zh": "广东鸿图",
+      "name_en": "Guangdong Hongtu Technology (Holdings) Co., Ltd.",
+      "country": "CN",
+      "province": "广东",
+      "city": "肇庆市",
+      "stock_codes": [
+        "002101.SZ"
+      ],
+      "description": "铝合金压铸件、汽车内外饰件",
+      "founded_year": 2000,
+      "employee_count": 5426
+    },
+    {
+      "company_id": "sz_002099",
+      "name_zh": "海翔药业",
+      "name_en": "Zhejiang Hisun Pharmaceutical Co., Ltd.",
+      "country": "CN",
+      "province": "浙江",
+      "city": "台州市",
+      "stock_codes": [
+        "002099.SZ"
+      ],
+      "description": "化学合成医药产品",
+      "founded_year": 1966,
+      "employee_count": 3585
+    }
+  ],
+  "company_node_exposures_to_upsert": [
+    {
+      "exposure_id": "sz_002090_provide_service_power_automation",
+      "company_id": "sz_002090",
+      "node_id": "power_automation",
+      "activity_type": "provide_service",
+      "weight": 0.3,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:电力自动化",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002090_provide_service_university_informatization",
+      "company_id": "sz_002090",
+      "node_id": "university_informatization",
+      "activity_type": "provide_service",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:高校信息化",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002090_provide_service_smart_grid",
+      "company_id": "sz_002090",
+      "node_id": "smart_grid",
+      "activity_type": "provide_service",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:智能电网",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002090_produce_energy_storage_system",
+      "company_id": "sz_002090",
+      "node_id": "energy_storage_system",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:储能系统",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002090_produce_charging_pile",
+      "company_id": "sz_002090",
+      "node_id": "charging_pile",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:充电桩",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002090_provide_service_technical_service",
+      "company_id": "sz_002090",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002091_provide_service_textile_export",
+      "company_id": "sz_002091",
+      "node_id": "textile_export",
+      "activity_type": "provide_service",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:纺织品进出口",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002091_provide_service_light_industry_export",
+      "company_id": "sz_002091",
+      "node_id": "light_industry_export",
+      "activity_type": "provide_service",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:轻工产品进出口",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002091_provide_service_mechanical_electrical_export",
+      "company_id": "sz_002091",
+      "node_id": "mechanical_electrical_export",
+      "activity_type": "provide_service",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:机电产品进出口",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002091_provide_service_chemical_export",
+      "company_id": "sz_002091",
+      "node_id": "chemical_export",
+      "activity_type": "provide_service",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:化工产品进出口",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002091_provide_service_labor_export",
+      "company_id": "sz_002091",
+      "node_id": "labor_export",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:对外派遣劳务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002091_provide_service_technical_service",
+      "company_id": "sz_002091",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002091_provide_service_logistics",
+      "company_id": "sz_002091",
+      "node_id": "logistics",
+      "activity_type": "provide_service",
+      "weight": 0.05,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:物流配送",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002092_produce_pvc_resin",
+      "company_id": "sz_002092",
+      "node_id": "pvc_resin",
+      "activity_type": "produce",
+      "weight": 0.3,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:聚氯乙烯树脂",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002092_produce_caustic_soda",
+      "company_id": "sz_002092",
+      "node_id": "caustic_soda",
+      "activity_type": "produce",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:离子膜烧碱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002092_operate_chlor_alkali",
+      "company_id": "sz_002092",
+      "node_id": "chlor_alkali",
+      "activity_type": "operate",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:氯碱化工",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002092_produce_calcium_carbide",
+      "company_id": "sz_002092",
+      "node_id": "calcium_carbide",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:电石",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002092_produce_cement",
+      "company_id": "sz_002092",
+      "node_id": "cement",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:水泥",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002092_provide_service_technical_service",
+      "company_id": "sz_002092",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601991_operate_thermal_power",
+      "company_id": "sh_601991",
+      "node_id": "thermal_power",
+      "activity_type": "operate",
+      "weight": 0.35,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:火力发电",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601991_provide_service_electricity_sales",
+      "company_id": "sh_601991",
+      "node_id": "electricity_sales",
+      "activity_type": "provide_service",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:电力销售",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601991_provide_service_heat_supply",
+      "company_id": "sh_601991",
+      "node_id": "heat_supply",
+      "activity_type": "provide_service",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:供热",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601991_operate_power_generation",
+      "company_id": "sh_601991",
+      "node_id": "power_generation",
+      "activity_type": "operate",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:建设经营电厂",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601991_provide_service_technical_service",
+      "company_id": "sh_601991",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002095_provide_service_b2b_e_commerce",
+      "company_id": "sz_002095",
+      "node_id": "b2b_e_commerce",
+      "activity_type": "provide_service",
+      "weight": 0.3,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:B2B电子商务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002095_provide_service_chemical_industry_information",
+      "company_id": "sz_002095",
+      "node_id": "chemical_industry_information",
+      "activity_type": "provide_service",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:化工行业信息服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002095_provide_service_textile_information",
+      "company_id": "sz_002095",
+      "node_id": "textile_information",
+      "activity_type": "provide_service",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:纺织信息服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002095_provide_service_internet_advertising",
+      "company_id": "sz_002095",
+      "node_id": "internet_advertising",
+      "activity_type": "provide_service",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:互联网广告",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002095_provide_service_technical_service",
+      "company_id": "sz_002095",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002094_produce_candle",
+      "company_id": "sz_002094",
+      "node_id": "candle",
+      "activity_type": "produce",
+      "weight": 0.3,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:蜡烛",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002094_produce_polymer_candle_material",
+      "company_id": "sz_002094",
+      "node_id": "polymer_candle_material",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:聚合物蜡烛",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002094_produce_glass_craft",
+      "company_id": "sz_002094",
+      "node_id": "glass_craft",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:玻璃制品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002094_produce_epoxy_resin_product",
+      "company_id": "sz_002094",
+      "node_id": "epoxy_resin_product",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:环氧树脂产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002094_produce_cosmetic",
+      "company_id": "sz_002094",
+      "node_id": "cosmetic",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:日用化学品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002094_provide_service_technical_service",
+      "company_id": "sz_002094",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002094_produce_paper_product",
+      "company_id": "sz_002094",
+      "node_id": "paper_product",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:纸制品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002093_provide_service_telecom_network_service",
+      "company_id": "sz_002093",
+      "node_id": "telecom_network_service",
+      "activity_type": "provide_service",
+      "weight": 0.3,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:电信网络服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002093_provide_service_communication_system_integration",
+      "company_id": "sz_002093",
+      "node_id": "communication_system_integration",
+      "activity_type": "provide_service",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:通信系统集成",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002093_provide_service_iot_service",
+      "company_id": "sz_002093",
+      "node_id": "iot_service",
+      "activity_type": "provide_service",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:物联网",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002093_provide_service_telecommunication",
+      "company_id": "sz_002093",
+      "node_id": "telecommunication",
+      "activity_type": "provide_service",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:通讯设备",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002093_provide_service_technical_service",
+      "company_id": "sz_002093",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002093_provide_service_information_security_service",
+      "company_id": "sz_002093",
+      "node_id": "information_security_service",
+      "activity_type": "provide_service",
+      "weight": 0.05,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:信息安全",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002102_produce_pharmaceutical_intermediate",
+      "company_id": "sz_002102",
+      "node_id": "pharmaceutical_intermediate",
+      "activity_type": "produce",
+      "weight": 0.35,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:医药中间体",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002102_operate_gold_mining",
+      "company_id": "sz_002102",
+      "node_id": "gold_mining",
+      "activity_type": "operate",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:黄金探矿及采矿",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002102_provide_service_plastic_trade",
+      "company_id": "sz_002102",
+      "node_id": "plastic_trade",
+      "activity_type": "provide_service",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:塑料贸易",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002102_provide_service_real_estate_leasing",
+      "company_id": "sz_002102",
+      "node_id": "real_estate_leasing",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:房地产租赁",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002102_provide_service_technical_service",
+      "company_id": "sz_002102",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002101_produce_aluminum_die_casting",
+      "company_id": "sz_002101",
+      "node_id": "aluminum_die_casting",
+      "activity_type": "produce",
+      "weight": 0.3,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:铝合金压铸件",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002101_produce_auto_interior_exterior_trim",
+      "company_id": "sz_002101",
+      "node_id": "auto_interior_exterior_trim",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:汽车内外饰件",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002101_produce_automotive_part",
+      "company_id": "sz_002101",
+      "node_id": "automotive_part",
+      "activity_type": "produce",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:汽车零部件",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002101_produce_special_purpose_vehicle",
+      "company_id": "sz_002101",
+      "node_id": "special_purpose_vehicle",
+      "activity_type": "produce",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:专用车",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002101_provide_service_investment_platform",
+      "company_id": "sz_002101",
+      "node_id": "investment_platform",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:投资平台",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002101_provide_service_technical_service",
+      "company_id": "sz_002101",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002099_produce_pharmaceutical",
+      "company_id": "sz_002099",
+      "node_id": "pharmaceutical",
+      "activity_type": "produce",
+      "weight": 0.3,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:化学合成医药产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002099_produce_dye",
+      "company_id": "sz_002099",
+      "node_id": "dye",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:染料",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002099_produce_active_pharmaceutical_ingredient",
+      "company_id": "sz_002099",
+      "node_id": "active_pharmaceutical_ingredient",
+      "activity_type": "produce",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:医药中间体",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002099_produce_chemical_drug",
+      "company_id": "sz_002099",
+      "node_id": "chemical_drug",
+      "activity_type": "produce",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:原料药",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002099_provide_service_technical_service",
+      "company_id": "sz_002099",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002099_produce_cosmetic",
+      "company_id": "sz_002099",
+      "node_id": "cosmetic",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:化妆品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    }
+  ],
+  "industries_to_upsert": [],
+  "industry_node_mappings_to_upsert": []
+}

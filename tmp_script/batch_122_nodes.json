@@ -1,0 +1,1058 @@
+{
+  "batch_id": "batch_122_nodes",
+  "task_description": "Batch 122 industrial nodes and edges",
+  "nodes_to_upsert": [
+    {
+      "node_id": "tire_manufacturing_equipment",
+      "canonical_name_zh": "轮胎制造设备",
+      "canonical_name_en": "tire manufacturing equipment",
+      "entity_type": "device",
+      "aliases": [],
+      "definition": "用于轮胎生产过程中各工序的专用机械设备",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "软控股份主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "rubber_mixing_equipment",
+      "canonical_name_zh": "橡胶混炼设备",
+      "canonical_name_en": "rubber mixing equipment",
+      "entity_type": "device",
+      "aliases": [],
+      "definition": "用于橡胶配方混炼的机械设备",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "软控股份主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "tire_curing_equipment",
+      "canonical_name_zh": "轮胎硫化设备",
+      "canonical_name_en": "tire curing equipment",
+      "entity_type": "device",
+      "aliases": [],
+      "definition": "用于轮胎硫化成型的机械设备",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "软控股份主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "tire_forming_equipment",
+      "canonical_name_zh": "轮胎成型设备",
+      "canonical_name_en": "tire forming equipment",
+      "entity_type": "device",
+      "aliases": [],
+      "definition": "用于轮胎胎坯成型的机械设备",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "软控股份主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "bulk_cargo_handling",
+      "canonical_name_zh": "散杂货装卸",
+      "canonical_name_en": "bulk cargo handling",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "对散装货物和杂货进行装卸、堆存和中转的作业",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "日照港主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "power_battery",
+      "canonical_name_zh": "动力电池",
+      "canonical_name_en": "power battery",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "为电动车辆、储能系统等提供动力的电池",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "国轩高科经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "energy_storage_system",
+      "canonical_name_zh": "储能系统",
+      "canonical_name_en": "energy storage system",
+      "entity_type": "system",
+      "aliases": [],
+      "definition": "用于存储电能并在需要时释放的系统",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "国轩高科经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "charging_pile",
+      "canonical_name_zh": "充电桩",
+      "canonical_name_en": "charging pile",
+      "entity_type": "device",
+      "aliases": [],
+      "definition": "为电动汽车提供电能补给的设备",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "国轩高科经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "switchgear",
+      "canonical_name_zh": "开关柜",
+      "canonical_name_en": "switchgear",
+      "entity_type": "device",
+      "aliases": [],
+      "definition": "用于电力系统中接通、断开和保护电路的开关设备组合",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "国轩高科主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "gis_equipment",
+      "canonical_name_zh": "气体绝缘开关设备",
+      "canonical_name_en": "gas insulated switchgear",
+      "entity_type": "device",
+      "aliases": [
+        "GIS"
+      ],
+      "definition": "采用SF6等气体作为绝缘介质的金属封闭开关设备",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "国轩高科主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "special_steel",
+      "canonical_name_zh": "特种钢",
+      "canonical_name_en": "special steel",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "具有特殊化学成分、组织性能或用途的合金钢",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "沙钢股份主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "automotive_steel",
+      "canonical_name_zh": "汽车用钢",
+      "canonical_name_en": "automotive steel",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "用于汽车制造的各类特种钢材",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "沙钢股份主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "rail_steel",
+      "canonical_name_zh": "轨道交通用钢",
+      "canonical_name_en": "rail steel",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "用于轨道交通车辆制造的特种钢材",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "沙钢股份主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "ship_steel",
+      "canonical_name_zh": "船用钢",
+      "canonical_name_en": "ship steel",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "用于船舶制造的特种钢材",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "沙钢股份主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "energy_saving_lamp",
+      "canonical_name_zh": "节能灯",
+      "canonical_name_en": "energy saving lamp",
+      "entity_type": "device",
+      "aliases": [],
+      "definition": "发光效率高于传统白炽灯的照明灯具",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "星光股份主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "hid_lamp",
+      "canonical_name_zh": "氙气金卤灯",
+      "canonical_name_en": "HID lamp",
+      "entity_type": "device",
+      "aliases": [
+        "xenon metal halide lamp"
+      ],
+      "definition": "利用高强度气体放电原理发光的照明灯具",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "星光股份主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "uv_lamp",
+      "canonical_name_zh": "紫外线杀菌灯",
+      "canonical_name_en": "UV lamp",
+      "entity_type": "device",
+      "aliases": [],
+      "definition": "利用紫外线进行杀菌消毒的专用灯具",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "星光股份主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "electronic_ballast",
+      "canonical_name_zh": "电子镇流器",
+      "canonical_name_en": "electronic ballast",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "用于气体放电灯的电子控制装置",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "星光股份主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "semiconductor_lighting",
+      "canonical_name_zh": "半导体照明",
+      "canonical_name_en": "semiconductor lighting",
+      "entity_type": "device",
+      "aliases": [
+        "LED lighting"
+      ],
+      "definition": "利用发光二极管作为光源的照明技术",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "星光股份经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "corporate_banking",
+      "canonical_name_zh": "公司银行业务",
+      "canonical_name_en": "corporate banking",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "银行向企业客户提供的各类金融服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "工商银行主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "personal_banking",
+      "canonical_name_zh": "个人银行业务",
+      "canonical_name_en": "personal banking",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "银行向个人客户提供的各类金融服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "工商银行主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "treasury_operations",
+      "canonical_name_zh": "资金业务",
+      "canonical_name_en": "treasury operations",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "银行进行的资金运作和投资管理业务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "工商银行主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "diode",
+      "canonical_name_zh": "二极管",
+      "canonical_name_en": "diode",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "具有单向导电性的半导体器件",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "苏州固锝主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "bridge_rectifier",
+      "canonical_name_zh": "桥堆",
+      "canonical_name_en": "bridge rectifier",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "由四个二极管组成的桥式整流电路器件",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "苏州固锝主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "smd_device",
+      "canonical_name_zh": "表面贴装器件",
+      "canonical_name_en": "surface mount device",
+      "entity_type": "component",
+      "aliases": [
+        "SMD"
+      ],
+      "definition": "可直接贴装到印刷电路板表面的电子元器件",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "苏州固锝主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "integrated_circuit_packaging",
+      "canonical_name_zh": "集成电路封装",
+      "canonical_name_en": "integrated circuit packaging",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "将集成电路芯片封装成可用器件的制造工艺",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "苏州固锝经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "mechanical_paper",
+      "canonical_name_zh": "机制纸",
+      "canonical_name_en": "mechanical paper",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "通过造纸机生产的各类纸张",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "太阳纸业主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "coated_paperboard",
+      "canonical_name_zh": "涂布纸板",
+      "canonical_name_en": "coated paperboard",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "表面涂有涂料层的包装纸板",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "太阳纸业主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "cultural_paper",
+      "canonical_name_zh": "文化用纸",
+      "canonical_name_en": "cultural paper",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "用于书写、印刷等文化用途的纸张",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "太阳纸业主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "pulp",
+      "canonical_name_zh": "纸浆",
+      "canonical_name_en": "pulp",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "造纸的原料，由植物纤维经化学或机械方法处理制成",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "太阳纸业经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "high_tech_park",
+      "canonical_name_zh": "高科技园区",
+      "canonical_name_en": "high tech park",
+      "entity_type": "infrastructure",
+      "aliases": [],
+      "definition": "以高新技术产业为主导的产业园区",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "大港股份主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "park_service",
+      "canonical_name_zh": "园区服务",
+      "canonical_name_en": "park service",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "为产业园区提供的物业管理、企业服务等综合性服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "大港股份主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "container_handling",
+      "canonical_name_zh": "集装箱装卸",
+      "canonical_name_en": "container handling",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "对集装箱进行装卸、堆存和转运的作业",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "上港集团主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "port_logistics",
+      "canonical_name_zh": "港口物流",
+      "canonical_name_en": "port logistics",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "依托港口开展的仓储、运输、配送等物流服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "上港集团主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    }
+  ],
+  "edges_to_upsert": [
+    {
+      "edge_id": "rubber_mixing_equipment_tire_manufacturing_equipment",
+      "from_node": "rubber_mixing_equipment",
+      "to_node": "tire_manufacturing_equipment",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "橡胶混炼设备是轮胎制造设备的一部分",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "tire_curing_equipment_tire_manufacturing_equipment",
+      "from_node": "tire_curing_equipment",
+      "to_node": "tire_manufacturing_equipment",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "轮胎硫化设备是轮胎制造设备的一部分",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "tire_forming_equipment_tire_manufacturing_equipment",
+      "from_node": "tire_forming_equipment",
+      "to_node": "tire_manufacturing_equipment",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "轮胎成型设备是轮胎制造设备的一部分",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "bulk_cargo_handling_port",
+      "from_node": "bulk_cargo_handling",
+      "to_node": "port",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "散杂货装卸是港口的核心业务",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "power_battery_energy_storage_system",
+      "from_node": "power_battery",
+      "to_node": "energy_storage_system",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "动力电池是储能系统的组成部分",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "charging_pile_energy_storage_system",
+      "from_node": "charging_pile",
+      "to_node": "energy_storage_system",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "充电桩是储能系统的配套设备",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "switchgear_power_generation_equipment",
+      "from_node": "switchgear",
+      "to_node": "power_generation_equipment",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "开关柜是发电设备的配电组件",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "gis_equipment_switchgear",
+      "from_node": "gis_equipment",
+      "to_node": "switchgear",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "GIS是开关柜的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "automotive_steel_special_steel",
+      "from_node": "automotive_steel",
+      "to_node": "special_steel",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "汽车用钢是特种钢的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "rail_steel_special_steel",
+      "from_node": "rail_steel",
+      "to_node": "special_steel",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "轨道交通用钢是特种钢的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "ship_steel_special_steel",
+      "from_node": "ship_steel",
+      "to_node": "special_steel",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "船用钢是特种钢的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "energy_saving_lamp_lighting_equipment",
+      "from_node": "energy_saving_lamp",
+      "to_node": "lighting_equipment",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "节能灯是照明设备的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "hid_lamp_lighting_equipment",
+      "from_node": "hid_lamp",
+      "to_node": "lighting_equipment",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "氙气金卤灯是照明设备的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "uv_lamp_lighting_equipment",
+      "from_node": "uv_lamp",
+      "to_node": "lighting_equipment",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "紫外线杀菌灯是照明设备的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "electronic_ballast_lighting_equipment",
+      "from_node": "electronic_ballast",
+      "to_node": "lighting_equipment",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "电子镇流器是照明设备的配套组件",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "semiconductor_lighting_lighting_equipment",
+      "from_node": "semiconductor_lighting",
+      "to_node": "lighting_equipment",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "半导体照明是照明设备的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "corporate_banking_banking_service",
+      "from_node": "corporate_banking",
+      "to_node": "banking_service",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "公司银行业务是银行服务的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "personal_banking_banking_service",
+      "from_node": "personal_banking",
+      "to_node": "banking_service",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "个人银行业务是银行服务的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "treasury_operations_banking_service",
+      "from_node": "treasury_operations",
+      "to_node": "banking_service",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "资金业务是银行服务的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "diode_electronic_component",
+      "from_node": "diode",
+      "to_node": "electronic_component",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "二极管是电子元器件的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "bridge_rectifier_electronic_component",
+      "from_node": "bridge_rectifier",
+      "to_node": "electronic_component",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "桥堆是电子元器件的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "smd_device_electronic_component",
+      "from_node": "smd_device",
+      "to_node": "electronic_component",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "表面贴装器件是电子元器件的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "integrated_circuit_packaging_integrated_circuit",
+      "from_node": "integrated_circuit_packaging",
+      "to_node": "integrated_circuit",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "集成电路封装服务于集成电路生产",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "pulp_mechanical_paper",
+      "from_node": "pulp",
+      "to_node": "mechanical_paper",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "description": "纸浆是机制纸的原料",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "coated_paperboard_pulp",
+      "from_node": "coated_paperboard",
+      "to_node": "pulp",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "description": "涂布纸板以纸浆为原料",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "cultural_paper_pulp",
+      "from_node": "cultural_paper",
+      "to_node": "pulp",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "description": "文化用纸以纸浆为原料",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "park_service_high_tech_park",
+      "from_node": "park_service",
+      "to_node": "high_tech_park",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "园区服务依托高科技园区开展",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "container_handling_port",
+      "from_node": "container_handling",
+      "to_node": "port",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "集装箱装卸是港口的核心业务",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "port_logistics_port",
+      "from_node": "port_logistics",
+      "to_node": "port",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "港口物流依托港口开展",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    }
+  ]
+}

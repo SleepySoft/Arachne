@@ -1,0 +1,128 @@
+=== Checking Existing Companies ===
+EXISTS: sh_600764 (中国海防)
+EXISTS: sh_600765 (XD中航重机)
+EXISTS: sh_600768 (宁波富邦)
+EXISTS: sh_600769 (祥龙电业)
+EXISTS: sh_600770 (综艺股份)
+EXISTS: sh_600771 (广誉远)
+EXISTS: sh_600773 (西藏城投)
+EXISTS: sh_600774 (汉商集团)
+EXISTS: sh_600775 (南京熊猫)
+EXISTS: sh_600776 (东方通信)
+
+=== Checking Existing Nodes ===
+
+Search '水声': 1 results
+  underwater_acoustic_equipment | 水声信息传输装备 | device
+
+Search '声纳': 0 results
+
+Search '液压': 1 results
+  hydraulic_system | 液压系统 | system
+
+Search '锻件': 0 results
+
+Search '铸件': 2 results
+  cast_part | 铸件 | component
+  casting_product | 铸造制品 | component
+
+Search '换热器': 1 results
+  heat_exchanger | 高效换热器 | device
+
+Search '铝板': 3 results
+  building_curtain_wall | 建筑幕墙 | component
+  aluminum_panel | 铝板 | material
+  aluminum_plate_strip | 铝板带材 | material
+
+Search '铝型材': 1 results
+  aluminum_profile | 铝合金型材 | material
+
+Search '发电': 17 results
+  solar_power_generation | 光伏发电 | service
+  generator_set | 发电机组 | device
+  power_generation_equipment | 发电设备 | device
+  renewable_energy_power_generation | 可再生能源发电 | service
+  waste_incineration | 垃圾焚烧 | service
+
+Search '供电': 2 results
+  power_supply_system | 供电系统 | subsystem
+  electricity_distribution | 电力配送 | service
+
+Search '供热': 2 results
+  heating_engineering_service | 供暖工程服务 | service
+  heating_supply | 供热服务 | service
+
+Search '供水': 1 results
+  water_supply_service | 供水服务 | service
+
+Search '污水': 3 results
+  city_sewage_treatment | 城市污水处理 | service
+  waste_water_treatment | 污水处理 | service
+  sewage_treatment_service | 污水处理服务 | service
+
+Search '太阳能': 3 results
+  solar_power_generation | 光伏发电 | service
+  solar_photovoltaic_power_station | 太阳能光伏电站 | infrastructure
+  solar_cell | 太阳能电池 | component
+
+Search '电池': 11 results
+  energy_storage_battery | 储能电池 | device
+  solar_cell | 太阳能电池 | component
+  new_energy_battery | 新能源电池 | component
+  hydrogen_fuel_cell_vehicle | 氢能燃料电池汽车 | device
+  consumer_battery_pack | 消费电子电池包 | device
+
+Search '集成电路': 3 results
+  semiconductor_device | 半导体器件 | component
+  integrated_circuit | 集成电路 | component
+  ic_design | 集成电路设计 | technology_capability
+
+Search '软件': 4 results
+  telecom_software | 电信软件 | application_system
+  software_development_service | 软件开发服务 | service
+  software_license | 软件授权 | service
+  financial_software | 金融软件 | service
+
+Search '中药': 5 results
+  traditional_chinese_medicine | 中成药 | material
+  chinese_patent_medicine | 中成药制剂 | material
+  chinese_medicine_preparation | 中药制剂 | material
+  chinese_patent_medicine_pill | 中药经典名方制剂 | material
+  chinese_medicine_plaster | 中药膏剂 | material
+
+Search '中成药': 3 results
+  traditional_chinese_medicine | 中成药 | material
+  chinese_patent_medicine | 中成药制剂 | material
+  chinese_patent_medicine_liquid | 中成药液体制剂 | material
+
+Search '房地产开发': 1 results
+  real_estate_development | 房地产开发 | service
+
+Search '零售': 7 results
+  pharmaceutical_retail | 医药零售服务 | service
+  home_materials_retail | 家居建材零售 | service
+  fuel_retail_service | 成品油零售服务 | service
+  jewelry_retail_service | 珠宝零售服务 | service
+  department_store | 百货零售 | service
+
+Search '百货': 2 results
+  daily_necessities | 日用百货 | material
+  department_store | 百货零售 | service
+
+Search '会展': 1 results
+  exhibition_service | 会展服务 | service
+
+Search '移动通信': 0 results
+
+Search '卫星通信': 1 results
+  satellite_communication | 卫星通信 | infrastructure
+
+Search '通信设备': 2 results
+  communication_device | 通信设备 | device
+  communication_equipment | 通信设备 | device
+
+Search '传输设备': 1 results
+  optical_transmission_equipment | 光传输设备 | device
+
+Search 'IC卡': 1 results
+  ic_card_telephone | IC卡话机 | device

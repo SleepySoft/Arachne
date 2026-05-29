@@ -1,0 +1,1046 @@
+{
+  "batch_id": "batch_118_business",
+  "task_description": "Batch 118 business registration for 10 A-share companies",
+  "companies_to_upsert": [
+    {
+      "company_id": "sz_002042",
+      "name_zh": "华孚时尚",
+      "name_en": "Huafu Fashion Co., Ltd.",
+      "country": "CN",
+      "province": "安徽",
+      "city": "淮北市",
+      "stock_codes": [
+        "002042.SZ"
+      ],
+      "description": "纯棉纱线、混纺纱线、纯棉坯布、混纺坯布等的生产和销售",
+      "founded_year": 2000,
+      "employee_count": 13772
+    },
+    {
+      "company_id": "sz_002043",
+      "name_zh": "兔宝宝",
+      "name_en": "Deweller Rabbit Baby Decoration New Material Co., Ltd.",
+      "country": "CN",
+      "province": "浙江",
+      "city": "湖州市",
+      "stock_codes": [
+        "002043.SZ"
+      ],
+      "description": "中高档装饰贴面板、胶合板、单板的生产销售和原木加工",
+      "founded_year": 2001,
+      "employee_count": 3015
+    },
+    {
+      "company_id": "sz_002044",
+      "name_zh": "美年健康",
+      "name_en": "Meinian Onehealth Healthcare Holdings Co., Ltd.",
+      "country": "CN",
+      "province": "浙江",
+      "city": "绍兴市",
+      "stock_codes": [
+        "002044.SZ"
+      ],
+      "description": "以健康体检为核心的专业体检和医疗服务",
+      "founded_year": 1991,
+      "employee_count": 38253
+    },
+    {
+      "company_id": "sz_002045",
+      "name_zh": "国光电器",
+      "name_en": "Guoguang Electric Co., Ltd.",
+      "country": "CN",
+      "province": "广东",
+      "city": "广州市",
+      "stock_codes": [
+        "002045.SZ"
+      ],
+      "description": "扬声器单元、音响系统、电池和其他电子零配件的设计生产和销售",
+      "founded_year": 1995,
+      "employee_count": 9630
+    },
+    {
+      "company_id": "sz_002046",
+      "name_zh": "国机精工",
+      "name_en": "Sinomach Precision Industry Group Co., Ltd.",
+      "country": "CN",
+      "province": "河南",
+      "city": "洛阳市",
+      "stock_codes": [
+        "002046.SZ"
+      ],
+      "description": "轴承、电主轴、轴承专用工艺装备和相关产品的研发生产销售",
+      "founded_year": 2001,
+      "employee_count": 2056
+    },
+    {
+      "company_id": "sz_002047",
+      "name_zh": "宝鹰股份",
+      "name_en": "Shenzhen Baoying Construction Holding Group Co., Ltd.",
+      "country": "CN",
+      "province": "广东",
+      "city": "深圳市",
+      "stock_codes": [
+        "002047.SZ"
+      ],
+      "description": "综合建筑装饰工程业务",
+      "founded_year": 1993,
+      "employee_count": 209
+    },
+    {
+      "company_id": "sz_002048",
+      "name_zh": "宁波华翔",
+      "name_en": "Ningbo Huaxiang Electronic Co., Ltd.",
+      "country": "CN",
+      "province": "浙江",
+      "city": "宁波市",
+      "stock_codes": [
+        "002048.SZ"
+      ],
+      "description": "汽车零部件的设计开发生产和销售",
+      "founded_year": 1988,
+      "employee_count": 21860
+    },
+    {
+      "company_id": "sz_002049",
+      "name_zh": "紫光国微",
+      "name_en": "Unisoc Guoxin Microelectronics Co., Ltd.",
+      "country": "CN",
+      "province": "河北",
+      "city": "唐山市",
+      "stock_codes": [
+        "002049.SZ"
+      ],
+      "description": "集成电路芯片设计与销售",
+      "founded_year": 2001,
+      "employee_count": 2788
+    },
+    {
+      "company_id": "sz_002050",
+      "name_zh": "三花智控",
+      "name_en": "Zhejiang Sanhua Intelligent Controls Co., Ltd.",
+      "country": "CN",
+      "province": "浙江",
+      "city": "绍兴市",
+      "stock_codes": [
+        "002050.SZ"
+      ],
+      "description": "截止阀、电子膨胀阀、电磁阀等制冷空调控制元器件",
+      "founded_year": 1994,
+      "employee_count": 19090
+    },
+    {
+      "company_id": "sz_300150",
+      "name_zh": "世纪瑞尔",
+      "name_en": "Beijing Century Real Technology Co., Ltd.",
+      "country": "CN",
+      "province": "北京",
+      "city": "北京市",
+      "stock_codes": [
+        "300150.SZ"
+      ],
+      "description": "铁路行车安全监控系统及综合运维服务",
+      "founded_year": 1999,
+      "employee_count": 1026
+    }
+  ],
+  "company_node_exposures_to_upsert": [
+    {
+      "exposure_id": "sz_002042_produce_cotton_yarn",
+      "company_id": "sz_002042",
+      "node_id": "cotton_yarn",
+      "activity_type": "produce",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:纯棉纱线",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002042_produce_blended_yarn",
+      "company_id": "sz_002042",
+      "node_id": "blended_yarn",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:混纺纱线",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002042_produce_cotton_grey_cloth",
+      "company_id": "sz_002042",
+      "node_id": "cotton_grey_cloth",
+      "activity_type": "produce",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:纯棉坯布",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002042_produce_blended_grey_cloth",
+      "company_id": "sz_002042",
+      "node_id": "blended_grey_cloth",
+      "activity_type": "produce",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:混纺坯布",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002042_produce_textile_garment",
+      "company_id": "sz_002042",
+      "node_id": "textile_garment",
+      "activity_type": "produce",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:纺织品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002042_provide_service_technical_service",
+      "company_id": "sz_002042",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:纺纱技术研究",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002043_produce_decorative_veneer",
+      "company_id": "sz_002043",
+      "node_id": "decorative_veneer",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:装饰贴面板",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002043_produce_plywood",
+      "company_id": "sz_002043",
+      "node_id": "plywood",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:胶合板",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002043_produce_wooden_floor",
+      "company_id": "sz_002043",
+      "node_id": "wooden_floor",
+      "activity_type": "produce",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:地板制造",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002043_produce_furniture",
+      "company_id": "sz_002043",
+      "node_id": "furniture",
+      "activity_type": "produce",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:家具制造",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002043_operate_wood_processing",
+      "company_id": "sz_002043",
+      "node_id": "wood_processing",
+      "activity_type": "operate",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:木材加工",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002043_produce_coating",
+      "company_id": "sz_002043",
+      "node_id": "coating",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:涂料销售",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002044_provide_service_health_examination",
+      "company_id": "sz_002044",
+      "node_id": "health_examination",
+      "activity_type": "provide_service",
+      "weight": 0.4,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:健康体检",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002044_provide_service_health_management",
+      "company_id": "sz_002044",
+      "node_id": "health_management",
+      "activity_type": "provide_service",
+      "weight": 0.3,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:健康管理",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002044_provide_service_medical_service",
+      "company_id": "sz_002044",
+      "node_id": "medical_service",
+      "activity_type": "provide_service",
+      "weight": 0.3,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:医疗服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002045_produce_audio_system",
+      "company_id": "sz_002045",
+      "node_id": "audio_system",
+      "activity_type": "produce",
+      "weight": 0.3,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主要产品:音响系统",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002045_produce_loudspeaker_unit",
+      "company_id": "sz_002045",
+      "node_id": "loudspeaker_unit",
+      "activity_type": "produce",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:扬声器单元",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002045_produce_battery",
+      "company_id": "sz_002045",
+      "node_id": "battery",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:电池",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002045_produce_electronic_connector",
+      "company_id": "sz_002045",
+      "node_id": "electronic_connector",
+      "activity_type": "produce",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:电子零配件",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002045_produce_electronic_component",
+      "company_id": "sz_002045",
+      "node_id": "electronic_component",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:电子零配件",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002046_produce_bearing",
+      "company_id": "sz_002046",
+      "node_id": "bearing",
+      "activity_type": "produce",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:轴承",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002046_produce_spindle",
+      "company_id": "sz_002046",
+      "node_id": "spindle",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:电主轴",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002046_produce_non_metallic_mineral_product",
+      "company_id": "sz_002046",
+      "node_id": "non_metallic_mineral_product",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:非金属矿物制品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002046_produce_non_ferrous_metal_alloy",
+      "company_id": "sz_002046",
+      "node_id": "non_ferrous_metal_alloy",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:有色金属合金",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002046_produce_analytical_instrument",
+      "company_id": "sz_002046",
+      "node_id": "analytical_instrument",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:实验分析仪器",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002046_produce_new_material",
+      "company_id": "sz_002046",
+      "node_id": "new_material",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:新材料技术研发",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002046_produce_photovoltaic_equipment",
+      "company_id": "sz_002046",
+      "node_id": "photovoltaic_equipment",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:光伏设备销售",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002047_provide_service_building_decoration",
+      "company_id": "sz_002047",
+      "node_id": "building_decoration",
+      "activity_type": "provide_service",
+      "weight": 0.3,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:综合建筑装饰工程",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002047_provide_service_intelligent_building_system",
+      "company_id": "sz_002047",
+      "node_id": "intelligent_building_system",
+      "activity_type": "provide_service",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:智能系统工程",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002047_provide_service_fire_protection_engineering",
+      "company_id": "sz_002047",
+      "node_id": "fire_protection_engineering",
+      "activity_type": "provide_service",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:消防设施工程",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002047_produce_curtain_wall",
+      "company_id": "sz_002047",
+      "node_id": "curtain_wall",
+      "activity_type": "produce",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:幕墙工程",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002047_provide_service_smart_city",
+      "company_id": "sz_002047",
+      "node_id": "smart_city",
+      "activity_type": "provide_service",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:智慧城市",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002047_provide_service_construction_engineering",
+      "company_id": "sz_002047",
+      "node_id": "construction_engineering",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:建筑工程施工",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002048_produce_automotive_interior_exterior_trim",
+      "company_id": "sz_002048",
+      "node_id": "automotive_interior_exterior_trim",
+      "activity_type": "produce",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主要产品:汽车内外饰件",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002048_produce_automotive_body_metal_part",
+      "company_id": "sz_002048",
+      "node_id": "automotive_body_metal_part",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主要产品:车身金属件",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002048_produce_automotive_lightweight_material",
+      "company_id": "sz_002048",
+      "node_id": "automotive_lightweight_material",
+      "activity_type": "produce",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主要产品:车身轻量化材料",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002048_produce_automotive_part",
+      "company_id": "sz_002048",
+      "node_id": "automotive_part",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:汽车零部件",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002048_provide_service_technical_service",
+      "company_id": "sz_002048",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002048_provide_service_engineering_design_service",
+      "company_id": "sz_002048",
+      "node_id": "engineering_design_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:模具设计",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002049_produce_smart_chip",
+      "company_id": "sz_002049",
+      "node_id": "smart_chip",
+      "activity_type": "produce",
+      "weight": 0.3,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:智能芯片",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002049_produce_special_integrated_circuit",
+      "company_id": "sz_002049",
+      "node_id": "special_integrated_circuit",
+      "activity_type": "produce",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:特种集成电路",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002049_produce_memory_chip",
+      "company_id": "sz_002049",
+      "node_id": "memory_chip",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:存储器芯片",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002049_produce_integrated_circuit",
+      "company_id": "sz_002049",
+      "node_id": "integrated_circuit",
+      "activity_type": "produce",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:集成电路芯片设计",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002049_produce_electronic_component",
+      "company_id": "sz_002049",
+      "node_id": "electronic_component",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:电子元器件",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002050_produce_globe_valve",
+      "company_id": "sz_002050",
+      "node_id": "globe_valve",
+      "activity_type": "produce",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主要产品:截止阀",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002050_produce_electronic_expansion_valve",
+      "company_id": "sz_002050",
+      "node_id": "electronic_expansion_valve",
+      "activity_type": "produce",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主要产品:电子膨胀阀",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002050_produce_solenoid_valve",
+      "company_id": "sz_002050",
+      "node_id": "solenoid_valve",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主要产品:电磁阀",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002050_produce_refrigeration_air_conditioning_equipment",
+      "company_id": "sz_002050",
+      "node_id": "refrigeration_air_conditioning_equipment",
+      "activity_type": "produce",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:制冷空调设备制造",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002050_produce_valve",
+      "company_id": "sz_002050",
+      "node_id": "valve",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:阀门制造",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002050_produce_pump",
+      "company_id": "sz_002050",
+      "node_id": "pump",
+      "activity_type": "produce",
+      "weight": 0.05,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:泵及真空设备制造",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_300150_produce_railway_video_monitoring",
+      "company_id": "sz_300150",
+      "node_id": "railway_video_monitoring",
+      "activity_type": "produce",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主要产品:铁路综合视频监控系统",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_300150_produce_railway_disaster_prevention_system",
+      "company_id": "sz_300150",
+      "node_id": "railway_disaster_prevention_system",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主要产品:铁路防灾安全监控系统",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_300150_produce_railway_communication_system",
+      "company_id": "sz_300150",
+      "node_id": "railway_communication_system",
+      "activity_type": "produce",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主要产品:铁路通信监控系统",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_300150_provide_service_railway_operation_maintenance_service",
+      "company_id": "sz_300150",
+      "node_id": "railway_operation_maintenance_service",
+      "activity_type": "provide_service",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:铁路综合运维服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_300150_provide_service_technical_service",
+      "company_id": "sz_300150",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_300150_produce_software",
+      "company_id": "sz_300150",
+      "node_id": "software_development_service",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:软件开发",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    }
+  ],
+  "industries_to_upsert": [],
+  "industry_node_mappings_to_upsert": []
+}

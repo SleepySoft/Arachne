@@ -1,0 +1,9 @@
+
+=== '钢丝' (1 results) ===
+  steel_cord | 钢帘线 | material
+
+=== '盘条' (1 results) ===
+  steel_wire_rod | 线材 | material
+
+=== '线材' (1 results) ===
+  steel_wire_rod | 线材 | material

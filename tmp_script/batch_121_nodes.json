@@ -1,0 +1,970 @@
+{
+  "batch_id": "batch_121_nodes",
+  "task_description": "Batch 121 industrial nodes and edges",
+  "nodes_to_upsert": [
+    {
+      "node_id": "air_transport",
+      "canonical_name_zh": "航空运输",
+      "canonical_name_en": "air transport",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "利用航空器从事旅客、货物、邮件运输的服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "中国国航主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "aircraft_maintenance",
+      "canonical_name_zh": "航空器维修",
+      "canonical_name_en": "aircraft maintenance",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "对民用航空器及其部件进行检测、修理、翻修和改装的维修活动",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "中国国航经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "ground_service",
+      "canonical_name_zh": "航空地面服务",
+      "canonical_name_en": "aviation ground service",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "为航空器在地面运行期间提供的各类服务，包括客货装卸、飞机引导、加油等",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "中国国航经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "duty_free",
+      "canonical_name_zh": "免税品",
+      "canonical_name_en": "duty-free goods",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "在免税商店销售的免除进口关税、增值税等税费的商品",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "中国国航经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "air_cargo",
+      "canonical_name_zh": "航空货运",
+      "canonical_name_en": "air cargo",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "利用航空器运输货物的服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "中国国航主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "kraft_linerboard",
+      "canonical_name_zh": "牛皮箱纸板",
+      "canonical_name_en": "kraft linerboard",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "以硫酸盐木浆为主要原料制成的强度高、耐折度好的包装纸板",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "景兴纸业主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "white_top_kraft_linerboard",
+      "canonical_name_zh": "白面牛皮卡纸",
+      "canonical_name_en": "white top kraft linerboard",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "表面为白色、底层为牛皮浆的复合包装纸板",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "景兴纸业主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "corrugated_medium_paper",
+      "canonical_name_zh": "瓦楞原纸",
+      "canonical_name_en": "corrugated medium paper",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "用于制造瓦楞纸板芯层的包装用纸",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "景兴纸业主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "corrugated_carton",
+      "canonical_name_zh": "瓦楞纸箱",
+      "canonical_name_en": "corrugated carton",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "由瓦楞纸板制成的包装容器",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "景兴纸业主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "recycled_paper",
+      "canonical_name_zh": "再生纸",
+      "canonical_name_en": "recycled paper",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "利用废纸为原料生产的纸制品",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "景兴纸业经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "carbon_black",
+      "canonical_name_zh": "炭黑",
+      "canonical_name_en": "carbon black",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "由烃类化合物不完全燃烧或热裂解生成的黑色无定形碳粉末，主要用于橡胶补强",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "黑猫股份主要产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "white_carbon_black",
+      "canonical_name_zh": "白炭黑",
+      "canonical_name_en": "white carbon black",
+      "entity_type": "material",
+      "aliases": [
+        "silica"
+      ],
+      "definition": "白色无定形二氧化硅粉末，用作橡胶补强剂和涂料消光剂",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "黑猫股份经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "coal_tar",
+      "canonical_name_zh": "煤焦油",
+      "canonical_name_en": "coal tar",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "煤干馏过程中产生的黑色或黑褐色粘稠液体，用于提取化工原料",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "黑猫股份经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "industrial_naphthalene",
+      "canonical_name_zh": "工业萘",
+      "canonical_name_en": "industrial naphthalene",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "从煤焦油中提取的双环芳烃化合物，用于生产染料、农药等",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "黑猫股份经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "pitch",
+      "canonical_name_zh": "沥青",
+      "canonical_name_en": "pitch",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "煤焦油蒸馏后的残渣，用于电极、防水材料等",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "黑猫股份经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "contrast_agent",
+      "canonical_name_zh": "对比剂",
+      "canonical_name_en": "contrast agent",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "用于医学影像检查中增强组织对比度的药物",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "北陆药业主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "psychiatric_drug",
+      "canonical_name_zh": "精神类药品",
+      "canonical_name_en": "psychiatric drug",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "用于治疗精神疾病的药物",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "北陆药业主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "hypoglycemic_drug",
+      "canonical_name_zh": "降糖药",
+      "canonical_name_en": "hypoglycemic drug",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "用于降低血糖水平的药物",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "北陆药业主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "e_government_software",
+      "canonical_name_zh": "电子政务软件",
+      "canonical_name_en": "e-government software",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "用于政府机构信息化管理的软件系统",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "华宇软件主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "judicial_informatization",
+      "canonical_name_zh": "司法信息化",
+      "canonical_name_en": "judicial informatization",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "为法院、检察院等司法机关提供的信息化解决方案和服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "华宇软件主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "information_security_service",
+      "canonical_name_zh": "信息安全服务",
+      "canonical_name_en": "information security service",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "为保护信息系统安全提供的咨询、测评、运维等服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "华宇软件经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "coalbed_methane",
+      "canonical_name_zh": "煤层气",
+      "canonical_name_en": "coalbed methane",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "储存在煤层中的以甲烷为主要成分的天然气",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "潞安环能经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "marine_aquaculture",
+      "canonical_name_zh": "海水养殖",
+      "canonical_name_en": "marine aquaculture",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "在海水环境中进行的动植物养殖活动",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "獐子岛主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "marine_fishery",
+      "canonical_name_zh": "海洋渔业",
+      "canonical_name_en": "marine fishery",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "在海洋中进行的捕捞和养殖活动",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "獐子岛经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "aquatic_product",
+      "canonical_name_zh": "水产品",
+      "canonical_name_en": "aquatic product",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "通过捕捞或养殖获得的水生动物和植物产品",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "獐子岛经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "management_software",
+      "canonical_name_zh": "管理软件",
+      "canonical_name_en": "management software",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "用于企业和组织管理的软件系统",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "久其软件主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "digital_media",
+      "canonical_name_zh": "数字传播",
+      "canonical_name_en": "digital media",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "通过数字化手段进行内容制作和传播的服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "久其软件主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "internet_bandwidth_optimization",
+      "canonical_name_zh": "互联网带宽优化",
+      "canonical_name_en": "internet bandwidth optimization",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "通过技术手段优化互联网出口带宽使用效率的服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "凯瑞德主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "supply_chain_management",
+      "canonical_name_zh": "供应链管理",
+      "canonical_name_en": "supply chain management",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "对供应链各环节进行计划、协调、控制和优化的管理活动",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "凯瑞德经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "internet_application_acceleration",
+      "canonical_name_zh": "互联网应用加速",
+      "canonical_name_en": "internet application acceleration",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "通过技术手段提升互联网应用访问速度的服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "凯瑞德主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "hotel_operation",
+      "canonical_name_zh": "酒店经营",
+      "canonical_name_en": "hotel operation",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "提供住宿、餐饮、会议等服务的酒店经营管理活动",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "北辰实业主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "exhibition_service",
+      "canonical_name_zh": "会展服务",
+      "canonical_name_en": "exhibition service",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "为会议和展览活动提供场地、策划、组织等服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "北辰实业经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    }
+  ],
+  "edges_to_upsert": [
+    {
+      "edge_id": "air_transport_aircraft_maintenance",
+      "from_node": "air_transport",
+      "to_node": "aircraft_maintenance",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "航空运输依赖航空器维修服务",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "air_transport_ground_service",
+      "from_node": "air_transport",
+      "to_node": "ground_service",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "航空运输需要地面服务支持",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "air_cargo_air_transport",
+      "from_node": "air_cargo",
+      "to_node": "air_transport",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "航空货运是航空运输的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "duty_free_air_transport",
+      "from_node": "duty_free",
+      "to_node": "air_transport",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "免税品销售依托航空运输场景",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "kraft_linerboard_corrugated_carton",
+      "from_node": "kraft_linerboard",
+      "to_node": "corrugated_carton",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "description": "牛皮箱纸板是瓦楞纸箱的面纸材料",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "corrugated_medium_paper_corrugated_carton",
+      "from_node": "corrugated_medium_paper",
+      "to_node": "corrugated_carton",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "description": "瓦楞原纸是瓦楞纸箱的芯纸材料",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "recycled_paper_kraft_linerboard",
+      "from_node": "recycled_paper",
+      "to_node": "kraft_linerboard",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "description": "再生纸可用于生产牛皮箱纸板",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "carbon_black_rubber_product",
+      "from_node": "carbon_black",
+      "to_node": "rubber_product",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "description": "炭黑是橡胶制品的重要补强剂",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "white_carbon_black_rubber_product",
+      "from_node": "white_carbon_black",
+      "to_node": "rubber_product",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "description": "白炭黑用于橡胶和硅橡胶补强",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "coal_tar_pitch",
+      "from_node": "coal_tar",
+      "to_node": "pitch",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "description": "煤焦油蒸馏残渣为沥青",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "industrial_naphthalene_coal_tar",
+      "from_node": "industrial_naphthalene",
+      "to_node": "coal_tar",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "description": "工业萘从煤焦油中提取",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "contrast_agent_pharmaceutical",
+      "from_node": "contrast_agent",
+      "to_node": "pharmaceutical",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "对比剂是药品的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "psychiatric_drug_pharmaceutical",
+      "from_node": "psychiatric_drug",
+      "to_node": "pharmaceutical",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "精神类药品是药品的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "hypoglycemic_drug_pharmaceutical",
+      "from_node": "hypoglycemic_drug",
+      "to_node": "pharmaceutical",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "降糖药是药品的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "e_government_software_software_development_service",
+      "from_node": "e_government_software",
+      "to_node": "software_development_service",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "电子政务软件是软件开发服务的产品",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "judicial_informatization_e_government_software",
+      "from_node": "judicial_informatization",
+      "to_node": "e_government_software",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "司法信息化是电子政务软件的应用领域",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "information_security_service_software_development_service",
+      "from_node": "information_security_service",
+      "to_node": "software_development_service",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "信息安全服务支持软件开发",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "coalbed_methane_natural_gas",
+      "from_node": "coalbed_methane",
+      "to_node": "natural_gas",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "description": "煤层气是天然气的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "marine_aquaculture_marine_fishery",
+      "from_node": "marine_aquaculture",
+      "to_node": "marine_fishery",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "海水养殖是海洋渔业的组成部分",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "aquatic_product_marine_fishery",
+      "from_node": "aquatic_product",
+      "to_node": "marine_fishery",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "description": "水产品来自海洋渔业",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "management_software_software_development_service",
+      "from_node": "management_software",
+      "to_node": "software_development_service",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "管理软件是软件开发服务的产品",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "digital_media_management_software",
+      "from_node": "digital_media",
+      "to_node": "management_software",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "数字传播服务依托管理软件平台",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "internet_bandwidth_optimization_supply_chain_management",
+      "from_node": "internet_bandwidth_optimization",
+      "to_node": "supply_chain_management",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "带宽优化服务支持供应链管理",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "internet_application_acceleration_internet_bandwidth_optimization",
+      "from_node": "internet_application_acceleration",
+      "to_node": "internet_bandwidth_optimization",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "应用加速是带宽优化的延伸服务",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "hotel_operation_real_estate_development",
+      "from_node": "hotel_operation",
+      "to_node": "real_estate_development",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "酒店经营是房地产开发后续服务",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "exhibition_service_real_estate_development",
+      "from_node": "exhibition_service",
+      "to_node": "real_estate_development",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "会展服务依托商业地产开展",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    }
+  ]
+}

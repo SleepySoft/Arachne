@@ -1,0 +1,1094 @@
+{
+  "batch_id": "batch_121_business",
+  "task_description": "Batch 121 business registration",
+  "companies_to_upsert": [
+    {
+      "company_id": "sh_601111",
+      "name_zh": "中国国航",
+      "name_en": "Air China Limited",
+      "country": "CN",
+      "province": "北京",
+      "city": "北京市",
+      "stock_codes": [
+        "601111.SH"
+      ],
+      "description": "国际、国内航空客货邮和行李运输业务",
+      "founded_year": 2006,
+      "employee_count": 107795
+    },
+    {
+      "company_id": "sz_002067",
+      "name_zh": "景兴纸业",
+      "name_en": "Zhejiang Jingxing Paper Co., Ltd.",
+      "country": "CN",
+      "province": "浙江",
+      "city": "嘉兴市",
+      "stock_codes": [
+        "002067.SZ"
+      ],
+      "description": "牛皮箱纸板、白面牛皮卡纸、瓦楞原纸和瓦楞纸箱的生产销售",
+      "founded_year": 1996,
+      "employee_count": 2180
+    },
+    {
+      "company_id": "sz_002068",
+      "name_zh": "黑猫股份",
+      "name_en": "Jiangxi Black Cat Carbon Black Co., Ltd.",
+      "country": "CN",
+      "province": "江西",
+      "city": "景德镇市",
+      "stock_codes": [
+        "002068.SZ"
+      ],
+      "description": "炭黑、白炭黑及相关化工产品的生产销售",
+      "founded_year": 2001,
+      "employee_count": 4259
+    },
+    {
+      "company_id": "sz_300016",
+      "name_zh": "北陆药业",
+      "name_en": "Beijing Beilu Pharmaceutical Co., Ltd.",
+      "country": "CN",
+      "province": "北京",
+      "city": "北京市",
+      "stock_codes": [
+        "300016.SZ"
+      ],
+      "description": "对比剂系列、精神类药品和降糖类药品的研发、生产与销售",
+      "founded_year": 1992,
+      "employee_count": 1173
+    },
+    {
+      "company_id": "sz_300271",
+      "name_zh": "华宇软件",
+      "name_en": "Beijing Thunisoft Co., Ltd.",
+      "country": "CN",
+      "province": "北京",
+      "city": "北京市",
+      "stock_codes": [
+        "300271.SZ"
+      ],
+      "description": "电子政务系统的产品开发与服务",
+      "founded_year": 2001,
+      "employee_count": 4140
+    },
+    {
+      "company_id": "sh_601699",
+      "name_zh": "潞安环能",
+      "name_en": "Shanxi Lu'an Environmental Energy Development Co., Ltd.",
+      "country": "CN",
+      "province": "山西",
+      "city": "长治市",
+      "stock_codes": [
+        "601699.SH"
+      ],
+      "description": "原煤开采、煤炭洗选、煤焦冶炼",
+      "founded_year": 2001,
+      "employee_count": 34954
+    },
+    {
+      "company_id": "sz_002069",
+      "name_zh": "獐子岛",
+      "name_en": "Zhangzidao Group Co., Ltd.",
+      "country": "CN",
+      "province": "辽宁",
+      "city": "大连市",
+      "stock_codes": [
+        "002069.SZ"
+      ],
+      "description": "海洋水产业",
+      "founded_year": 1992,
+      "employee_count": 1554
+    },
+    {
+      "company_id": "sz_002279",
+      "name_zh": "久其软件",
+      "name_en": "Beijing Join-Cheer Software Co., Ltd.",
+      "country": "CN",
+      "province": "北京",
+      "city": "北京市",
+      "stock_codes": [
+        "002279.SZ"
+      ],
+      "description": "管理软件和数字传播",
+      "founded_year": 1999,
+      "employee_count": 3253
+    },
+    {
+      "company_id": "sz_002072",
+      "name_zh": "凯瑞德",
+      "name_en": "Kairuide Holding Co., Ltd.",
+      "country": "CN",
+      "province": "湖北",
+      "city": "荆门市",
+      "stock_codes": [
+        "002072.SZ"
+      ],
+      "description": "互联网出口带宽优化服务和互联网应用加速服务",
+      "founded_year": 2000,
+      "employee_count": 43
+    },
+    {
+      "company_id": "sh_601588",
+      "name_zh": "北辰实业",
+      "name_en": "Beijing North Star Co., Ltd.",
+      "country": "CN",
+      "province": "北京",
+      "city": "北京市",
+      "stock_codes": [
+        "601588.SH"
+      ],
+      "description": "发展物业、投资物业及商业物业",
+      "founded_year": 1998,
+      "employee_count": 4729
+    }
+  ],
+  "company_node_exposures_to_upsert": [
+    {
+      "exposure_id": "sh_601111_provide_service_air_transport",
+      "company_id": "sh_601111",
+      "node_id": "air_transport",
+      "activity_type": "provide_service",
+      "weight": 0.4,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:航空客货运输",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601111_provide_service_air_cargo",
+      "company_id": "sh_601111",
+      "node_id": "air_cargo",
+      "activity_type": "provide_service",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:航空货运",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601111_provide_service_aircraft_maintenance",
+      "company_id": "sh_601111",
+      "node_id": "aircraft_maintenance",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:航空器维修",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601111_provide_service_ground_service",
+      "company_id": "sh_601111",
+      "node_id": "ground_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:地面服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601111_produce_duty_free",
+      "company_id": "sh_601111",
+      "node_id": "duty_free",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:机上免税品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601111_provide_service_catering_service",
+      "company_id": "sh_601111",
+      "node_id": "catering_service",
+      "activity_type": "provide_service",
+      "weight": 0.05,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:餐饮服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601111_provide_service_hotel_operation",
+      "company_id": "sh_601111",
+      "node_id": "hotel_operation",
+      "activity_type": "provide_service",
+      "weight": 0.05,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:酒店管理",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601111_provide_service_technical_service",
+      "company_id": "sh_601111",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.05,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术培训",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002067_produce_kraft_linerboard",
+      "company_id": "sz_002067",
+      "node_id": "kraft_linerboard",
+      "activity_type": "produce",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:牛皮箱纸板",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002067_produce_white_top_kraft_linerboard",
+      "company_id": "sz_002067",
+      "node_id": "white_top_kraft_linerboard",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:白面牛皮卡纸",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002067_produce_corrugated_medium_paper",
+      "company_id": "sz_002067",
+      "node_id": "corrugated_medium_paper",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:瓦楞原纸",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002067_produce_corrugated_carton",
+      "company_id": "sz_002067",
+      "node_id": "corrugated_carton",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:瓦楞纸箱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002067_produce_recycled_paper",
+      "company_id": "sz_002067",
+      "node_id": "recycled_paper",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:绿色环保再生纸",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002067_provide_service_technical_service",
+      "company_id": "sz_002067",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.05,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002068_produce_carbon_black",
+      "company_id": "sz_002068",
+      "node_id": "carbon_black",
+      "activity_type": "produce",
+      "weight": 0.35,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主要产品:炭黑",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002068_produce_white_carbon_black",
+      "company_id": "sz_002068",
+      "node_id": "white_carbon_black",
+      "activity_type": "produce",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:白炭黑",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002068_produce_coal_tar",
+      "company_id": "sz_002068",
+      "node_id": "coal_tar",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:焦油",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002068_produce_pitch",
+      "company_id": "sz_002068",
+      "node_id": "pitch",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:沥青",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002068_produce_industrial_naphthalene",
+      "company_id": "sz_002068",
+      "node_id": "industrial_naphthalene",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:工业萘",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002068_provide_service_steam",
+      "company_id": "sz_002068",
+      "node_id": "steam",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:蒸汽",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002068_operate_power_generation",
+      "company_id": "sz_002068",
+      "node_id": "power_generation",
+      "activity_type": "operate",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:发电",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_300016_produce_contrast_agent",
+      "company_id": "sz_300016",
+      "node_id": "contrast_agent",
+      "activity_type": "produce",
+      "weight": 0.3,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:对比剂系列",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_300016_produce_psychiatric_drug",
+      "company_id": "sz_300016",
+      "node_id": "psychiatric_drug",
+      "activity_type": "produce",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:精神类药品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_300016_produce_hypoglycemic_drug",
+      "company_id": "sz_300016",
+      "node_id": "hypoglycemic_drug",
+      "activity_type": "produce",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:降糖类药品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_300016_produce_pharmaceutical_api",
+      "company_id": "sz_300016",
+      "node_id": "pharmaceutical_api",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:原料药",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_300016_produce_chemical_drug",
+      "company_id": "sz_300016",
+      "node_id": "chemical_drug",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:生产销售注射剂片剂",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_300271_produce_e_government_software",
+      "company_id": "sz_300271",
+      "node_id": "e_government_software",
+      "activity_type": "produce",
+      "weight": 0.3,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:电子政务系统",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_300271_provide_service_judicial_informatization",
+      "company_id": "sz_300271",
+      "node_id": "judicial_informatization",
+      "activity_type": "provide_service",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:法院检察院信息化",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_300271_produce_software_development_service",
+      "company_id": "sz_300271",
+      "node_id": "software_development_service",
+      "activity_type": "produce",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:软件开发",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_300271_provide_service_system_integration",
+      "company_id": "sz_300271",
+      "node_id": "system_integration",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:信息系统集成服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_300271_provide_service_information_security_service",
+      "company_id": "sz_300271",
+      "node_id": "information_security_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:网络与信息安全软件开发",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_300271_provide_service_artificial_intelligence",
+      "company_id": "sz_300271",
+      "node_id": "artificial_intelligence",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:人工智能应用软件开发",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601699_operate_coal_mining",
+      "company_id": "sh_601699",
+      "node_id": "coal_mining",
+      "activity_type": "operate",
+      "weight": 0.35,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:原煤开采",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601699_operate_coal_washing",
+      "company_id": "sh_601699",
+      "node_id": "coal_washing",
+      "activity_type": "operate",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:煤炭洗选",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601699_produce_coal",
+      "company_id": "sh_601699",
+      "node_id": "coal",
+      "activity_type": "produce",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:煤炭销售",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601699_operate_coking",
+      "company_id": "sh_601699",
+      "node_id": "coking",
+      "activity_type": "operate",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:煤焦冶炼",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601699_produce_coalbed_methane",
+      "company_id": "sh_601699",
+      "node_id": "coalbed_methane",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:煤层气开发",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601699_provide_service_technical_service",
+      "company_id": "sh_601699",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.05,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002069_operate_marine_aquaculture",
+      "company_id": "sz_002069",
+      "node_id": "marine_aquaculture",
+      "activity_type": "operate",
+      "weight": 0.3,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:海洋水产",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002069_operate_marine_fishery",
+      "company_id": "sz_002069",
+      "node_id": "marine_fishery",
+      "activity_type": "operate",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:渔业捕捞",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002069_produce_aquatic_product",
+      "company_id": "sz_002069",
+      "node_id": "aquatic_product",
+      "activity_type": "produce",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:水产养殖",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002069_provide_service_food_processing",
+      "company_id": "sz_002069",
+      "node_id": "food_processing",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:食品加工",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002069_provide_service_technical_service",
+      "company_id": "sz_002069",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002279_produce_management_software",
+      "company_id": "sz_002279",
+      "node_id": "management_software",
+      "activity_type": "produce",
+      "weight": 0.3,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:管理软件",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002279_provide_service_digital_media",
+      "company_id": "sz_002279",
+      "node_id": "digital_media",
+      "activity_type": "provide_service",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:数字传播",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002279_produce_software_development_service",
+      "company_id": "sz_002279",
+      "node_id": "software_development_service",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:软件开发",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002279_provide_service_e_government_software",
+      "company_id": "sz_002279",
+      "node_id": "e_government_software",
+      "activity_type": "provide_service",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:电子政务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002279_provide_service_system_integration",
+      "company_id": "sz_002279",
+      "node_id": "system_integration",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:信息系统集成服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002072_provide_service_internet_bandwidth_optimization",
+      "company_id": "sz_002072",
+      "node_id": "internet_bandwidth_optimization",
+      "activity_type": "provide_service",
+      "weight": 0.35,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:互联网出口带宽优化服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002072_provide_service_internet_application_acceleration",
+      "company_id": "sz_002072",
+      "node_id": "internet_application_acceleration",
+      "activity_type": "provide_service",
+      "weight": 0.3,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:互联网应用加速服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002072_provide_service_supply_chain_management",
+      "company_id": "sz_002072",
+      "node_id": "supply_chain_management",
+      "activity_type": "provide_service",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:供应链管理",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002072_produce_metal_ore",
+      "company_id": "sz_002072",
+      "node_id": "metal_ore",
+      "activity_type": "produce",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:金属矿石加工销售",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002072_provide_service_technical_service",
+      "company_id": "sz_002072",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.05,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601588_provide_service_real_estate_development",
+      "company_id": "sh_601588",
+      "node_id": "real_estate_development",
+      "activity_type": "provide_service",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:发展物业",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601588_provide_service_property_management",
+      "company_id": "sh_601588",
+      "node_id": "property_management",
+      "activity_type": "provide_service",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:物业管理",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601588_provide_service_hotel_operation",
+      "company_id": "sh_601588",
+      "node_id": "hotel_operation",
+      "activity_type": "provide_service",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:酒店",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601588_provide_service_exhibition_service",
+      "company_id": "sh_601588",
+      "node_id": "exhibition_service",
+      "activity_type": "provide_service",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:承办展览展示",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601588_provide_service_construction_service",
+      "company_id": "sh_601588",
+      "node_id": "construction_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:房地产开发建设",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601588_provide_service_catering_service",
+      "company_id": "sh_601588",
+      "node_id": "catering_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:餐饮服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    }
+  ],
+  "industries_to_upsert": [],
+  "industry_node_mappings_to_upsert": []
+}

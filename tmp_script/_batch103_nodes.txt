@@ -1,0 +1,75 @@
+
+=== '水泥' (2 results) ===
+  cement | 水泥 | material
+  cement_product | 水泥制品 | component
+
+=== '熟料' (0 results) ===
+
+=== '液化天然气' (1 results) ===
+  lng | 液化天然气 | material
+
+=== 'LNG' (1 results) ===
+  energy_chemical_equipment | 能源化工装备 | device
+
+=== '甲醇' (1 results) ===
+  methanol | 甲醇 | material
+
+=== '煤炭' (3 results) ===
+  coal | 煤炭 | material
+  coal_mining | 煤炭开采 | service
+  coal_railway_transport | 煤炭铁路运输 | service
+
+=== '公路' (5 results) ===
+  road_engineering | 公路工程 | service
+  road_bridge | 公路桥梁 | infrastructure
+  highway | 高速公路 | infrastructure
+  expressway | 高速公路 | infrastructure
+  highway_operation_service | 高速公路运营服务 | service
+
+=== '拖拉机' (0 results) ===
+
+=== '生物制药' (1 results) ===
+  biological_drug | 生物药 | material
+
+=== '钢铁' (0 results) ===
+
+=== '板材' (3 results) ===
+  steel_plate | 板材 | material
+  aluminum_panel | 铝板 | material
+  high_performance_aluminum_sheet | 高性能铝合金板材 | material
+
+=== '长材' (0 results) ===
+
+=== '轮轴' (0 results) ===
+
+=== '白酒' (2 results) ===
+  liquor | 白酒 | material
+  baijiu | 白酒 | material
+
+=== '帘子布' (1 results) ===
+  tire_cord_fabric | 帘子布 | material
+
+=== '工业丝' (0 results) ===
+
+=== '尼龙' (2 results) ===
+  nylon_chip | 锦纶切片 | material
+  nylon_filament | 锦纶长丝 | material
+
+=== '维生素' (3 results) ===
+  riboflavin | 核黄素 | material
+  vitamin | 维生素 | material
+  vitamin_e | 维生素E | material
+
+=== '青霉素' (0 results) ===
+
+=== '头孢' (0 results) ===
+
+=== '百货' (2 results) ===
+  daily_necessities | 日用百货 | material
+  department_store | 百货零售 | service
+
+=== '广告' (4 results) ===
+  internet_advertising | 互联网广告 | service
+  bus_advertising | 公交广告 | service
+  advertising | 广告 | service
+  advertising_service | 广告服务 | service

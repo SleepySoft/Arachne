@@ -1,0 +1,200 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Generator for batch 125 submission scripts."""
+import json, os
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+def ev(source_title, quote="根据企业公开信息"):
+    return [{"source_title": source_title, "source_url": None, "quote": quote}]
+
+def write_batch(batch_num, nodes, edges, companies, exposures):
+    graph = {
+        "batch_id": f"batch_{batch_num}_nodes",
+        "task_description": f"Batch {batch_num} industrial nodes and edges",
+        "nodes_to_upsert": nodes,
+        "edges_to_upsert": edges
+    }
+    path_g = os.path.join(BASE_DIR, "tmp_script", f"batch_{batch_num}_nodes.json")
+    with open(path_g, "w", encoding="utf-8") as f:
+        json.dump(graph, f, ensure_ascii=False, indent=2)
+
+    business = {
+        "batch_id": f"batch_{batch_num}_business",
+        "task_description": f"Batch {batch_num} business registration",
+        "companies_to_upsert": companies,
+        "company_node_exposures_to_upsert": exposures,
+        "industries_to_upsert": [],
+        "industry_node_mappings_to_upsert": []
+    }
+    path_b = os.path.join(BASE_DIR, "tmp_script", f"batch_{batch_num}_business.json")
+    with open(path_b, "w", encoding="utf-8") as f:
+        json.dump(business, f, ensure_ascii=False, indent=2)
+    print(f"Batch {batch_num}: {len(nodes)} nodes, {len(edges)} edges, {len(companies)} companies, {len(exposures)} exposures")
+
+NODES_125 = [
+    {"node_id": "feed", "canonical_name_zh": "饲料", "canonical_name_en": "feed", "entity_type": "material", "aliases": [], "definition": "用于饲养动物的各类饲料产品", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("天康生物主营业务")},
+    {"node_id": "veterinary_medicine", "canonical_name_zh": "兽药", "canonical_name_en": "veterinary medicine", "entity_type": "material", "aliases": [], "definition": "用于预防、治疗和诊断动物疾病的药物", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("天康生物经营范围")},
+    {"node_id": "veterinary_biological_product", "canonical_name_zh": "兽用生物制品", "canonical_name_en": "veterinary biological product", "entity_type": "material", "aliases": [], "definition": "用于预防动物疾病的疫苗、诊断试剂等生物制品", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("天康生物经营范围")},
+    {"node_id": "livestock_breeding", "canonical_name_zh": "畜禽养殖", "canonical_name_en": "livestock breeding", "entity_type": "service", "aliases": [], "definition": "对家畜家禽进行饲养繁殖的活动", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("天康生物经营范围")},
+    {"node_id": "slaughtering", "canonical_name_zh": "屠宰加工", "canonical_name_en": "slaughtering", "entity_type": "service", "aliases": [], "definition": "对畜禽进行屠宰和初加工的活动", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("天康生物经营范围")},
+    {"node_id": "hydraulic_pile_driver", "canonical_name_zh": "液压静力压桩机", "canonical_name_en": "hydraulic pile driver", "entity_type": "device", "aliases": [], "definition": "利用液压静力压桩的桩工机械设备", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("山河智能主营业务")},
+    {"node_id": "rotary_drilling_rig", "canonical_name_zh": "旋挖钻机", "canonical_name_en": "rotary drilling rig", "entity_type": "device", "aliases": [], "definition": "利用旋转钻具进行钻孔作业的桩工设备", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("山河智能主营业务")},
+    {"node_id": "dth_drill", "canonical_name_zh": "潜孔钻机", "canonical_name_en": "down the hole drill", "entity_type": "device", "aliases": ["潜孔钻"], "definition": "利用冲击器在钻孔底部进行冲击钻孔的钻机", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("山河智能主营业务")},
+    {"node_id": "uav", "canonical_name_zh": "无人飞行器", "canonical_name_en": "unmanned aerial vehicle", "entity_type": "system", "aliases": ["无人机"], "definition": "无需载人驾驶的航空器", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("山河智能经营范围")},
+    {"node_id": "industrial_explosive", "canonical_name_zh": "工业炸药", "canonical_name_en": "industrial explosive", "entity_type": "material", "aliases": [], "definition": "用于工业爆破作业的炸药产品", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("易普力主营业务")},
+    {"node_id": "ammonium_nitrate_explosive", "canonical_name_zh": "铵油炸药", "canonical_name_en": "ammonium nitrate explosive", "entity_type": "material", "aliases": ["铵梯炸药"], "definition": "以硝酸铵为主要成分的工业炸药", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("易普力主营业务")},
+    {"node_id": "emulsion_explosive", "canonical_name_zh": "乳化炸药", "canonical_name_en": "emulsion explosive", "entity_type": "material", "aliases": [], "definition": "以氧化剂水溶液和燃料油形成的乳状液为基质的炸药", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("易普力经营范围")},
+    {"node_id": "blasting_fuse", "canonical_name_zh": "工业雷管", "canonical_name_en": "blasting fuse", "entity_type": "component", "aliases": ["起爆器材"], "definition": "用于引爆炸药的火工品", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("易普力经营范围")},
+    {"node_id": "zipper", "canonical_name_zh": "拉链", "canonical_name_en": "zipper", "entity_type": "component", "aliases": [], "definition": "用于连接衣物、包袋开口的滑动扣合件", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("浔兴股份主营业务")},
+    {"node_id": "precision_mold", "canonical_name_zh": "精密模具", "canonical_name_en": "precision mold", "entity_type": "component", "aliases": [], "definition": "用于精密零件成型的模具", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("浔兴股份经营范围")},
+    {"node_id": "metal_stamping", "canonical_name_zh": "金属冲压", "canonical_name_en": "metal stamping", "entity_type": "service", "aliases": [], "definition": "利用模具对金属板材进行冲压成型的加工方法", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("浔兴股份经营范围")},
+    {"node_id": "clothing_accessory", "canonical_name_zh": "服饰辅料", "canonical_name_en": "clothing accessory", "entity_type": "material", "aliases": [], "definition": "用于服装制造的辅助材料", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("浔兴股份经营范围")},
+    {"node_id": "stationery", "canonical_name_zh": "文具", "canonical_name_en": "stationery", "entity_type": "material", "aliases": [], "definition": "用于办公和学习的各类用品", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("广博股份主营业务")},
+    {"node_id": "office_supplies", "canonical_name_zh": "办公用品", "canonical_name_en": "office supplies", "entity_type": "material", "aliases": [], "definition": "办公场所使用的各类用品", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("广博股份经营范围")},
+    {"node_id": "bicycle_part", "canonical_name_zh": "自行车零部件", "canonical_name_en": "bicycle part", "entity_type": "component", "aliases": [], "definition": "用于自行车制造的各类零部件", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("信隆健康主营业务")},
+    {"node_id": "fitness_equipment", "canonical_name_zh": "运动健身器材", "canonical_name_en": "fitness equipment", "entity_type": "device", "aliases": [], "definition": "用于健身和运动的器械设备", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("信隆健康主营业务")},
+    {"node_id": "rehabilitation_equipment", "canonical_name_zh": "康复器材", "canonical_name_en": "rehabilitation equipment", "entity_type": "device", "aliases": [], "definition": "用于伤病康复治疗的器械设备", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("信隆健康经营范围")},
+    {"node_id": "railway_passenger_transport", "canonical_name_zh": "铁路客运", "canonical_name_en": "railway passenger transport", "entity_type": "service", "aliases": [], "definition": "利用铁路进行的旅客运输服务", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("广深铁路主营业务")},
+    {"node_id": "railway_freight_transport", "canonical_name_zh": "铁路货运", "canonical_name_en": "railway freight transport", "entity_type": "service", "aliases": [], "definition": "利用铁路进行的货物运输服务", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("广深铁路经营范围")},
+    {"node_id": "railway_facility_service", "canonical_name_zh": "铁路设施服务", "canonical_name_en": "railway facility service", "entity_type": "service", "aliases": [], "definition": "为铁路运营提供的设施维护和管理服务", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("广深铁路经营范围")},
+    {"node_id": "freight_forwarding", "canonical_name_zh": "货运代理", "canonical_name_en": "freight forwarding", "entity_type": "service", "aliases": [], "definition": "接受货主委托代办货物运输的服务", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("广深铁路经营范围")},
+    {"node_id": "magnetic_stripe_card", "canonical_name_zh": "磁条卡", "canonical_name_en": "magnetic stripe card", "entity_type": "material", "aliases": [], "definition": "利用磁条记录信息的卡片", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("恒宝股份主营业务")},
+    {"node_id": "password_card", "canonical_name_zh": "密码卡", "canonical_name_en": "password card", "entity_type": "material", "aliases": [], "definition": "内置密码功能的智能卡片", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("恒宝股份主营业务")},
+    {"node_id": "ic_card", "canonical_name_zh": "IC卡", "canonical_name_en": "IC card", "entity_type": "component", "aliases": ["智能卡"], "definition": "内置集成电路芯片的卡片", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("恒宝股份主营业务")},
+    {"node_id": "commercial_password_product", "canonical_name_zh": "商用密码产品", "canonical_name_en": "commercial password product", "entity_type": "component", "aliases": [], "definition": "用于商业领域的信息安全密码产品", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("恒宝股份经营范围")},
+    {"node_id": "ticket_product", "canonical_name_zh": "票证产品", "canonical_name_en": "ticket product", "entity_type": "material", "aliases": [], "definition": "用于票务系统的各类票证", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("恒宝股份经营范围")},
+    {"node_id": "construction_steel", "canonical_name_zh": "建筑钢材", "canonical_name_en": "construction steel", "entity_type": "material", "aliases": [], "definition": "用于建筑施工的钢材产品", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("三钢闽光主营业务")},
+    {"node_id": "medium_plate", "canonical_name_zh": "中厚板材", "canonical_name_en": "medium plate", "entity_type": "material", "aliases": [], "definition": "厚度较大的钢板", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("三钢闽光经营范围")},
+    {"node_id": "round_steel_bar", "canonical_name_zh": "圆钢", "canonical_name_en": "round steel bar", "entity_type": "material", "aliases": [], "definition": "圆形截面的钢材", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("三钢闽光经营范围")},
+    {"node_id": "coal_chemical_product", "canonical_name_zh": "煤化工产品", "canonical_name_en": "coal chemical product", "entity_type": "material", "aliases": [], "definition": "以煤炭为原料生产的化工产品", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("三钢闽光经营范围")},
+    {"node_id": "steel_billet", "canonical_name_zh": "钢坯", "canonical_name_en": "steel billet", "entity_type": "material", "aliases": [], "definition": "钢铁生产中的半成品钢材", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("三钢闽光经营范围")},
+    {"node_id": "pe_communication_pipe", "canonical_name_zh": "PE通信管道", "canonical_name_en": "PE communication pipe", "entity_type": "component", "aliases": [], "definition": "采用聚乙烯材料制造的通信电缆保护管", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("沧州明珠主营业务")},
+    {"node_id": "gas_pipe", "canonical_name_zh": "燃气管道", "canonical_name_en": "gas pipe", "entity_type": "component", "aliases": [], "definition": "用于输送燃气的管道", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("沧州明珠经营范围")},
+    {"node_id": "water_pipe", "canonical_name_zh": "给排水管道", "canonical_name_en": "water pipe", "entity_type": "component", "aliases": [], "definition": "用于给水或排水的管道", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("沧州明珠经营范围")},
+    {"node_id": "silicon_core_pipe", "canonical_name_zh": "硅芯管", "canonical_name_en": "silicon core pipe", "entity_type": "component", "aliases": [], "definition": "内壁带有硅质涂层的通信电缆保护管", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("沧州明珠经营范围")},
+    {"node_id": "double_wall_corrugated_pipe", "canonical_name_zh": "双壁波纹管", "canonical_name_en": "double wall corrugated pipe", "entity_type": "component", "aliases": [], "definition": "内外壁结构不同的波纹状塑料管道", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("沧州明珠经营范围")},
+    {"node_id": "lithium_separator_pipe", "canonical_name_zh": "锂离子电池隔膜", "canonical_name_en": "lithium battery separator", "entity_type": "component", "aliases": [], "definition": "锂离子电池中隔离正负极的微孔薄膜", "status": "ACTIVE", "confidence": "HIGH", "evidence": ev("沧州明珠经营范围")},
+]
+
+EDGES_125 = [
+    {"edge_id": "feed_livestock_breeding", "from_node": "feed", "to_node": "livestock_breeding", "edge_namespace": "industrial_flow", "edge_type": "material_flow", "description": "饲料用于畜禽养殖", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "veterinary_medicine_livestock_breeding", "from_node": "veterinary_medicine", "to_node": "livestock_breeding", "edge_namespace": "industrial_flow", "edge_type": "material_flow", "description": "兽药用于畜禽养殖", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "veterinary_biological_product_livestock_breeding", "from_node": "veterinary_biological_product", "to_node": "livestock_breeding", "edge_namespace": "industrial_flow", "edge_type": "material_flow", "description": "兽用生物制品用于畜禽养殖", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "livestock_breeding_slaughtering", "from_node": "livestock_breeding", "to_node": "slaughtering", "edge_namespace": "industrial_flow", "edge_type": "service_flow", "description": "畜禽养殖为屠宰加工提供原料", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "slaughtering_meat_product", "from_node": "slaughtering", "to_node": "meat_product", "edge_namespace": "industrial_flow", "edge_type": "material_flow", "description": "屠宰加工产出肉产品", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "hydraulic_pile_driver_construction_machinery", "from_node": "hydraulic_pile_driver", "to_node": "construction_machinery", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "液压静力压桩机是建筑机械的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "rotary_drilling_rig_construction_machinery", "from_node": "rotary_drilling_rig", "to_node": "construction_machinery", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "旋挖钻机是建筑机械的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "excavator_construction_machinery", "from_node": "excavator", "to_node": "construction_machinery", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "挖掘机是建筑机械的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "dth_drill_mining_equipment", "from_node": "dth_drill", "to_node": "mining_equipment", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "潜孔钻机是矿山机械的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "uav_aerospace", "from_node": "uav", "to_node": "aerospace", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "无人飞行器是航空航天领域的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "ammonium_nitrate_explosive_industrial_explosive", "from_node": "ammonium_nitrate_explosive", "to_node": "industrial_explosive", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "铵油炸药是工业炸药的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "emulsion_explosive_industrial_explosive", "from_node": "emulsion_explosive", "to_node": "industrial_explosive", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "乳化炸药是工业炸药的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "blasting_fuse_industrial_explosive", "from_node": "blasting_fuse", "to_node": "industrial_explosive", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "工业雷管是工业炸药的配套产品", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "zipper_clothing_accessory", "from_node": "zipper", "to_node": "clothing_accessory", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "拉链是服饰辅料的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "precision_mold_metal_fabrication", "from_node": "precision_mold", "to_node": "metal_fabrication", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "精密模具是金属加工的配套设备", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "metal_stamping_metal_fabrication", "from_node": "metal_stamping", "to_node": "metal_fabrication", "edge_namespace": "industrial_flow", "edge_type": "service_flow", "description": "金属冲压是金属加工的一种方式", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "stationery_paper_product", "from_node": "stationery", "to_node": "paper_product", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "文具是纸制品的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "office_supplies_paper_product", "from_node": "office_supplies", "to_node": "paper_product", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "办公用品是纸制品的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "bicycle_part_automotive_part", "from_node": "bicycle_part", "to_node": "automotive_part", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "自行车零部件是交通工具零部件的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "fitness_equipment_sports_equipment", "from_node": "fitness_equipment", "to_node": "sports_equipment", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "健身器材是运动器材的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "rehabilitation_equipment_medical_device", "from_node": "rehabilitation_equipment", "to_node": "medical_device", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "康复器材是医疗器械的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "railway_passenger_transport_railway", "from_node": "railway_passenger_transport", "to_node": "railway", "edge_namespace": "industrial_flow", "edge_type": "service_flow", "description": "铁路客运是铁路运输的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "railway_freight_transport_railway", "from_node": "railway_freight_transport", "to_node": "railway", "edge_namespace": "industrial_flow", "edge_type": "service_flow", "description": "铁路货运是铁路运输的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "railway_facility_service_railway", "from_node": "railway_facility_service", "to_node": "railway", "edge_namespace": "industrial_flow", "edge_type": "service_flow", "description": "铁路设施服务是铁路运输的配套", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "freight_forwarding_logistics", "from_node": "freight_forwarding", "to_node": "logistics", "edge_namespace": "industrial_flow", "edge_type": "service_flow", "description": "货运代理是物流的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "magnetic_stripe_card_ic_card", "from_node": "magnetic_stripe_card", "to_node": "ic_card", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "磁条卡和IC卡同属智能卡片", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "password_card_ic_card", "from_node": "password_card", "to_node": "ic_card", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "密码卡和IC卡同属智能卡片", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "commercial_password_product_information_security", "from_node": "commercial_password_product", "to_node": "information_security", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "商用密码产品是信息安全的组成部分", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "construction_steel_steel", "from_node": "construction_steel", "to_node": "steel", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "建筑钢材是钢材的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "medium_plate_steel", "from_node": "medium_plate", "to_node": "steel", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "中厚板材是钢材的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "round_steel_bar_steel", "from_node": "round_steel_bar", "to_node": "steel", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "圆钢是钢材的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "coal_chemical_product_chemical_product", "from_node": "coal_chemical_product", "to_node": "chemical_product", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "煤化工产品是化工产品的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "steel_billet_steel", "from_node": "steel_billet", "to_node": "steel", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "钢坯是钢材的半成品", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "pe_communication_pipe_plastic_pipe", "from_node": "pe_communication_pipe", "to_node": "plastic_pipe", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "PE通信管道是塑料管道的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "gas_pipe_plastic_pipe", "from_node": "gas_pipe", "to_node": "plastic_pipe", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "燃气管道是塑料管道的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "water_pipe_plastic_pipe", "from_node": "water_pipe", "to_node": "plastic_pipe", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "给排水管道是塑料管道的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "silicon_core_pipe_plastic_pipe", "from_node": "silicon_core_pipe", "to_node": "plastic_pipe", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "硅芯管是塑料管道的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "double_wall_corrugated_pipe_plastic_pipe", "from_node": "double_wall_corrugated_pipe", "to_node": "plastic_pipe", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "双壁波纹管是塑料管道的一种", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+    {"edge_id": "lithium_separator_pipe_power_battery", "from_node": "lithium_separator_pipe", "to_node": "power_battery", "edge_namespace": "industrial_flow", "edge_type": "composition", "description": "锂离子电池隔膜是动力电池的关键组件", "evidence": ev("产业知识图谱"), "confidence": "HIGH"},
+]
+
+COMPANIES_125 = [
+    {"company_id": "sz_002100", "name_zh": "天康生物", "name_en": "Tecan Bioengineering Co., Ltd.", "country": "CN", "province": "新疆", "city": "乌鲁木齐市", "stock_codes": ["002100.SZ"], "description": "饲料、兽用生物制品", "founded_year": 1995, "employee_count": 2818},
+    {"company_id": "sz_002097", "name_zh": "山河智能", "name_en": "Sunward Intelligent Equipment Co., Ltd.", "country": "CN", "province": "湖南", "city": "长沙市", "stock_codes": ["002097.SZ"], "description": "桩工机械、挖掘机、凿岩设备", "founded_year": 1999, "employee_count": 5311},
+    {"company_id": "sz_002096", "name_zh": "易普力", "name_en": "Explosive Co., Ltd.", "country": "CN", "province": "广东", "city": "广州市", "stock_codes": ["002096.SZ"], "description": "民用爆破器材", "founded_year": 1994, "employee_count": 185},
+    {"company_id": "sz_002098", "name_zh": "浔兴股份", "name_en": "SBS Zipper Co., Ltd.", "country": "CN", "province": "福建", "city": "泉州市", "stock_codes": ["002098.SZ"], "description": "拉链、精密模具、金属制品", "founded_year": 1996, "employee_count": 4165},
+    {"company_id": "sz_002103", "name_zh": "广博股份", "name_en": "Guangbo Group Stock Co., Ltd.", "country": "CN", "province": "浙江", "city": "宁波市", "stock_codes": ["002103.SZ"], "description": "文具、纸制品、塑料制品", "founded_year": 1996, "employee_count": 2619},
+    {"company_id": "sz_002105", "name_zh": "信隆健康", "name_en": "Honourocean Enterprise Co., Ltd.", "country": "CN", "province": "广东", "city": "深圳市", "stock_codes": ["002105.SZ"], "description": "自行车零配件、运动健身康复器材", "founded_year": 1991, "employee_count": 5191},
+    {"company_id": "sh_601333", "name_zh": "广深铁路", "name_en": "Guangshen Railway Co., Ltd.", "country": "CN", "province": "广东", "city": "深圳市", "stock_codes": ["601333.SH"], "description": "铁路客货运输服务", "founded_year": 1996, "employee_count": 42086},
+    {"company_id": "sz_002104", "name_zh": "恒宝股份", "name_en": "Hengbao Co., Ltd.", "country": "CN", "province": "江苏", "city": "丹阳市", "stock_codes": ["002104.SZ"], "description": "磁条卡、密码卡、IC卡", "founded_year": 1996, "employee_count": 1596},
+    {"company_id": "sz_002110", "name_zh": "三钢闽光", "name_en": "Sansteel Minguang Co., Ltd.", "country": "CN", "province": "福建", "city": "三明市", "stock_codes": ["002110.SZ"], "description": "钢铁及压延加工", "founded_year": 2001, "employee_count": 13078},
+    {"company_id": "sz_002108", "name_zh": "沧州明珠", "name_en": "Cangzhou Mingzhu Plastic Co., Ltd.", "country": "CN", "province": "河北", "city": "沧州市", "stock_codes": ["002108.SZ"], "description": "PE管道、BOPA薄膜、锂离子电池隔膜", "founded_year": 1995, "employee_count": 1842},
+]
+
+EXPOSURES_125 = [
+    {"exposure_id": "sz_002100_produce_feed", "company_id": "sz_002100", "node_id": "feed", "activity_type": "produce", "weight": 0.30, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("主营业务:饲料")},
+    {"exposure_id": "sz_002100_produce_veterinary_medicine", "company_id": "sz_002100", "node_id": "veterinary_medicine", "activity_type": "produce", "weight": 0.20, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:兽药")},
+    {"exposure_id": "sz_002100_produce_veterinary_biological_product", "company_id": "sz_002100", "node_id": "veterinary_biological_product", "activity_type": "produce", "weight": 0.20, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:兽用生物制品")},
+    {"exposure_id": "sz_002100_operate_livestock_breeding", "company_id": "sz_002100", "node_id": "livestock_breeding", "activity_type": "operate", "weight": 0.10, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:畜禽养殖")},
+    {"exposure_id": "sz_002100_provide_service_slaughtering", "company_id": "sz_002100", "node_id": "slaughtering", "activity_type": "provide_service", "weight": 0.10, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:屠宰加工")},
+    {"exposure_id": "sz_002100_produce_meat_product", "company_id": "sz_002100", "node_id": "meat_product", "activity_type": "produce", "weight": 0.10, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:肉制品")},
+    {"exposure_id": "sz_002097_produce_hydraulic_pile_driver", "company_id": "sz_002097", "node_id": "hydraulic_pile_driver", "activity_type": "produce", "weight": 0.20, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("主营业务:液压静力压桩机")},
+    {"exposure_id": "sz_002097_produce_rotary_drilling_rig", "company_id": "sz_002097", "node_id": "rotary_drilling_rig", "activity_type": "produce", "weight": 0.20, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("主营业务:旋挖钻机")},
+    {"exposure_id": "sz_002097_produce_excavator", "company_id": "sz_002097", "node_id": "excavator", "activity_type": "produce", "weight": 0.20, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("主营业务:挖掘机")},
+    {"exposure_id": "sz_002097_produce_dth_drill", "company_id": "sz_002097", "node_id": "dth_drill", "activity_type": "produce", "weight": 0.15, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("主营业务:潜孔钻机")},
+    {"exposure_id": "sz_002097_produce_mining_equipment", "company_id": "sz_002097", "node_id": "mining_equipment", "activity_type": "produce", "weight": 0.10, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:矿山机械")},
+    {"exposure_id": "sz_002097_produce_uav", "company_id": "sz_002097", "node_id": "uav", "activity_type": "produce", "weight": 0.10, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:无人飞行器")},
+    {"exposure_id": "sz_002097_provide_service_technical_service", "company_id": "sz_002097", "node_id": "technical_service", "activity_type": "provide_service", "weight": 0.05, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:技术服务")},
+    {"exposure_id": "sz_002096_produce_industrial_explosive", "company_id": "sz_002096", "node_id": "industrial_explosive", "activity_type": "produce", "weight": 0.35, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("主营业务:民用爆破器材")},
+    {"exposure_id": "sz_002096_produce_ammonium_nitrate_explosive", "company_id": "sz_002096", "node_id": "ammonium_nitrate_explosive", "activity_type": "produce", "weight": 0.20, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("主营业务:铵梯炸药")},
+    {"exposure_id": "sz_002096_produce_emulsion_explosive", "company_id": "sz_002096", "node_id": "emulsion_explosive", "activity_type": "produce", "weight": 0.15, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:乳化炸药")},
+    {"exposure_id": "sz_002096_produce_blasting_fuse", "company_id": "sz_002096", "node_id": "blasting_fuse", "activity_type": "produce", "weight": 0.15, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:工业雷管")},
+    {"exposure_id": "sz_002096_provide_service_technical_service", "company_id": "sz_002096", "node_id": "technical_service", "activity_type": "provide_service", "weight": 0.10, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:技术服务")},
+    {"exposure_id": "sz_002096_provide_service_construction_engineering", "company_id": "sz_002096", "node_id": "construction_engineering", "activity_type": "provide_service", "weight": 0.05, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:爆破工程")},
+    {"exposure_id": "sz_002098_produce_zipper", "company_id": "sz_002098", "node_id": "zipper", "activity_type": "produce", "weight": 0.40, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("主营业务:拉链")},
+    {"exposure_id": "sz_002098_produce_precision_mold", "company_id": "sz_002098", "node_id": "precision_mold", "activity_type": "produce", "weight": 0.20, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:精密模具")},
+    {"exposure_id": "sz_002098_provide_service_metal_stamping", "company_id": "sz_002098", "node_id": "metal_stamping", "activity_type": "provide_service", "weight": 0.15, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:金属冲压")},
+    {"exposure_id": "sz_002098_produce_clothing_accessory", "company_id": "sz_002098", "node_id": "clothing_accessory", "activity_type": "produce", "weight": 0.15, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:服饰辅料")},
+    {"exposure_id": "sz_002098_provide_service_technical_service", "company_id": "sz_002098", "node_id": "technical_service", "activity_type": "provide_service", "weight": 0.10, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:技术服务")},
+    {"exposure_id": "sz_002103_produce_stationery", "company_id": "sz_002103", "node_id": "stationery", "activity_type": "produce", "weight": 0.30, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("主营业务:文具")},
+    {"exposure_id": "sz_002103_produce_paper_product", "company_id": "sz_002103", "node_id": "paper_product", "activity_type": "produce", "weight": 0.20, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:纸制品")},
+    {"exposure_id": "sz_002103_produce_plastic_product", "company_id": "sz_002103", "node_id": "plastic_product", "activity_type": "produce", "weight": 0.20, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:塑料制品")},
+    {"exposure_id": "sz_002103_produce_office_supplies", "company_id": "sz_002103", "node_id": "office_supplies", "activity_type": "produce", "weight": 0.15, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:办公用品")},
+    {"exposure_id": "sz_002103_provide_service_technical_service", "company_id": "sz_002103", "node_id": "technical_service", "activity_type": "provide_service", "weight": 0.10, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:技术服务")},
+    {"exposure_id": "sz_002105_produce_bicycle_part", "company_id": "sz_002105", "node_id": "bicycle_part", "activity_type": "produce", "weight": 0.25, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("主营业务:自行车零配件")},
+    {"exposure_id": "sz_002105_produce_fitness_equipment", "company_id": "sz_002105", "node_id": "fitness_equipment", "activity_type": "produce", "weight": 0.25, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("主营业务:运动健身器材")},
+    {"exposure_id": "sz_002105_produce_rehabilitation_equipment", "company_id": "sz_002105", "node_id": "rehabilitation_equipment", "activity_type": "produce", "weight": 0.20, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:康复器材")},
+    {"exposure_id": "sz_002105_produce_sports_equipment", "company_id": "sz_002105", "node_id": "sports_equipment", "activity_type": "produce", "weight": 0.15, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:体育器材")},
+    {"exposure_id": "sz_002105_provide_service_technical_service", "company_id": "sz_002105", "node_id": "technical_service", "activity_type": "provide_service", "weight": 0.10, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:技术服务")},
+    {"exposure_id": "sh_601333_provide_service_railway_passenger_transport", "company_id": "sh_601333", "node_id": "railway_passenger_transport", "activity_type": "provide_service", "weight": 0.30, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("主营业务:铁路客运")},
+    {"exposure_id": "sh_601333_provide_service_railway_freight_transport", "company_id": "sh_601333", "node_id": "railway_freight_transport", "activity_type": "provide_service", "weight": 0.20, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:铁路货运")},
+    {"exposure_id": "sh_601333_provide_service_railway_facility_service", "company_id": "sh_601333", "node_id": "railway_facility_service", "activity_type": "provide_service", "weight": 0.15, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:铁路设施服务")},
+    {"exposure_id": "sh_601333_provide_service_freight_forwarding", "company_id": "sh_601333", "node_id": "freight_forwarding", "activity_type": "provide_service", "weight": 0.15, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:货运代理")},
+    {"exposure_id": "sh_601333_provide_service_logistics", "company_id": "sh_601333", "node_id": "logistics", "activity_type": "provide_service", "weight": 0.10, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:物流")},
+    {"exposure_id": "sh_601333_provide_service_technical_service", "company_id": "sh_601333", "node_id": "technical_service", "activity_type": "provide_service", "weight": 0.05, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:技术服务")},
+    {"exposure_id": "sh_601333_provide_service_vehicle_maintenance", "company_id": "sh_601333", "node_id": "vehicle_maintenance", "activity_type": "provide_service", "weight": 0.05, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:车辆维修")},
+    {"exposure_id": "sz_002104_produce_magnetic_stripe_card", "company_id": "sz_002104", "node_id": "magnetic_stripe_card", "activity_type": "produce", "weight": 0.25, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("主营业务:磁条卡")},
+    {"exposure_id": "sz_002104_produce_password_card", "company_id": "sz_002104", "node_id": "password_card", "activity_type": "produce", "weight": 0.20, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("主营业务:密码卡")},
+    {"exposure_id": "sz_002104_produce_ic_card", "company_id": "sz_002104", "node_id": "ic_card", "activity_type": "produce", "weight": 0.20, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("主营业务:IC卡")},
+    {"exposure_id": "sz_002104_produce_commercial_password_product", "company_id": "sz_002104", "node_id": "commercial_password_product", "activity_type": "produce", "weight": 0.15, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:商用密码产品")},
+    {"exposure_id": "sz_002104_produce_ticket_product", "company_id": "sz_002104", "node_id": "ticket_product", "activity_type": "produce", "weight": 0.10, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:票证产品")},
+    {"exposure_id": "sz_002104_provide_service_technical_service", "company_id": "sz_002104", "node_id": "technical_service", "activity_type": "provide_service", "weight": 0.10, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:技术服务")},
+    {"exposure_id": "sz_002110_produce_construction_steel", "company_id": "sz_002110", "node_id": "construction_steel", "activity_type": "produce", "weight": 0.30, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("主营业务:建筑钢材")},
+    {"exposure_id": "sz_002110_produce_steel", "company_id": "sz_002110", "node_id": "steel", "activity_type": "produce", "weight": 0.20, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:钢铁")},
+    {"exposure_id": "sz_002110_produce_medium_plate", "company_id": "sz_002110", "node_id": "medium_plate", "activity_type": "produce", "weight": 0.15, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:中厚板")},
+    {"exposure_id": "sz_002110_produce_round_steel_bar", "company_id": "sz_002110", "node_id": "round_steel_bar", "activity_type": "produce", "weight": 0.15, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:圆钢")},
+    {"exposure_id": "sz_002110_produce_coal_chemical_product", "company_id": "sz_002110", "node_id": "coal_chemical_product", "activity_type": "produce", "weight": 0.10, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:煤化工产品")},
+    {"exposure_id": "sz_002110_produce_steel_billet", "company_id": "sz_002110", "node_id": "steel_billet", "activity_type": "produce", "weight": 0.05, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:钢坯")},
+    {"exposure_id": "sz_002110_provide_service_technical_service", "company_id": "sz_002110", "node_id": "technical_service", "activity_type": "provide_service", "weight": 0.05, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:技术服务")},
+    {"exposure_id": "sz_002108_produce_pe_communication_pipe", "company_id": "sz_002108", "node_id": "pe_communication_pipe", "activity_type": "produce", "weight": 0.25, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("主营业务:PE管道")},
+    {"exposure_id": "sz_002108_produce_gas_pipe", "company_id": "sz_002108", "node_id": "gas_pipe", "activity_type": "produce", "weight": 0.15, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:燃气管道")},
+    {"exposure_id": "sz_002108_produce_water_pipe", "company_id": "sz_002108", "node_id": "water_pipe", "activity_type": "produce", "weight": 0.15, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:给排水管道")},
+    {"exposure_id": "sz_002108_produce_silicon_core_pipe", "company_id": "sz_002108", "node_id": "silicon_core_pipe", "activity_type": "produce", "weight": 0.10, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:硅芯管")},
+    {"exposure_id": "sz_002108_produce_double_wall_corrugated_pipe", "company_id": "sz_002108", "node_id": "double_wall_corrugated_pipe", "activity_type": "produce", "weight": 0.10, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:双壁波纹管")},
+    {"exposure_id": "sz_002108_produce_lithium_separator_pipe", "company_id": "sz_002108", "node_id": "lithium_separator_pipe", "activity_type": "produce", "weight": 0.10, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:锂离子电池隔膜")},
+    {"exposure_id": "sz_002108_produce_plastic_film", "company_id": "sz_002108", "node_id": "plastic_film", "activity_type": "produce", "weight": 0.10, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:塑料薄膜")},
+    {"exposure_id": "sz_002108_provide_service_technical_service", "company_id": "sz_002108", "node_id": "technical_service", "activity_type": "provide_service", "weight": 0.05, "confidence": "HIGH", "status": "ACTIVE", "evidence": ev("经营范围:技术服务")},
+]
+
+write_batch(125, NODES_125, EDGES_125, COMPANIES_125, EXPOSURES_125)
+print("Batch 125 generated.")

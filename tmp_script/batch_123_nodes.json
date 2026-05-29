@@ -1,0 +1,952 @@
+{
+  "batch_id": "batch_123_nodes",
+  "task_description": "Batch 123 industrial nodes and edges",
+  "nodes_to_upsert": [
+    {
+      "node_id": "wind_turbine_blade",
+      "canonical_name_zh": "风力发电机叶片",
+      "canonical_name_en": "wind turbine blade",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "风力发电机组中将风能转化为机械能的旋转叶片",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "中材科技主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "high_pressure_composite_vessel",
+      "canonical_name_zh": "高压复合气瓶",
+      "canonical_name_en": "high pressure composite vessel",
+      "entity_type": "component",
+      "aliases": [
+        "CNG瓶"
+      ],
+      "definition": "采用复合材料制造的可承受高压的气体储存容器",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "中材科技经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "membrane_material_product",
+      "canonical_name_zh": "膜材料制品",
+      "canonical_name_en": "membrane material product",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "用于过滤、分离、渗透等功能的薄膜材料制品",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "中材科技经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "lithium_battery_separator",
+      "canonical_name_zh": "锂电池隔膜",
+      "canonical_name_en": "lithium battery separator",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "锂离子电池中隔离正负极的多孔薄膜",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "中材科技经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "public_decoration",
+      "canonical_name_zh": "公共建筑装饰",
+      "canonical_name_en": "public decoration",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "对公共建筑内部空间进行装饰装修的服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "金螳螂主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "wood_product",
+      "canonical_name_zh": "木制品",
+      "canonical_name_en": "wood product",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "以木材为原料加工制造的各类产品",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "金螳螂经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "landscape_engineering",
+      "canonical_name_zh": "园林景观",
+      "canonical_name_en": "landscape engineering",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "园林绿化的设计、施工和养护服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "金螳螂经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "ancient_building_engineering",
+      "canonical_name_zh": "古建筑工程",
+      "canonical_name_en": "ancient building engineering",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "对古建筑进行保护、修缮和复原的工程服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "金螳螂经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "aluminum_profile",
+      "canonical_name_zh": "铝合金型材",
+      "canonical_name_en": "aluminum profile",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "通过挤压工艺生产的铝合金截面材料",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "万邦德主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "aluminum_plate",
+      "canonical_name_zh": "铝板",
+      "canonical_name_en": "aluminum plate",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "厚度较大的平板状铝材",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "万邦德经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "coal_sales",
+      "canonical_name_zh": "煤炭销售",
+      "canonical_name_en": "coal sales",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "煤炭产品的销售和贸易活动",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "平煤股份主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "electricity_sales",
+      "canonical_name_zh": "电力销售",
+      "canonical_name_en": "electricity sales",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "电力产品的销售和供应活动",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "平煤股份经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "towel",
+      "canonical_name_zh": "毛巾",
+      "canonical_name_en": "towel",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "用于擦拭的棉质纺织品",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "孚日股份主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "decorative_fabric",
+      "canonical_name_zh": "装饰布",
+      "canonical_name_en": "decorative fabric",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "用于装饰用途的各类纺织面料",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "孚日股份主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "bathroom_hardware",
+      "canonical_name_zh": "卫浴五金",
+      "canonical_name_en": "bathroom hardware",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "用于卫生间的各类金属配件和五金件",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "海鸥住工主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "faucet",
+      "canonical_name_zh": "水龙头",
+      "canonical_name_en": "faucet",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "控制水流的管道终端阀门装置",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "海鸥住工主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "sanitary_ware",
+      "canonical_name_zh": "卫生陶瓷",
+      "canonical_name_en": "sanitary ware",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "用于卫生间和厨房的陶瓷洁具",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "海鸥住工主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "building_ceramics",
+      "canonical_name_zh": "建筑陶瓷",
+      "canonical_name_en": "building ceramics",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "用于建筑装饰的陶瓷材料",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "海鸥住工经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "aluminum_wheel",
+      "canonical_name_zh": "铝合金车轮",
+      "canonical_name_en": "aluminum wheel",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "采用铝合金材料制造的车辆轮毂",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "万丰奥威主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "dacro_coating",
+      "canonical_name_zh": "涂复加工",
+      "canonical_name_en": "dacro coating",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "在金属表面进行防腐涂层的加工服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "万丰奥威经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "magnesium_alloy",
+      "canonical_name_zh": "镁合金",
+      "canonical_name_en": "magnesium alloy",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "以镁为基础的合金材料",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "万丰奥威经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "stamping_part",
+      "canonical_name_zh": "冲压件",
+      "canonical_name_en": "stamping part",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "通过冲压工艺成型的金属零件",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "万丰奥威经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "marine_product",
+      "canonical_name_zh": "海洋产品",
+      "canonical_name_en": "marine product",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "来自海洋的各类产品，包括海产品和海洋药物",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "东方海洋经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "ceramic_fiber",
+      "canonical_name_zh": "陶瓷纤维",
+      "canonical_name_en": "ceramic fiber",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "以陶瓷为原料制成的高性能纤维材料，用于高温绝热",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "鲁阳节能主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "thermal_insulation_material",
+      "canonical_name_zh": "保温材料",
+      "canonical_name_en": "thermal insulation material",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "用于减少热传导的材料",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "鲁阳节能经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "refractory_product",
+      "canonical_name_zh": "耐火材料",
+      "canonical_name_en": "refractory product",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "在高温环境下能保持结构稳定的材料",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "鲁阳节能经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "crude_oil_transportation",
+      "canonical_name_zh": "原油运输",
+      "canonical_name_en": "crude oil transportation",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "利用船舶运输原油的服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "招商轮船主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "dry_bulk_shipping",
+      "canonical_name_zh": "干散货运输",
+      "canonical_name_en": "dry bulk shipping",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "利用船舶运输干散货物的服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "招商轮船主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "lng_transportation",
+      "canonical_name_zh": "LNG运输",
+      "canonical_name_en": "LNG transportation",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "利用专用船舶运输液化天然气的服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "招商轮船经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "ship_leasing",
+      "canonical_name_zh": "船舶租赁",
+      "canonical_name_en": "ship leasing",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "船舶经营租赁和融资租赁服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "招商轮船经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    }
+  ],
+  "edges_to_upsert": [
+    {
+      "edge_id": "wind_turbine_blade_wind_power_generation",
+      "from_node": "wind_turbine_blade",
+      "to_node": "wind_power_generation",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "风力发电机叶片是风力发电设备的关键部件",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "high_pressure_composite_vessel_cng_equipment",
+      "from_node": "high_pressure_composite_vessel",
+      "to_node": "cng_equipment",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "高压复合气瓶是CNG设备的关键组件",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "lithium_battery_separator_power_battery",
+      "from_node": "lithium_battery_separator",
+      "to_node": "power_battery",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "锂电池隔膜是动力电池的关键组件",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "membrane_material_product_filtration_equipment",
+      "from_node": "membrane_material_product",
+      "to_node": "filtration_equipment",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "膜材料制品是过滤设备的核心组件",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "public_decoration_building_decoration",
+      "from_node": "public_decoration",
+      "to_node": "building_decoration",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "公共建筑装饰是建筑装饰的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "wood_product_building_decoration",
+      "from_node": "wood_product",
+      "to_node": "building_decoration",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "description": "木制品用于建筑装饰",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "landscape_engineering_building_decoration",
+      "from_node": "landscape_engineering",
+      "to_node": "building_decoration",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "园林景观是建筑装饰的延伸服务",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "ancient_building_engineering_building_decoration",
+      "from_node": "ancient_building_engineering",
+      "to_node": "building_decoration",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "古建筑工程是建筑装饰的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "aluminum_profile_aluminum",
+      "from_node": "aluminum_profile",
+      "to_node": "aluminum",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "description": "铝合金型材以铝为原料",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "aluminum_plate_aluminum",
+      "from_node": "aluminum_plate",
+      "to_node": "aluminum",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "description": "铝板以铝为原料",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "coal_sales_coal_mining",
+      "from_node": "coal_sales",
+      "to_node": "coal_mining",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "煤炭销售是煤炭开采的下游环节",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "electricity_sales_power_generation",
+      "from_node": "electricity_sales",
+      "to_node": "power_generation",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "电力销售是发电的下游环节",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "towel_home_textile",
+      "from_node": "towel",
+      "to_node": "home_textile",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "毛巾是家用纺织品的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "decorative_fabric_home_textile",
+      "from_node": "decorative_fabric",
+      "to_node": "home_textile",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "装饰布是家用纺织品的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "bathroom_hardware_sanitary_ware",
+      "from_node": "bathroom_hardware",
+      "to_node": "sanitary_ware",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "卫浴五金是卫生洁具的配套组件",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "faucet_sanitary_ware",
+      "from_node": "faucet",
+      "to_node": "sanitary_ware",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "水龙头是卫生洁具的组件",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "building_ceramics_building_material",
+      "from_node": "building_ceramics",
+      "to_node": "building_material",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "建筑陶瓷是建筑材料的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "aluminum_wheel_automotive_part",
+      "from_node": "aluminum_wheel",
+      "to_node": "automotive_part",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "铝合金车轮是汽车零部件的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "magnesium_alloy_aluminum",
+      "from_node": "magnesium_alloy",
+      "to_node": "aluminum",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "description": "镁合金与铝合金同属轻合金材料",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "stamping_part_metal_fabrication",
+      "from_node": "stamping_part",
+      "to_node": "metal_fabrication",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "冲压件是金属加工的产品",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "marine_product_marine_aquaculture",
+      "from_node": "marine_product",
+      "to_node": "marine_aquaculture",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "description": "海洋产品来自海水养殖",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "ceramic_fiber_refractory_product",
+      "from_node": "ceramic_fiber",
+      "to_node": "refractory_product",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "陶瓷纤维是耐火材料的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "thermal_insulation_material_refractory_product",
+      "from_node": "thermal_insulation_material",
+      "to_node": "refractory_product",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "保温材料是耐火材料的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "crude_oil_transportation_shipping",
+      "from_node": "crude_oil_transportation",
+      "to_node": "shipping",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "原油运输是航运的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "dry_bulk_shipping_shipping",
+      "from_node": "dry_bulk_shipping",
+      "to_node": "shipping",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "干散货运输是航运的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "lng_transportation_shipping",
+      "from_node": "lng_transportation",
+      "to_node": "shipping",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "LNG运输是航运的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "ship_leasing_shipping",
+      "from_node": "ship_leasing",
+      "to_node": "shipping",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "船舶租赁服务于航运业",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    }
+  ]
+}

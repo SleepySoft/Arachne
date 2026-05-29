@@ -1,0 +1,86 @@
+
+=== '装载机' (0 results) ===
+
+=== '挖掘机' (1 results) ===
+  excavator | 挖掘机 | device
+
+=== '工程机械' (1 results) ===
+  construction_machinery | 工程机械 | device
+
+=== '信托' (1 results) ===
+  trust_service | 信托服务 | service
+
+=== '自行车' (3 results) ===
+  electric_bicycle | 电动自行车 | system
+  bicycle | 自行车 | device
+  bicycle_part | 自行车零部件 | component
+
+=== '康体设备' (0 results) ===
+
+=== '浮法玻璃' (1 results) ===
+  float_glass | 浮法玻璃 | component
+
+=== '玻璃加工' (0 results) ===
+
+=== '隧道' (0 results) ===
+
+=== '市政工程' (1 results) ===
+  municipal_engineering | 市政工程 | service
+
+=== '汽车贸易' (0 results) ===
+
+=== '有色金属' (4 results) ===
+  non_ferrous_metal_engineering | 有色金属工程 | service
+  non_ferrous_metal_mining | 有色金属采矿 | service
+  nonferrous_metal_mining | 有色金属采选 | service
+  nonferrous_mining_service | 有色金属采选服务 | service
+
+=== '出版' (6 results) ===
+  publishing_media | 出版传媒 | service
+  publishing_service | 出版服务 | service
+  book_publishing | 图书出版 | service
+  newspaper_publishing | 报纸出版 | service
+  journal_publishing | 期刊出版 | service
+  electronic_publication | 电子出版物 | material
+
+=== '图书' (2 results) ===
+  publishing_service | 出版服务 | service
+  book_publishing | 图书出版 | service
+
+=== '电梯' (1 results) ===
+  elevator_parts | 电梯配件 | component
+
+=== '自动扶梯' (0 results) ===
+
+=== '地铁' (0 results) ===
+
+=== '公共交通' (2 results) ===
+  public_transportation | 公共交通 | service
+  bus | 客车 | system
+
+=== '有线电视' (3 results) ===
+  cable_tv_network | 有线电视网 | infrastructure
+  cable_tv_network_service | 有线电视网络服务 | service
+  cable_tv_equipment | 有线电视设备 | device
+
+=== '广电网络' (2 results) ===
+  cable_tv_network | 有线电视网 | infrastructure
+  cable_tv_network_service | 有线电视网络服务 | service
+
+=== '医药批发' (0 results) ===
+
+=== '医药零售' (1 results) ===
+  pharmaceutical_retail | 医药零售服务 | service
+
+=== '典当' (0 results) ===
+
+=== '保险' (1 results) ===
+  automotive_bumper | 汽车保险杠 | component
+
+=== '超市' (0 results) ===
+
+=== '外贸' (1 results) ===
+  foreign_trade_service | 外贸进出口服务 | service
+
+=== '机电产品' (1 results) ===
+  electromechanical_product | 机电产品 | device
