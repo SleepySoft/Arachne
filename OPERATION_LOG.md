@@ -232,3 +232,299 @@ from app.services import neo4j_storage  # 恢复 Neo4j 存储
 ```
 资料输入 → 信息提取 Prompt → 发现分析 Prompt（查询已有实体）→ 生成 JSON → 提交方式 Prompt → CLI submit → 人工复核
 ```
+
+---
+
+## 阶段六：上市公司产业图批量构建（Batches 100-105）
+
+### 6.1 构建概况
+
+基于 tushare 沪深A股数据，对股票代码 600764.SH - 600838.SH 范围内的上市公司进行产业图批量构建。
+
+| 批次 | 股票代码范围 | 公司数 | 新建节点 | 新建边 | 新建暴露 |
+|------|-------------|--------|---------|--------|---------|
+| 100 | 600764-600776 | 10 | 13 | 0 | 34 |
+| 101 | 600777-600789 | 10 | 1 | 1 | 34 |
+| 102 | 600790-600800 | 10 | 5 | 1 | 27 |
+| 103 | 600801-600814 | 10 | 6 | 2 | 28 |
+| 104 | 600815-600825 | 10 | 5 | 1 | 21 |
+| 105 | 600826-600838 | 10 | 6 | 1 | 19 |
+| **合计** | — | **60** | **36** | **6** | **163** |
+
+### 6.2 图统计（Batches 100-105 完成后）
+
+```
+总节点数: 1107
+总边数: 534
+```
+
+### 6.3 关键发现
+
+1. **数据库信息滞后问题**：tushare 的 `main_business` 字段存在明显滞后，特别是发生重大资产重组的公司：
+   - **宇通重工 (600817)**：数据库标注"集成电路/家电"，实际为"环卫装备/矿机/工程机械"
+   - **金开新能 (600821)**：数据库标注"商业零售"，实际已转型为"风力发电/光伏发电"
+   
+   解决方式：通过 Web 搜索（新浪财经、公司年报）交叉验证主营业务信息。
+
+2. **节点复用率高**：60家公司共产生163条暴露关系，仅新建36个产业节点，说明系统中已有节点覆盖了大部分产业实体。
+
+3. **产业链补全效应**：
+   - 钢铁产品分类：`steel_strand`（钢绞线）、`steel_long_product`（长材）
+   - 水泥产业链：`clinker`（水泥熟料）
+   - 清洁能源：`wind_power_generation`（风力发电）
+   - 化纤产业链：`nylon_industrial_yarn`（尼龙工业丝）
+   - 城市交通：`metro_operation`（地铁运营）
+   - 医药流通：`pharmaceutical_wholesale`（医药批发）
+
+4. **构建方式**：每批次采用两步提交——先提交 `GraphRegistrationBatch`（补充缺失节点和边），再提交 `BusinessRegistrationBatch`（注册公司和暴露关系），确保产业节点先存在于图中，再建立公司映射。
+
+---
+
+## 阶段七：上市公司产业图批量构建（Batches 106-110）
+
+### 7.1 构建概况
+
+基于 tushare 沪深A股数据，对股票代码 600839.SH - 600897.SH 范围内的上市公司进行产业图批量构建。
+
+| 批次 | 股票代码范围 | 公司数 | 新建节点 | 新建边 | 新建暴露 |
+|------|-------------|--------|---------|--------|---------|
+| 106 | 600839-600850 | 10 | 6 | 0 | 27 |
+| 107 | 600851-600862 | 10 | 6 | 0 | 22 |
+| 108 | 600863-600873 | 10 | 7 | 0 | 28 |
+| 109 | 600874-600884 | 10 | 6 | 0 | 22 |
+| 110 | 600885-600897 | 10 | 13 | 3 | 29 |
+| **合计** | — | **50** | **38** | **3** | **128** |
+
+### 7.2 图统计（Batches 106-110 完成后）
+
+```
+总节点数: 1145
+总边数: 537
+```
+
+### 7.3 关键新建节点
+
+| 节点 | 类型 | 代表性公司 | 产业链意义 |
+|------|------|-----------|-----------|
+| `compressor` | device | 四川长虹 | 家电核心零部件 |
+| `sewing_machine` | device | 上工申贝 | 纺织设备消费端 |
+| `lead_acid_battery` | device | 万里股份 | 传统储能电池 |
+| `intelligent_building` | system | 电科数字 | 楼宇智能化 |
+| `security_service` | service | 航天长峰 | 安防安保服务 |
+| `human_resource_service` | service | 北京人力 | 人力资源外包 |
+| `aviation_new_material` | material | 中航高科 | 航空复合材料 |
+| `recombinant_human_insulin` | material | 通化东宝 | 糖尿病治疗药物 |
+| `nucleotide` | material | 星湖科技 | 食品鲜味剂 |
+| `carbon_fiber_composite_conductor` | component | 远东股份 | 新型输电导线 |
+| `petroleum_engineering_service` | service | 石化油服 | 油气工程服务 |
+| `cheese` | material | 妙可蓝多 | 乳制品细分品类 |
+| `liquid_milk` | material | 妙可蓝多/伊利 | 乳制品主力品类 |
+| `lithium_ion_battery_material` | material | 杉杉股份 | 锂电负极材料 |
+| `relay` | component | 宏发股份 | 电力控制器件 |
+| `low_voltage_electrical` | component | 宏发股份 | 低压配电器件 |
+| `contactor` | component | 宏发股份 | 电磁控制开关 |
+| `aero_engine` | system | 航发动力 | 航空发动机 |
+| `electronic_aluminum_foil` | material | 新疆众和 | 电容器核心材料 |
+| `formed_foil` | material | 新疆众和 | 电容器中间材料 |
+| `etched_foil` | material | 新疆众和 | 电容器原材料 |
+| `air_ground_service` | service | 厦门空港 | 机场地勤服务 |
+
+### 7.4 新增产业链
+
+**铝电解电容器材料链**：
+```
+aluminum_ingot → electronic_aluminum_foil → etched_foil → formed_foil
+```
+
+### 7.5 数据勘误记录
+
+- **电科芯片 (600877)**：tushare 标注"摩托车"，实际为"集成电路设计/制造/销售"
+
+### 7.6 累计统计（Batches 100-110）
+
+| 指标 | 数值 |
+|------|------|
+| 总批次 | 11个 (100-110) |
+| 总 Company | 110家 |
+| 总新建节点 | 74个 |
+| 总新建边 | 9条 |
+| 总新建暴露 | 291条 |
+| 图节点总数 | 1145 |
+| 图边总数 | 537 |
+
+---
+
+## 阶段八：上市公司产业图批量构建（Batches 111-115）
+
+### 8.1 构建概况
+
+| 批次 | 股票代码范围 | 公司数 | 新建节点 | 新建边 | 新建暴露 |
+|------|-------------|--------|---------|--------|---------|
+| 111 | 600900, 600960, 600963, 600966, 600967, 600969, 600975, 600976, 600980, 600985 | 10 | 17 | 0 | 31 |
+| 112 | 600986, 600988, 600990, 600992, 600993, 600995, 600997, 002017, 002003, 002004 | 10 | 16 | 0 | 27 |
+| 113 | 002005-002015 | 10 | 17 | 0 | 26 |
+| 114 | 002016-002027 | 10 | 16 | 0 | 25 |
+| 115 | 002028-002037 | 10 | 23 | 0 | 33 |
+| **合计** | — | **50** | **89** | **0** | **142** |
+
+### 8.2 图统计（Batches 111-115 完成后）
+
+```
+总节点数: 1234
+总边数: 537
+```
+
+### 8.3 关键新建节点
+
+| 节点 | 类型 | 代表性公司 | 产业链意义 |
+|------|------|-----------|-----------|
+| `piston` | component | 渤海汽车 | 发动机核心零部件 |
+| `armored_vehicle` | system | 内蒙一机 | 军工地面装备 |
+| `railway_vehicle` | system | 内蒙一机 | 轨道交通装备 |
+| `ferrite` | material | 北矿科技 | 磁性材料基础 |
+| `gold` | material | 赤峰黄金 | 贵金属 |
+| `palladium` | material | 赤峰黄金 | 汽车催化剂金属 |
+| `rhodium` | material | 赤峰黄金 | 贵金属催化剂 |
+| `radar` | device | 四创电子 | 国防电子信息 |
+| `energy_storage` | service | 南网储能 | 新能源配套 |
+| `button` | component | 伟星股份 | 服装辅料 |
+| `zipper` | component | 伟星股份 | 服装辅料 |
+| `laser_marking_machine` | device | 大族激光 | 激光加工设备 |
+| `laser_welding_machine` | device | 大族激光 | 激光加工设备 |
+| `human_serum_albumin` | material | 华兰生物 | 血液制品 |
+| `electrolytic_capacitor_paper` | material | 凯恩股份 | 电容器特种纸 |
+| `clean_energy` | service | 协鑫能科 | 清洁能源服务 |
+| `home_appliance_retail` | service | ST易购 | 家电零售渠道 |
+| `electronics_retail` | service | ST易购 | 3C零售渠道 |
+| `connector` | component | 航天电器 | 电子连接器 |
+| `aircraft_maintenance` | service | 海特高新 | 航空MRO |
+| `power_automation_protection` | device | 思源电气 | 电网保护 |
+| `high_voltage_switch` | device | 思源电气 | 输配电开关 |
+| `tire_mold` | device | 巨轮智能 | 轮胎核心模具 |
+| `cookware` | device | 苏泊尔 | 厨房炊具 |
+| `waste_incineration_power_generation` | service | 旺能环境 | 垃圾资源化 |
+| `gas_stove` | device | 华帝股份 | 厨电核心产品 |
+| `range_hood` | device | 华帝股份 | 厨电核心产品 |
+| `camera_module` | component | 联创电子 | 手机光学模组 |
+| `touch_display_module` | component | 联创电子 | 触显一体化 |
+| `detonator` | material | 保利联合 | 民爆器材 |
+| `industrial_explosive` | material | 保利联合 | 工程爆破 |
+
+### 8.4 累计统计（Batches 100-115）
+
+| 指标 | 数值 |
+|------|------|
+| 总批次 | 16个 (100-115) |
+| 总 Company | 160家 |
+| 总新建节点 | 163个 |
+| 总新建边 | 9条 |
+| 总新建暴露 | 433条 |
+| 图节点总数 | 1234 |
+| 图边总数 | 537 |
+
+---
+
+## Phase 9 — Batches 116-120 提交 (2026-05-28)
+
+### 9.1 批次提交记录
+
+| 批次 | 公司数 | 新建节点 | 新建边 | 新建暴露 | 状态 |
+|------|--------|---------|--------|---------|------|
+| Batch 116 | 10 | 43 | 43 | 70 | ✅ 成功 |
+| Batch 117 | 10 | 23 | 20 | 45 | ✅ 成功 |
+| Batch 118 | 10 | 37 | 30 | 56 | ✅ 成功 |
+| Batch 119 | 10 | 26 | 22 | 58 | ✅ 成功 |
+| Batch 120 | 10 | 28 | 27 | 55 | ✅ 成功 |
+| **合计** | **50** | **157** | **142** | **284** | ✅ |
+
+### 9.2 提交后图统计
+
+```
+总节点数: 1391
+总边数: 679
+```
+
+### 9.3 关键新建节点
+
+| 节点 | 类型 | 代表性公司 | 产业链意义 |
+|------|------|-----------|-----------|
+| `gene_engineering_drug` | material | 双鹭药业 | 生物制药核心技术 |
+| `modified_plastic` | material | 金发科技 | 新材料改性 |
+| `gas_turbine_power` | service | 中国动力 | 船舶动力系统 |
+| `lead_zinc_alloy` | material | 株冶集团 | 有色金属冶炼 |
+| `offshore_wind_power_equipment` | system | 宝胜股份 | 海上风电装备 |
+| `health_examination` | service | 美年健康 | 健康体检服务 |
+| `audio_system` | system | 国光电器 | 电声设备 |
+| `smart_chip` | component | 紫光国微 | 智能安全芯片 |
+| `international_engineering_contracting` | service | 中工国际 | 海外工程承包 |
+| `commercial_bank` | service | 中国银行 | 商业银行服务 |
+| `crystalline_silicon_solar_cell` | component | 横店东磁 | 光伏电池片 |
+| `railway_transport` | service | 大秦铁路 | 煤炭铁路专线 |
+| `spandex` | material | 华峰化学 | 氨纶纤维 |
+| `refractory_material` | material | 瑞泰科技 | 熔铸耐火材料 |
+| `artificial_intelligence` | technology_capability | 东华软件 | AI技术应用 |
+
+### 9.4 累计统计（Batches 100-120）
+
+| 指标 | 数值 |
+|------|------|
+| 总批次 | 21个 (100-120) |
+| 总 Company | 210家 |
+| 总新建节点 | 320个 |
+| 总新建边 | 151条 |
+| 总新建暴露 | 717条 |
+| 图节点总数 | 1391 |
+| 图边总数 | 679 |
+
+
+## 10. Batches 121-125 提交记录 (2026-05-28)
+
+### 10.1 批次提交记录
+
+| 批次 | 公司数 | 新建节点 | 新建边 | 新建暴露 | 状态 |
+|------|--------|---------|--------|---------|------|
+| Batch 121 | 10 | 24 | 23 | 59 | ✅ 成功 |
+| Batch 122 | 10 | 29 | 26 | 55 | ✅ 成功 |
+| Batch 123 | 10 | 28 | 14 | 55 | ✅ 成功 |
+| Batch 124 | 10 | 26 | 10 | 59 | ✅ 成功 |
+| Batch 125 | 10 | 34 | 25 | 62 | ✅ 成功 |
+| 修复节点 | - | 26 | - | - | ✅ 成功 |
+| 修复边 | - | - | 51 | - | ✅ 成功 |
+| **合计** | **50** | **167** | **149** | **290** | ✅ |
+
+> 注：原始提交产生 51 条边错误（缺失父级基础设施节点），已通过补充 26 个基础设施节点和 51 条修复边全部解决。
+
+### 10.2 提交后图统计
+
+```
+总节点数: ~1558
+总边数: ~828
+```
+
+### 10.3 关键新建节点
+
+| 节点 | 类型 | 代表性公司 | 产业链意义 |
+|------|------|-----------|-----------|
+| `air_transport` | service | 中国国航 | 航空运输服务 |
+| `carbon_black` | material | 黑猫股份 | 橡胶补强剂 |
+| `power_battery` | component | 国轩高科 | 动力电池 |
+| `wind_turbine_blade` | component | 中材科技 | 风电叶片 |
+| `pvc_resin` | material | 中泰化学 | 聚氯乙烯树脂 |
+| `aluminum_die_casting` | component | 广东鸿图 | 汽车压铸件 |
+| `industrial_explosive` | material | 易普力 | 民用爆破器材 |
+| `zipper` | component | 浔兴股份 | 服饰辅料 |
+| `railway_passenger_transport` | service | 广深铁路 | 铁路客运 |
+| `construction_steel` | material | 三钢闽光 | 建筑钢材 |
+| `lithium_separator_pipe` | component | 沧州明珠 | 锂电池隔膜 |
+
+### 10.4 累计统计（Batches 100-125）
+
+| 指标 | 数值 |
+|------|------|
+| 总批次 | 26个 (100-125) |
+| 总 Company | 260家 |
+| 总新建节点 | ~487个 |
+| 总新建边 | ~300条 |
+| 总新建暴露 | 1007条 |
+| 图节点总数 | ~1558 |
+| 图边总数 | ~828 |
