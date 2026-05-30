@@ -1,10 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Activity, Building2, GitBranch, Layers, Network } from "lucide-react";
 import { getStats } from "@/services/api";
-import { getCompanyNetwork } from "@/services/api";
-import { useEffect, useState } from "react";
-
-export type MainView = "industrial_graph" | "company_graph";
+export type MainView = "industrial_graph";
 
 interface StatsBarProps {
   mainView: MainView;
@@ -18,16 +15,6 @@ export function StatsBar({ mainView, onChangeMainView }: StatsBarProps) {
     refetchInterval: 30000,
   });
 
-  const [companyNetworkStats, setCompanyNetworkStats] = useState<{ nodes: number; edges: number } | null>(null);
-
-  useEffect(() => {
-    if (mainView === "company_graph") {
-      getCompanyNetwork()
-        .then((data) => setCompanyNetworkStats({ nodes: data.nodes.length, edges: data.edges.length }))
-        .catch(() => setCompanyNetworkStats(null));
-    }
-  }, [mainView]);
-
   return (
     <div className="flex h-full items-center justify-between px-4">
       <div className="flex items-center gap-3">
@@ -35,24 +22,16 @@ export function StatsBar({ mainView, onChangeMainView }: StatsBarProps) {
         <div className="flex items-center gap-2">
           <Layers className="h-5 w-5 text-cyan-400" />
           <span className="text-lg font-bold tracking-tight text-slate-100">Arachne</span>
-          <span className="ml-1 text-xs font-medium text-slate-500">
-            {mainView === "industrial_graph" ? "产业本体图" : "公司关系网络"}
-          </span>
+          <span className="ml-1 text-xs font-medium text-slate-500">产业本体图</span>
         </div>
 
-        {/* Main View Switcher */}
+        {/* Main View Switcher — 公司视图已移除，保留单视图 */}
         <div className="ml-4 flex items-center rounded-lg border border-slate-700 bg-slate-800 p-0.5">
           <ViewTab
             active={mainView === "industrial_graph"}
             onClick={() => onChangeMainView("industrial_graph")}
             icon={<GitBranch className="h-3 w-3" />}
             label="产业图"
-          />
-          <ViewTab
-            active={mainView === "company_graph"}
-            onClick={() => onChangeMainView("company_graph")}
-            icon={<Network className="h-3 w-3" />}
-            label="公司视图"
           />
         </div>
       </div>

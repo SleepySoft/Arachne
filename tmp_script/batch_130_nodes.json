@@ -1,0 +1,1068 @@
+{
+  "batch_id": "batch_130_nodes",
+  "task_description": "Batch 130 industrial nodes and edges",
+  "nodes_to_upsert": [
+    {
+      "node_id": "alumina",
+      "canonical_name_zh": "氧化铝",
+      "canonical_name_en": "alumina",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "铝土矿经拜耳法加工得到的主要产品，是电解铝的原料",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "中国铝业主营产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "aluminum_foil",
+      "canonical_name_zh": "铝箔",
+      "canonical_name_en": "aluminum foil",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "厚度小于0.2mm的薄铝板",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "中国铝业经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "aluminum_alloy",
+      "canonical_name_zh": "铝合金",
+      "canonical_name_en": "aluminum alloy",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "以铝为基础加入其他元素组成的合金",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "中国铝业经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "aluminum_extrusion",
+      "canonical_name_zh": "铝型材",
+      "canonical_name_en": "aluminum extrusion",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "通过挤压工艺成型的铝材",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "中国铝业经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "rare_earth",
+      "canonical_name_zh": "稀土",
+      "canonical_name_en": "rare earth",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "镧系元素和钪、钇等共17种金属元素的统称",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "中国铝业经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "led_lighting",
+      "canonical_name_zh": "LED照明",
+      "canonical_name_en": "LED lighting",
+      "entity_type": "device",
+      "aliases": [],
+      "definition": "以LED为光源的照明产品",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "实益达主营产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "led_driver",
+      "canonical_name_zh": "LED驱动电源",
+      "canonical_name_en": "LED driver",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "为LED灯具提供稳定电流或电压的电源",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "实益达经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "smart_lighting",
+      "canonical_name_zh": "智能照明",
+      "canonical_name_en": "smart lighting",
+      "entity_type": "device",
+      "aliases": [],
+      "definition": "具有智能控制功能的照明系统",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "实益达经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "mlcc",
+      "canonical_name_zh": "片式多层陶瓷电容器",
+      "canonical_name_en": "MLCC",
+      "entity_type": "component",
+      "aliases": [
+        "多层陶瓷电容"
+      ],
+      "definition": "由多层陶瓷介质和金属电极交替叠压而成的电容器",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "顺络电子主营产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "inductor",
+      "canonical_name_zh": "电感器",
+      "canonical_name_en": "inductor",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "利用电磁感应原理存储能量的被动电子元件",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "顺络电子主营产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "chip_resistor",
+      "canonical_name_zh": "片式电阻器",
+      "canonical_name_en": "chip resistor",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "表面贴装型的小型电阻器",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "顺络电子经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "ltcc_component",
+      "canonical_name_zh": "LTCC组件",
+      "canonical_name_en": "LTCC component",
+      "entity_type": "component",
+      "aliases": [
+        "低温共烧陶瓷组件"
+      ],
+      "definition": "采用低温共烧陶瓷工艺制造的电子组件",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "顺络电子经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "compound_fertilizer",
+      "canonical_name_zh": "复合肥",
+      "canonical_name_en": "compound fertilizer",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "含有两种或两种以上营养元素的化学肥料",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "芭田股份主营产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "slow_release_fertilizer",
+      "canonical_name_zh": "缓释肥",
+      "canonical_name_en": "slow release fertilizer",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "能缓慢释放养分的特种肥料",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "芭田股份经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "water_soluble_fertilizer",
+      "canonical_name_zh": "水溶肥",
+      "canonical_name_en": "water soluble fertilizer",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "能完全溶解于水的多元素复合肥料",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "芭田股份经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "chemical_engineering_design",
+      "canonical_name_zh": "化工工程设计",
+      "canonical_name_en": "chemical engineering design",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "为化工项目提供工艺设计、设备选型和工程设计",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "东华科技主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "chemical_epc",
+      "canonical_name_zh": "化工工程总承包",
+      "canonical_name_en": "chemical EPC",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "化工项目的设计、采购、施工一体化总承包",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "东华科技经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "environmental_engineering",
+      "canonical_name_zh": "环保工程",
+      "canonical_name_en": "environmental engineering",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "为防治环境污染和生态破坏提供工程技术服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "东华科技经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "container_shipping",
+      "canonical_name_zh": "集装箱航运",
+      "canonical_name_en": "container shipping",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "以集装箱为载体的海上运输服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "中远海控主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "bulk_shipping",
+      "canonical_name_zh": "干散货航运",
+      "canonical_name_en": "bulk shipping",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "运输大宗干散货的航运服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "中远海控经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "terminal_operation",
+      "canonical_name_zh": "码头运营",
+      "canonical_name_en": "terminal operation",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "港口码头的装卸、堆存和管理运营",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "中远海控经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "copper_concentrate",
+      "canonical_name_zh": "铜精矿",
+      "canonical_name_en": "copper concentrate",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "铜矿石经过选矿富集后的高品位产品",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "西部矿业主营产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "zinc_concentrate",
+      "canonical_name_zh": "锌精矿",
+      "canonical_name_en": "zinc concentrate",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "锌矿石经过选矿富集后的高品位产品",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "西部矿业主营产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "lead_zinc_metal",
+      "canonical_name_zh": "铅锌金属",
+      "canonical_name_en": "lead zinc metal",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "铅和锌的冶炼产品",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "西部矿业主营产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "car_interior",
+      "canonical_name_zh": "汽车内饰",
+      "canonical_name_en": "car interior",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "汽车内部的装饰和功能性部件",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "宏达高科主营产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "automotive_fabric",
+      "canonical_name_zh": "汽车面料",
+      "canonical_name_en": "automotive fabric",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "用于汽车座椅和内饰的特种织物",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "宏达高科经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "medical_textile",
+      "canonical_name_zh": "医用纺织品",
+      "canonical_name_en": "medical textile",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "用于医疗领域的特种纺织品",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "宏达高科经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "lithium_ion_battery_material",
+      "canonical_name_zh": "锂离子电池材料",
+      "canonical_name_en": "lithium ion battery material",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "用于锂离子电池的各类材料",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "贤丰控股主营产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "electrolyte",
+      "canonical_name_zh": "电解液",
+      "canonical_name_en": "electrolyte",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "电池中离子传导的介质",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "贤丰控股经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "city_commercial_bank",
+      "canonical_name_zh": "城市商业银行",
+      "canonical_name_en": "city commercial bank",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "主要服务地方经济的商业银行",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "宁波银行主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "small_medium_enterprise_loan",
+      "canonical_name_zh": "中小企业贷款",
+      "canonical_name_en": "SME loan",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "面向中小微企业的信贷服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "宁波银行经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "trade_finance",
+      "canonical_name_zh": "贸易融资",
+      "canonical_name_en": "trade finance",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "为进出口贸易提供的融资服务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "宁波银行经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    }
+  ],
+  "edges_to_upsert": [
+    {
+      "edge_id": "alumina_aluminum",
+      "from_node": "alumina",
+      "to_node": "aluminum",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "description": "氧化铝是电解铝的原料",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "aluminum_foil_aluminum",
+      "from_node": "aluminum_foil",
+      "to_node": "aluminum",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "铝箔是铝加工产品的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "aluminum_alloy_aluminum",
+      "from_node": "aluminum_alloy",
+      "to_node": "aluminum",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "铝合金是铝加工产品的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "aluminum_extrusion_aluminum",
+      "from_node": "aluminum_extrusion",
+      "to_node": "aluminum",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "铝型材是铝加工产品的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "rare_earth_metal_product",
+      "from_node": "rare_earth",
+      "to_node": "metal_product",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "稀土是金属产品的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "led_lighting_lighting_equipment",
+      "from_node": "led_lighting",
+      "to_node": "lighting_equipment",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "LED照明是照明设备的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "led_driver_electronic_component",
+      "from_node": "led_driver",
+      "to_node": "electronic_component",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "LED驱动电源是电子元器件的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "smart_lighting_led_lighting",
+      "from_node": "smart_lighting",
+      "to_node": "led_lighting",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "智能照明是LED照明的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "mlcc_electronic_component",
+      "from_node": "mlcc",
+      "to_node": "electronic_component",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "MLCC是电子元器件的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "inductor_electronic_component",
+      "from_node": "inductor",
+      "to_node": "electronic_component",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "电感器是电子元器件的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "chip_resistor_electronic_component",
+      "from_node": "chip_resistor",
+      "to_node": "electronic_component",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "片式电阻器是电子元器件的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "ltcc_component_electronic_component",
+      "from_node": "ltcc_component",
+      "to_node": "electronic_component",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "LTCC组件是电子元器件的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "compound_fertilizer_chemical_fertilizer",
+      "from_node": "compound_fertilizer",
+      "to_node": "chemical_fertilizer",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "复合肥是化肥的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "slow_release_fertilizer_compound_fertilizer",
+      "from_node": "slow_release_fertilizer",
+      "to_node": "compound_fertilizer",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "缓释肥是复合肥的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "water_soluble_fertilizer_compound_fertilizer",
+      "from_node": "water_soluble_fertilizer",
+      "to_node": "compound_fertilizer",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "水溶肥是复合肥的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "chemical_engineering_design_engineering_design",
+      "from_node": "chemical_engineering_design",
+      "to_node": "engineering_design",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "化工工程设计是工程设计的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "chemical_epc_general_contracting",
+      "from_node": "chemical_epc",
+      "to_node": "general_contracting",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "化工工程总承包是工程总承包的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "environmental_engineering_engineering_construction",
+      "from_node": "environmental_engineering",
+      "to_node": "engineering_construction",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "环保工程是工程建设的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "container_shipping_shipping",
+      "from_node": "container_shipping",
+      "to_node": "shipping",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "集装箱航运是航运的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "bulk_shipping_shipping",
+      "from_node": "bulk_shipping",
+      "to_node": "shipping",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "干散货航运是航运的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "terminal_operation_port_operation",
+      "from_node": "terminal_operation",
+      "to_node": "port_operation",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "码头运营是港口运营的一部分",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "copper_concentrate_mining",
+      "from_node": "copper_concentrate",
+      "to_node": "mining",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "description": "铜精矿来自采矿",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "zinc_concentrate_mining",
+      "from_node": "zinc_concentrate",
+      "to_node": "mining",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "description": "锌精矿来自采矿",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "lead_zinc_metal_metal_product",
+      "from_node": "lead_zinc_metal",
+      "to_node": "metal_product",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "铅锌金属是金属产品",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "car_interior_automotive_component",
+      "from_node": "car_interior",
+      "to_node": "automotive_component",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "汽车内饰是汽车零部件的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "automotive_fabric_textile",
+      "from_node": "automotive_fabric",
+      "to_node": "textile",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "汽车面料是纺织品的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "medical_textile_textile",
+      "from_node": "medical_textile",
+      "to_node": "textile",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "医用纺织品是纺织品的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "lithium_ion_battery_material_battery_material",
+      "from_node": "lithium_ion_battery_material",
+      "to_node": "battery_material",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "锂离子电池材料是电池材料的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "electrolyte_battery_material",
+      "from_node": "electrolyte",
+      "to_node": "battery_material",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "电解液是电池材料的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "city_commercial_bank_banking",
+      "from_node": "city_commercial_bank",
+      "to_node": "banking",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "城市商业银行是银行业的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "small_medium_enterprise_loan_banking",
+      "from_node": "small_medium_enterprise_loan",
+      "to_node": "banking",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "中小企业贷款是银行业务的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "trade_finance_banking",
+      "from_node": "trade_finance",
+      "to_node": "banking",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "贸易融资是银行业务的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    }
+  ]
+}

@@ -1,0 +1,982 @@
+{
+  "batch_id": "batch_127_business",
+  "task_description": "Batch 127 business registration",
+  "companies_to_upsert": [
+    {
+      "company_id": "sz_002120",
+      "name_zh": "韵达股份",
+      "name_en": "Yunda Holding Co., Ltd.",
+      "country": "CN",
+      "province": "浙江",
+      "city": "宁波市",
+      "stock_codes": [
+        "002120.SZ"
+      ],
+      "description": "快递服务、跨境物流、供应链管理",
+      "founded_year": 1999,
+      "employee_count": 32456
+    },
+    {
+      "company_id": "sz_002116",
+      "name_zh": "中国海诚",
+      "name_en": "China Haisum Engineering Co., Ltd.",
+      "country": "CN",
+      "province": "上海",
+      "city": "上海市",
+      "stock_codes": [
+        "002116.SZ"
+      ],
+      "description": "工程设计、监理、总承包和技术服务",
+      "founded_year": 1953,
+      "employee_count": 4821
+    },
+    {
+      "company_id": "sz_002117",
+      "name_zh": "东港股份",
+      "name_en": "Tungkong Co., Ltd.",
+      "country": "CN",
+      "province": "山东",
+      "city": "济南市",
+      "stock_codes": [
+        "002117.SZ"
+      ],
+      "description": "印刷业务、安全印刷、智能卡",
+      "founded_year": 1996,
+      "employee_count": 2434
+    },
+    {
+      "company_id": "sh_601166",
+      "name_zh": "兴业银行",
+      "name_en": "Industrial Bank Co., Ltd.",
+      "country": "CN",
+      "province": "福建",
+      "city": "福州市",
+      "stock_codes": [
+        "601166.SH"
+      ],
+      "description": "公司银行、零售银行、同业及资产管理",
+      "founded_year": 1988,
+      "employee_count": 60327
+    },
+    {
+      "company_id": "sz_002119",
+      "name_zh": "康强电子",
+      "name_en": "Ningbo Kangqiang Electronics Co., Ltd.",
+      "country": "CN",
+      "province": "浙江",
+      "city": "宁波市",
+      "stock_codes": [
+        "002119.SZ"
+      ],
+      "description": "半导体封装材料、引线框架、键合丝",
+      "founded_year": 1992,
+      "employee_count": 2156
+    },
+    {
+      "company_id": "sh_601003",
+      "name_zh": "柳钢股份",
+      "name_en": "Liuzhou Iron & Steel Co., Ltd.",
+      "country": "CN",
+      "province": "广西",
+      "city": "柳州市",
+      "stock_codes": [
+        "601003.SH"
+      ],
+      "description": "中厚板、热轧板带、冷轧板带等钢材生产",
+      "founded_year": 1958,
+      "employee_count": 9876
+    },
+    {
+      "company_id": "sz_002124",
+      "name_zh": "天邦食品",
+      "name_en": "Tianbang Food Co., Ltd.",
+      "country": "CN",
+      "province": "浙江",
+      "city": "宁波市",
+      "stock_codes": [
+        "002124.SZ"
+      ],
+      "description": "饲料、生猪养殖、猪肉制品",
+      "founded_year": 1996,
+      "employee_count": 5643
+    },
+    {
+      "company_id": "sh_601005",
+      "name_zh": "重庆钢铁",
+      "name_en": "Chongqing Iron & Steel Co., Ltd.",
+      "country": "CN",
+      "province": "重庆",
+      "city": "重庆市",
+      "stock_codes": [
+        "601005.SH"
+      ],
+      "description": "中厚板、热轧卷板、棒材等钢铁产品",
+      "founded_year": 1938,
+      "employee_count": 12345
+    },
+    {
+      "company_id": "sh_601318",
+      "name_zh": "中国平安",
+      "name_en": "Ping An Insurance Group Co., Ltd.",
+      "country": "CN",
+      "province": "广东",
+      "city": "深圳市",
+      "stock_codes": [
+        "601318.SH"
+      ],
+      "description": "综合金融服务:保险、银行、证券、资管",
+      "founded_year": 1988,
+      "employee_count": 344223
+    },
+    {
+      "company_id": "sz_002123",
+      "name_zh": "梦网科技",
+      "name_en": "Dreamton Technology Co., Ltd.",
+      "country": "CN",
+      "province": "辽宁",
+      "city": "鞍山市",
+      "stock_codes": [
+        "002123.SZ"
+      ],
+      "description": "企业短信、移动云通信、视频云",
+      "founded_year": 2001,
+      "employee_count": 1689
+    }
+  ],
+  "company_node_exposures_to_upsert": [
+    {
+      "exposure_id": "sz_002120_provide_service_express_delivery",
+      "company_id": "sz_002120",
+      "node_id": "express_delivery",
+      "activity_type": "provide_service",
+      "weight": 0.4,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:快递服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002120_provide_service_cross_border_logistics",
+      "company_id": "sz_002120",
+      "node_id": "cross_border_logistics",
+      "activity_type": "provide_service",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:跨境物流",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002120_provide_service_supply_chain_management",
+      "company_id": "sz_002120",
+      "node_id": "supply_chain_management",
+      "activity_type": "provide_service",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:供应链管理",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002120_provide_service_last_mile_delivery",
+      "company_id": "sz_002120",
+      "node_id": "last_mile_delivery",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:末端配送",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002120_provide_service_logistics",
+      "company_id": "sz_002120",
+      "node_id": "logistics",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:物流服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002116_provide_service_engineering_design",
+      "company_id": "sz_002116",
+      "node_id": "engineering_design",
+      "activity_type": "provide_service",
+      "weight": 0.3,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:工程设计",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002116_provide_service_supervision_consulting",
+      "company_id": "sz_002116",
+      "node_id": "supervision_consulting",
+      "activity_type": "provide_service",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:监理咨询",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002116_provide_service_general_contracting",
+      "company_id": "sz_002116",
+      "node_id": "general_contracting",
+      "activity_type": "provide_service",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:工程总承包",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002116_provide_service_engineering_construction",
+      "company_id": "sz_002116",
+      "node_id": "engineering_construction",
+      "activity_type": "provide_service",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:工程建设",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002116_provide_service_technical_service",
+      "company_id": "sz_002116",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002117_provide_service_printing",
+      "company_id": "sz_002117",
+      "node_id": "printing",
+      "activity_type": "provide_service",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:印刷业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002117_provide_service_receipt_paper",
+      "company_id": "sz_002117",
+      "node_id": "receipt_paper",
+      "activity_type": "provide_service",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主要产品:票据印刷",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002117_produce_smart_card",
+      "company_id": "sz_002117",
+      "node_id": "smart_card",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:智能卡",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002117_provide_service_security_printing",
+      "company_id": "sz_002117",
+      "node_id": "security_printing",
+      "activity_type": "provide_service",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:安全印刷",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002117_provide_service_technical_service",
+      "company_id": "sz_002117",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601166_provide_service_corporate_banking",
+      "company_id": "sh_601166",
+      "node_id": "corporate_banking",
+      "activity_type": "provide_service",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:公司银行",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601166_provide_service_retail_banking",
+      "company_id": "sh_601166",
+      "node_id": "retail_banking",
+      "activity_type": "provide_service",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:零售银行",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601166_provide_service_wealth_management",
+      "company_id": "sh_601166",
+      "node_id": "wealth_management",
+      "activity_type": "provide_service",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:财富管理",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601166_provide_service_interbank_business",
+      "company_id": "sh_601166",
+      "node_id": "interbank_business",
+      "activity_type": "provide_service",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:同业业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601166_provide_service_banking",
+      "company_id": "sh_601166",
+      "node_id": "banking",
+      "activity_type": "provide_service",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:银行业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601166_provide_service_financial_service",
+      "company_id": "sh_601166",
+      "node_id": "financial_service",
+      "activity_type": "provide_service",
+      "weight": 0.05,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:金融服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002119_produce_lead_frame",
+      "company_id": "sz_002119",
+      "node_id": "lead_frame",
+      "activity_type": "produce",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营产品:引线框架",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002119_produce_bonding_wire",
+      "company_id": "sz_002119",
+      "node_id": "bonding_wire",
+      "activity_type": "produce",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营产品:键合丝",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002119_produce_semiconductor_packaging_material",
+      "company_id": "sz_002119",
+      "node_id": "semiconductor_packaging_material",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营产品:半导体封装材料",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002119_produce_electronic_component",
+      "company_id": "sz_002119",
+      "node_id": "electronic_component",
+      "activity_type": "produce",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:电子元器件",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002119_provide_service_technical_service",
+      "company_id": "sz_002119",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601003_produce_steel_plate",
+      "company_id": "sh_601003",
+      "node_id": "steel_plate",
+      "activity_type": "produce",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营产品:钢板",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601003_produce_hot_rolled_steel",
+      "company_id": "sh_601003",
+      "node_id": "hot_rolled_steel",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营产品:热轧钢材",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601003_produce_cold_rolled_steel",
+      "company_id": "sh_601003",
+      "node_id": "cold_rolled_steel",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营产品:冷轧钢材",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601003_produce_steel",
+      "company_id": "sh_601003",
+      "node_id": "steel",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:钢铁产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601003_provide_service_technical_service",
+      "company_id": "sh_601003",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002124_produce_animal_feed",
+      "company_id": "sz_002124",
+      "node_id": "animal_feed",
+      "activity_type": "produce",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营产品:饲料",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002124_provide_service_aquaculture",
+      "company_id": "sz_002124",
+      "node_id": "aquaculture",
+      "activity_type": "operate",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:水产养殖",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002124_produce_pork_product",
+      "company_id": "sz_002124",
+      "node_id": "pork_product",
+      "activity_type": "produce",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营产品:猪肉制品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002124_provide_service_pig_breeding",
+      "company_id": "sz_002124",
+      "node_id": "pig_breeding",
+      "activity_type": "operate",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:种猪繁育",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002124_provide_service_technical_service",
+      "company_id": "sz_002124",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601005_produce_flat_steel",
+      "company_id": "sh_601005",
+      "node_id": "flat_steel",
+      "activity_type": "produce",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营产品:中厚板",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601005_produce_long_steel",
+      "company_id": "sh_601005",
+      "node_id": "long_steel",
+      "activity_type": "produce",
+      "weight": 0.25,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营产品:棒线材",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601005_produce_steel",
+      "company_id": "sh_601005",
+      "node_id": "steel",
+      "activity_type": "produce",
+      "weight": 0.3,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:钢铁产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601005_provide_service_technical_service",
+      "company_id": "sh_601005",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601318_provide_service_life_insurance",
+      "company_id": "sh_601318",
+      "node_id": "life_insurance",
+      "activity_type": "provide_service",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:人寿保险",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601318_provide_service_general_insurance",
+      "company_id": "sh_601318",
+      "node_id": "general_insurance",
+      "activity_type": "provide_service",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:财产保险",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601318_provide_service_banking",
+      "company_id": "sh_601318",
+      "node_id": "banking",
+      "activity_type": "provide_service",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:银行业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601318_provide_service_securities_brokerage",
+      "company_id": "sh_601318",
+      "node_id": "securities_brokerage",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:证券经纪",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601318_provide_service_insurance",
+      "company_id": "sh_601318",
+      "node_id": "insurance",
+      "activity_type": "provide_service",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:保险业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sh_601318_provide_service_financial_service",
+      "company_id": "sh_601318",
+      "node_id": "financial_service",
+      "activity_type": "provide_service",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:金融服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002123_provide_service_enterprise_sms",
+      "company_id": "sz_002123",
+      "node_id": "enterprise_sms",
+      "activity_type": "provide_service",
+      "weight": 0.3,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:企业短信",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002123_provide_service_mobile_cloud_computing",
+      "company_id": "sz_002123",
+      "node_id": "mobile_cloud_computing",
+      "activity_type": "provide_service",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "主营业务:移动云通信",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002123_provide_service_video_cloud",
+      "company_id": "sz_002123",
+      "node_id": "video_cloud",
+      "activity_type": "provide_service",
+      "weight": 0.2,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:视频云",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002123_provide_service_telecommunication",
+      "company_id": "sz_002123",
+      "node_id": "telecommunication",
+      "activity_type": "provide_service",
+      "weight": 0.15,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:通信服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002123_provide_service_cloud_computing",
+      "company_id": "sz_002123",
+      "node_id": "cloud_computing",
+      "activity_type": "provide_service",
+      "weight": 0.1,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:云计算服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "exposure_id": "sz_002123_provide_service_technical_service",
+      "company_id": "sz_002123",
+      "node_id": "technical_service",
+      "activity_type": "provide_service",
+      "weight": 0.05,
+      "confidence": "HIGH",
+      "status": "ACTIVE",
+      "evidence": [
+        {
+          "source_title": "经营范围:技术服务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    }
+  ],
+  "industries_to_upsert": [],
+  "industry_node_mappings_to_upsert": []
+}

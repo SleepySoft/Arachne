@@ -1,8 +1,10 @@
 # UI 架构重构：从侧边栏模式到工作区模式
 
+> ⚠️ **DEPRECATED**: 本文档描述的三层架构（Industry → Industrial → Company View）及公司视图相关组件已在 2026-05-30 废弃。当前架构为两域模型：产业图 + 事实关系图。公司视图的全局网络计算和 `INFERRED_UPSTREAM` 持久化已移除，替换为动态探索接口 (`/api/v1/explore/*`)。
+
 **日期**: 2026-05-24  
 **作者**: Kimi Code CLI  
-**状态**: 已完成
+**状态**: 已废弃 (superseded by two-domain architecture, 2026-05-30)
 
 ---
 

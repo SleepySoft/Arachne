@@ -284,7 +284,7 @@ async def process_business_batch(batch: BusinessRegistrationBatch) -> dict:
 
     # ------------------------------------------------------------------
     # Auto-activate companies and exposures created/updated in this batch
-    # so that they are visible to the company-view computation.
+    # so that they are visible to exploration queries.
     # ------------------------------------------------------------------
     company_ids_in_batch = {c.company_id for c in batch.companies_to_upsert}
     exposure_ids_in_batch = {e.exposure_id for e in batch.company_node_exposures_to_upsert}

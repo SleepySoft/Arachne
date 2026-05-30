@@ -1,0 +1,835 @@
+{
+  "batch_id": "batch_129_nodes",
+  "task_description": "Batch 129 industrial nodes and edges",
+  "nodes_to_upsert": [
+    {
+      "node_id": "steel_cord",
+      "canonical_name_zh": "钢帘线",
+      "canonical_name_en": "steel cord",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "用于轮胎增强的高强度钢丝帘线",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "恒星科技主营产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "galvanized_steel_wire",
+      "canonical_name_zh": "镀锌钢绞线",
+      "canonical_name_en": "galvanized steel wire",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "表面镀锌的高强度钢绞线",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "恒星科技主营产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "pc_strand",
+      "canonical_name_zh": "预应力钢绞线",
+      "canonical_name_en": "PC strand",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "用于预应力混凝土的高强度钢绞线",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "恒星科技主营产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "sapphire_substrate",
+      "canonical_name_zh": "蓝宝石衬底",
+      "canonical_name_en": "sapphire substrate",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "用于LED外延片生长的蓝宝石单晶基板",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "恒星科技经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "printed_circuit_board",
+      "canonical_name_zh": "印制电路板",
+      "canonical_name_en": "printed circuit board",
+      "entity_type": "component",
+      "aliases": [
+        "PCB"
+      ],
+      "definition": "用于电子元器件电气连接的基板",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "天津普林主营产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "high_frequency_pcb",
+      "canonical_name_zh": "高频电路板",
+      "canonical_name_en": "high frequency PCB",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "适用于高频信号传输的特种电路板",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "天津普林主营产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "multilayer_pcb",
+      "canonical_name_zh": "多层电路板",
+      "canonical_name_en": "multilayer PCB",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "由多层导电层和绝缘层叠压而成的电路板",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "天津普林经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "space_frame_structure",
+      "canonical_name_zh": "空间钢结构",
+      "canonical_name_en": "space frame structure",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "由多根杆件按一定规律组成的空间受力结构",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "东南网架主营产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "steel_structure",
+      "canonical_name_zh": "钢结构",
+      "canonical_name_en": "steel structure",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "以钢材为主要材料的建筑结构",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "东南网架经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "membrane_structure",
+      "canonical_name_zh": "膜结构",
+      "canonical_name_en": "membrane structure",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "以柔性薄膜材料为覆盖面的建筑结构",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "东南网架经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "titanium_dioxide",
+      "canonical_name_zh": "钛白粉",
+      "canonical_name_en": "titanium dioxide",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "重要的白色颜料和化工原料",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "安纳达主营产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "nano_titanium_dioxide",
+      "canonical_name_zh": "纳米钛白粉",
+      "canonical_name_en": "nano titanium dioxide",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "粒径在纳米级的钛白粉",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "安纳达经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "phosphoric_acid",
+      "canonical_name_zh": "磷酸",
+      "canonical_name_en": "phosphoric acid",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "重要的化工原料和食品添加剂",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "安纳达经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "real_estate_development",
+      "canonical_name_zh": "房地产开发",
+      "canonical_name_en": "real estate development",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "从事房地产项目的开发和建设",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "广宇集团主营业务",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "property_sales",
+      "canonical_name_zh": "房产销售",
+      "canonical_name_en": "property sales",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "房地产开发后的房产销售业务",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "广宇集团经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "diesel_engine",
+      "canonical_name_zh": "柴油发动机",
+      "canonical_name_en": "diesel engine",
+      "entity_type": "device",
+      "aliases": [],
+      "definition": "以柴油为燃料的内燃机",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "潍柴动力主营产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "engine_component",
+      "canonical_name_zh": "发动机零部件",
+      "canonical_name_en": "engine component",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "发动机用的各类零部件",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "潍柴动力主营产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "hydraulic_power",
+      "canonical_name_zh": "液压动力",
+      "canonical_name_en": "hydraulic power",
+      "entity_type": "device",
+      "aliases": [],
+      "definition": "利用液体压力传递动力的系统",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "潍柴动力经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "heavy_truck",
+      "canonical_name_zh": "重型卡车",
+      "canonical_name_en": "heavy truck",
+      "entity_type": "device",
+      "aliases": [],
+      "definition": "载重量大的商用运输车辆",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "潍柴动力经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "coal",
+      "canonical_name_zh": "煤炭",
+      "canonical_name_en": "coal",
+      "entity_type": "material",
+      "aliases": [],
+      "definition": "重要的化石能源和工业原料",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "电投能源主营产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "wind_power",
+      "canonical_name_zh": "风力发电",
+      "canonical_name_en": "wind power",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "利用风力驱动发电机发电的可再生能源",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "电投能源经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "new_energy",
+      "canonical_name_zh": "新能源",
+      "canonical_name_en": "new energy",
+      "entity_type": "service",
+      "aliases": [],
+      "definition": "可再生能源和清洁能源的统称",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "电投能源经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "smart_controller",
+      "canonical_name_zh": "智能控制器",
+      "canonical_name_en": "smart controller",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "具有智能处理能力的电子控制器件",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "拓邦股份主营产品",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "lithium_battery",
+      "canonical_name_zh": "锂电池",
+      "canonical_name_en": "lithium battery",
+      "entity_type": "component",
+      "aliases": [],
+      "definition": "以锂化合物为正负极材料的电池",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "拓邦股份经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    },
+    {
+      "node_id": "motor",
+      "canonical_name_zh": "电机",
+      "canonical_name_en": "motor",
+      "entity_type": "device",
+      "aliases": [],
+      "definition": "将电能转换为机械能的装置",
+      "status": "ACTIVE",
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "拓邦股份经营范围",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ]
+    }
+  ],
+  "edges_to_upsert": [
+    {
+      "edge_id": "steel_cord_steel_wire",
+      "from_node": "steel_cord",
+      "to_node": "steel_wire",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "钢帘线是钢丝的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "galvanized_steel_wire_steel_wire",
+      "from_node": "galvanized_steel_wire",
+      "to_node": "steel_wire",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "镀锌钢绞线是钢丝的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "pc_strand_steel_wire",
+      "from_node": "pc_strand",
+      "to_node": "steel_wire",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "预应力钢绞线是钢丝的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "sapphire_substrate_led",
+      "from_node": "sapphire_substrate",
+      "to_node": "led",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "description": "蓝宝石衬底用于LED制造",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "printed_circuit_board_electronic_component",
+      "from_node": "printed_circuit_board",
+      "to_node": "electronic_component",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "印制电路板是电子元器件的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "high_frequency_pcb_printed_circuit_board",
+      "from_node": "high_frequency_pcb",
+      "to_node": "printed_circuit_board",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "高频电路板是电路板的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "multilayer_pcb_printed_circuit_board",
+      "from_node": "multilayer_pcb",
+      "to_node": "printed_circuit_board",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "多层电路板是电路板的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "space_frame_structure_steel_structure",
+      "from_node": "space_frame_structure",
+      "to_node": "steel_structure",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "空间钢结构是钢结构的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "steel_structure_construction_material",
+      "from_node": "steel_structure",
+      "to_node": "construction_material",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "钢结构是建筑材料的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "membrane_structure_construction_material",
+      "from_node": "membrane_structure",
+      "to_node": "construction_material",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "膜结构是建筑材料的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "titanium_dioxide_chemical_product",
+      "from_node": "titanium_dioxide",
+      "to_node": "chemical_product",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "钛白粉是化工产品的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "nano_titanium_dioxide_titanium_dioxide",
+      "from_node": "nano_titanium_dioxide",
+      "to_node": "titanium_dioxide",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "纳米钛白粉是钛白粉的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "phosphoric_acid_chemical_product",
+      "from_node": "phosphoric_acid",
+      "to_node": "chemical_product",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "磷酸是化工产品的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "real_estate_development_real_estate",
+      "from_node": "real_estate_development",
+      "to_node": "real_estate",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "房地产开发是房地产业务",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "property_sales_real_estate",
+      "from_node": "property_sales",
+      "to_node": "real_estate",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "service_flow",
+      "description": "房产销售是房地产业务",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "diesel_engine_engine",
+      "from_node": "diesel_engine",
+      "to_node": "engine",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "柴油发动机是发动机的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "engine_component_engine",
+      "from_node": "engine_component",
+      "to_node": "engine",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "发动机零部件是发动机的组成部分",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "hydraulic_power_mechanical_equipment",
+      "from_node": "hydraulic_power",
+      "to_node": "mechanical_equipment",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "液压动力是机械设备的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "heavy_truck_automotive",
+      "from_node": "heavy_truck",
+      "to_node": "automotive",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "重型卡车是汽车的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "coal_energy",
+      "from_node": "coal",
+      "to_node": "energy",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "energy_flow",
+      "description": "煤炭是能源的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "wind_power_new_energy",
+      "from_node": "wind_power",
+      "to_node": "new_energy",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "energy_flow",
+      "description": "风力发电是新能源的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "new_energy_energy",
+      "from_node": "new_energy",
+      "to_node": "energy",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "energy_flow",
+      "description": "新能源是能源的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "smart_controller_electronic_component",
+      "from_node": "smart_controller",
+      "to_node": "electronic_component",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "智能控制器是电子元器件的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "lithium_battery_battery",
+      "from_node": "lithium_battery",
+      "to_node": "battery",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "锂电池是电池的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "motor_mechanical_equipment",
+      "from_node": "motor",
+      "to_node": "mechanical_equipment",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "description": "电机是机械设备的一种",
+      "evidence": [
+        {
+          "source_title": "产业知识图谱",
+          "source_url": null,
+          "quote": "根据企业公开信息"
+        }
+      ],
+      "confidence": "HIGH"
+    }
+  ]
+}

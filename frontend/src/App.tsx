@@ -8,9 +8,6 @@ import { CompanyNetworkCanvas } from "@/components/CompanyNetworkCanvas";
 import { CompanySidebar } from "@/components/CompanySidebar";
 import {
   getCompany,
-  getCompanyNetwork,
-  getCompanyUpstream,
-  getCompanyDownstream,
   getExplorationGraph,
 } from "@/services/api";
 import { EdgeDetail } from "@/components/EdgeDetail";
@@ -28,11 +25,9 @@ import { NodeForm } from "@/components/NodeForm";
 import { NodeIndustriesPanel } from "@/components/NodeIndustriesPanel";
 import { SearchPanel } from "@/components/SearchPanel";
 import { StatsBar, MainView } from "@/components/StatsBar";
-import { CompanyViewVersions } from "@/components/CompanyViewVersions";
 import { CompanyMaterialModal } from "@/components/CompanyMaterialModal";
 import { ExplorationCanvas, ExplorationNode as ENode, ExplorationEdge as EEdge } from "@/components/ExplorationCanvas";
 import { MaterialConnectionPanel } from "@/components/MaterialConnectionPanel";
-import { CompanyRelationDetail } from "@/components/CompanyRelationDetail";
 
 export type PanelType =
   | "none"
@@ -77,7 +72,7 @@ export default function App() {
   // ------------------------------------------------------------------
   const [mainView, setMainView] = useState<MainView>("industrial_graph");
   const [industrialSubView, setIndustrialSubView] = useState<"filter" | "industry" | "company">("filter");
-  const [companySubView, setCompanySubView] = useState<"version" | "company_list">("company_list");
+  const [companySubView, setCompanySubView] = useState<"company_list">("company_list");
 
   // ------------------------------------------------------------------
   // Industrial graph state
@@ -297,51 +292,11 @@ export default function App() {
   };
 
   // Load preview (temporary translucent network) for a given company
-  const loadPreview = async (companyId: string) => {
-    try {
-      const [upstream, downstream] = await Promise.all([
-        getCompanyUpstream(companyId),
-        getCompanyDownstream(companyId),
-      ]);
-
-      const nodeMap = new Map<string, CNode>();
-
-      // Ensure the center company itself is in the node map
-      const existingNode = nodeStore.get(companyId) || previewData?.nodes.find((n) => n.company_id === companyId);
-      nodeMap.set(companyId, existingNode || { company_id: companyId, name_zh: companyId, company_type: "unknown", status: "ACTIVE" });
-
-      upstream.forEach((u) => {
-        if (!nodeMap.has(u.company_id)) {
-          nodeMap.set(u.company_id, { company_id: u.company_id, name_zh: u.name_zh, company_type: u.company_type || "unknown", status: "ACTIVE" });
-        }
-      });
-      downstream.forEach((d) => {
-        if (!nodeMap.has(d.company_id)) {
-          nodeMap.set(d.company_id, { company_id: d.company_id, name_zh: d.name_zh, company_type: d.company_type || "unknown", status: "ACTIVE" });
-        }
-      });
-
-      const edges: CEdge[] = [];
-      upstream.forEach((u) => {
-        edges.push({ from_company_id: u.company_id, to_company_id: companyId, path_count: u.path_count, strength: u.strength, confidence: "MEDIUM" });
-      });
-      downstream.forEach((d) => {
-        edges.push({ from_company_id: companyId, to_company_id: d.company_id, path_count: d.path_count, strength: d.strength, confidence: "MEDIUM" });
-      });
-
-      // Cache preview nodes in nodeStore
-      setNodeStore((prev) => {
-        const next = new Map(prev);
-        nodeMap.forEach((n, id) => {
-          if (!next.has(id)) next.set(id, n);
-        });
-        return next;
-      });
-
-      setPreviewData({ centerId: companyId, nodes: Array.from(nodeMap.values()), edges });
-    } catch {
-      setPreviewData(null);
-    }
+  const loadPreview = async (_companyId: string) => {
+    // Company view upstream/downstream APIs have been removed.
+    // Preview based on inferred industrial relations is no longer available.
+    // Use /api/v1/explore endpoints for cross-domain exploration instead.
+    setPreviewData(null);
   };
 
   // Click on a node inside the exploration canvas (manual mode)
@@ -575,7 +530,6 @@ export default function App() {
     <div className="flex h-full flex-col">
       <div className="flex border-b border-slate-700">
         <SubTab active={companySubView === "company_list"} onClick={() => setCompanySubView("company_list")} label="公司列表" />
-        <SubTab active={companySubView === "version"} onClick={() => setCompanySubView("version")} label="版本" />
       </div>
       <div className="flex-1 overflow-auto">
         {companySubView === "company_list" && (
@@ -585,19 +539,7 @@ export default function App() {
             onCreate={() => setPanel("company-create")}
           />
         )}
-        {companySubView === "version" && (
-          <CompanyViewVersions
-            onViewNetwork={() => {
-              setCompanyDisplayMode("empty");
-              setOrderedChain([]);
-              setFixedIds(new Set());
-              setNodeStore(new Map());
-              setPermanentEdges([]);
-              setCurrentFocusId(null);
-              setPreviewData(null);
-            }}
-          />
-        )}
+
       </div>
     </div>
   );
@@ -797,14 +739,16 @@ export default function App() {
         onSuccess={(ind) => { setSelectedIndustry(ind); setPanel("industry-detail"); }}
       />
     ) : panel === "company-relation-detail" && selectedRelation ? (
-      <CompanyRelationDetail
-        fromCompanyId={selectedRelation.from_company_id}
-        toCompanyId={selectedRelation.to_company_id}
-        relationType={selectedRelation.relation_type}
-        relationSubtype={selectedRelation.relation_subtype}
-        pathCount={selectedRelation.path_count}
-        onClose={() => { setPanel("none"); setSelectedRelation(null); }}
-      />
+      <div className="flex h-full flex-col items-center justify-center bg-slate-900 text-slate-400">
+        <p className="text-sm">公司视图已重构</p>
+        <p className="mt-1 text-xs">此功能已移除，请使用探索接口</p>
+        <button
+          onClick={() => { setPanel("none"); setSelectedRelation(null); }}
+          className="mt-3 rounded bg-slate-800 px-3 py-1 text-xs hover:bg-slate-700"
+        >
+          关闭
+        </button>
+      </div>
     ) : panel === "company-detail" && selectedCompany ? (
       <CompanyDetail
         company={selectedCompany}
@@ -854,15 +798,9 @@ export default function App() {
           companyCount={companyNetworkData?.nodes.length ?? 200}
           relationCount={companyNetworkData?.edges.length ?? 1142}
           onDrawGlobal={() => {
-            setIsDrawingGlobal(true);
-            getCompanyNetwork()
-              .then((data) => {
-                setCompanyNetworkData(data);
-                setCompanyDisplayMode("global");
-                setCurrentFocusId(null);
-                setIsDrawingGlobal(false);
-              })
-              .catch(() => setIsDrawingGlobal(false));
+            // Global company network view has been removed.
+            // Use /api/v1/explore endpoints for cross-domain exploration.
+            alert("全局公司网络视图已移除。请使用探索接口。");
           }}
           isLoading={isDrawingGlobal}
         />

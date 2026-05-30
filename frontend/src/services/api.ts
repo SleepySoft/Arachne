@@ -332,74 +332,6 @@ export const getComputationJob = async (jobId: string): Promise<ComputationJob> 
   return res.data;
 };
 
-// ============================================================
-// Company View APIs (全局公司视图)
-// ============================================================
-
-export const computeCompanyView = async (): Promise<{ job_id: string; status: string; created_at: string }> => {
-  const res = await client.post("/company-view/compute", {});
-  return res.data;
-};
-
-export const getCompanyNetwork = async (): Promise<{
-  nodes: { company_id: string; name_zh: string; company_type: string; status: string }[];
-  edges: { from_company_id: string; to_company_id: string; path_count: number; strength: number; confidence: string; relation_type?: string; relation_subtype?: string }[];
-}> => {
-  const res = await client.get("/company-view/network");
-  return res.data;
-};
-
-export const listCompanyViewVersions = async (page = 1, pageSize = 20): Promise<{
-  items: import("@/types").CompanyViewVersion[];
-  total: number;
-  page: number;
-  page_size: number;
-}> => {
-  const res = await client.get("/company-view/versions", { params: { page, page_size: pageSize } });
-  return res.data;
-};
-
-export const createCompanyViewVersion = async (): Promise<{ job_id: string; status: string; created_at: string }> => {
-  const res = await client.post("/company-view/versions", {});
-  return res.data;
-};
-
-export const deleteCompanyViewVersion = async (versionId: number): Promise<void> => {
-  await client.delete(`/company-view/versions/${versionId}`);
-};
-
-export const getCompanyUpstream = async (companyId: string): Promise<{
-  company_id: string;
-  name_zh: string;
-  company_type: string;
-  path_count: number;
-  strength: number;
-  relation_type?: string;
-  relation_subtype?: string;
-}[]> => {
-  const res = await client.get(`/company-view/${companyId}/upstream`);
-  return res.data;
-};
-
-export const getCompanyDownstream = async (companyId: string): Promise<{
-  company_id: string;
-  name_zh: string;
-  company_type: string;
-  path_count: number;
-  strength: number;
-  relation_type?: string;
-  relation_subtype?: string;
-}[]> => {
-  const res = await client.get(`/company-view/${companyId}/downstream`);
-  return res.data;
-};
-
-export interface CompanyRelationPath {
-  from_node: { node_id: string; canonical_name_zh: string };
-  to_node: { node_id: string; canonical_name_zh: string };
-  edge_type: string;
-}
-
 export interface ExplorationGraph {
   nodes: {
     id: string;
@@ -456,21 +388,5 @@ export const getMaterialCompanies = async (nodeId: string, excludeCompanyId?: st
   const res = await client.get(`/companies/nodes/${nodeId}/connected-companies`, {
     params: excludeCompanyId ? { exclude_company_id: excludeCompanyId } : undefined,
   });
-  return res.data;
-};
-
-export const getCompanyRelationPaths = async (
-  fromCompanyId: string,
-  toCompanyId: string
-): Promise<{
-  from_company_id: string;
-  to_company_id: string;
-  from_company_name: string;
-  to_company_name: string;
-  relation_type: string;
-  total_paths: number;
-  paths: CompanyRelationPath[];
-}> => {
-  const res = await client.get(`/company-view/relations/${fromCompanyId}/${toCompanyId}/paths`);
   return res.data;
 };

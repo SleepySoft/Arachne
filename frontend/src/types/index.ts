@@ -388,23 +388,6 @@ export interface ComputationJob {
   completed_at?: string;
 }
 
-export interface CompanyViewVersion {
-  version_id: number;
-  version_uuid: string;
-  job_id: string;
-  status: string;
-  total_companies?: number;
-  total_relations?: number;
-  total_pairs?: number;
-  processed_pairs?: number;
-  synced_companies?: number;
-  cleared_relations?: number;
-  created_relations?: number;
-  error_message?: string;
-  created_at?: string;
-  completed_at?: string;
-}
-
 export const ENTITY_TYPE_COLORS: Record<EntityType, string> = {
   material: "#f87171",
   component: "#fb923c",

@@ -1,0 +1,1706 @@
+{
+  "aes_surfactant": {
+    "name": "AES表面活性剂",
+    "type": "material"
+  },
+  "atm_machine": {
+    "name": "ATM机",
+    "type": "device"
+  },
+  "bms_component": {
+    "name": "BMS组件",
+    "type": "component"
+  },
+  "dram_chip": {
+    "name": "DRAM芯片",
+    "type": "component"
+  },
+  "eva_resin": {
+    "name": "EVA树脂",
+    "type": "material"
+  },
+  "it_distribution_service": {
+    "name": "IT分销服务",
+    "type": "service"
+  },
+  "it_hardware": {
+    "name": "IT硬件",
+    "type": "device"
+  },
+  "lcd_polarizer": {
+    "name": "LCD偏光片",
+    "type": "component"
+  },
+  "led_display_screen": {
+    "name": "LED显示屏",
+    "type": "device"
+  },
+  "led_lighting": {
+    "name": "LED照明",
+    "type": "device"
+  },
+  "nand_flash_chip": {
+    "name": "NAND Flash芯片",
+    "type": "component"
+  },
+  "oled_polarizer": {
+    "name": "OLED偏光片",
+    "type": "component"
+  },
+  "oled_panel": {
+    "name": "OLED面板",
+    "type": "component"
+  },
+  "pet_resin": {
+    "name": "PET树脂",
+    "type": "material"
+  },
+  "pet_bottle": {
+    "name": "PET瓶",
+    "type": "component"
+  },
+  "pva_film": {
+    "name": "PVA膜",
+    "type": "material"
+  },
+  "suv": {
+    "name": "SUV",
+    "type": "device"
+  },
+  "tac_film": {
+    "name": "TAC膜",
+    "type": "material"
+  },
+  "universal_joint": {
+    "name": "万向节",
+    "type": "component"
+  },
+  "non_performing_asset_management": {
+    "name": "不良资产管理",
+    "type": "service"
+  },
+  "stainless_steel": {
+    "name": "不锈钢",
+    "type": "material"
+  },
+  "special_purpose_vehicle": {
+    "name": "专用车",
+    "type": "device"
+  },
+  "traditional_chinese_medicine": {
+    "name": "中成药",
+    "type": "material"
+  },
+  "passenger_car": {
+    "name": "乘用车",
+    "type": "device"
+  },
+  "cloud_service_resource": {
+    "name": "云服务资源",
+    "type": "service"
+  },
+  "cloud_solution": {
+    "name": "云解决方案",
+    "type": "service"
+  },
+  "artificial_board": {
+    "name": "人造板",
+    "type": "component"
+  },
+  "warehouse_service": {
+    "name": "仓储服务",
+    "type": "service"
+  },
+  "exhibition_service": {
+    "name": "会展服务",
+    "type": "service"
+  },
+  "residential_asset_management": {
+    "name": "住宅资产管理",
+    "type": "service"
+  },
+  "heating_supply": {
+    "name": "供热服务",
+    "type": "service"
+  },
+  "power_supply_system": {
+    "name": "供电系统",
+    "type": "subsystem"
+  },
+  "bonded_warehousing_service": {
+    "name": "保税仓储服务",
+    "type": "service"
+  },
+  "signaling_system": {
+    "name": "信号系统",
+    "type": "subsystem"
+  },
+  "information_system_integration": {
+    "name": "信息系统集成服务",
+    "type": "service"
+  },
+  "trust_service": {
+    "name": "信托服务",
+    "type": "service"
+  },
+  "bond_investment_service": {
+    "name": "债券投资服务",
+    "type": "service"
+  },
+  "health_management_service": {
+    "name": "健康管理服务",
+    "type": "service"
+  },
+  "energy_storage_technology": {
+    "name": "储能技术服务",
+    "type": "service"
+  },
+  "energy_storage_service": {
+    "name": "储能服务",
+    "type": "service"
+  },
+  "energy_storage_battery": {
+    "name": "储能电池",
+    "type": "device"
+  },
+  "solar_power_generation": {
+    "name": "光伏发电",
+    "type": "service"
+  },
+  "pv_glass": {
+    "name": "光伏玻璃",
+    "type": "component"
+  },
+  "photovoltaic_module": {
+    "name": "光伏组件",
+    "type": "device"
+  },
+  "optical_transmission_equipment": {
+    "name": "光传输设备",
+    "type": "device"
+  },
+  "fiber_optic_device": {
+    "name": "光电子器件",
+    "type": "device"
+  },
+  "optical_fiber": {
+    "name": "光纤",
+    "type": "component"
+  },
+  "optical_fiber_cable": {
+    "name": "光缆",
+    "type": "component"
+  },
+  "public_deposit": {
+    "name": "公众存款",
+    "type": "material"
+  },
+  "memory_dimm": {
+    "name": "内存条模组",
+    "type": "device"
+  },
+  "recycling_service": {
+    "name": "再生资源回收服务",
+    "type": "service"
+  },
+  "recycled_lead": {
+    "name": "再生铅",
+    "type": "material"
+  },
+  "military_power_supply": {
+    "name": "军用电源",
+    "type": "device"
+  },
+  "agricultural_machinery": {
+    "name": "农业机械",
+    "type": "device"
+  },
+  "agricultural_product": {
+    "name": "农产品",
+    "type": "material"
+  },
+  "agricultural_wholesale_service": {
+    "name": "农产品批发服务",
+    "type": "service"
+  },
+  "agricultural_transport_vehicle": {
+    "name": "农用运输车",
+    "type": "device"
+  },
+  "pesticide": {
+    "name": "农药",
+    "type": "material"
+  },
+  "cold_storage_equipment": {
+    "name": "冷藏设备",
+    "type": "device"
+  },
+  "cold_storage_facility": {
+    "name": "冷藏设施",
+    "type": "infrastructure"
+  },
+  "steel_sheet": {
+    "name": "冷轧钢板",
+    "type": "material"
+  },
+  "distributed_energy": {
+    "name": "分布式能源",
+    "type": "service"
+  },
+  "refrigeration_compressor": {
+    "name": "制冷压缩机",
+    "type": "component"
+  },
+  "refrigeration_engineering_service": {
+    "name": "制冷工程服务",
+    "type": "service"
+  },
+  "refrigeration_equipment": {
+    "name": "制冷设备",
+    "type": "device"
+  },
+  "office_equipment": {
+    "name": "办公设备",
+    "type": "device"
+  },
+  "cng_station": {
+    "name": "加气站",
+    "type": "infrastructure"
+  },
+  "cosmetic": {
+    "name": "化妆品",
+    "type": "material"
+  },
+  "chemical_fertilizer": {
+    "name": "化学肥料",
+    "type": "material"
+  },
+  "chemical_drug": {
+    "name": "化学药",
+    "type": "material"
+  },
+  "medical_cold_storage": {
+    "name": "医用低温存储设备",
+    "type": "device"
+  },
+  "medical_device": {
+    "name": "医疗器械",
+    "type": "device"
+  },
+  "medical_service": {
+    "name": "医疗服务",
+    "type": "service"
+  },
+  "medical_cosmetic_service": {
+    "name": "医疗美容服务",
+    "type": "service"
+  },
+  "pharmaceutical_distribution": {
+    "name": "医药分销服务",
+    "type": "service"
+  },
+  "pharmaceutical_raw_material": {
+    "name": "医药原料药",
+    "type": "material"
+  },
+  "pharmaceutical_retail": {
+    "name": "医药零售服务",
+    "type": "service"
+  },
+  "semiconductor_device": {
+    "name": "半导体器件",
+    "type": "component"
+  },
+  "pcb_board": {
+    "name": "印制电路板",
+    "type": "component"
+  },
+  "hazardous_waste_treatment_service": {
+    "name": "危险废物处理服务",
+    "type": "service"
+  },
+  "active_pharmaceutical_ingredient": {
+    "name": "原料药",
+    "type": "material"
+  },
+  "timber": {
+    "name": "原木",
+    "type": "material"
+  },
+  "crude_oil": {
+    "name": "原油",
+    "type": "material"
+  },
+  "kitchen_appliance": {
+    "name": "厨卫电器",
+    "type": "device"
+  },
+  "kitchen_cabinet": {
+    "name": "厨柜",
+    "type": "component"
+  },
+  "dicyandiamide": {
+    "name": "双氰胺",
+    "type": "material"
+  },
+  "generator_set": {
+    "name": "发电机组",
+    "type": "device"
+  },
+  "transformer": {
+    "name": "变压器",
+    "type": "device"
+  },
+  "renewable_energy_power_generation": {
+    "name": "可再生能源发电",
+    "type": "service"
+  },
+  "desktop_computer": {
+    "name": "台式电脑",
+    "type": "device"
+  },
+  "synthetic_resin": {
+    "name": "合成树脂",
+    "type": "material"
+  },
+  "interbank_lending_service": {
+    "name": "同业拆借服务",
+    "type": "service"
+  },
+  "commercial_property": {
+    "name": "商业地产",
+    "type": "component"
+  },
+  "commercial_property_operation": {
+    "name": "商业地产运营",
+    "type": "service"
+  },
+  "residential_property": {
+    "name": "商品住宅",
+    "type": "component"
+  },
+  "ready_mixed_concrete": {
+    "name": "商品混凝土",
+    "type": "material"
+  },
+  "business_travel_service": {
+    "name": "商旅服务",
+    "type": "service"
+  },
+  "commercial_vehicle": {
+    "name": "商用车",
+    "type": "device"
+  },
+  "trade_service": {
+    "name": "商贸服务",
+    "type": "service"
+  },
+  "gardening_material": {
+    "name": "园艺材料",
+    "type": "material"
+  },
+  "solid_waste_treatment": {
+    "name": "固废处理",
+    "type": "service"
+  },
+  "grinding_wheel": {
+    "name": "固结磨具",
+    "type": "device"
+  },
+  "land": {
+    "name": "土地",
+    "type": "material"
+  },
+  "land_development": {
+    "name": "土地开发",
+    "type": "service"
+  },
+  "soil": {
+    "name": "土壤",
+    "type": "material"
+  },
+  "waste_to_energy": {
+    "name": "垃圾焚烧发电",
+    "type": "service"
+  },
+  "waste_incineration_equipment": {
+    "name": "垃圾焚烧发电设备",
+    "type": "device"
+  },
+  "urban_sanitation_service": {
+    "name": "城乡环卫一体化服务",
+    "type": "service"
+  },
+  "city_gas_supply": {
+    "name": "城市燃气供应",
+    "type": "service"
+  },
+  "urban_gas_network": {
+    "name": "城市燃气管网",
+    "type": "infrastructure"
+  },
+  "municipal_waste_treatment": {
+    "name": "城市生活垃圾处理服务",
+    "type": "service"
+  },
+  "urban_complex": {
+    "name": "城市综合体",
+    "type": "infrastructure"
+  },
+  "plastic_profile": {
+    "name": "塑料型材",
+    "type": "component"
+  },
+  "plastic_resin": {
+    "name": "塑胶原料",
+    "type": "material"
+  },
+  "big_data_service": {
+    "name": "大数据服务",
+    "type": "service"
+  },
+  "natural_gas": {
+    "name": "天然气",
+    "type": "material"
+  },
+  "natural_gas_pipeline": {
+    "name": "天然气长输管道",
+    "type": "infrastructure"
+  },
+  "natural_graphite": {
+    "name": "天然石墨",
+    "type": "material"
+  },
+  "solar_photovoltaic_power_station": {
+    "name": "太阳能光伏电站",
+    "type": "infrastructure"
+  },
+  "radial_tire": {
+    "name": "子午线轮胎",
+    "type": "component"
+  },
+  "memory_wafer": {
+    "name": "存储晶圆",
+    "type": "component"
+  },
+  "memory_module": {
+    "name": "存储模组",
+    "type": "device"
+  },
+  "storage_equipment": {
+    "name": "存储设备",
+    "type": "device"
+  },
+  "security_database": {
+    "name": "安全数据库",
+    "type": "service"
+  },
+  "poultry": {
+    "name": "家禽",
+    "type": "material"
+  },
+  "broadband_network_service": {
+    "name": "宽带网络服务",
+    "type": "service"
+  },
+  "missile": {
+    "name": "导弹",
+    "type": "system"
+  },
+  "packaging_substrate": {
+    "name": "封装基板",
+    "type": "component"
+  },
+  "packaging_material": {
+    "name": "封装材料",
+    "type": "material"
+  },
+  "small_home_appliance": {
+    "name": "小家电",
+    "type": "device"
+  },
+  "exhaust_aftertreatment_system": {
+    "name": "尾气后处理系统",
+    "type": "subsystem"
+  },
+  "industrial_internet_platform": {
+    "name": "工业互联网平台",
+    "type": "service"
+  },
+  "industrial_zone_development": {
+    "name": "工业区开发",
+    "type": "service"
+  },
+  "industrial_property": {
+    "name": "工业物业",
+    "type": "component"
+  },
+  "sulfuric_acid": {
+    "name": "工业硫酸",
+    "type": "material"
+  },
+  "construction_machinery": {
+    "name": "工程机械",
+    "type": "device"
+  },
+  "engineering_glass": {
+    "name": "工程玻璃",
+    "type": "component"
+  },
+  "early_childhood_education": {
+    "name": "幼教",
+    "type": "service"
+  },
+  "advertising_service": {
+    "name": "广告服务",
+    "type": "service"
+  },
+  "emergency_security_service": {
+    "name": "应急安全技术服务",
+    "type": "service"
+  },
+  "chassis_system": {
+    "name": "底盘系统",
+    "type": "subsystem"
+  },
+  "building_profile": {
+    "name": "建筑型材",
+    "type": "component"
+  },
+  "building_curtain_wall": {
+    "name": "建筑幕墙",
+    "type": "component"
+  },
+  "construction_service": {
+    "name": "建筑施工服务",
+    "type": "service"
+  },
+  "architectural_design_service": {
+    "name": "建筑设计服务",
+    "type": "service"
+  },
+  "switchgear": {
+    "name": "开关柜",
+    "type": "device"
+  },
+  "pilotage_service": {
+    "name": "引航服务",
+    "type": "service"
+  },
+  "color_tv": {
+    "name": "彩色电视机",
+    "type": "device"
+  },
+  "mini_bus": {
+    "name": "微型客车",
+    "type": "device"
+  },
+  "mini_truck": {
+    "name": "微型货车",
+    "type": "device"
+  },
+  "microecological_preparation": {
+    "name": "微生态制剂",
+    "type": "material"
+  },
+  "suspension_system": {
+    "name": "悬架系统",
+    "type": "subsystem"
+  },
+  "fuel_retail_service": {
+    "name": "成品油零售服务",
+    "type": "service"
+  },
+  "real_estate_development": {
+    "name": "房地产开发",
+    "type": "service"
+  },
+  "real_estate_agency_service": {
+    "name": "房地产经纪服务",
+    "type": "service"
+  },
+  "housing_rental_service": {
+    "name": "房屋租赁服务",
+    "type": "service"
+  },
+  "mobile_phone": {
+    "name": "手机",
+    "type": "device"
+  },
+  "watch": {
+    "name": "手表",
+    "type": "device"
+  },
+  "watch_movement": {
+    "name": "手表机芯",
+    "type": "component"
+  },
+  "antibiotic": {
+    "name": "抗生素",
+    "type": "material"
+  },
+  "operating_system": {
+    "name": "操作系统",
+    "type": "application_system"
+  },
+  "modified_vehicle": {
+    "name": "改装车",
+    "type": "device"
+  },
+  "education_service": {
+    "name": "教育服务",
+    "type": "service"
+  },
+  "bulk_cargo": {
+    "name": "散杂货",
+    "type": "material"
+  },
+  "bias_tire": {
+    "name": "斜交轮胎",
+    "type": "component"
+  },
+  "new_media_service": {
+    "name": "新媒体服务",
+    "type": "service"
+  },
+  "tourism_service": {
+    "name": "旅游服务",
+    "type": "service"
+  },
+  "daily_necessities": {
+    "name": "日用百货",
+    "type": "material"
+  },
+  "display_module": {
+    "name": "显示模组",
+    "type": "component"
+  },
+  "scenic_area_service": {
+    "name": "景区服务",
+    "type": "service"
+  },
+  "landscape_design_service": {
+    "name": "景观设计服务",
+    "type": "service"
+  },
+  "smart_meter": {
+    "name": "智能电表",
+    "type": "device"
+  },
+  "smart_mining_service": {
+    "name": "智能矿山服务",
+    "type": "service"
+  },
+  "cable_tv_network_service": {
+    "name": "有线电视网络服务",
+    "type": "service"
+  },
+  "cable_tv_equipment": {
+    "name": "有线电视设备",
+    "type": "device"
+  },
+  "non_ferrous_metal_mining": {
+    "name": "有色金属采矿",
+    "type": "service"
+  },
+  "server_hardware": {
+    "name": "服务器硬件",
+    "type": "infrastructure"
+  },
+  "futures_brokerage": {
+    "name": "期货经纪",
+    "type": "service"
+  },
+  "wood_product": {
+    "name": "木材产品",
+    "type": "material"
+  },
+  "paper_product": {
+    "name": "机制纸",
+    "type": "material"
+  },
+  "airport_operation_service": {
+    "name": "机场运营服务",
+    "type": "service"
+  },
+  "machine_tool": {
+    "name": "机床",
+    "type": "device"
+  },
+  "machinery_part": {
+    "name": "机械零部件",
+    "type": "component"
+  },
+  "electromechanical_product": {
+    "name": "机电产品",
+    "type": "device"
+  },
+  "forestry": {
+    "name": "林业",
+    "type": "service"
+  },
+  "forest_chemical_product": {
+    "name": "林化产品",
+    "type": "material"
+  },
+  "diesel": {
+    "name": "柴油",
+    "type": "material"
+  },
+  "diesel_generator_set": {
+    "name": "柴油发电机组",
+    "type": "device"
+  },
+  "diesel_engine": {
+    "name": "柴油机",
+    "type": "subsystem"
+  },
+  "module_power_supply": {
+    "name": "模块电源",
+    "type": "component"
+  },
+  "rubber_plastic_machine": {
+    "name": "橡塑机械",
+    "type": "device"
+  },
+  "rubber": {
+    "name": "橡胶",
+    "type": "material"
+  },
+  "gas_engine": {
+    "name": "气体机",
+    "type": "subsystem"
+  },
+  "cylinder_liner": {
+    "name": "气缸套",
+    "type": "component"
+  },
+  "vanadium_oxide": {
+    "name": "氧化钒",
+    "type": "material"
+  },
+  "potassium_chloride": {
+    "name": "氯化钾",
+    "type": "material"
+  },
+  "hydro_power_generation": {
+    "name": "水力发电",
+    "type": "service"
+  },
+  "cement": {
+    "name": "水泥",
+    "type": "material"
+  },
+  "waste_water_treatment": {
+    "name": "污水处理",
+    "type": "service"
+  },
+  "sewage_treatment_service": {
+    "name": "污水处理服务",
+    "type": "service"
+  },
+  "sludge_treatment": {
+    "name": "污泥处理",
+    "type": "service"
+  },
+  "gasoline": {
+    "name": "汽油",
+    "type": "material"
+  },
+  "automotive_transmission_system": {
+    "name": "汽车传动系统",
+    "type": "subsystem"
+  },
+  "automotive_brake_system": {
+    "name": "汽车制动系统",
+    "type": "subsystem"
+  },
+  "automotive_manufacturing": {
+    "name": "汽车制造",
+    "type": "service"
+  },
+  "automotive_engine": {
+    "name": "汽车发动机",
+    "type": "subsystem"
+  },
+  "automotive_engine_accessory": {
+    "name": "汽车发动机附件",
+    "type": "component"
+  },
+  "automotive_exhaust_system": {
+    "name": "汽车排气系统",
+    "type": "subsystem"
+  },
+  "automotive_inspection_service": {
+    "name": "汽车检测服务",
+    "type": "service"
+  },
+  "automotive_environment_system": {
+    "name": "汽车环境系统",
+    "type": "subsystem"
+  },
+  "automotive_electronics": {
+    "name": "汽车电子电器",
+    "type": "component"
+  },
+  "car_rental_service": {
+    "name": "汽车租赁服务",
+    "type": "service"
+  },
+  "automotive_maintenance_service": {
+    "name": "汽车维修保养服务",
+    "type": "service"
+  },
+  "automotive_chip": {
+    "name": "汽车芯片",
+    "type": "component"
+  },
+  "automotive_steering_system": {
+    "name": "汽车转向系统",
+    "type": "subsystem"
+  },
+  "automotive_steel": {
+    "name": "汽车钢材",
+    "type": "material"
+  },
+  "automotive_aluminum": {
+    "name": "汽车铝材",
+    "type": "material"
+  },
+  "automotive_sales_service": {
+    "name": "汽车销售服务",
+    "type": "service"
+  },
+  "paint": {
+    "name": "油漆",
+    "type": "material"
+  },
+  "injection_molding_part": {
+    "name": "注塑件",
+    "type": "component"
+  },
+  "clean_material": {
+    "name": "洁净材料",
+    "type": "material"
+  },
+  "cleanroom_equipment": {
+    "name": "洁净设备",
+    "type": "device"
+  },
+  "detergent": {
+    "name": "洗涤剂",
+    "type": "material"
+  },
+  "washing_machine": {
+    "name": "洗衣机",
+    "type": "device"
+  },
+  "surveying_instrument": {
+    "name": "测绘仪器",
+    "type": "device"
+  },
+  "float_glass": {
+    "name": "浮法玻璃",
+    "type": "component"
+  },
+  "offshore_engineering_equipment": {
+    "name": "海洋工程装备",
+    "type": "device"
+  },
+  "impregnated_paper": {
+    "name": "浸渍纸",
+    "type": "material"
+  },
+  "coating": {
+    "name": "涂料",
+    "type": "material"
+  },
+  "coated_abrasive": {
+    "name": "涂附磨具",
+    "type": "material"
+  },
+  "consumer_battery_pack": {
+    "name": "消费电子电池包",
+    "type": "device"
+  },
+  "polyester_filament": {
+    "name": "涤纶长丝",
+    "type": "material"
+  },
+  "lng": {
+    "name": "液化天然气",
+    "type": "material"
+  },
+  "lpg": {
+    "name": "液化石油气",
+    "type": "material"
+  },
+  "lcd_monitor": {
+    "name": "液晶显示器",
+    "type": "device"
+  },
+  "lcd_panel": {
+    "name": "液晶面板",
+    "type": "component"
+  },
+  "port_operation_service": {
+    "name": "港口运营服务",
+    "type": "service"
+  },
+  "rolling_bearing": {
+    "name": "滚动轴承",
+    "type": "component"
+  },
+  "rocket": {
+    "name": "火箭弹",
+    "type": "system"
+  },
+  "artillery_shell": {
+    "name": "炮弹",
+    "type": "component"
+  },
+  "caustic_soda": {
+    "name": "烧碱",
+    "type": "material"
+  },
+  "thermal_management_system": {
+    "name": "热管理系统",
+    "type": "subsystem"
+  },
+  "coke": {
+    "name": "焦炭",
+    "type": "material"
+  },
+  "coal": {
+    "name": "煤炭",
+    "type": "material"
+  },
+  "lighting_fixture": {
+    "name": "照明灯具",
+    "type": "device"
+  },
+  "gas_power_generation": {
+    "name": "燃气发电",
+    "type": "service"
+  },
+  "gas_generator_set": {
+    "name": "燃气发电机组",
+    "type": "device"
+  },
+  "fuel_injection_system": {
+    "name": "燃油喷射系统",
+    "type": "subsystem"
+  },
+  "fuel_tank": {
+    "name": "燃油箱",
+    "type": "component"
+  },
+  "coal_power_generation": {
+    "name": "燃煤发电",
+    "type": "service"
+  },
+  "chip_resistor": {
+    "name": "片式电阻器",
+    "type": "component"
+  },
+  "beef_product": {
+    "name": "牛肉食品",
+    "type": "material"
+  },
+  "property_management_service": {
+    "name": "物业服务",
+    "type": "service"
+  },
+  "logistics_service": {
+    "name": "物流服务",
+    "type": "service"
+  },
+  "special_alloy_product": {
+    "name": "特种合金制品",
+    "type": "material"
+  },
+  "environmental_protection_material": {
+    "name": "环保材料",
+    "type": "material"
+  },
+  "environmental_protection_equipment": {
+    "name": "环保设备",
+    "type": "device"
+  },
+  "jewelry_retail_service": {
+    "name": "珠宝零售服务",
+    "type": "service"
+  },
+  "bottle_preform": {
+    "name": "瓶胚",
+    "type": "component"
+  },
+  "glycerin": {
+    "name": "甘油",
+    "type": "material"
+  },
+  "ecological_restoration_service": {
+    "name": "生态修复服务",
+    "type": "service"
+  },
+  "biological_drug": {
+    "name": "生物药",
+    "type": "material"
+  },
+  "live_pig": {
+    "name": "生猪",
+    "type": "material"
+  },
+  "formaldehyde": {
+    "name": "甲醛",
+    "type": "material"
+  },
+  "telecom_software": {
+    "name": "电信软件",
+    "type": "application_system"
+  },
+  "refrigerator": {
+    "name": "电冰箱",
+    "type": "device"
+  },
+  "electricity_power": {
+    "name": "电力",
+    "type": "material"
+  },
+  "electricity_transmission": {
+    "name": "电力输送",
+    "type": "service"
+  },
+  "electricity_distribution": {
+    "name": "电力配送",
+    "type": "service"
+  },
+  "electric_bicycle": {
+    "name": "电动自行车",
+    "type": "device"
+  },
+  "power_plant_operation": {
+    "name": "电厂运营",
+    "type": "service"
+  },
+  "electroacoustic_device": {
+    "name": "电声器材",
+    "type": "device"
+  },
+  "electronics_market_service": {
+    "name": "电子专业市场服务",
+    "type": "service"
+  },
+  "electronic_component_distribution_service": {
+    "name": "电子元器件分销服务",
+    "type": "service"
+  },
+  "electronic_glass": {
+    "name": "电子玻璃",
+    "type": "component"
+  },
+  "electronic_capacitor": {
+    "name": "电子电容器",
+    "type": "component"
+  },
+  "reactor": {
+    "name": "电抗器",
+    "type": "component"
+  },
+  "calcium_carbide": {
+    "name": "电石",
+    "type": "material"
+  },
+  "wire_cable": {
+    "name": "电线电缆",
+    "type": "component"
+  },
+  "computer_peripheral": {
+    "name": "电脑外设",
+    "type": "device"
+  },
+  "liquor": {
+    "name": "白酒",
+    "type": "material"
+  },
+  "department_store": {
+    "name": "百货零售",
+    "type": "service"
+  },
+  "pickup_truck": {
+    "name": "皮卡",
+    "type": "device"
+  },
+  "salt_product": {
+    "name": "盐产品",
+    "type": "material"
+  },
+  "petrochemical_product": {
+    "name": "石油化工产品",
+    "type": "material"
+  },
+  "oil_extraction": {
+    "name": "石油开采",
+    "type": "service"
+  },
+  "refining_service": {
+    "name": "石油炼化服务",
+    "type": "service"
+  },
+  "quartz_sand": {
+    "name": "石英砂",
+    "type": "material"
+  },
+  "silicon_material": {
+    "name": "硅材料",
+    "type": "material"
+  },
+  "hard_disk_platter": {
+    "name": "硬盘盘片",
+    "type": "component"
+  },
+  "hard_disk_drive": {
+    "name": "硬盘驱动器",
+    "type": "device"
+  },
+  "cemented_carbide": {
+    "name": "硬质合金",
+    "type": "material"
+  },
+  "magnetic_head": {
+    "name": "磁头",
+    "type": "component"
+  },
+  "abrasive_tool": {
+    "name": "磨具",
+    "type": "device"
+  },
+  "abrasive_material": {
+    "name": "磨料",
+    "type": "material"
+  },
+  "sulfonic_acid": {
+    "name": "磺酸",
+    "type": "material"
+  },
+  "community_life_service": {
+    "name": "社区生活服务",
+    "type": "service"
+  },
+  "mobile_app_security_service": {
+    "name": "移动应用安全服务",
+    "type": "service"
+  },
+  "rare_refractory_metal": {
+    "name": "稀有难熔金属",
+    "type": "material"
+  },
+  "airport_equipment": {
+    "name": "空港装备",
+    "type": "device"
+  },
+  "air_conditioner": {
+    "name": "空调器",
+    "type": "device"
+  },
+  "platform_screen_door": {
+    "name": "站台屏蔽门",
+    "type": "subsystem"
+  },
+  "laptop_computer": {
+    "name": "笔记本电脑",
+    "type": "device"
+  },
+  "pipeline_transportation": {
+    "name": "管道运输",
+    "type": "service"
+  },
+  "viscose_fiber": {
+    "name": "粘胶纤维",
+    "type": "material"
+  },
+  "viscose_filament": {
+    "name": "粘胶长丝",
+    "type": "material"
+  },
+  "grain_oil": {
+    "name": "粮油",
+    "type": "material"
+  },
+  "grain_storage_service": {
+    "name": "粮食仓储服务",
+    "type": "service"
+  },
+  "grain_processing": {
+    "name": "粮食加工",
+    "type": "service"
+  },
+  "pta": {
+    "name": "精对苯二甲酸",
+    "type": "material"
+  },
+  "soda_ash": {
+    "name": "纯碱",
+    "type": "material"
+  },
+  "paper_packaging_product": {
+    "name": "纸包装制品",
+    "type": "component"
+  },
+  "paper_pulp": {
+    "name": "纸浆",
+    "type": "material"
+  },
+  "textile_product": {
+    "name": "纺织品",
+    "type": "material"
+  },
+  "textile_machinery": {
+    "name": "纺织机械",
+    "type": "device"
+  },
+  "insulator": {
+    "name": "绝缘子",
+    "type": "component"
+  },
+  "embroidery_product": {
+    "name": "绣品",
+    "type": "material"
+  },
+  "greening_construction_service": {
+    "name": "绿化施工服务",
+    "type": "service"
+  },
+  "network_engineering_service": {
+    "name": "网络工程服务",
+    "type": "service"
+  },
+  "network_equipment": {
+    "name": "网络设备",
+    "type": "device"
+  },
+  "vocational_education": {
+    "name": "职业教育",
+    "type": "service"
+  },
+  "combine_harvester": {
+    "name": "联合收割机",
+    "type": "device"
+  },
+  "polypropylene": {
+    "name": "聚丙烯",
+    "type": "material"
+  },
+  "pvc": {
+    "name": "聚氯乙烯",
+    "type": "material"
+  },
+  "adhesive": {
+    "name": "胶粘剂",
+    "type": "material"
+  },
+  "energy_chemical_equipment": {
+    "name": "能源化工装备",
+    "type": "device"
+  },
+  "dietary_supplement": {
+    "name": "膳食补充剂",
+    "type": "material"
+  },
+  "tap_water_supply": {
+    "name": "自来水供应",
+    "type": "service"
+  },
+  "bicycle": {
+    "name": "自行车",
+    "type": "device"
+  },
+  "aircraft": {
+    "name": "航空器",
+    "type": "device"
+  },
+  "shipping_service": {
+    "name": "航运服务",
+    "type": "service"
+  },
+  "vessel": {
+    "name": "船舶",
+    "type": "device"
+  },
+  "shipping_agency_service": {
+    "name": "船舶代理服务",
+    "type": "service"
+  },
+  "vessel_repair_service": {
+    "name": "船舶维修服务",
+    "type": "service"
+  },
+  "nursery_stock": {
+    "name": "苗木",
+    "type": "material"
+  },
+  "tea": {
+    "name": "茶叶",
+    "type": "material"
+  },
+  "pharmaceutical_product": {
+    "name": "药品",
+    "type": "material"
+  },
+  "wine": {
+    "name": "葡萄酒",
+    "type": "material"
+  },
+  "steel_rebar": {
+    "name": "螺纹钢",
+    "type": "material"
+  },
+  "blood_product": {
+    "name": "血液制品",
+    "type": "material"
+  },
+  "stevedoring_service": {
+    "name": "装卸堆存服务",
+    "type": "service"
+  },
+  "pcb_substrate": {
+    "name": "覆铜板",
+    "type": "material"
+  },
+  "food_condiment": {
+    "name": "调味品",
+    "type": "material"
+  },
+  "freight_forwarding_service": {
+    "name": "货运代理服务",
+    "type": "service"
+  },
+  "precious_metal": {
+    "name": "贵金属",
+    "type": "material"
+  },
+  "loan_service": {
+    "name": "贷款服务",
+    "type": "service"
+  },
+  "superhard_material": {
+    "name": "超硬材料",
+    "type": "material"
+  },
+  "rail_vehicle": {
+    "name": "轨道车辆",
+    "type": "device"
+  },
+  "rail_maintenance_service": {
+    "name": "轨道运维服务",
+    "type": "service"
+  },
+  "wheel_hub_unit": {
+    "name": "轮毂单元",
+    "type": "component"
+  },
+  "tire": {
+    "name": "轮胎",
+    "type": "component"
+  },
+  "software_development_service": {
+    "name": "软件开发服务",
+    "type": "service"
+  },
+  "software_license": {
+    "name": "软件授权",
+    "type": "service"
+  },
+  "bearing": {
+    "name": "轴承",
+    "type": "component"
+  },
+  "light_truck": {
+    "name": "轻型卡车",
+    "type": "device"
+  },
+  "sports_shoes": {
+    "name": "运动鞋",
+    "type": "device"
+  },
+  "intake_system": {
+    "name": "进气系统",
+    "type": "subsystem"
+  },
+  "remote_education_service": {
+    "name": "远程教育服务",
+    "type": "service"
+  },
+  "chain_retail_service": {
+    "name": "连锁零售服务",
+    "type": "service"
+  },
+  "communication_device": {
+    "name": "通信设备",
+    "type": "device"
+  },
+  "communication_equipment": {
+    "name": "通信设备",
+    "type": "device"
+  },
+  "general_aviation_service": {
+    "name": "通用航空服务",
+    "type": "service"
+  },
+  "road_transport_vehicle": {
+    "name": "道路运输车辆",
+    "type": "device"
+  },
+  "power_distribution_equipment": {
+    "name": "配电设备",
+    "type": "device"
+  },
+  "hotel_operation_service": {
+    "name": "酒店经营服务",
+    "type": "service"
+  },
+  "heavy_truck": {
+    "name": "重型卡车",
+    "type": "device"
+  },
+  "metal_packaging": {
+    "name": "金属包装",
+    "type": "component"
+  },
+  "financial_bond": {
+    "name": "金融债券",
+    "type": "component"
+  },
+  "fintech_service": {
+    "name": "金融科技服务",
+    "type": "service"
+  },
+  "needle_coke": {
+    "name": "针状焦",
+    "type": "material"
+  },
+  "vanadium_nitrogen_alloy": {
+    "name": "钒氮合金",
+    "type": "material"
+  },
+  "vanadium_titanium": {
+    "name": "钒钛制品",
+    "type": "material"
+  },
+  "ferrovanadium": {
+    "name": "钒铁",
+    "type": "material"
+  },
+  "titanium_slag": {
+    "name": "钛渣",
+    "type": "material"
+  },
+  "titanium_dioxide": {
+    "name": "钛白粉",
+    "type": "material"
+  },
+  "titanium_ore": {
+    "name": "钛矿",
+    "type": "material"
+  },
+  "watch_retail_service": {
+    "name": "钟表零售服务",
+    "type": "service"
+  },
+  "watch_component": {
+    "name": "钟表零部件",
+    "type": "component"
+  },
+  "tungsten": {
+    "name": "钨",
+    "type": "material"
+  },
+  "molybdenum": {
+    "name": "钼",
+    "type": "material"
+  },
+  "tantalum": {
+    "name": "钽",
+    "type": "material"
+  },
+  "iron_ore": {
+    "name": "铁矿石",
+    "type": "material"
+  },
+  "rail_transport_service": {
+    "name": "铁路运输服务",
+    "type": "service"
+  },
+  "lead_zinc_ore": {
+    "name": "铅锌矿石",
+    "type": "material"
+  },
+  "lead_zinc_metal": {
+    "name": "铅锌金属",
+    "type": "material"
+  },
+  "niobium": {
+    "name": "铌",
+    "type": "material"
+  },
+  "copper_sheet": {
+    "name": "铜板带",
+    "type": "component"
+  },
+  "copper_foil": {
+    "name": "铜箔",
+    "type": "component"
+  },
+  "copper_wire": {
+    "name": "铜线",
+    "type": "component"
+  },
+  "aluminum_smelting": {
+    "name": "铝冶炼",
+    "type": "service"
+  },
+  "aluminum_alloy": {
+    "name": "铝合金",
+    "type": "material"
+  },
+  "aluminum_panel": {
+    "name": "铝板",
+    "type": "material"
+  },
+  "aluminum_piston": {
+    "name": "铝活塞",
+    "type": "component"
+  },
+  "aluminum_liquid": {
+    "name": "铝液",
+    "type": "material"
+  },
+  "aluminum_ingot": {
+    "name": "铝锭",
+    "type": "material"
+  },
+  "silver": {
+    "name": "银",
+    "type": "material"
+  },
+  "cast_part": {
+    "name": "铸件",
+    "type": "component"
+  },
+  "casting_machine": {
+    "name": "铸造机械",
+    "type": "device"
+  },
+  "lithium_battery_cathode": {
+    "name": "锂电池正极材料",
+    "type": "material"
+  },
+  "lithium_battery_anode": {
+    "name": "锂电池负极材料",
+    "type": "material"
+  },
+  "lithium_salt": {
+    "name": "锂盐",
+    "type": "material"
+  },
+  "lithium_battery_cell": {
+    "name": "锂离子电池电芯",
+    "type": "component"
+  },
+  "lithium_ion_cell": {
+    "name": "锂离子电芯",
+    "type": "component"
+  },
+  "tin_metal": {
+    "name": "锡金属",
+    "type": "material"
+  },
+  "nickel_based_alloy": {
+    "name": "镍基合金",
+    "type": "material"
+  },
+  "door_window": {
+    "name": "门窗",
+    "type": "component"
+  },
+  "usb_flash_drive": {
+    "name": "闪存盘",
+    "type": "device"
+  },
+  "valve": {
+    "name": "阀门",
+    "type": "component"
+  },
+  "copper": {
+    "name": "阴极铜",
+    "type": "material"
+  },
+  "ceramic_capacitor": {
+    "name": "陶瓷电容器",
+    "type": "component"
+  },
+  "container": {
+    "name": "集装箱",
+    "type": "device"
+  },
+  "container_handling_service": {
+    "name": "集装箱装卸服务",
+    "type": "service"
+  },
+  "packaged_substation": {
+    "name": "预装式变电站",
+    "type": "device"
+  },
+  "wind_power_generation": {
+    "name": "风力发电",
+    "type": "service"
+  },
+  "food_cold_chain_service": {
+    "name": "食品冷链服务",
+    "type": "service"
+  },
+  "food_ingredient": {
+    "name": "食品原料",
+    "type": "material"
+  },
+  "edible_oil": {
+    "name": "食用油",
+    "type": "material"
+  },
+  "catering_service": {
+    "name": "餐饮服务",
+    "type": "service"
+  },
+  "beverage_processing": {
+    "name": "饮料加工",
+    "type": "service"
+  },
+  "beverage_packaging": {
+    "name": "饮料包装",
+    "type": "component"
+  },
+  "animal_feed": {
+    "name": "饲料",
+    "type": "material"
+  },
+  "high_temperature_alloy": {
+    "name": "高温合金",
+    "type": "material"
+  },
+  "high_tech_industrial_engineering": {
+    "name": "高科技产业工程服务",
+    "type": "service"
+  },
+  "highway": {
+    "name": "高速公路",
+    "type": "infrastructure"
+  },
+  "highway_operation_service": {
+    "name": "高速公路运营服务",
+    "type": "service"
+  },
+  "gold_jewelry": {
+    "name": "黄金珠宝",
+    "type": "device"
+  }
+}
