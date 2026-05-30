@@ -218,4 +218,105 @@ async def init_postgres_tables() -> None:
             """
         )
 
+        # Persons (Factual Graph)
+        await conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS persons (
+                person_id      VARCHAR(64) PRIMARY KEY,
+                person_uuid    UUID NOT NULL DEFAULT gen_random_uuid(),
+                name_zh        VARCHAR(256) NOT NULL,
+                name_en        VARCHAR(256),
+                aliases        TEXT[],
+                gender         VARCHAR(16),
+                birth_year     INTEGER,
+                nationality    VARCHAR(64),
+                id_card_hash   VARCHAR(256),
+                profile        TEXT,
+                status         VARCHAR(16) NOT NULL DEFAULT 'PENDING',
+                notes          TEXT,
+                created_at     TIMESTAMPTZ DEFAULT NOW(),
+                updated_at     TIMESTAMPTZ DEFAULT NOW()
+            )
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_persons_status
+            ON persons(status)
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_persons_name
+            ON persons(name_zh)
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_persons_id_card_hash
+            ON persons(id_card_hash)
+            WHERE id_card_hash IS NOT NULL
+            """
+        )
+
+        # Factual Relations (Factual Graph)
+        await conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS factual_relations (
+                relation_id      VARCHAR(128) PRIMARY KEY,
+                relation_type    VARCHAR(64) NOT NULL,
+                relation_domain  VARCHAR(32) NOT NULL,
+                from_entity_type VARCHAR(16) NOT NULL,
+                from_entity_id   VARCHAR(64) NOT NULL,
+                to_entity_type   VARCHAR(16) NOT NULL,
+                to_entity_id     VARCHAR(64) NOT NULL,
+                subtype          VARCHAR(128),
+                equity_ratio     REAL CHECK (equity_ratio >= 0 AND equity_ratio <= 1),
+                amount_cny       BIGINT,
+                contract_no      VARCHAR(256),
+                proportion       REAL CHECK (proportion >= 0 AND proportion <= 1),
+                start_date       DATE,
+                end_date         DATE,
+                is_history       BOOLEAN NOT NULL DEFAULT FALSE,
+                evidence         JSONB DEFAULT '[]',
+                source           VARCHAR(256) NOT NULL,
+                confidence       VARCHAR(16) NOT NULL DEFAULT 'LOW',
+                status           VARCHAR(16) NOT NULL DEFAULT 'PENDING',
+                notes            TEXT,
+                created_at       TIMESTAMPTZ DEFAULT NOW(),
+                updated_at       TIMESTAMPTZ DEFAULT NOW()
+            )
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_fr_domain
+            ON factual_relations(relation_domain)
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_fr_from_entity
+            ON factual_relations(from_entity_type, from_entity_id)
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_fr_to_entity
+            ON factual_relations(to_entity_type, to_entity_id)
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_fr_status
+            ON factual_relations(status)
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_fr_type
+            ON factual_relations(relation_type)
+            """
+        )
+
 
