@@ -528,3 +528,51 @@ aluminum_ingot → electronic_aluminum_foil → etched_foil → formed_foil
 | 总新建暴露 | 1007条 |
 | 图节点总数 | ~1558 |
 | 图边总数 | ~828 |
+
+
+## Phase 11 — 架构重构：废弃公司视图，确立两域架构 (2026-05-30)
+
+### 11.1 设计决策
+
+**原因**：
+1. **探索优于全量**：公司视图的批量计算（全量公司间上下游推导）成本高、时效性差，实际使用中动态计算单公司产业上下文更具价值
+2. **域边界纯净**：新架构只有两个持久化域——**产业图**（Industrial Graph）和**事实关系图**（Factual Graph）。公司视图作为第三域会造成概念混杂，破坏浏览时的单域隔离原则
+3. **事实关系图承载公司关联**：公司-公司之间的业务关系（供应商、客户、投资方等）将通过事实关系图采集和存储，而非从产业图推导
+
+**新架构**：
+```
+┌─────────────────────────────────────────┐
+│  域A: 产业图（Industrial Graph）         │
+│  Neo4j: :IndustrialNode                 │
+│         :INDUSTRIAL_FLOW / :ONTOLOGY    │
+├─────────────────────────────────────────┤
+│  域B: 事实关系图（Factual Graph）        │
+│  Neo4j: :Person / :Company              │
+│         :SHAREHOLDER_OF / :SPOUSE...    │
+├─────────────────────────────────────────┤
+│  桥接层: PG company_node_exposures      │
+│  （跨域探索时应用层拼接，非Neo4j边）    │
+└─────────────────────────────────────────┘
+```
+
+### 11.2 清理操作
+
+| 操作 | 详情 |
+|------|------|
+| 移动文件 | `company_view_schema.py`, `company_view.py`(router), `company_view.py`(service), `company_view_neo4j.py` → `recycled/company_view/` |
+| 移除引用 | `main.py` 中注销 `/api/v1/company-view` router |
+| 移除触发 | `business_batches.py` 中移除提交后自动触发 `company_view_compute` 的逻辑 |
+| 移除表 | `database_postgres.py` 中移除 `company_view_versions` 表创建 |
+| 清理脚本 | `export_db.py` / `import_db.py` 移除 `--no-company-view` 选项及公司视图数据导入导出逻辑 |
+| Neo4j清理 | 删除 `:INFERRED_UPSTREAM` 关系 **17,168** 条，删除 `:Company` 节点 **1,300** 个 |
+
+### 11.3 保留的能力
+
+- **公司CRUD** (`/api/v1/companies/*`)：完整保留，作为事实关系图的数据源
+- **公司-产业暴露** (`company_node_exposures`)：保留在PG中，作为两域之间的桥接
+- **单公司产业上下文**：未来将提供 `GET /api/v1/companies/{id}/industrial-context` 实时计算接口（不持久化）
+
+### 11.4 后续计划
+
+1. **Phase 11b**: 建立事实关系图 Schema + Storage + Router（Person + 三类关系）
+2. **Phase 11c**: 设计跨域探索接口（统一的 `/api/v1/explore/*`）

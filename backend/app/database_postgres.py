@@ -218,36 +218,4 @@ async def init_postgres_tables() -> None:
             """
         )
 
-        # Company View Versions
-        await conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS company_view_versions (
-                version_id      SERIAL PRIMARY KEY,
-                version_uuid    UUID NOT NULL DEFAULT gen_random_uuid(),
-                job_id          VARCHAR(128),
-                status          VARCHAR(16) NOT NULL DEFAULT 'pending',
-                total_companies INTEGER,
-                total_relations INTEGER,
-                total_pairs     INTEGER,
-                processed_pairs INTEGER,
-                synced_companies INTEGER,
-                cleared_relations INTEGER,
-                created_relations INTEGER,
-                error_message   TEXT,
-                created_at      TIMESTAMPTZ DEFAULT NOW(),
-                completed_at    TIMESTAMPTZ
-            )
-            """
-        )
-        await conn.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_cvv_status
-            ON company_view_versions(status)
-            """
-        )
-        await conn.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_cvv_created_at
-            ON company_view_versions(created_at DESC)
-            """
-        )
+

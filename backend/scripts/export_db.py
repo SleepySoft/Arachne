@@ -7,7 +7,7 @@ Export all Neo4j and PostgreSQL data to JSON files.
 Usage:
     cd backend && python scripts/export_db.py
     cd backend && python scripts/export_db.py --output-dir ../data/ArachneData/newest
-    cd backend && python scripts/export_db.py --no-company-view
+    cd backend && python scripts/export_db.py
 
 Output structure:
     <output_dir>/
@@ -15,15 +15,12 @@ Output structure:
             industrial_nodes.json
             industrial_flow_edges.json
             ontology_edges.json
-            company_nodes.json          (skipped if --no-company-view)
-            company_relations.json      (skipped if --no-company-view)
         postgres/
             industries.json
             industry_node_mappings.json
             companies.json
             company_node_exposures.json
             computation_jobs.json
-            company_view_versions.json
 """
 
 from __future__ import annotations
@@ -107,36 +104,12 @@ NEO4J_EXPORT_SPECS = [
     },
 ]
 
-NEO4J_COMPANY_VIEW_SPECS = [
-    {
-        "file": "company_nodes.json",
-        "query": """
-            MATCH (n:Company)
-            RETURN n { .*, __labels: labels(n) } AS node
-        """,
-        "extract": lambda r: r["node"],
-    },
-    {
-        "file": "company_relations.json",
-        "query": """
-            MATCH (a:Company)-[r:INFERRED_UPSTREAM]->(b:Company)
-            RETURN r { .*, __type: type(r), __from: a.company_id, __to: b.company_id } AS edge
-        """,
-        "extract": lambda r: r["edge"],
-    },
-]
-
-
-async def export_neo4j(output_dir: Path, include_company_view: bool) -> None:
+async def export_neo4j(output_dir: Path) -> None:
     driver = get_async_driver()
     neo4j_dir = output_dir / "neo4j"
     neo4j_dir.mkdir(parents=True, exist_ok=True)
 
-    specs = NEO4J_EXPORT_SPECS.copy()
-    if include_company_view:
-        specs.extend(NEO4J_COMPANY_VIEW_SPECS)
-
-    for spec in specs:
+    for spec in NEO4J_EXPORT_SPECS:
         filepath = neo4j_dir / spec["file"]
         print(f"  Exporting Neo4j {spec['file']} ...", end=" ")
 
@@ -161,7 +134,7 @@ async def export_neo4j(output_dir: Path, include_company_view: bool) -> None:
 # PostgreSQL export
 # ---------------------------------------------------------------------------
 
-POSTGRES_CORE_TABLES = [
+POSTGRES_TABLES = [
     "industries",
     "industry_node_mappings",
     "companies",
@@ -169,12 +142,8 @@ POSTGRES_CORE_TABLES = [
     "computation_jobs",
 ]
 
-POSTGRES_COMPANY_VIEW_TABLES = [
-    "company_view_versions",
-]
 
-
-async def export_postgres(output_dir: Path, include_company_view: bool) -> None:
+async def export_postgres(output_dir: Path) -> None:
     pool = await get_postgres_pool()
     if pool is None:
         print("  WARNING: PostgreSQL not available, skipping PostgreSQL export")
@@ -183,12 +152,8 @@ async def export_postgres(output_dir: Path, include_company_view: bool) -> None:
     pg_dir = output_dir / "postgres"
     pg_dir.mkdir(parents=True, exist_ok=True)
 
-    tables = POSTGRES_CORE_TABLES.copy()
-    if include_company_view:
-        tables.extend(POSTGRES_COMPANY_VIEW_TABLES)
-
     async with pool.acquire() as conn:
-        for table in tables:
+        for table in POSTGRES_TABLES:
             filepath = pg_dir / f"{table}.json"
             print(f"  Exporting PostgreSQL {table} ...", end=" ")
 
@@ -215,11 +180,6 @@ def main():
         default=None,
         help="Output directory (default: data/backup/YYYYMMDD_HHMMSS)",
     )
-    parser.add_argument(
-        "--no-company-view",
-        action="store_true",
-        help="Skip company view data (Company nodes, INFERRED_UPSTREAM edges, company_view_versions table)",
-    )
     args = parser.parse_args()
 
     if args.output_dir:
@@ -232,14 +192,12 @@ def main():
     print(f"Exporting to: {output_dir}")
     print()
 
-    include_company_view = not args.no_company_view
-
     print("Exporting Neo4j ...")
-    asyncio.run(export_neo4j(output_dir, include_company_view))
+    asyncio.run(export_neo4j(output_dir))
     print()
 
     print("Exporting PostgreSQL ...")
-    asyncio.run(export_postgres(output_dir, include_company_view))
+    asyncio.run(export_postgres(output_dir))
     print()
 
     print(f"Export complete: {output_dir}")

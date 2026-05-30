@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.database import close_async_driver, init_db
 from app.database_postgres import close_postgres_pool, init_postgres_tables
-from app.routers import batches, business_batches, companies, company_exploration, company_material, company_view, computation_jobs, edges, industries, nodes, query
+from app.routers import batches, business_batches, companies, company_exploration, company_material, computation_jobs, edges, industries, nodes, query
 
 settings = get_settings()
 
@@ -40,7 +40,6 @@ app.add_middleware(
 app.include_router(nodes.router, prefix=f"{settings.API_V1_STR}/nodes", tags=["Nodes"])
 app.include_router(edges.router, prefix=f"{settings.API_V1_STR}/edges", tags=["Edges"])
 app.include_router(industries.router, prefix=f"{settings.API_V1_STR}/industries", tags=["Industries"])
-app.include_router(company_view.router, prefix=f"{settings.API_V1_STR}/company-view", tags=["Company View"])
 app.include_router(companies.router, prefix=f"{settings.API_V1_STR}/companies", tags=["Companies"])
 app.include_router(company_material.router, prefix=f"{settings.API_V1_STR}/companies", tags=["Company Material Connections"])
 app.include_router(company_exploration.router, prefix=f"{settings.API_V1_STR}/companies", tags=["Company Exploration"])

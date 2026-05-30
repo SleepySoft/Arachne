@@ -7,11 +7,10 @@ Import Neo4j and PostgreSQL data from JSON files produced by export_db.py.
 Usage:
     cd backend && python scripts/import_db.py --input-dir ../data/backup/20240115_120000
     cd backend && python scripts/import_db.py --input-dir ../data/backup/20240115_120000 --clear
-    cd backend && python scripts/import_db.py --input-dir ../data/backup/20240115_120000 --no-company-view
+    cd backend && python scripts/import_db.py --input-dir ../data/backup/20240115_120000
 
 Options:
     --clear             Drop existing data before import (DESTRUCTIVE)
-    --no-company-view   Skip company view data
 """
 
 from __future__ import annotations
@@ -181,7 +180,7 @@ async def import_neo4j_edges_no_apoc(
     return total
 
 
-async def clear_neo4j(driver, include_company_view: bool) -> None:
+async def clear_neo4j(driver) -> None:
     """Clear all data from Neo4j."""
     print("  Clearing Neo4j ...")
 
@@ -189,21 +188,17 @@ async def clear_neo4j(driver, include_company_view: bool) -> None:
         # Delete all edges first
         await session.run("MATCH ()-[r:INDUSTRIAL_FLOW]->() DELETE r")
         await session.run("MATCH ()-[r:ONTOLOGY]->() DELETE r")
-        if include_company_view:
-            await session.run("MATCH ()-[r:INFERRED_UPSTREAM]->() DELETE r")
 
         # Delete all nodes
-        if include_company_view:
-            await session.run("MATCH (n:Company) DELETE n")
         await session.run("MATCH (n:IndustrialNode) DELETE n")
 
 
-async def import_neo4j(input_dir: Path, include_company_view: bool, clear: bool) -> None:
+async def import_neo4j(input_dir: Path, clear: bool) -> None:
     driver = get_async_driver()
     neo4j_dir = input_dir / "neo4j"
 
     if clear:
-        await clear_neo4j(driver, include_company_view)
+        await clear_neo4j(driver)
 
     print("  Importing Neo4j industrial_nodes ...", end=" ")
     count = await import_neo4j_nodes(driver, neo4j_dir / "industrial_nodes.json", "IndustrialNode", "node_id")
@@ -237,18 +232,6 @@ async def import_neo4j(input_dir: Path, include_company_view: bool, clear: bool)
     )
     print(f"{count} edges")
 
-    if include_company_view:
-        print("  Importing Neo4j company_nodes ...", end=" ")
-        count = await import_neo4j_nodes(driver, neo4j_dir / "company_nodes.json", "Company", "company_id")
-        print(f"{count} nodes")
-
-        print("  Importing Neo4j company_relations ...", end=" ")
-        count = await import_edges(
-            driver, neo4j_dir / "company_relations.json",
-            "INFERRED_UPSTREAM", "Company", "Company", "company_id", "company_id"
-        )
-        print(f"{count} edges")
-
     await close_async_driver()
 
 
@@ -263,11 +246,9 @@ POSTGRES_IMPORT_ORDER = [
     "industry_node_mappings",
     "company_node_exposures",
     "computation_jobs",
-    "company_view_versions",
 ]
 
 POSTGRES_TRUNCATE_ORDER = [
-    "company_view_versions",
     "computation_jobs",
     "company_node_exposures",
     "industry_node_mappings",
@@ -327,7 +308,7 @@ async def import_postgres_table(conn, table: str, filepath: Path) -> int:
     return len(data)
 
 
-async def import_postgres(input_dir: Path, clear: bool, include_company_view: bool) -> None:
+async def import_postgres(input_dir: Path, clear: bool) -> None:
     pool = await get_postgres_pool()
     if pool is None:
         print("  WARNING: PostgreSQL not available, skipping PostgreSQL import")
@@ -340,9 +321,6 @@ async def import_postgres(input_dir: Path, clear: bool, include_company_view: bo
 
     async with pool.acquire() as conn:
         for table in POSTGRES_IMPORT_ORDER:
-            if not include_company_view and table == "company_view_versions":
-                continue
-
             filepath = pg_dir / f"{table}.json"
             print(f"  Importing PostgreSQL {table} ...", end=" ")
             count = await import_postgres_table(conn, table, filepath)
@@ -368,19 +346,12 @@ def main():
         action="store_true",
         help="Drop existing data before import (DESTRUCTIVE!)",
     )
-    parser.add_argument(
-        "--no-company-view",
-        action="store_true",
-        help="Skip company view data",
-    )
     args = parser.parse_args()
 
     input_dir = Path(args.input_dir)
     if not input_dir.exists():
         print(f"ERROR: Input directory does not exist: {input_dir}")
         sys.exit(1)
-
-    include_company_view = not args.no_company_view
 
     if args.clear:
         print("WARNING: --clear is set. All existing data will be DESTROYED.")
@@ -393,11 +364,11 @@ def main():
     print()
 
     print("Importing Neo4j ...")
-    asyncio.run(import_neo4j(input_dir, include_company_view, args.clear))
+    asyncio.run(import_neo4j(input_dir, args.clear))
     print()
 
     print("Importing PostgreSQL ...")
-    asyncio.run(import_postgres(input_dir, args.clear, include_company_view))
+    asyncio.run(import_postgres(input_dir, args.clear))
     print()
 
     print("Import complete.")
