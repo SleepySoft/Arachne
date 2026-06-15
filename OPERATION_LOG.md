@@ -570,9 +570,9 @@ aluminum_ingot → electronic_aluminum_foil → etched_foil → formed_foil
 
 - **公司CRUD** (`/api/v1/companies/*`)：完整保留，作为事实关系图的数据源
 - **公司-产业暴露** (`company_node_exposures`)：保留在PG中，作为两域之间的桥接
-- **单公司产业上下文**：未来将提供 `GET /api/v1/companies/{id}/industrial-context` 实时计算接口（不持久化）
+- **单公司产业上下文**：`GET /api/v1/companies/{id}/industrial-context` 已在 `backend/app/routers/explore.py` 实现（不持久化，实时计算）
 
-### 11.4 后续计划
+### 11.4 后续计划（2026-06-15 更新：均已实现后端）
 
-1. **Phase 11b**: 建立事实关系图 Schema + Storage + Router（Person + 三类关系）
-2. **Phase 11c**: 设计跨域探索接口（统一的 `/api/v1/explore/*`）
+1. **Phase 11b**: 事实关系图 Schema + Storage + Router（Person + 三类关系）已在 `backend/app/models/factual_graph_schema.py`、`backend/app/services/factual_graph_storage.py`、`backend/app/routers/factual_graph.py` 实现
+2. **Phase 11c**: 跨域探索接口（统一的 `/api/v1/explore/*`）已在 `backend/app/routers/explore.py` 实现

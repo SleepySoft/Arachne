@@ -224,6 +224,10 @@
 
 ## 八、待完善事项
 
+> **2026-06-15 更新**：以下记录的是 batch_001  construction 时的状态。其中第 1 项
+> `/api/v1/companies/by-node/{node_id}` 反向查询端点已在后续 Commit 中实现，详见
+> `backend/app/routers/companies.py`。其余项仍为待办。
+
 1. **反向查询 API**: `/api/v1/companies/by-node/{node_id}` 端点未实现，无法通过产业节点反向查找公司。
 2. **公司关系推断**: Phase 2 计划中提到的 `inferred_industrial_relation`、`evidenced_business_relation`、`similarity_or_peer_relation` 尚未实现。
 3. **前端视图**: Industry List/Detail Page、Company List/Detail Page 尚未构建。

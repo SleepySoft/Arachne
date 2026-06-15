@@ -17,7 +17,8 @@ Factual Graph (事实关系图)          ← Neo4j + PG: 人/公司/事实关系
 
 **Previous three-layer view pyramid (Industry → Industrial → Company View) has been retired.**
 Company-to-company upstream/downstream inference is now dynamic per-company
-(via `/explore` endpoints) rather than batch-computed and persisted.
+(via `/explore` endpoints and the older `/companies/{id}/exploration-graph`
+endpoints) rather than batch-computed and persisted.
 
 **Core principle:** Industrial nodes are the single source of truth. Companies connect to nodes via `CompanyNodeExposure` (edges in the relational model), never redefine nodes.
 
@@ -58,6 +59,7 @@ Company-to-company upstream/downstream inference is now dynamic per-company
 | Industries + node mappings | PostgreSQL | `industries`, `industry_node_mappings` |
 | Companies + node exposures | PostgreSQL | `companies`, `company_node_exposures` |
 | Persons + factual relations | PostgreSQL + Neo4j | `persons`, `factual_relations` tables; `:Person`, `:Company` nodes + typed relations in Neo4j |
+| Computation jobs | PostgreSQL | `computation_jobs` (async/batch job tracking) |
 
 ### 3.2 Backend Directory Structure
 
@@ -67,56 +69,93 @@ backend/
 │   ├── main.py                    # FastAPI entry, registers all routers
 │   ├── config.py                  # Settings (Neo4j + PostgreSQL URLs)
 │   ├── database.py                # Neo4j async driver
-│   ├── database_postgres.py       # asyncpg pool + table init
+│   ├── database_postgres.py       # asyncpg pool + table init (7 tables)
 │   ├── models/
 │   │   ├── schemas.py             # Core graph models (Node, Edge, Evidence, RecordStatus)
 │   │   ├── industry_schema.py     # Industry, IndustryNodeMapping, IndustryType
 │   │   ├── company_schema.py      # Company, CompanyNodeExposure, CompanyActivityType, CompanyType, BusinessRegistrationBatch
-│   │   └── factual_graph_schema.py # Person, FactualRelation, three relation types ★ NEW
+│   │   └── factual_graph_schema.py # Person, FactualRelation, three relation types
 │   ├── services/
 │   │   ├── neo4j_storage.py       # Neo4j CRUD + subgraph queries
-│   │   ├── graph_service.py       # Business logic: nodes, edges, batches, conflicts
+│   │   ├── graph_service.py       # Business logic: nodes, edges, batches, conflicts, business batch processing
 │   │   ├── industry_storage.py    # PostgreSQL CRUD for industries + mappings
 │   │   ├── company_storage.py     # PostgreSQL CRUD for companies + exposures
-│   │   └── factual_graph_storage.py # PG + Neo4j for Factual Graph ★ NEW
+│   │   ├── factual_graph_storage.py # PG + Neo4j for Factual Graph
+│   │   ├── company_exploration.py # Heterogeneous company↔node exploration graph
+│   │   └── company_material.py    # Material-flow based company connections
 │   └── routers/
 │       ├── nodes.py               # /api/v1/nodes
 │       ├── edges.py               # /api/v1/edges
 │       ├── batches.py             # /api/v1/batches (GraphRegistrationBatch)
 │       ├── business_batches.py    # /api/v1/business-batches (BusinessRegistrationBatch)
-│       ├── industries.py          # /api/v1/industries + /subgraph + /mappings
-│       ├── companies.py           # /api/v1/companies + /subgraph + /exposures + /by-node
-│       ├── factual_graph.py       # /api/v1/factual-graph (Person + Relations) ★ NEW
-│       ├── explore.py             # /api/v1/explore (cross-domain) ★ NEW
-│       └── query.py               # /api/v1/query (subgraph, neighbors, paths, stats)
+│       ├── industries.py          # /api/v1/industries + /mappings + /nodes + /subgraph + /by-node
+│       ├── companies.py           # /api/v1/companies + /nodes + /subgraph + /exposures + /by-node
+│       ├── company_exploration.py # /api/v1/companies/{id}/exploration-graph + /nodes/{id}/connected-companies
+│       ├── company_material.py    # /api/v1/companies/{id}/material-connections
+│       ├── computation_jobs.py    # /api/v1/computation-jobs
+│       ├── factual_graph.py       # /api/v1/factual-graph (Person + Relations)
+│       ├── explore.py             # /api/v1/explore (cross-domain)
+│       └── query.py               # /api/v1/query (subgraph, neighbors, paths, stats, conflicts)
 └── tests/
     ├── test_database_postgres.py
     ├── test_industry_storage.py
     ├── test_company_storage.py
     ├── test_industry_company_routers.py
-    └── test_business_batches.py   # ★ NEW
+    └── test_business_batches.py
 ```
 
 ### 3.3 Key API Endpoints
 
 **Industries**
 - `POST /api/v1/industries` — create
-- `GET /api/v1/industries` — list (paginated, filterable)
+- `GET /api/v1/industries` — list (paginated, filter by `industry_type`, `status`, `search`)
 - `GET /api/v1/industries/{id}` — detail
 - `PUT /api/v1/industries/{id}` — update
 - `DELETE /api/v1/industries/{id}` — delete
 - `GET /api/v1/industries/{id}/mappings` — list node mappings
-- `GET /api/v1/industries/{id}/subgraph` — Neo4j subgraph of mapped nodes
+- `POST /api/v1/industries/{id}/mappings` — create a mapping
+- `DELETE /api/v1/industries/{id}/mappings/{mapping_id}` — delete a mapping
+- `GET /api/v1/industries/{id}/nodes` — mapped IndustrialNodes
+- `GET /api/v1/industries/{id}/subgraph` — Neo4j subgraph of mapped nodes + edges
+- `GET /api/v1/industries/by-node/{node_id}` — reverse lookup: industries mapping a node
 
 **Companies**
 - `POST /api/v1/companies` — create
-- `GET /api/v1/companies` — list (paginated, filter by country/type/status/node_id/activity_type)
+- `GET /api/v1/companies` — list (paginated, filter by `country`, `company_type`, `status`, `search`)
 - `GET /api/v1/companies/{id}` — detail
 - `PUT /api/v1/companies/{id}` — update
 - `DELETE /api/v1/companies/{id}` — delete
-- `GET /api/v1/companies/{id}/exposures` — list node exposures
-- `GET /api/v1/companies/{id}/subgraph` — Neo4j temporary subgraph of exposed nodes
-- `GET /api/v1/companies/by-node/{node_id}` — reverse lookup: companies producing a node
+- `GET /api/v1/companies/{id}/exposures` — list node exposures (filter by `activity_type`)
+- `POST /api/v1/companies/{id}/exposures` — create an exposure
+- `DELETE /api/v1/companies/{id}/exposures/{exposure_id}` — delete an exposure
+- `GET /api/v1/companies/{id}/nodes` — exposed IndustrialNodes
+- `GET /api/v1/companies/{id}/subgraph` — Neo4j temporary subgraph of exposed nodes + edges
+- `GET /api/v1/companies/by-node/{node_id}` — reverse lookup: companies exposing a node
+
+**Company Exploration (heterogeneous graph)**
+- `GET /api/v1/companies/{id}/exploration-graph` — company-centered heterogeneous graph
+- `GET /api/v1/companies/nodes/{node_id}/connected-companies` — peer/upstream/downstream companies
+
+**Company Material Connections**
+- `GET /api/v1/companies/{id}/material-connections` — material-flow based company connections
+
+**Factual Graph**
+- `POST /api/v1/factual-graph/persons` — create Person
+- `GET /api/v1/factual-graph/persons` — list persons
+- `GET /api/v1/factual-graph/persons/{id}` — person detail
+- `PUT /api/v1/factual-graph/persons/{id}` — update person
+- `POST /api/v1/factual-graph/relations` — create a factual relation
+- `GET /api/v1/factual-graph/relations` — list relations
+- `GET /api/v1/factual-graph/relations/{id}` — relation detail
+- `PUT /api/v1/factual-graph/relations/{id}` — update relation
+- `GET /api/v1/factual-graph/persons/{id}/neighborhood` — person-centered relations
+- `GET /api/v1/factual-graph/companies/{id}/neighborhood` — company-centered factual relations
+
+**Cross-domain Explore**
+- `GET /api/v1/explore/companies/{id}/industrial-context`
+- `GET /api/v1/explore/nodes/{id}/ecosystem`
+- `GET /api/v1/explore/persons/{id}/industrial-footprint`
+- `GET /api/v1/explore/companies/{id}/full-context`
 
 **Batches**
 - `POST /api/v1/batches` — GraphRegistrationBatch (nodes + edges)
@@ -127,28 +166,31 @@ backend/
 ## 4. Completed Work
 
 ### Commit 1 — PostgreSQL Infrastructure
-- `database_postgres.py`: asyncpg pool + `init_postgres_tables()` creates 4 tables
+- `database_postgres.py`: asyncpg pool + `init_postgres_tables()` creates **7 tables**
+  (`industries`, `industry_node_mappings`, `companies`, `company_node_exposures`, `computation_jobs`, `persons`, `factual_relations`)
 - `config.py`: `POSTGRES_URL` setting (default port 5433)
 - `requirements.txt`: added `asyncpg`
-- `test_database_postgres.py`: connection test
+- `test_database_postgres.py`: connection test (currently only asserts the original 4 tables)
 
 ### Commit 2 — Industry Storage Layer
 - `industry_schema.py`: `Industry`, `IndustryNodeMapping`, `IndustryType` enum
-- `industry_storage.py`: full CRUD + `get_industry_subgraph()` (Neo4j integration)
+- `industry_storage.py`: full CRUD + `get_mapping_by_industry_and_node()` + `update_mapping()`
 - `test_industry_storage.py`: full test coverage
+- **Note:** `GET /api/v1/industries/{id}/subgraph` is implemented inline in `routers/industries.py`, not in `industry_storage.py`.
 
 ### Commit 3 — Company Storage Layer
-- `company_schema.py`: `Company`, `CompanyNodeExposure`, `CompanyActivityType` enum, `BusinessRegistrationBatch`
-- `company_storage.py`: full CRUD + `get_company_subgraph()` + `list_companies_by_node()`
+- `company_schema.py`: `Company`, `CompanyNodeExposure`, `CompanyActivityType` enum, `BusinessRegistrationBatch`, `CompanyType` + financial/location fields
+- `company_storage.py`: full CRUD + `get_exposure_by_company_and_node()` + `update_exposure()` + `list_exposures_by_node()`
 - `test_company_storage.py`: full test coverage
+- **Note:** `GET /api/v1/companies/{id}/subgraph` and `GET /api/v1/companies/by-node/{node_id}` are implemented inline in `routers/companies.py` (subgraph query) and via `list_exposures_by_node()` + `get_company()` (reverse lookup), not as standalone storage helpers.
 
 ### Commit 4 — REST API Routes + Neo4j Subgraph
-- `industries.py`: all industry endpoints
-- `companies.py`: all company endpoints
+- `industries.py`: all industry endpoints, including `/nodes`, `/subgraph`, `/by-node`
+- `companies.py`: all company endpoints, including `/nodes`, `/subgraph`, `/by-node`
 - `main.py`: registered new routers
 - `test_industry_company_routers.py`: end-to-end API tests
 
-### Commit 5 — Business Batch Extension (latest)
+### Commit 5 — Business Batch Extension
 - `business_batches.py`: new router for `BusinessRegistrationBatch`
 - `graph_service.py`: `process_business_batch()` with upsert logic for all 4 entity types
 - `industry_storage.py`: added `get_mapping_by_industry_and_node()` + `update_mapping()`
@@ -157,6 +199,18 @@ backend/
 - `industry_schema.py` / `company_schema.py`: UUID fields now have `default_factory=uuid4`
 - `test_business_batches.py`: 4 tests (full batch, upsert existing, mapping dedup, empty batch)
 - Cleaned up root-level stale files: `company_schema.py`, `core_schema.py`, `industry_schema.py`
+
+### Commit 6 — Factual Graph Backend (Phase 2 backend)
+- `factual_graph_schema.py`: `Person`, three relation types, `FactualRelation` discriminated union
+- `factual_graph_storage.py`: PG CRUD + Neo4j sync for persons and relations
+- `factual_graph.py`: full REST router for persons, relations, and neighborhood queries
+- `database_postgres.py`: added `persons` and `factual_relations` tables
+
+### Commit 7 — Cross-domain Exploration Backend
+- `explore.py`: cross-domain endpoints bridging Industrial Graph and Factual Graph
+- `company_exploration.py`: heterogeneous company exploration graph endpoints
+- `company_material.py`: material-flow based company connection endpoints
+- `computation_jobs.py`: async computation job tracking endpoints
 
 ### Historical Fixes (carried over)
 - **HTTP 422 fix**: `page_size` query limit relaxed from `le=100` to `le=1000`
@@ -168,23 +222,43 @@ backend/
 
 ## 5. Pending Work
 
-### Phase 2 — Factual Graph Completion
-The Factual Graph schema and storage are implemented. Remaining work:
-- Frontend pages for Person CRUD and relation visualization
-- Batch import for factual relations (annual reports, Tianyancha data)
+### Phase 2 — Factual Graph Frontend
+The Factual Graph **backend** (schema, storage, router, Neo4j sync) is implemented. Remaining work:
+- Frontend Person CRUD pages/components (`PersonList`, `PersonForm`, `PersonDetail`)
+- Frontend relation visualization for factual relations
+- Batch import UI/API for factual relations (annual reports, Tianyancha data)
 
 ### Phase 3 — Frontend Views
-Build React pages for:
-- **Industry List Page**: table view of industries with search/filter
-- **Industry Detail Page**: show mapped nodes + subgraph visualization (reuse `GraphCanvas`)
-- **Company List Page**: table view with country/type/node filters
-- **Company Detail Page**: show exposures + temporary subgraph + factual relations
-- **Person List/Detail Page**: new, for Factual Graph
-- **Cross-domain Exploration Page**: unified explore interface with domain color coding
+Current frontend is a single-page dashboard with sidebars and detail panels, not dedicated routes/pages.
+
+Implemented:
+- `IndustrySidebar`: list with search/type/status filters
+- `IndustryDetail`: shows mapped nodes + can load subgraph
+- `CompanySidebar`: list with type/status/search filters
+- `CompanyDetail`: shows exposures
+- `ExplorationCanvas`: manual cross-domain exploration UI
+
+Missing or stubbed:
+- **Dedicated Industry/Company pages** (currently only sidebars/panels)
+- **Country filter** and **node filter** in company list
+- **Temporary subgraph inside CompanyDetail panel**
+- **Factual relations inside CompanyDetail panel**
+- **Person List/Detail Page** — no Person components exist
+- **Add mapping workflow** in `IndustryDetail` (`onAddMapping` is an `alert` stub)
+- **Add exposure workflow** in `CompanyDetail` (`onAddExposure` is an `alert` stub)
+- **Cross-domain exploration page** currently uses `company_exploration.py` endpoints (`/companies/{id}/exploration-graph`, `/companies/nodes/{id}/connected-companies`); the newer `/api/v1/explore/*` endpoints are not yet wired to the UI
 
 ### Infrastructure
 - [ ] **Install PostgreSQL locally** — system currently has no `psql`; backend code is ready but cannot run integration tests until PostgreSQL is installed
 - [ ] **Run full test suite** — all PostgreSQL-dependent tests skip when DB is unavailable; verify they pass after installation
+
+### Data / Batch Debt
+Historical batch construction logs list these as future work; none are implemented:
+- Inferred inter-company industrial relations for batches 002–004
+- Industry filter/views for batches 002–004
+- Additional exposure relationships (e.g., Shenzhen Energy sludge/waste-water treatment)
+- Periodic financial-data refresh mechanism for company revenue / market cap
+- Remaining company batches beyond Batch 001
 
 ---
 
@@ -199,6 +273,7 @@ Build React pages for:
 - Code is fully written but **not locally installed**.
 - When PostgreSQL is unavailable, `get_postgres_pool()` returns `None`; storage functions return empty lists / `None` gracefully.
 - Table schemas use `TEXT[]` for arrays, `JSONB` for evidence, `TIMESTAMPTZ` for timestamps.
+- `init_postgres_tables()` now creates 7 tables: `industries`, `industry_node_mappings`, `companies`, `company_node_exposures`, `computation_jobs`, `persons`, `factual_relations`.
 
 ### Schema Patterns
 - All IDs use snake_case regex: `^[a-z][a-z0-9_]*$`, min 3 chars, max 64.
@@ -214,10 +289,11 @@ Build React pages for:
 
 ## 7. Design Documents
 
-- `docs/view_design_v2.md` — Three-layer view pyramid architecture (Industry → Industrial → Company)
+- `docs/view_design_v2.md` — Three-layer view pyramid architecture (Industry → Industrial → Company) (retired)
 - `docs/think-01.md`, `docs/think-02.md` — Historical design thinking
 - `docs/prompts.txt` — Prompt history
+- `docs/ui_architecture_refactor_2026-05-24.md` — Current UI architecture and future extension directions
 
 ---
 
-*Last updated: 2026-05-21*
+*Last updated: 2026-06-15*
