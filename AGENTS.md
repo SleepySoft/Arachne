@@ -223,6 +223,8 @@ backend/
 - `neo4j_storage.py` / `nodes.py`: added `draft_only` filter to `list_nodes` for discovering incomplete nodes
 - `QuickNodeForm.tsx` / `SearchPanel.tsx`: frontend quick-add entry point with draft-node badge and draft-node list
 - `NodeDetail.tsx`: added "草稿节点 / 待完善" banner for draft/incomplete nodes
+- `SearchPanel.tsx`: fixed search/draft dropdown item text layout (vertical text → single-line with truncation)
+- `GraphCanvas.tsx`: enhanced single-node highlight style (larger border, larger node, yellow label); changed highlight animation from `fit` (zoom) to `center` (pan only); added fallback to fetch and add node if selected from search but not loaded in current graph
 - `cli/arachne_cli.py`: added `industry update-mapping` and `quick-node` commands; `query --draft-only` flag
 - `skills/arachne-api/SKILL.md`: updated with `update-mapping`, `quick-node`, `query --draft-only` examples and frontend UI operation guide
 - `.kimi/skills/arachne-graph/SKILL.md`: added guidance that market concepts / themes should be registered as `Industry` rather than nodes

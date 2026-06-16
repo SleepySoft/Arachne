@@ -8,7 +8,7 @@ import {
   GraphEdge,
   IndustrialNode,
 } from "@/types";
-import { getNeighbors, listEdges, listNodes } from "@/services/api";
+import { getNeighbors, getNode, listEdges, listNodes } from "@/services/api";
 
 cytoscape.use(dagre);
 
@@ -226,7 +226,13 @@ export function GraphCanvas({
               selector: ".highlighted",
               style: {
                 "border-color": "#facc15",
-                "border-width": 4,
+                "border-width": 5,
+                width: 38,
+                height: 38,
+                color: "#facc15",
+                "text-background-color": "#422006",
+                "text-background-opacity": 0.95,
+                "text-background-padding": "3px 6px",
               },
             },
             {
@@ -484,10 +490,42 @@ export function GraphCanvas({
       if (target.length) {
         target.addClass("highlighted");
         cy.elements().not(target).not(target.neighborhood()).addClass("dimmed");
+        // 平移到视野中心，不改变缩放级别
         cy.animate({
-          fit: { eles: target, padding: 80 },
+          center: { eles: target },
           duration: 400,
           easing: "ease-out",
+        });
+      } else {
+        // 节点未在当前图谱中加载：单独获取并添加到视野中心
+        getNode(highlightNodeId).then((node) => {
+          if (!cyRef.current) return;
+          const cy2 = cyRef.current;
+          if (cy2.getElementById(node.node_id).length) return;
+          const extent = cy2.extent();
+          const x = (extent.x1 + extent.x2) / 2;
+          const y = (extent.y1 + extent.y2) / 2;
+          cy2.add({
+            data: {
+              id: node.node_id,
+              label: node.canonical_name_zh,
+              entity_type: node.entity_type,
+              status: node.status,
+              confidence: node.confidence,
+              raw: node,
+            },
+            position: { x, y },
+          });
+          const added = cy2.getElementById(node.node_id);
+          added.addClass("highlighted");
+          cy2.elements().not(added).addClass("dimmed");
+          cy2.animate({
+            center: { eles: added },
+            duration: 400,
+            easing: "ease-out",
+          });
+        }).catch(() => {
+          // 节点不存在或网络错误，静默忽略
         });
       }
     }

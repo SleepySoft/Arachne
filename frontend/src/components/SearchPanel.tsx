@@ -52,7 +52,7 @@ export function SearchPanel({
             className="w-full rounded-md border border-slate-700 bg-slate-800 py-1.5 pl-8 pr-3 text-sm text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
           />
           {searchData && query && !showDrafts && (
-            <div className="absolute z-50 mt-1 w-full rounded-md border border-slate-700 bg-slate-800 shadow-lg">
+            <div className="absolute z-50 mt-1 w-full min-w-[280px] rounded-md border border-slate-700 bg-slate-800 shadow-lg">
               {searchData.items.length === 0 ? (
                 <div className="px-3 py-2 text-sm text-slate-500">无结果</div>
               ) : (
@@ -64,13 +64,13 @@ export function SearchPanel({
                       setQuery("");
                       setShowQuickAdd(false);
                     }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-700"
+                    className="flex w-full min-w-0 items-center gap-2 whitespace-nowrap px-3 py-2 text-left text-sm hover:bg-slate-700"
                   >
-                    <span className="font-medium text-slate-200">
-                      {node.canonical_name_zh}
+                    <span className="min-w-0 flex-1 truncate font-medium text-slate-200">
+                      {node.canonical_name_zh || node.canonical_name_en}
                     </span>
-                    <span className="text-xs text-slate-500">{node.node_id}</span>
-                    <span className="ml-auto rounded-full bg-slate-700 px-2 py-0.5 text-[10px] text-slate-400">
+                    <span className="shrink-0 text-xs text-slate-500">{node.node_id}</span>
+                    <span className="ml-2 shrink-0 rounded-full bg-slate-700 px-2 py-0.5 text-[10px] text-slate-400">
                       {node.entity_type}
                     </span>
                   </button>
@@ -89,7 +89,7 @@ export function SearchPanel({
           )}
 
           {showDrafts && (
-            <div className="absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-md border border-slate-700 bg-slate-800 shadow-lg">
+            <div className="absolute z-50 mt-1 max-h-64 w-full min-w-[280px] overflow-auto rounded-md border border-slate-700 bg-slate-800 shadow-lg">
               <div className="sticky top-0 flex items-center justify-between border-b border-slate-700 bg-slate-800 px-3 py-2">
                 <span className="flex items-center gap-1 text-xs font-medium text-amber-400">
                   <AlertCircle className="h-3.5 w-3.5" />
@@ -112,17 +112,17 @@ export function SearchPanel({
                       onSelectNode(node);
                       setShowDrafts(false);
                     }}
-                    className="flex w-full flex-col gap-0.5 border-b border-slate-800 px-3 py-2 text-left text-sm hover:bg-slate-700 last:border-b-0"
+                    className="flex w-full min-w-0 flex-col gap-0.5 border-b border-slate-800 px-3 py-2 text-left text-sm hover:bg-slate-700 last:border-b-0"
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-slate-200">{node.canonical_name_zh || node.canonical_name_en}</span>
-                      <span className="text-[10px] text-slate-500">{node.node_id}</span>
+                    <div className="flex w-full min-w-0 items-center gap-2 whitespace-nowrap">
+                      <span className="min-w-0 flex-1 truncate font-medium text-slate-200">{node.canonical_name_zh || node.canonical_name_en}</span>
+                      <span className="shrink-0 text-[10px] text-slate-500">{node.node_id}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                      <span>{node.entity_type}</span>
-                      <span>·</span>
-                      <span>{node.status}</span>
-                      {!node.definition && <span className="text-amber-500">· 待补定义</span>}
+                    <div className="flex w-full min-w-0 items-center gap-2 whitespace-nowrap text-[10px] text-slate-500">
+                      <span className="shrink-0">{node.entity_type}</span>
+                      <span className="shrink-0">·</span>
+                      <span className="shrink-0">{node.status}</span>
+                      {!node.definition && <span className="shrink-0 text-amber-500">· 待补定义</span>}
                     </div>
                   </button>
                 ))
