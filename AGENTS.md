@@ -160,6 +160,7 @@ backend/
 **Quick Create (Draft Mode)**
 - `POST /api/v1/nodes/quick-create` — create a draft node with only a name
 - `POST /api/v1/edges/quick-create` — create a draft industrial-flow edge with only from/to nodes
+- `GET /api/v1/nodes/fuzzy-search` — fuzzy node name search to detect near-duplicates without vector DB
 
 **Batches**
 - `POST /api/v1/batches` — GraphRegistrationBatch (nodes + edges)
@@ -215,6 +216,15 @@ backend/
 - `company_exploration.py`: heterogeneous company exploration graph endpoints
 - `company_material.py`: material-flow based company connection endpoints
 - `computation_jobs.py`: async computation job tracking endpoints
+
+### Commit 10 — Fuzzy Node Search + Duplicate Prevention (Frontend + Backend)
+- `backend/app/services/fuzzy_search.py`: pure-Python fuzzy matcher combining substring containment, character bigram Jaccard, token overlap, and `difflib.SequenceMatcher` similarity; no vector DB or external dependencies
+- `backend/app/routers/nodes.py`: added `GET /api/v1/nodes/fuzzy-search?query=&limit=&score_threshold=` endpoint
+- `frontend/src/services/api.ts`: added `fuzzySearchNodes()` wrapper
+- `frontend/src/components/SimilarNodesPanel.tsx`: new component listing similar nodes with confidence badges and one-click selection
+- `frontend/src/components/QuickNodeForm.tsx` / `NodeForm.tsx`: debounced fuzzy search while typing; warns users about potential duplicates and lets them select an existing node instead of creating a new one
+- `cli/arachne_cli.py`: added `query --fuzzy-search <query> --limit <n>` command
+- No new Python dependencies required
 
 ### Commit 9 — Quick Edge Creation (Frontend + Backend + CLI + Skills)
 - `schemas.py`: added `IndustrialFlowEdgeQuickCreate` input model with auto-generated `edge_id`, default `edge_type=material_flow`, and auto-generated description

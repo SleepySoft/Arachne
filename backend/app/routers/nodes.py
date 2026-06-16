@@ -9,7 +9,7 @@ from app.models.schemas import (
     IndustrialNodeUpdate,
     PaginatedNodes,
 )
-from app.services import graph_service
+from app.services import fuzzy_search, graph_service
 
 router = APIRouter()
 
@@ -29,6 +29,30 @@ async def quick_create_node(data: IndustrialNodeQuickCreate):
         return await graph_service.quick_create_node(data)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/fuzzy-search")
+async def fuzzy_search_nodes(
+    query: str = Query(..., min_length=2, description="Search query for similar node names"),
+    limit: int = Query(10, ge=1, le=50),
+    score_threshold: float = Query(0.35, ge=0.0, le=1.0),
+):
+    """Fuzzy search nodes by name similarity without vector DB.
+
+    Returns a list of candidate nodes sorted by similarity score.
+    """
+    results = await fuzzy_search.fuzzy_search_nodes(query, limit, score_threshold)
+    return {
+        "query": query,
+        "count": len(results),
+        "items": [
+            {
+                "score": round(r["score"], 3),
+                "node": r["node"],
+            }
+            for r in results
+        ],
+    }
 
 
 @router.get("", response_model=PaginatedNodes)

@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, X, Sparkles } from "lucide-react";
 import { IndustrialNode, IndustrialNodeQuickCreate } from "@/types";
-import { quickCreateNode } from "@/services/api";
+import { fuzzySearchNodes, quickCreateNode } from "@/services/api";
+import { SimilarNodesPanel } from "./SimilarNodesPanel";
 
 interface QuickNodeFormProps {
   onSuccess?: (node: IndustrialNode) => void;
@@ -18,7 +19,34 @@ export function QuickNodeForm({ onSuccess, onCancel, initialName = "" }: QuickNo
     entity_type: "unknown",
     notes: "",
   });
+  const [similar, setSimilar] = useState<{ score: number; node: IndustrialNode }[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const nameQuery = [form.canonical_name_zh, form.canonical_name_en]
+    .map((s) => s?.trim())
+    .filter(Boolean)[0];
+
+  useEffect(() => {
+    if (!nameQuery || nameQuery.length < 2) {
+      setSimilar([]);
+      setDismissed(false);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await fuzzySearchNodes(nameQuery, 5, 0.35);
+        setSimilar(res.items);
+      } catch {
+        setSimilar([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [nameQuery]);
 
   const mutation = useMutation({
     mutationFn: quickCreateNode,
@@ -68,6 +96,22 @@ export function QuickNodeForm({ onSuccess, onCancel, initialName = "" }: QuickNo
 
       {error && (
         <div className="rounded bg-red-900/30 px-2 py-1 text-[10px] text-red-300">{error}</div>
+      )}
+
+      {!dismissed && (
+        <SimilarNodesPanel
+          query={nameQuery || ""}
+          items={similar}
+          onSelect={(node) => {
+            setError(null);
+            onSuccess?.(node);
+          }}
+          onDismiss={() => setDismissed(true)}
+        />
+      )}
+
+      {searching && similar.length === 0 && (
+        <div className="text-[10px] text-slate-500">正在检查相似节点...</div>
       )}
 
       <div className="flex gap-2">
@@ -121,7 +165,7 @@ export function QuickNodeForm({ onSuccess, onCancel, initialName = "" }: QuickNo
         className="flex w-full items-center justify-center gap-1 rounded bg-cyan-600/80 py-1 text-xs font-medium text-white hover:bg-cyan-500 disabled:opacity-50"
       >
         <Plus className="h-3 w-3" />
-        {mutation.isPending ? "添加中..." : "添加为草稿节点（PENDING）"}
+        {mutation.isPending ? "添加中..." : similar.length > 0 && !dismissed ? "仍要添加为新节点" : "添加为草稿节点（PENDING）"}
       </button>
 
       <p className="text-[9px] text-slate-500">

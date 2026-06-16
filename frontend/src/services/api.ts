@@ -66,6 +66,17 @@ export const quickCreateNode = async (data: IndustrialNodeQuickCreate): Promise<
   return res.data;
 };
 
+export const fuzzySearchNodes = async (
+  query: string,
+  limit = 10,
+  scoreThreshold = 0.35
+): Promise<{ query: string; count: number; items: { score: number; node: IndustrialNode }[] }> => {
+  const res = await client.get("/nodes/fuzzy-search", {
+    params: { query, limit, score_threshold: scoreThreshold },
+  });
+  return res.data;
+};
+
 export const updateNode = async (
   nodeId: string,
   data: IndustrialNodeUpdate

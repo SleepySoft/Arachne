@@ -1,8 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { IndustrialNode, IndustrialNodeCreate } from "@/types";
-import { createNode, updateNode } from "@/services/api";
+import { createNode, fuzzySearchNodes, updateNode } from "@/services/api";
+import { SimilarNodesPanel } from "./SimilarNodesPanel";
 
 interface NodeFormProps {
   mode: "create" | "edit";
@@ -51,7 +52,30 @@ export function NodeForm({ mode, node, onClose, onSuccess }: NodeFormProps) {
     status: node?.status || "PENDING",
     notes: node?.notes || "",
   });
+  const [similar, setSimilar] = useState<{ score: number; node: IndustrialNode }[]>([]);
+  const [dismissed, setDismissed] = useState(false);
   const [error, setError] = useState("");
+
+  const nameQuery = [form.canonical_name_zh, form.canonical_name_en]
+    .map((s) => s?.trim())
+    .filter(Boolean)[0];
+
+  useEffect(() => {
+    if (mode === "edit" || !nameQuery || nameQuery.length < 2) {
+      setSimilar([]);
+      setDismissed(false);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fuzzySearchNodes(nameQuery, 5, 0.35);
+        setSimilar(res.items);
+      } catch {
+        setSimilar([]);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [nameQuery, mode]);
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -104,6 +128,18 @@ export function NodeForm({ mode, node, onClose, onSuccess }: NodeFormProps) {
 
       {error && (
         <div className="rounded bg-red-900/20 p-2 text-xs text-red-400">{error}</div>
+      )}
+
+      {mode === "create" && !dismissed && (
+        <SimilarNodesPanel
+          query={nameQuery || ""}
+          items={similar}
+          onSelect={(node) => {
+            setError("");
+            onSuccess(node);
+          }}
+          onDismiss={() => setDismissed(true)}
+        />
       )}
 
       <form onSubmit={handleSubmit} className="space-y-3">
@@ -212,7 +248,7 @@ export function NodeForm({ mode, node, onClose, onSuccess }: NodeFormProps) {
             disabled={mutation.isPending}
             className="w-full rounded bg-cyan-600 py-2 text-sm font-medium text-white hover:bg-cyan-500 disabled:opacity-50"
           >
-            {mutation.isPending ? "保存中..." : "保存"}
+            {mutation.isPending ? "保存中..." : similar.length > 0 && !dismissed ? "仍要保存为新节点" : "保存"}
           </button>
         </div>
       </form>

@@ -275,6 +275,28 @@ python cli/arachne_cli.py query --draft-only
 - 在节点详情页顶部显示“草稿节点 / 待完善”提示
 - 通过搜索框右侧的 🔔 按钮查看所有草稿节点列表
 
+#### 防止重复：模糊搜索相似节点
+
+系统没有向量数据库，而是使用纯 Python 文本相似度算法（子串匹配、字符 n-gram Jaccard、`difflib.SequenceMatcher`）检测相似节点。前端在创建节点时会实时提示：
+
+- 输入中文名或英文名后，延迟 400ms 自动调用 `GET /api/v1/nodes/fuzzy-search`
+- 若发现高相似度节点，会显示黄色警告卡片，列出候选节点及相似度百分比
+- 用户可直接点击候选节点选用，避免重复创建
+- 也可点击“忽略”继续创建新节点
+
+CLI 场景下，创建节点前建议先用模糊搜索检查相似节点：
+
+```bash
+python cli/arachne_cli.py query --fuzzy-search "激光雷达" --limit 5
+python cli/arachne_cli.py query --fuzzy-search lidar --limit 5
+```
+
+返回的 `score` 越高表示越相似，≥0.85 通常需要重点排查。如果结果不够，可直接调用底层 API：
+
+```bash
+curl "http://localhost:8005/api/v1/nodes/fuzzy-search?query=%E6%BF%80%E5%85%89%E9%9B%B7%E8%BE%BE&limit=5"
+```
+
 ### 4.1 快速添加草稿关系（Quick Edge）
 
 当需要快速连接两个已有节点、先占位后补全证据时，使用 `quick-edge`：
