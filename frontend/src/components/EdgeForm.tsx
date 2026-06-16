@@ -16,6 +16,13 @@ interface EdgeFormProps {
   edge?: GraphEdge;
   defaultFromNode?: string;
   defaultToNode?: string;
+  prefillData?: {
+    from_node?: string;
+    to_node?: string;
+    edge_type?: string;
+    description?: string;
+    notes?: string;
+  };
   onClose: () => void;
   onSuccess: (edge: GraphEdge) => void;
 }
@@ -34,16 +41,16 @@ const INDUSTRIAL_FLOW_TYPES = [
 const ONTOLOGY_TYPES = ["alias_of", "is_a", "variant_of", "related_term"];
 const CONFIDENCES = ["HIGH", "MEDIUM", "LOW"];
 
-export function EdgeForm({ mode, edge, defaultFromNode, defaultToNode, onClose, onSuccess }: EdgeFormProps) {
+export function EdgeForm({ mode, edge, defaultFromNode, defaultToNode, prefillData, onClose, onSuccess }: EdgeFormProps) {
   const [namespace, setNamespace] = useState<EdgeNamespace>(edge?.edge_namespace || "industrial_flow");
   const [form, setForm] = useState({
     edge_id: edge?.edge_id || "",
-    from_node: edge?.from_node || defaultFromNode || "",
-    to_node: edge?.to_node || defaultToNode || "",
-    edge_type: edge?.edge_type || "material_flow",
-    description: edge?.description || "",
+    from_node: edge?.from_node || defaultFromNode || prefillData?.from_node || "",
+    to_node: edge?.to_node || defaultToNode || prefillData?.to_node || "",
+    edge_type: edge?.edge_type || prefillData?.edge_type || "material_flow",
+    description: edge?.description || prefillData?.description || "",
     confidence: edge?.confidence || "LOW",
-    notes: edge?.notes || "",
+    notes: edge?.notes || prefillData?.notes || "",
   });
   const [error, setError] = useState("");
 

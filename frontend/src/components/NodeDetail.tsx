@@ -1,10 +1,8 @@
-import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, Edit2, Trash2, X } from "lucide-react";
+import { Edit2, Trash2, X } from "lucide-react";
 import { IndustrialNode } from "@/types";
 import { deleteNode } from "@/services/api";
 import { NodeEdgeList } from "./NodeEdgeList";
-import { QuickEdgeForm } from "./QuickEdgeForm";
 
 interface NodeDetailProps {
   node: IndustrialNode;
@@ -14,8 +12,6 @@ interface NodeDetailProps {
 }
 
 export function NodeDetail({ node, onEdit, onClose, onRefresh }: NodeDetailProps) {
-  const [edgeDirection, setEdgeDirection] = useState<"upstream" | "downstream" | null>(null);
-
   const deleteMutation = useMutation({
     mutationFn: deleteNode,
     onSuccess: () => {
@@ -122,40 +118,7 @@ export function NodeDetail({ node, onEdit, onClose, onRefresh }: NodeDetailProps
           </div>
         )}
 
-        {/* Quick edge actions */}
-        <div className="flex gap-2 border-t border-slate-800 pt-3">
-          <button
-            onClick={() => setEdgeDirection("upstream")}
-            className={`flex flex-1 items-center justify-center gap-1 rounded border border-slate-700 bg-slate-800 py-1.5 text-xs text-slate-300 transition-colors hover:border-cyan-600 hover:text-cyan-400 ${
-              edgeDirection === "upstream" ? "border-cyan-600 text-cyan-400" : ""
-            }`}
-          >
-            <ArrowUp className="h-3 w-3" />
-            添加上游
-          </button>
-          <button
-            onClick={() => setEdgeDirection("downstream")}
-            className={`flex flex-1 items-center justify-center gap-1 rounded border border-slate-700 bg-slate-800 py-1.5 text-xs text-slate-300 transition-colors hover:border-cyan-600 hover:text-cyan-400 ${
-              edgeDirection === "downstream" ? "border-cyan-600 text-cyan-400" : ""
-            }`}
-          >
-            <ArrowDown className="h-3 w-3" />
-            添加下游
-          </button>
-        </div>
-
-        {edgeDirection && (
-          <QuickEdgeForm
-            anchorNode={node}
-            direction={edgeDirection}
-            onSuccess={() => {
-              setEdgeDirection(null);
-              onRefresh();
-            }}
-            onCancel={() => setEdgeDirection(null)}
-          />
-        )}
-
+        {/* Relationship section: single entry point */}
         <div className="border-t border-slate-800 pt-3">
           <NodeEdgeList
             nodeId={node.node_id}

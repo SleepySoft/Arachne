@@ -220,8 +220,9 @@ backend/
 - `schemas.py`: added `IndustrialFlowEdgeQuickCreate` input model with auto-generated `edge_id`, default `edge_type=material_flow`, and auto-generated description
 - `graph_service.py`: added `quick_create_edge()` service that validates endpoints, resolves a unique `edge_id`, fills placeholders, and creates an `IndustrialFlowEdge`
 - `edges.py`: added `POST /api/v1/edges/quick-create` endpoint
-- `QuickEdgeForm.tsx`: new minimal form to add an upstream/downstream edge from the node detail panel, with searchable node picker, edge-type selector, optional description/notes
-- `NodeDetail.tsx`: wired "添加上游" / "添加下游" buttons to open `QuickEdgeForm`
+- `QuickEdgeForm.tsx`: new minimal form to add an upstream/downstream edge, with searchable node picker, edge-type selector, optional description/notes, and an "expand to full form" button that pre-fills `EdgeForm`
+- `NodeDetail.tsx`: removed the duplicate top-level "添加上游/下游" buttons; all relationship creation now flows through `NodeEdgeList`
+- `NodeEdgeList.tsx`: relationship management now defaults to `QuickEdgeForm` when adding, while still supporting full `EdgeForm` via the expand action or edit action
 - `api.ts` / `types/index.ts`: added `quickCreateEdge()` wrapper and `IndustrialFlowEdgeQuickCreate` type
 - `cli/arachne_cli.py`: added `quick-edge` command (`--from`, `--to`, `--edge-type`, `--description`, `--notes`)
 - `skills/arachne-api/SKILL.md`: documented `quick-edge` usage and the frontend quick-add workflow

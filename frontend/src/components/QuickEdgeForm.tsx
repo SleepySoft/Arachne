@@ -1,14 +1,21 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, Plus, Search, X } from "lucide-react";
-import { GraphEdge, IndustrialFlowEdgeQuickCreate, IndustrialFlowType, IndustrialNode } from "@/types";
-import { listNodes, quickCreateEdge } from "@/services/api";
+import { ArrowRight, Maximize2, Plus, Search, X } from "lucide-react";
+import { GraphEdge, IndustrialFlowEdgeQuickCreate, IndustrialFlowType } from "@/types";
+import { getNode, listNodes, quickCreateEdge } from "@/services/api";
 
 interface QuickEdgeFormProps {
-  anchorNode: IndustrialNode;
+  anchorNodeId: string;
   direction: "upstream" | "downstream";
   onSuccess?: (edge: GraphEdge) => void;
   onCancel?: () => void;
+  onExpand?: (draft: {
+    from_node: string;
+    to_node: string;
+    edge_type: string;
+    description?: string;
+    notes?: string;
+  }) => void;
 }
 
 const EDGE_TYPES: { value: IndustrialFlowType; label: string }[] = [
@@ -21,22 +28,24 @@ const EDGE_TYPES: { value: IndustrialFlowType; label: string }[] = [
 ];
 
 export function QuickEdgeForm({
-  anchorNode,
+  anchorNodeId,
   direction,
   onSuccess,
   onCancel,
+  onExpand,
 }: QuickEdgeFormProps) {
   const queryClient = useQueryClient();
   const [query, setQuery] = useState("");
-  const [selectedNode, setSelectedNode] = useState<IndustrialNode | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [edgeType, setEdgeType] = useState<IndustrialFlowType>("material_flow");
   const [description, setDescription] = useState("");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const isUpstream = direction === "upstream";
-  const fromNode = isUpstream ? selectedNode : anchorNode;
-  const toNode = isUpstream ? anchorNode : selectedNode;
+  const { data: anchorNode } = useQuery({
+    queryKey: ["node", anchorNodeId],
+    queryFn: () => getNode(anchorNodeId),
+  });
 
   const { data: searchData } = useQuery({
     queryKey: ["nodes", 1, 10, undefined, undefined, query],
@@ -44,12 +53,24 @@ export function QuickEdgeForm({
     enabled: query.length >= 1,
   });
 
+  const selectedNode = searchData?.items.find((n) => n.node_id === selectedNodeId) || null;
+
+  const isUpstream = direction === "upstream";
+  const fromNodeId = isUpstream ? selectedNodeId : anchorNodeId;
+  const toNodeId = isUpstream ? anchorNodeId : selectedNodeId;
+  const fromNodeName = isUpstream
+    ? selectedNode?.canonical_name_zh
+    : anchorNode?.canonical_name_zh;
+  const toNodeName = isUpstream
+    ? anchorNode?.canonical_name_zh
+    : selectedNode?.canonical_name_zh;
+
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!selectedNode) throw new Error("请选择另一个节点");
+      if (!fromNodeId || !toNodeId) throw new Error("请选择另一个节点");
       const payload: IndustrialFlowEdgeQuickCreate = {
-        from_node: fromNode!.node_id,
-        to_node: toNode!.node_id,
+        from_node: fromNodeId,
+        to_node: toNodeId,
         edge_type: edgeType,
         description: description.trim() || undefined,
         notes: notes.trim() || undefined,
@@ -57,10 +78,10 @@ export function QuickEdgeForm({
       return quickCreateEdge(payload);
     },
     onSuccess: (edge) => {
-      queryClient.invalidateQueries({ queryKey: ["edges-outgoing", anchorNode.node_id] });
-      queryClient.invalidateQueries({ queryKey: ["edges-incoming", anchorNode.node_id] });
+      queryClient.invalidateQueries({ queryKey: ["edges-outgoing", anchorNodeId] });
+      queryClient.invalidateQueries({ queryKey: ["edges-incoming", anchorNodeId] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
-      setSelectedNode(null);
+      setSelectedNodeId(null);
       setQuery("");
       setDescription("");
       setNotes("");
@@ -73,15 +94,40 @@ export function QuickEdgeForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!selectedNode) {
+    if (!selectedNodeId) {
       setError("请选择另一个节点");
       return;
     }
     mutation.mutate();
   };
 
+  const handleExpand = () => {
+    if (!fromNodeId || !toNodeId) {
+      setError("请选择另一个节点后再展开完整表单");
+      return;
+    }
+    onExpand?.({
+      from_node: fromNodeId,
+      to_node: toNodeId,
+      edge_type: edgeType,
+      description: description.trim() || undefined,
+      notes: notes.trim() || undefined,
+    });
+  };
+
+  if (!anchorNode) {
+    return (
+      <div className="rounded border border-dashed border-cyan-700/50 bg-cyan-900/10 p-2.5 text-xs text-cyan-400">
+        加载中...
+      </div>
+    );
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-2 rounded border border-dashed border-cyan-700/50 bg-cyan-900/10 p-2.5">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-2 rounded border border-dashed border-cyan-700/50 bg-cyan-900/10 p-2.5"
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1 text-[11px] font-medium text-cyan-400">
           <Plus className="h-3 w-3" />
@@ -105,11 +151,11 @@ export function QuickEdgeForm({
       {/* Direction visualization */}
       <div className="flex items-center gap-1 text-[10px] text-slate-400">
         <span className="truncate rounded bg-slate-800 px-1.5 py-0.5">
-          {isUpstream ? (selectedNode?.canonical_name_zh || "上游节点") : anchorNode.canonical_name_zh}
+          {fromNodeName || (isUpstream ? "上游节点" : anchorNode.canonical_name_zh)}
         </span>
         <ArrowRight className="h-3 w-3 shrink-0 text-cyan-500" />
         <span className="truncate rounded bg-slate-800 px-1.5 py-0.5">
-          {isUpstream ? anchorNode.canonical_name_zh : (selectedNode?.canonical_name_zh || "下游节点")}
+          {toNodeName || (isUpstream ? anchorNode.canonical_name_zh : "下游节点")}
         </span>
       </div>
 
@@ -121,7 +167,7 @@ export function QuickEdgeForm({
           value={selectedNode ? selectedNode.canonical_name_zh : query}
           onChange={(e) => {
             setQuery(e.target.value);
-            if (selectedNode) setSelectedNode(null);
+            if (selectedNodeId) setSelectedNodeId(null);
           }}
           placeholder={isUpstream ? "搜索上游节点（供应商）..." : "搜索下游节点（客户/应用）..."}
           className="w-full rounded border border-slate-700 bg-slate-800 py-1.5 pl-6 pr-2 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
@@ -132,13 +178,13 @@ export function QuickEdgeForm({
               <div className="px-2 py-1.5 text-xs text-slate-500">无结果</div>
             ) : (
               searchData.items
-                .filter((n) => n.node_id !== anchorNode.node_id)
+                .filter((n) => n.node_id !== anchorNodeId)
                 .map((node) => (
                   <button
                     key={node.node_id}
                     type="button"
                     onClick={() => {
-                      setSelectedNode(node);
+                      setSelectedNodeId(node.node_id);
                       setQuery("");
                     }}
                     className="flex w-full min-w-0 items-center gap-2 whitespace-nowrap px-2 py-1.5 text-left text-xs hover:bg-slate-700"
@@ -158,19 +204,17 @@ export function QuickEdgeForm({
       </div>
 
       {/* Edge type */}
-      <div className="flex gap-2">
-        <select
-          value={edgeType}
-          onChange={(e) => setEdgeType(e.target.value as IndustrialFlowType)}
-          className="flex-1 rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
-        >
-          {EDGE_TYPES.map((t) => (
-            <option key={t.value} value={t.value}>
-              {t.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <select
+        value={edgeType}
+        onChange={(e) => setEdgeType(e.target.value as IndustrialFlowType)}
+        className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
+      >
+        {EDGE_TYPES.map((t) => (
+          <option key={t.value} value={t.value}>
+            {t.label}
+          </option>
+        ))}
+      </select>
 
       {/* Description */}
       <input
@@ -190,18 +234,26 @@ export function QuickEdgeForm({
         className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
       />
 
-      <button
-        type="submit"
-        disabled={mutation.isPending || !selectedNode}
-        className="flex w-full items-center justify-center gap-1 rounded bg-cyan-600/80 py-1 text-xs font-medium text-white hover:bg-cyan-500 disabled:opacity-50"
-      >
-        <Plus className="h-3 w-3" />
-        {mutation.isPending ? "创建中..." : `创建${isUpstream ? "上游" : "下游"}关系`}
-      </button>
-
-      <p className="text-[9px] text-slate-500">
-        关系方向：{isUpstream ? "上游节点 → 当前节点" : "当前节点 → 下游节点"}。系统会自动生成 edge_id 和默认描述，后续可补全证据与精修描述。
-      </p>
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={mutation.isPending || !selectedNodeId}
+          className="flex flex-1 items-center justify-center gap-1 rounded bg-cyan-600/80 py-1 text-xs font-medium text-white hover:bg-cyan-500 disabled:opacity-50"
+        >
+          <Plus className="h-3 w-3" />
+          {mutation.isPending ? "创建中..." : `创建${isUpstream ? "上游" : "下游"}关系`}
+        </button>
+        <button
+          type="button"
+          onClick={handleExpand}
+          disabled={!selectedNodeId}
+          title="展开完整表单（可填写 edge_id、证据等）"
+          className="flex items-center justify-center gap-1 rounded border border-slate-600 bg-slate-800 px-2 py-1 text-xs text-slate-300 hover:border-cyan-600 hover:text-cyan-400 disabled:opacity-50"
+        >
+          <Maximize2 className="h-3 w-3" />
+          完整
+        </button>
+      </div>
     </form>
   );
 }
