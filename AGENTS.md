@@ -296,4 +296,15 @@ Historical batch construction logs list these as future work; none are implement
 
 ---
 
-*Last updated: 2026-06-15*
+## 8. Agent Skills
+
+项目级 agent skills 位于根目录 `skills/` 下，提供针对本系统的程序化操作指引：
+
+- `skills/arachne-graph/` — 本体设计技能：判断候选词是否应登记为产业节点、合并为别名或被拒绝。
+- `skills/arachne-api/` — CLI/API 操作技能：优先通过 `cli/arachne_cli.py` 批量注册节点/关系/公司/行业/映射/暴露，管理行业和公司，以及查询图谱；CLI 未覆盖的场景可直接调用底层 API。
+
+通过对话构造或维护图谱时，通常两个技能协同使用：`arachne-graph` 负责本体决策，`arachne-api` 负责通过 CLI 执行具体操作。
+
+---
+
+*Last updated: 2026-06-16*
