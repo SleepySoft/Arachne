@@ -128,6 +128,17 @@ export interface IndustrialFlowEdgeCreate {
   notes?: string;
 }
 
+export interface IndustrialFlowEdgeQuickCreate {
+  edge_id?: string;
+  from_node: string;
+  to_node: string;
+  edge_type?: IndustrialFlowType;
+  description?: string;
+  evidence?: Evidence[];
+  confidence?: Confidence;
+  notes?: string;
+}
+
 export interface OntologyEdgeCreate {
   edge_namespace: "ontology";
   edge_id: string;

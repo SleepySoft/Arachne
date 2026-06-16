@@ -157,6 +157,10 @@ backend/
 - `GET /api/v1/explore/persons/{id}/industrial-footprint`
 - `GET /api/v1/explore/companies/{id}/full-context`
 
+**Quick Create (Draft Mode)**
+- `POST /api/v1/nodes/quick-create` — create a draft node with only a name
+- `POST /api/v1/edges/quick-create` — create a draft industrial-flow edge with only from/to nodes
+
 **Batches**
 - `POST /api/v1/batches` — GraphRegistrationBatch (nodes + edges)
 - `POST /api/v1/business-batches` — BusinessRegistrationBatch (industries + mappings + companies + exposures)
@@ -211,6 +215,17 @@ backend/
 - `company_exploration.py`: heterogeneous company exploration graph endpoints
 - `company_material.py`: material-flow based company connection endpoints
 - `computation_jobs.py`: async computation job tracking endpoints
+
+### Commit 9 — Quick Edge Creation (Frontend + Backend + CLI + Skills)
+- `schemas.py`: added `IndustrialFlowEdgeQuickCreate` input model with auto-generated `edge_id`, default `edge_type=material_flow`, and auto-generated description
+- `graph_service.py`: added `quick_create_edge()` service that validates endpoints, resolves a unique `edge_id`, fills placeholders, and creates an `IndustrialFlowEdge`
+- `edges.py`: added `POST /api/v1/edges/quick-create` endpoint
+- `QuickEdgeForm.tsx`: new minimal form to add an upstream/downstream edge from the node detail panel, with searchable node picker, edge-type selector, optional description/notes
+- `NodeDetail.tsx`: wired "添加上游" / "添加下游" buttons to open `QuickEdgeForm`
+- `api.ts` / `types/index.ts`: added `quickCreateEdge()` wrapper and `IndustrialFlowEdgeQuickCreate` type
+- `cli/arachne_cli.py`: added `quick-edge` command (`--from`, `--to`, `--edge-type`, `--description`, `--notes`)
+- `skills/arachne-api/SKILL.md`: documented `quick-edge` usage and the frontend quick-add workflow
+- Restarted backend uvicorn on port 16060 and verified `POST /api/v1/edges/quick-create` returns 201
 
 ### Commit 8 — Industry Mapping Workflow + Draft Node Quick Add (Frontend + Backend + CLI + Skills)
 - `IndustryMappingForm.tsx`: new create/edit form for industry-to-node mappings, with searchable node picker, role/weight/confidence/status/evidence/notes fields

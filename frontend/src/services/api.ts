@@ -7,6 +7,7 @@ import {
   GraphRegistrationBatch,
   GraphStats,
   IndustrialFlowEdgeCreate,
+  IndustrialFlowEdgeQuickCreate,
   IndustrialNode,
   IndustrialNodeCreate,
   IndustrialNodeQuickCreate,
@@ -104,6 +105,13 @@ export const createEdge = async (
   data: IndustrialFlowEdgeCreate | OntologyEdgeCreate
 ): Promise<GraphEdge> => {
   const res = await client.post("/edges", data);
+  return res.data;
+};
+
+export const quickCreateEdge = async (
+  data: IndustrialFlowEdgeQuickCreate
+): Promise<GraphEdge> => {
+  const res = await client.post("/edges/quick-create", data);
   return res.data;
 };
 

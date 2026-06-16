@@ -6,6 +6,7 @@ from app.models.schemas import (
     GraphStats,
     IndustrialFlowEdge,
     IndustrialFlowEdgeCreate,
+    IndustrialFlowEdgeQuickCreate,
     IndustrialNode,
     IndustrialNodeCreate,
     IndustrialNodeQuickCreate,
@@ -125,6 +126,48 @@ async def create_edge(data) -> GraphEdge:
         return await neo4j_storage.create_ontology_edge(edge)
     else:
         raise ValueError("Unsupported edge create type")
+
+
+async def quick_create_edge(data: IndustrialFlowEdgeQuickCreate) -> IndustrialFlowEdge:
+    """快速创建产业流关系。edge_id 留空时自动生成占位 ID。"""
+    from uuid import uuid4
+
+    from_exists = await neo4j_storage.get_node(data.from_node)
+    to_exists = await neo4j_storage.get_node(data.to_node)
+    if not from_exists:
+        raise ValueError(f"from_node '{data.from_node}' does not exist")
+    if not to_exists:
+        raise ValueError(f"to_node '{data.to_node}' does not exist")
+    if data.from_node == data.to_node:
+        raise ValueError("self-loop edge is not allowed")
+
+    edge_id = data.edge_id
+    if not edge_id:
+        candidate = f"{data.from_node}_to_{data.to_node}"
+        if len(candidate) <= 128:
+            existing = await neo4j_storage.get_edge(candidate)
+            edge_id = candidate if not existing else f"draft_edge_{uuid4().hex[:12]}"
+        else:
+            edge_id = f"draft_edge_{uuid4().hex[:12]}"
+
+    existing = await neo4j_storage.get_edge(edge_id)
+    if existing:
+        raise ValueError(f"edge_id '{edge_id}' already exists")
+
+    description = data.description or f"{data.from_node} 为 {data.to_node} 提供输入"
+
+    edge = IndustrialFlowEdge(
+        edge_id=edge_id,
+        from_node=data.from_node,
+        to_node=data.to_node,
+        edge_namespace="industrial_flow",
+        edge_type=data.edge_type,
+        description=description,
+        evidence=data.evidence,
+        confidence=data.confidence,
+        notes=data.notes,
+    )
+    return await neo4j_storage.create_industrial_flow_edge(edge)
 
 
 async def get_edge(edge_id: str) -> Optional[GraphEdge]:

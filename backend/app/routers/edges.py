@@ -5,7 +5,9 @@ from fastapi import APIRouter, HTTPException, Query
 from app.models.schemas import (
     GraphEdge,
     GraphEdgeCreate,
+    IndustrialFlowEdge,
     IndustrialFlowEdgeCreate,
+    IndustrialFlowEdgeQuickCreate,
     IndustrialFlowEdgeUpdate,
     OntologyEdgeCreate,
     OntologyEdgeUpdate,
@@ -20,6 +22,15 @@ router = APIRouter()
 async def create_edge(data: GraphEdgeCreate):
     try:
         return await graph_service.create_edge(data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/quick-create", response_model=IndustrialFlowEdge, status_code=201)
+async def quick_create_edge(data: IndustrialFlowEdgeQuickCreate):
+    """快速创建产业流关系。只需提供 from_node 和 to_node，系统自动生成 edge_id 和描述。"""
+    try:
+        return await graph_service.quick_create_edge(data)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

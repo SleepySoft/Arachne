@@ -385,6 +385,47 @@ class IndustrialFlowEdgeCreate(BaseModel):
         return self
 
 
+class IndustrialFlowEdgeQuickCreate(BaseModel):
+    """用于快速创建产业流关系的输入模型。只需提供起点和终点节点，其余字段由系统填充默认值。"""
+    edge_id: Optional[str] = Field(
+        default=None,
+        pattern=r"^[a-z][a-z0-9_]*$",
+        description="可选；不提供时自动生成 {from_node}_to_{to_node} 或 draft_{uuid} 占位 ID",
+    )
+    from_node: str = Field(
+        ...,
+        pattern=r"^[a-z][a-z0-9_]*$",
+        description="上游节点 ID，为下游节点提供输入",
+    )
+    to_node: str = Field(
+        ...,
+        pattern=r"^[a-z][a-z0-9_]*$",
+        description="下游节点 ID，接收上游节点的输入",
+    )
+    edge_type: IndustrialFlowType = Field(
+        default=IndustrialFlowType.MATERIAL_FLOW,
+        description="关系类型；留空默认 material_flow",
+    )
+    description: Optional[str] = Field(
+        default=None,
+        description="关系描述；留空自动生成",
+    )
+    evidence: List[Evidence] = Field(default_factory=list)
+    confidence: Confidence = Confidence.LOW
+    notes: Optional[str] = Field(
+        default=None,
+        description="备注",
+    )
+
+    @model_validator(mode="after")
+    def validate_policy(self) -> "IndustrialFlowEdgeQuickCreate":
+        if self.from_node == self.to_node:
+            raise ValueError("self-loop edge is not allowed")
+        if self.confidence == Confidence.HIGH and not self.evidence:
+            raise ValueError("HIGH confidence edge must have evidence")
+        return self
+
+
 class IndustrialFlowEdgeUpdate(BaseModel):
     description: Optional[str] = None
     evidence: Optional[List[Evidence]] = None

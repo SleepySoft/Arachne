@@ -275,6 +275,32 @@ python cli/arachne_cli.py query --draft-only
 - 在节点详情页顶部显示“草稿节点 / 待完善”提示
 - 通过搜索框右侧的 🔔 按钮查看所有草稿节点列表
 
+### 4.1 快速添加草稿关系（Quick Edge）
+
+当需要快速连接两个已有节点、先占位后补全证据时，使用 `quick-edge`：
+
+```bash
+# 最简单的上下游关系（默认 material_flow）
+python cli/arachne_cli.py quick-edge --from laser --to lidar_system
+
+# 指定关系类型和备注
+python cli/arachne_cli.py quick-edge --from battery_cell --to electric_vehicle \
+  --edge-type composition --notes "待补充pack集成证据"
+```
+
+系统会：
+- 自动生成 `edge_id`：优先使用 `{from_node}_to_{to_node}`；若冲突或超长则回退到 `draft_edge_{uuid}`
+- 默认 `edge_namespace = industrial_flow`、`edge_type = material_flow`、`confidence = LOW`
+- 描述留空时自动生成：`{from_node} 为 {to_node} 提供输入`
+- `from_node` 和 `to_node` 必须已存在，且不允许自环
+
+#### 通过前端界面快速添加关系
+
+在节点详情页，点击“添加上游”或“添加下游”按钮，即可展开简化表单：
+- 只需搜索并选择对端节点
+- 可选择关系类型，填写可选描述和备注
+- 提交后自动刷新该节点的上下游列表和图谱统计
+
 ### 5. 单独管理公司
 
 ```bash

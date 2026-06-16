@@ -243,6 +243,19 @@ def cmd_quick_node(name_zh: str = None, name_en: str = None, entity_type: str = 
     print("\n[OK] Draft node created")
 
 
+def cmd_quick_edge(from_node: str, to_node: str, edge_type: str = "material_flow", description: str = None, notes: str = None):
+    data = {
+        "from_node": from_node,
+        "to_node": to_node,
+        "edge_type": edge_type,
+        "description": description,
+        "notes": notes,
+    }
+    result = _request("POST", "/edges/quick-create", json=data)
+    _print(result)
+    print("\n[OK] Draft edge created")
+
+
 # ========================================================================
 # CLI Parser
 # ========================================================================
@@ -263,6 +276,8 @@ Examples:
   %(prog)s company get hesai_technology
   %(prog)s company create --json company.json
   %(prog)s query --stats
+  %(prog)s quick-node --name-zh "六氟化铀" --entity-type material
+  %(prog)s quick-edge --from lithium_metal --to battery_cell --edge-type material_flow
         """
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -381,6 +396,16 @@ Examples:
     ], help="Entity type (default: unknown)")
     p_quick.add_argument("--notes", help="Notes, e.g. '待 AI 补全'")
 
+    # quick-edge
+    p_qedge = subparsers.add_parser("quick-edge", help="Quickly create a draft industrial flow edge with minimal fields")
+    p_qedge.add_argument("--from", required=True, dest="from_node", help="Source node ID")
+    p_qedge.add_argument("--to", required=True, dest="to_node", help="Target node ID")
+    p_qedge.add_argument("--edge-type", default="material_flow", choices=[
+        "material_flow", "composition", "energy_flow", "information_flow", "capability_supply", "service_flow"
+    ], help="Edge type (default: material_flow)")
+    p_qedge.add_argument("--description", help="Optional description; auto-generated if omitted")
+    p_qedge.add_argument("--notes", help="Notes, e.g. '待 AI 补全'")
+
     args = parser.parse_args()
 
     if args.command == "submit":
@@ -443,6 +468,8 @@ Examples:
             sys.exit(1)
     elif args.command == "quick-node":
         cmd_quick_node(args.name_zh, args.name_en, args.entity_type, args.notes)
+    elif args.command == "quick-edge":
+        cmd_quick_edge(args.from_node, args.to_node, args.edge_type, args.description, args.notes)
 
 
 if __name__ == "__main__":
