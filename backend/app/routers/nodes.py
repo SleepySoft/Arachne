@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, Query
 from app.models.schemas import (
     IndustrialNode,
     IndustrialNodeCreate,
+    IndustrialNodeQuickCreate,
     IndustrialNodeUpdate,
     PaginatedNodes,
 )
@@ -21,6 +22,15 @@ async def create_node(data: IndustrialNodeCreate):
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@router.post("/quick-create", response_model=IndustrialNode, status_code=201)
+async def quick_create_node(data: IndustrialNodeQuickCreate):
+    """快速创建草稿节点。只需提供中文名或英文名，系统自动生成 draft_ 占位 ID 并填充默认值。"""
+    try:
+        return await graph_service.quick_create_node(data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @router.get("", response_model=PaginatedNodes)
 async def list_nodes(
     page: int = Query(1, ge=1),
@@ -28,9 +38,10 @@ async def list_nodes(
     entity_type: Optional[str] = None,
     status: Optional[str] = None,
     search: Optional[str] = None,
+    draft_only: Optional[bool] = Query(None, description="仅返回草稿/待完善节点"),
 ):
     skip = (page - 1) * page_size
-    items, total = await graph_service.list_nodes(skip, page_size, entity_type, status, search)
+    items, total = await graph_service.list_nodes(skip, page_size, entity_type, status, search, draft_only)
     return PaginatedNodes(total=total, page=page, page_size=page_size, items=items)
 
 

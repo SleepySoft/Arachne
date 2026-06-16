@@ -9,6 +9,7 @@ import {
   IndustrialFlowEdgeCreate,
   IndustrialNode,
   IndustrialNodeCreate,
+  IndustrialNodeQuickCreate,
   IndustrialNodeUpdate,
   Industry,
   IndustryNodeMapping,
@@ -37,12 +38,14 @@ export const listNodes = async (
   pageSize = 20,
   entityType?: string,
   status?: string,
-  search?: string
+  search?: string,
+  draftOnly?: boolean
 ): Promise<PaginatedNodes> => {
   const params: Record<string, unknown> = { page, page_size: pageSize };
   if (entityType) params.entity_type = entityType;
   if (status) params.status = status;
   if (search) params.search = search;
+  if (draftOnly) params.draft_only = true;
   const res = await client.get("/nodes", { params });
   return res.data;
 };
@@ -54,6 +57,11 @@ export const getNode = async (nodeId: string): Promise<IndustrialNode> => {
 
 export const createNode = async (data: IndustrialNodeCreate): Promise<IndustrialNode> => {
   const res = await client.post("/nodes", data);
+  return res.data;
+};
+
+export const quickCreateNode = async (data: IndustrialNodeQuickCreate): Promise<IndustrialNode> => {
+  const res = await client.post("/nodes/quick-create", data);
   return res.data;
 };
 

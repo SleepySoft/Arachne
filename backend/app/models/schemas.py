@@ -239,6 +239,48 @@ class IndustrialNodeUpdate(BaseModel):
     notes: Optional[str] = None
 
 
+class IndustrialNodeQuickCreate(BaseModel):
+    """用于快速创建草稿节点的输入模型。只需要中文名或英文名之一，其余字段由系统填充默认值。"""
+    node_id: Optional[str] = Field(
+        default=None,
+        pattern=r"^[a-z][a-z0-9_]*$",
+        min_length=3,
+        max_length=64,
+        description="可选；不提供时系统自动生成 draft_{uuid} 占位 ID，后续由 AI 或管理员替换为规范 snake_case ID",
+    )
+    canonical_name_zh: Optional[str] = Field(
+        default=None,
+        description="中文标准名；与 canonical_name_en 至少填一个",
+    )
+    canonical_name_en: Optional[str] = Field(
+        default=None,
+        description="英文标准名；与 canonical_name_zh 至少填一个",
+    )
+    aliases: List[str] = Field(default_factory=list)
+    definition: Optional[str] = Field(
+        default=None,
+        description="实体定义；留空表示待补充",
+    )
+    entity_type: Optional[EntityType] = Field(
+        default=EntityType.UNKNOWN,
+        description="实体粗分类；留空默认为 unknown",
+    )
+    evidence: List[Evidence] = Field(default_factory=list)
+    confidence: Confidence = Confidence.LOW
+    status: NodeStatus = NodeStatus.PENDING
+    notes: Optional[str] = Field(
+        default=None,
+        description="可记录'由人工快速添加，待 AI 补全'等备注",
+    )
+
+    @model_validator(mode="after")
+    def validate_name_present(self) -> "IndustrialNodeQuickCreate":
+        if not (self.canonical_name_zh and self.canonical_name_zh.strip()) and \
+           not (self.canonical_name_en and self.canonical_name_en.strip()):
+            raise ValueError("canonical_name_zh 和 canonical_name_en 至少填写一个")
+        return self
+
+
 # ============================================================
 # Edge Base
 # ============================================================

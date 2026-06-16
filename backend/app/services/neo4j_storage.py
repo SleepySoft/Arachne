@@ -254,6 +254,7 @@ async def list_nodes(
     entity_type: Optional[str] = None,
     status: Optional[str] = None,
     search: Optional[str] = None,
+    draft_only: Optional[bool] = None,
 ) -> tuple[List[IndustrialNode], int]:
     driver = get_async_driver()
     where_parts = ["1=1"]
@@ -270,6 +271,10 @@ async def list_nodes(
             "(n.canonical_name_zh CONTAINS $search OR n.node_id CONTAINS $search OR ANY(a IN n.aliases WHERE a CONTAINS $search))"
         )
         params["search"] = search
+    if draft_only:
+        where_parts.append(
+            "(n.node_id STARTS WITH 'draft_' OR n.status = 'PENDING' OR n.entity_type = 'unknown' OR n.definition IS NULL OR n.definition = '')"
+        )
 
     where_clause = " AND ".join(where_parts)
 

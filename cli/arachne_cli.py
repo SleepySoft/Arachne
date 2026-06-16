@@ -221,12 +221,26 @@ def cmd_query_stats():
     _print(result)
 
 
-def cmd_query_list_nodes(search: str = None, page: int = 1, page_size: int = 20):
+def cmd_query_list_nodes(search: str = None, page: int = 1, page_size: int = 20, draft_only: bool = False):
     params = {"page": page, "page_size": page_size}
     if search:
         params["search"] = search
+    if draft_only:
+        params["draft_only"] = True
     result = _request("GET", "/nodes", params=params)
     _print(result)
+
+
+def cmd_quick_node(name_zh: str = None, name_en: str = None, entity_type: str = "unknown", notes: str = None):
+    data = {
+        "canonical_name_zh": name_zh,
+        "canonical_name_en": name_en,
+        "entity_type": entity_type,
+        "notes": notes,
+    }
+    result = _request("POST", "/nodes/quick-create", json=data)
+    _print(result)
+    print("\n[OK] Draft node created")
 
 
 # ========================================================================
@@ -355,6 +369,17 @@ Examples:
     p_query.add_argument("--stats", action="store_true", help="Get graph statistics")
     p_query.add_argument("--list-nodes", action="store_true", help="List all nodes")
     p_query.add_argument("--search", help="Search nodes by name/alias")
+    p_query.add_argument("--draft-only", action="store_true", help="List only draft/incomplete nodes")
+
+    # quick-node
+    p_quick = subparsers.add_parser("quick-node", help="Quickly create a draft node with minimal fields")
+    p_quick.add_argument("--name-zh", help="Chinese name")
+    p_quick.add_argument("--name-en", help="English name")
+    p_quick.add_argument("--entity-type", default="unknown", choices=[
+        "material", "component", "device", "module", "subsystem", "system",
+        "platform", "infrastructure", "application_system", "service", "technology_capability", "unknown"
+    ], help="Entity type (default: unknown)")
+    p_quick.add_argument("--notes", help="Notes, e.g. '待 AI 补全'")
 
     args = parser.parse_args()
 
@@ -410,10 +435,14 @@ Examples:
         elif args.stats:
             cmd_query_stats()
         elif args.list_nodes or args.search:
-            cmd_query_list_nodes(args.search)
+            cmd_query_list_nodes(args.search, draft_only=args.draft_only)
+        elif args.draft_only:
+            cmd_query_list_nodes(draft_only=True)
         else:
             p_query.print_help()
             sys.exit(1)
+    elif args.command == "quick-node":
+        cmd_quick_node(args.name_zh, args.name_en, args.entity_type, args.notes)
 
 
 if __name__ == "__main__":

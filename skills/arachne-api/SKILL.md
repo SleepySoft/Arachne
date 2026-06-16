@@ -32,8 +32,9 @@ python cli/arachne_cli.py --help
 - `source_url` 为可选项。
 - 不要提供由后端自动生成的 `*_uuid` 字段。
 - 创建前先使用 `query` 或 `list` 命令检查节点/公司/行业是否已存在，避免重复。
+- 快速添加草稿节点时，只需中文名或英文名之一；系统会自动生成 `draft_{uuid}` 占位 ID 并设为 `PENDING` 状态，后续由 AI 或管理员补全。
 - 映射节点到行业时，先确认目标 `node_id` 已在 Neo4j 中存在；否则映射会创建成功但无法在行业子图中显示。
-- 关于本体决策（是否建新节点、是否别名、是否拒绝）请咨询 `arachne-graph` 技能。
+- 关于本体决策（是否建新节点、是否别名、是否拒绝、是否登记为行业）请咨询 `arachne-graph` 技能。
 
 ## 核心操作流程
 
@@ -242,7 +243,39 @@ python cli/arachne_cli.py industry del-mapping intelligent_driving intelligent_d
 3. 已有映射卡片右侧提供编辑/删除按钮。
 4. 在产业图谱中右键节点 →“关联行业”，也可以把当前节点关联到新行业。
 
-### 4. 单独管理公司
+### 4. 快速添加草稿节点（最小阻力入口）
+
+当只需要先记录一个名称、后续再补全定义和证据时，使用 `quick-node`：
+
+```bash
+# 只提供中文名
+python cli/arachne_cli.py quick-node --name-zh "激光雷达"
+
+# 同时提供中英文和类型
+python cli/arachne_cli.py quick-node --name-zh "激光雷达" --name-en "LiDAR" --entity-type system --notes "待 AI 补全定义"
+```
+
+系统会：
+- 自动生成 `draft_{uuid}` 占位 `node_id`
+- 默认 `entity_type = unknown`、`confidence = LOW`、`status = PENDING`
+- 定义留空，后续通过 `PUT /nodes/{node_id}` 补全
+
+#### 查看草稿 / 待完善节点
+
+```bash
+python cli/arachne_cli.py query --draft-only
+```
+
+这会返回 `node_id` 以 `draft_` 开头、或 `status=PENDING`、或 `entity_type=unknown`、或定义缺失的节点，方便 AI 批量补全。
+
+#### 通过前端界面快速添加
+
+在产业图模式下，顶部搜索框右侧的 ⚡ 按钮可展开“快速添加草稿节点”表单，只需填写中文名或英文名即可创建。创建后的草稿节点会：
+- 立即显示在图谱中（灰色 unknown 类型）
+- 在节点详情页顶部显示“草稿节点 / 待完善”提示
+- 通过搜索框右侧的 🔔 按钮查看所有草稿节点列表
+
+### 5. 单独管理公司
 
 ```bash
 # 列出公司
@@ -273,7 +306,7 @@ python cli/arachne_cli.py company add-exposure hesai_technology --json exposure.
 python cli/arachne_cli.py company del-exposure hesai_technology hesai_technology_produce_lidar_system
 ```
 
-### 5. 查询图谱
+### 6. 查询图谱
 
 ```bash
 # 图谱统计

@@ -77,6 +77,19 @@ export interface IndustrialNodeUpdate {
   notes?: string;
 }
 
+export interface IndustrialNodeQuickCreate {
+  node_id?: string;
+  canonical_name_zh?: string;
+  canonical_name_en?: string;
+  aliases?: string[];
+  definition?: string;
+  entity_type?: EntityType;
+  evidence?: Evidence[];
+  confidence?: Confidence;
+  status?: NodeStatus;
+  notes?: string;
+}
+
 export interface BaseEdge {
   edge_uuid: string;
   edge_id: string;

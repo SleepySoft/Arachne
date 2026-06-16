@@ -8,6 +8,7 @@ from app.models.schemas import (
     IndustrialFlowEdgeCreate,
     IndustrialNode,
     IndustrialNodeCreate,
+    IndustrialNodeQuickCreate,
     IndustrialNodeUpdate,
     OntologyEdge,
     OntologyEdgeCreate,
@@ -31,6 +32,39 @@ async def create_node(data: IndustrialNodeCreate) -> IndustrialNode:
         raise ValueError(f"node_id '{data.node_id}' already exists")
 
     node = IndustrialNode(**data.model_dump())
+    return await neo4j_storage.create_node(node)
+
+
+async def quick_create_node(data: IndustrialNodeQuickCreate) -> IndustrialNode:
+    """快速创建草稿节点。node_id 留空时自动生成 draft_{uuid} 占位。"""
+    from uuid import uuid4
+
+    node_id = data.node_id
+    if not node_id:
+        node_id = f"draft_{uuid4().hex[:12]}"
+
+    existing = await neo4j_storage.get_node(node_id)
+    if existing:
+        raise ValueError(f"node_id '{node_id}' already exists")
+
+    # 快速创建允许只填中文名或英文名之一；构造 IndustrialNode 时用占位值通过必填校验
+    canonical_name_zh = data.canonical_name_zh.strip() if data.canonical_name_zh else ""
+    canonical_name_en = data.canonical_name_en.strip() if data.canonical_name_en else None
+    if not canonical_name_zh:
+        canonical_name_zh = canonical_name_en or node_id
+
+    node = IndustrialNode(
+        node_id=node_id,
+        canonical_name_zh=canonical_name_zh,
+        canonical_name_en=canonical_name_en,
+        aliases=data.aliases,
+        definition=data.definition or "（定义待补充）",
+        entity_type=data.entity_type or IndustrialNode.model_fields["entity_type"].default,
+        evidence=data.evidence,
+        confidence=data.confidence,
+        status=data.status,
+        notes=data.notes,
+    )
     return await neo4j_storage.create_node(node)
 
 
@@ -60,8 +94,9 @@ async def list_nodes(
     entity_type: Optional[str] = None,
     status: Optional[str] = None,
     search: Optional[str] = None,
+    draft_only: Optional[bool] = None,
 ):
-    return await neo4j_storage.list_nodes(skip, limit, entity_type, status, search)
+    return await neo4j_storage.list_nodes(skip, limit, entity_type, status, search, draft_only)
 
 
 # ---------------------------------------------------------------------------

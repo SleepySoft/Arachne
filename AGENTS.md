@@ -212,15 +212,19 @@ backend/
 - `company_material.py`: material-flow based company connection endpoints
 - `computation_jobs.py`: async computation job tracking endpoints
 
-### Commit 8 — Industry Mapping Workflow (Frontend + Backend + CLI + Skills)
+### Commit 8 — Industry Mapping Workflow + Draft Node Quick Add (Frontend + Backend + CLI + Skills)
 - `IndustryMappingForm.tsx`: new create/edit form for industry-to-node mappings, with searchable node picker, role/weight/confidence/status/evidence/notes fields
 - `IndustryDetail.tsx`: replaced the `alert("添加映射功能待实现")` stub with inline add/edit mapping UI; added per-mapping edit/delete actions
 - `NodeIndustriesPanel.tsx`: added "关联到新行业" form to associate the current node with an existing industry
 - `IndustryForm.tsx`: added aliases input (comma-separated) so created industries can have aliases
 - `api.ts`: added `updateIndustryMapping()` wrapper
 - `industries.py`: added `PUT /api/v1/industries/{id}/mappings/{mapping_id}` endpoint
-- `cli/arachne_cli.py`: added `industry update-mapping` command
-- `skills/arachne-api/SKILL.md`: updated with `update-mapping` examples, richer mapping JSON with evidence, and frontend UI operation guide
+- `schemas.py` / `graph_service.py` / `nodes.py`: added `IndustrialNodeQuickCreate` schema and `POST /nodes/quick-create` endpoint for minimal-effort draft node creation
+- `neo4j_storage.py` / `nodes.py`: added `draft_only` filter to `list_nodes` for discovering incomplete nodes
+- `QuickNodeForm.tsx` / `SearchPanel.tsx`: frontend quick-add entry point with draft-node badge and draft-node list
+- `NodeDetail.tsx`: added "草稿节点 / 待完善" banner for draft/incomplete nodes
+- `cli/arachne_cli.py`: added `industry update-mapping` and `quick-node` commands; `query --draft-only` flag
+- `skills/arachne-api/SKILL.md`: updated with `update-mapping`, `quick-node`, `query --draft-only` examples and frontend UI operation guide
 - `.kimi/skills/arachne-graph/SKILL.md`: added guidance that market concepts / themes should be registered as `Industry` rather than nodes
 - `test_industry_storage.py`: removed stale `IndustryCreate` import
 - `StatsBar.tsx` / `App.tsx`: fixed pre-existing TypeScript errors that blocked the production build (dead `MainView` type, unused setters)

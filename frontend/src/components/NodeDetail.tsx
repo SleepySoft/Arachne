@@ -50,6 +50,15 @@ export function NodeDetail({ node, onEdit, onClose, onRefresh }: NodeDetailProps
         </div>
       </div>
 
+      {isDraftNode(node) && (
+        <div className="rounded border border-amber-700/50 bg-amber-900/20 px-3 py-2">
+          <div className="text-xs font-medium text-amber-400">⚠️ 草稿节点 / 待完善</div>
+          <div className="mt-0.5 text-[10px] text-amber-300/80">
+            该节点由快速添加创建，ID、定义、类型或证据可能不完整，后续需要人工或 AI 补全。
+          </div>
+        </div>
+      )}
+
       <div className="space-y-3">
         <Field label="node_id" value={node.node_id} mono />
         <Field label="中文名" value={node.canonical_name_zh} />
@@ -120,6 +129,16 @@ export function NodeDetail({ node, onEdit, onClose, onRefresh }: NodeDetailProps
   );
 }
 
+function isDraftNode(node: IndustrialNode): boolean {
+  return (
+    node.status === "PENDING" ||
+    node.entity_type === "unknown" ||
+    !node.definition ||
+    node.definition.trim() === "" ||
+    node.node_id.startsWith("draft_")
+  );
+}
+
 function Field({
   label,
   value,
@@ -127,7 +146,7 @@ function Field({
   badge,
 }: {
   label: string;
-  value: string;
+  value?: string | null;
   mono?: boolean;
   badge?: boolean;
 }) {
