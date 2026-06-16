@@ -212,6 +212,16 @@ backend/
 - `company_material.py`: material-flow based company connection endpoints
 - `computation_jobs.py`: async computation job tracking endpoints
 
+### Commit 8 — Industry Mapping Workflow (Frontend + Backend)
+- `IndustryMappingForm.tsx`: new create/edit form for industry-to-node mappings, with searchable node picker, role/weight/confidence/status/evidence/notes fields
+- `IndustryDetail.tsx`: replaced the `alert("添加映射功能待实现")` stub with inline add/edit mapping UI; added per-mapping edit/delete actions
+- `NodeIndustriesPanel.tsx`: added "关联到新行业" form to associate the current node with an existing industry
+- `IndustryForm.tsx`: added aliases input (comma-separated) so created industries can have aliases
+- `api.ts`: added `updateIndustryMapping()` wrapper
+- `industries.py`: added `PUT /api/v1/industries/{id}/mappings/{mapping_id}` endpoint
+- `test_industry_storage.py`: removed stale `IndustryCreate` import
+- `StatsBar.tsx` / `App.tsx`: fixed pre-existing TypeScript errors that blocked the production build (dead `MainView` type, unused setters)
+
 ### Historical Fixes (carried over)
 - **HTTP 422 fix**: `page_size` query limit relaxed from `le=100` to `le=1000`
 - **Frontend filter bug**: `GraphCanvas` `useEffect` deps fixed with `useRef` + `useCallback`
@@ -244,7 +254,6 @@ Missing or stubbed:
 - **Temporary subgraph inside CompanyDetail panel**
 - **Factual relations inside CompanyDetail panel**
 - **Person List/Detail Page** — no Person components exist
-- **Add mapping workflow** in `IndustryDetail` (`onAddMapping` is an `alert` stub)
 - **Add exposure workflow** in `CompanyDetail` (`onAddExposure` is an `alert` stub)
 - **Cross-domain exploration page** currently uses `company_exploration.py` endpoints (`/companies/{id}/exploration-graph`, `/companies/nodes/{id}/connected-companies`); the newer `/api/v1/explore/*` endpoints are not yet wired to the UI
 

@@ -104,7 +104,7 @@ export default function App() {
   // Company graph state
   // ------------------------------------------------------------------
   const [companyDisplayMode, setCompanyDisplayMode] = useState<"empty" | "global" | "local">("empty");
-  const [companyNetworkData, setCompanyNetworkData] = useState<{ nodes: CNode[]; edges: CEdge[] } | null>(null);
+  const [companyNetworkData] = useState<{ nodes: CNode[]; edges: CEdge[] } | null>(null);
 
   // orderedChain: exploration path (max 2, oldest auto-removed)
   const [orderedChain, setOrderedChain] = useState<string[]>([]);
@@ -121,7 +121,7 @@ export default function App() {
   // Preview: temporary translucent nodes/edges for the current focus
   const [previewData, setPreviewData] = useState<{ centerId: string; nodes: CNode[]; edges: CEdge[] } | null>(null);
 
-  const [isDrawingGlobal, setIsDrawingGlobal] = useState(false);
+  const [isDrawingGlobal] = useState(false);
 
   // Company explore mode: "bulk" = auto-load all upstream/downstream (current behavior)
   // "manual" = heterogeneous graph exploration (company + material nodes)
@@ -723,7 +723,6 @@ export default function App() {
         onRefresh={refreshGraph}
         onLoadSubgraph={handleLoadSubgraph}
         onHighlightNodes={handleHighlightNodes}
-        onAddMapping={() => alert("添加映射功能待实现")}
       />
     ) : panel === "industry-create" ? (
       <IndustryForm

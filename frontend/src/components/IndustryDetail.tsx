@@ -1,7 +1,14 @@
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit2, Trash2, X, Link2, Plus, Crosshair } from "lucide-react";
-import { Industry } from "@/types";
-import { deleteIndustry, getIndustrySubgraph, listIndustryMappings } from "@/services/api";
+import { Industry, IndustryNodeMapping } from "@/types";
+import {
+  deleteIndustry,
+  deleteIndustryMapping,
+  getIndustrySubgraph,
+  listIndustryMappings,
+} from "@/services/api";
+import { IndustryMappingForm } from "./IndustryMappingForm";
 
 interface IndustryDetailProps {
   industry: Industry;
@@ -10,7 +17,6 @@ interface IndustryDetailProps {
   onRefresh: () => void;
   onLoadSubgraph: (nodes: unknown[], edges: unknown[]) => void;
   onHighlightNodes: (nodeIds: string[]) => void;
-  onAddMapping: () => void;
 }
 
 function Field({ label, value, badge }: { label: string; value?: string | number | null; badge?: boolean }) {
@@ -34,9 +40,10 @@ export function IndustryDetail({
   onRefresh,
   onLoadSubgraph,
   onHighlightNodes,
-  onAddMapping,
 }: IndustryDetailProps) {
   const queryClient = useQueryClient();
+  const [showMappingForm, setShowMappingForm] = useState(false);
+  const [editingMapping, setEditingMapping] = useState<IndustryNodeMapping | null>(null);
 
   const { data: subgraph } = useQuery({
     queryKey: ["industry-subgraph", industry.industry_id],
@@ -56,6 +63,25 @@ export function IndustryDetail({
       onClose();
     },
   });
+
+  const deleteMappingMutation = useMutation({
+    mutationFn: (mappingId: string) => deleteIndustryMapping(industry.industry_id, mappingId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["industry-mappings", industry.industry_id] });
+      queryClient.invalidateQueries({ queryKey: ["industry-subgraph", industry.industry_id] });
+      queryClient.invalidateQueries({ queryKey: ["industries-by-node"] });
+    },
+  });
+
+  const handleAddSuccess = () => {
+    setShowMappingForm(false);
+    setEditingMapping(null);
+  };
+
+  const handleEdit = (mapping: IndustryNodeMapping) => {
+    setEditingMapping(mapping);
+    setShowMappingForm(false);
+  };
 
   return (
     <div className="flex h-full flex-col">
@@ -129,7 +155,10 @@ export function IndustryDetail({
               映射节点 ({mappingsData?.total ?? 0})
             </h4>
             <button
-              onClick={onAddMapping}
+              onClick={() => {
+                setEditingMapping(null);
+                setShowMappingForm(true);
+              }}
               className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-cyan-400 hover:bg-cyan-900/20"
             >
               <Plus className="h-3 w-3" />
@@ -144,15 +173,52 @@ export function IndustryDetail({
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-slate-200">{m.node_id}</span>
-                  <span className="text-[10px] text-slate-500">{m.weight.toFixed(2)}</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] text-slate-500">{m.weight.toFixed(2)}</span>
+                    <button
+                      onClick={() => handleEdit(m)}
+                      title="编辑映射"
+                      className="rounded p-0.5 text-slate-500 hover:bg-slate-700 hover:text-cyan-400"
+                    >
+                      <Edit2 className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm(`确定删除映射 ${m.mapping_id}？`)) {
+                          deleteMappingMutation.mutate(m.mapping_id);
+                        }
+                      }}
+                      title="删除映射"
+                      className="rounded p-0.5 text-slate-500 hover:bg-slate-700 hover:text-red-400"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
                 </div>
                 {m.role && <span className="text-[10px] text-slate-400">{m.role}</span>}
               </div>
             ))}
             {(mappingsData?.items.length ?? 0) === 0 && (
-              <div className="text-center text-xs text-slate-500 py-2">暂无映射节点</div>
+              <div className="py-2 text-center text-xs text-slate-500">暂无映射节点</div>
             )}
           </div>
+
+          {showMappingForm && !editingMapping && (
+            <IndustryMappingForm
+              industryId={industry.industry_id}
+              onClose={() => setShowMappingForm(false)}
+              onSuccess={handleAddSuccess}
+            />
+          )}
+
+          {editingMapping && (
+            <IndustryMappingForm
+              industryId={industry.industry_id}
+              mapping={editingMapping}
+              onClose={() => setEditingMapping(null)}
+              onSuccess={handleAddSuccess}
+            />
+          )}
         </div>
       </div>
     </div>

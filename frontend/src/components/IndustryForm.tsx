@@ -17,6 +17,7 @@ export function IndustryForm({ mode, industry, onClose, onSuccess }: IndustryFor
     industry_id: industry?.industry_id ?? "",
     name_zh: industry?.name_zh ?? "",
     name_en: industry?.name_en ?? "",
+    aliases: industry?.aliases?.join(", ") ?? "",
     industry_type: (industry?.industry_type ?? "curated_view") as IndustryType,
     description: industry?.description ?? "",
     status: (industry?.status ?? "ACTIVE") as Industry["status"],
@@ -27,12 +28,22 @@ export function IndustryForm({ mode, industry, onClose, onSuccess }: IndustryFor
   const mutation = useMutation({
     mutationFn: async () => {
       if (mode === "create") {
-        return createIndustry(form);
+        return createIndustry({
+          ...form,
+          aliases: form.aliases
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+        });
       } else {
         if (!industry) throw new Error("No industry to update");
         return updateIndustry(industry.industry_id, {
           name_zh: form.name_zh,
           name_en: form.name_en,
+          aliases: form.aliases
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
           industry_type: form.industry_type,
           description: form.description,
           status: form.status,
@@ -91,6 +102,15 @@ export function IndustryForm({ mode, industry, onClose, onSuccess }: IndustryFor
             value={form.name_en}
             onChange={(e) => setForm((f) => ({ ...f, name_en: e.target.value }))}
             className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
+          />
+        </FormField>
+
+        <FormField label="别名（逗号分隔）">
+          <input
+            value={form.aliases}
+            onChange={(e) => setForm((f) => ({ ...f, aliases: e.target.value }))}
+            placeholder="例如 智能制造, 先进制造"
+            className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
           />
         </FormField>
 

@@ -232,6 +232,15 @@ export const createIndustryMapping = async (
   return res.data;
 };
 
+export const updateIndustryMapping = async (
+  industryId: string,
+  mappingId: string,
+  data: Partial<IndustryNodeMapping>
+): Promise<IndustryNodeMapping> => {
+  const res = await client.put(`/industries/${industryId}/mappings/${mappingId}`, data);
+  return res.data;
+};
+
 export const deleteIndustryMapping = async (industryId: string, mappingId: string): Promise<void> => {
   await client.delete(`/industries/${industryId}/mappings/${mappingId}`);
 };

@@ -10,7 +10,6 @@ import pytest
 from app.database_postgres import get_postgres_pool
 from app.models.industry_schema import (
     Industry,
-    IndustryCreate,
     IndustryNodeMapping,
     IndustryType,
     RecordStatus,

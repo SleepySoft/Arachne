@@ -100,6 +100,22 @@ async def create_industry_mapping(industry_id: str, data: IndustryNodeMapping):
         raise HTTPException(status_code=409, detail=str(e))
 
 
+@router.put("/{industry_id}/mappings/{mapping_id}", response_model=IndustryNodeMapping)
+async def update_industry_mapping(industry_id: str, mapping_id: str, data: dict):
+    mapping = await industry_storage.get_mapping(mapping_id)
+    if not mapping or mapping.industry_id != industry_id:
+        raise HTTPException(status_code=404, detail="Mapping not found")
+
+    try:
+        updated = await industry_storage.update_mapping(mapping_id, data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    if not updated:
+        raise HTTPException(status_code=404, detail="Mapping not found")
+    return updated
+
+
 @router.delete("/{industry_id}/mappings/{mapping_id}", status_code=204)
 async def delete_industry_mapping(industry_id: str, mapping_id: str):
     mapping = await industry_storage.get_mapping(mapping_id)

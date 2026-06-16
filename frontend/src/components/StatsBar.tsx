@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Activity, Building2, GitBranch, Layers, Network } from "lucide-react";
 import { getStats } from "@/services/api";
-export type MainView = "industrial_graph";
+export type MainView = "industrial_graph" | "company_graph";
 
 interface StatsBarProps {
   mainView: MainView;
@@ -14,6 +14,8 @@ export function StatsBar({ mainView, onChangeMainView }: StatsBarProps) {
     queryFn: getStats,
     refetchInterval: 30000,
   });
+
+  const companyNetworkStats = { nodes: 0, edges: 0 };
 
   return (
     <div className="flex h-full items-center justify-between px-4">
