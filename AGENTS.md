@@ -212,13 +212,16 @@ backend/
 - `company_material.py`: material-flow based company connection endpoints
 - `computation_jobs.py`: async computation job tracking endpoints
 
-### Commit 8 — Industry Mapping Workflow (Frontend + Backend)
+### Commit 8 — Industry Mapping Workflow (Frontend + Backend + CLI + Skills)
 - `IndustryMappingForm.tsx`: new create/edit form for industry-to-node mappings, with searchable node picker, role/weight/confidence/status/evidence/notes fields
 - `IndustryDetail.tsx`: replaced the `alert("添加映射功能待实现")` stub with inline add/edit mapping UI; added per-mapping edit/delete actions
 - `NodeIndustriesPanel.tsx`: added "关联到新行业" form to associate the current node with an existing industry
 - `IndustryForm.tsx`: added aliases input (comma-separated) so created industries can have aliases
 - `api.ts`: added `updateIndustryMapping()` wrapper
 - `industries.py`: added `PUT /api/v1/industries/{id}/mappings/{mapping_id}` endpoint
+- `cli/arachne_cli.py`: added `industry update-mapping` command
+- `skills/arachne-api/SKILL.md`: updated with `update-mapping` examples, richer mapping JSON with evidence, and frontend UI operation guide
+- `.kimi/skills/arachne-graph/SKILL.md`: added guidance that market concepts / themes should be registered as `Industry` rather than nodes
 - `test_industry_storage.py`: removed stale `IndustryCreate` import
 - `StatsBar.tsx` / `App.tsx`: fixed pre-existing TypeScript errors that blocked the production build (dead `MainView` type, unused setters)
 

@@ -124,6 +124,13 @@ def cmd_industry_add_mapping(industry_id: str, json_path: str):
     print("\n[OK] Mapping created")
 
 
+def cmd_industry_update_mapping(industry_id: str, mapping_id: str, json_path: str):
+    data = _load_json(json_path)
+    result = _request("PUT", f"/industries/{industry_id}/mappings/{mapping_id}", json=data)
+    _print(result)
+    print("\n[OK] Mapping updated")
+
+
 def cmd_industry_del_mapping(industry_id: str, mapping_id: str):
     _request("DELETE", f"/industries/{industry_id}/mappings/{mapping_id}")
     print(f"[OK] Mapping '{mapping_id}' deleted")
@@ -290,6 +297,11 @@ Examples:
     p_ind_add_map.add_argument("industry_id", help="Industry ID")
     p_ind_add_map.add_argument("--json", required=True, dest="json_file", help="Path to JSON file")
 
+    p_ind_update_map = ind_sub.add_parser("update-mapping", help="Update node mapping in industry")
+    p_ind_update_map.add_argument("industry_id", help="Industry ID")
+    p_ind_update_map.add_argument("mapping_id", help="Mapping ID")
+    p_ind_update_map.add_argument("--json", required=True, dest="json_file", help="Path to JSON file")
+
     p_ind_del_map = ind_sub.add_parser("del-mapping", help="Delete node mapping from industry")
     p_ind_del_map.add_argument("industry_id", help="Industry ID")
     p_ind_del_map.add_argument("mapping_id", help="Mapping ID")
@@ -367,6 +379,8 @@ Examples:
             cmd_industry_mappings(args.industry_id, args.page, args.page_size)
         elif args.subcommand == "add-mapping":
             cmd_industry_add_mapping(args.industry_id, args.json_file)
+        elif args.subcommand == "update-mapping":
+            cmd_industry_update_mapping(args.industry_id, args.mapping_id, args.json_file)
         elif args.subcommand == "del-mapping":
             cmd_industry_del_mapping(args.industry_id, args.mapping_id)
     elif args.command == "company":

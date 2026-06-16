@@ -1,11 +1,11 @@
 ---
 name: arachne-api
-description: 通过 Arachne CLI（arachne_cli.py）操作产业本体图，包括批量注册节点/关系/公司/行业/映射/暴露，以及行业、公司和查询管理。当用户要求通过命令行或 API 添加、创建、注册、更新、查询或操作 Arachne 图谱实体（节点、边、公司、行业、批量、事实关系）时触发。
+description: 通过 Arachne CLI（arachne_cli.py）或前端界面操作产业本体图，包括批量注册节点/关系/公司/行业/映射/暴露，以及行业、公司和查询管理。当用户要求通过命令行或 API 添加、创建、注册、更新、查询或操作 Arachne 图谱实体（节点、边、公司、行业、映射、批量、事实关系）时触发。
 ---
 
 # Arachne CLI 操作技能
 
-使用本技能通过 `cli/arachne_cli.py` 操作 Arachne 系统。该 CLI 封装了后端 API，默认连接 `http://localhost:8005/api/v1` 。在判断一个候选词是否应该成为节点之前，先参考 `arachne-graph` 技能中的本体规则；本技能解决的是“决定之后如何通过 CLI 提交数据”。
+使用本技能通过 `cli/arachne_cli.py` 或前端界面操作 Arachne 系统。CLI 封装了后端 API，默认连接 `http://localhost:8005/api/v1`；前端界面则通过左侧“行业”侧边栏和右侧面板完成行业的 CRUD 与映射管理。在判断一个候选词是否应该成为节点之前，先参考 `arachne-graph` 技能中的本体规则；本技能解决的是“决定之后如何通过 CLI 或 UI 提交数据”。
 
 ## 运行方式
 
@@ -32,6 +32,7 @@ python cli/arachne_cli.py --help
 - `source_url` 为可选项。
 - 不要提供由后端自动生成的 `*_uuid` 字段。
 - 创建前先使用 `query` 或 `list` 命令检查节点/公司/行业是否已存在，避免重复。
+- 映射节点到行业时，先确认目标 `node_id` 已在 Neo4j 中存在；否则映射会创建成功但无法在行业子图中显示。
 - 关于本体决策（是否建新节点、是否别名、是否拒绝）请咨询 `arachne-graph` 技能。
 
 ## 核心操作流程
@@ -133,7 +134,15 @@ python cli/arachne_cli.py business-batch business_batch_001.json
       "node_id": "lidar_system",
       "role": "核心产品",
       "weight": 0.9,
-      "status": "ACTIVE"
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "智能驾驶产业链报告",
+          "quote": "激光雷达系统是智能驾驶感知层的核心产品。"
+        }
+      ],
+      "status": "ACTIVE",
+      "notes": "核心传感器"
     }
   ],
   "companies_to_upsert": [
@@ -185,9 +194,53 @@ python cli/arachne_cli.py industry mappings intelligent_driving
 # 添加节点映射
 python cli/arachne_cli.py industry add-mapping intelligent_driving --json mapping.json
 
+# 更新节点映射（可修改 role/weight/confidence/evidence/status/notes）
+python cli/arachne_cli.py industry update-mapping intelligent_driving intelligent_driving_contains_lidar_system --json mapping_update.json
+
 # 删除节点映射
 python cli/arachne_cli.py industry del-mapping intelligent_driving intelligent_driving_contains_lidar_system
 ```
+
+`mapping.json` 示例（创建）：
+
+```json
+{
+  "mapping_id": "intelligent_driving_contains_lidar_system",
+  "industry_id": "intelligent_driving",
+  "node_id": "lidar_system",
+  "role": "核心产品",
+  "weight": 0.9,
+  "confidence": "HIGH",
+  "evidence": [
+    {
+      "source_title": "智能驾驶产业链报告",
+      "quote": "激光雷达系统是智能驾驶感知层的核心产品。"
+    }
+  ],
+  "status": "ACTIVE",
+  "notes": "核心传感器"
+}
+```
+
+`mapping_update.json` 示例（更新，只传需要修改的字段）：
+
+```json
+{
+  "role": "关键零部件",
+  "weight": 0.85,
+  "confidence": "MEDIUM",
+  "status": "ACTIVE"
+}
+```
+
+#### 通过前端界面管理行业映射
+
+除了 CLI，也可以直接在前端操作：
+
+1. 切换到左侧“行业”子标签，搜索并点击目标行业。
+2. 在右侧面板点击“添加”按钮，搜索节点并填写角色、权重、置信度、证据后保存。
+3. 已有映射卡片右侧提供编辑/删除按钮。
+4. 在产业图谱中右键节点 →“关联行业”，也可以把当前节点关联到新行业。
 
 ### 4. 单独管理公司
 
@@ -278,7 +331,7 @@ python cli/arachne_cli.py industry list --search 智能驾驶
 | `edge_namespace` | `industrial_flow`, `ontology` |
 | `industrial_flow` 的 `edge_type` | `material_flow`, `composition`, `energy_flow`, `information_flow`, `capability_supply`, `service_flow` |
 | `ontology` 的 `edge_type` | `alias_of`, `is_a`, `variant_of`, `related_term` |
-| `status` | `ACTIVE`, `PENDING`, `REJECTED` |
+| `status` | `ACTIVE`, `PENDING`, `REJECTED`, `ARCHIVED` |
 | `confidence` | `HIGH`, `MEDIUM`, `LOW` |
 | `industry_type` | `formal_industry`, `curated_view`, `theme_view` |
 | `company_type` | `public`, `private`, `state_owned`, `startup`, `unknown` |
