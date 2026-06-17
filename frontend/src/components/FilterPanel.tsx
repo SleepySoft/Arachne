@@ -12,6 +12,7 @@ interface FilterState {
   entityTypes: string[];
   status: string[];
   confidence: string[];
+  showIsA: boolean;
   showWeakOntology: boolean;
 }
 
@@ -54,6 +55,34 @@ export function FilterPanel({ filters, onChange }: FilterPanelProps) {
             <span>{ns === "industrial_flow" ? "产业流" : "本体"}</span>
           </label>
         ))}
+        <label className="ml-4 flex items-center gap-2 text-xs text-slate-500">
+          <input
+            type="checkbox"
+            checked={filters.showIsA}
+            disabled={!filters.edgeNamespaces.includes("ontology")}
+            onChange={() =>
+              onChange({ ...filters, showIsA: !filters.showIsA })
+            }
+            className="h-3 w-3 rounded border-slate-600 bg-slate-800 text-cyan-500 disabled:opacity-40"
+          />
+          <span className={filters.edgeNamespaces.includes("ontology") ? "" : "opacity-40"}>
+            显示 is_a 层级关系
+          </span>
+        </label>
+        <label className="ml-4 flex items-center gap-2 text-xs text-slate-500">
+          <input
+            type="checkbox"
+            checked={filters.showWeakOntology}
+            disabled={!filters.edgeNamespaces.includes("ontology")}
+            onChange={() =>
+              onChange({ ...filters, showWeakOntology: !filters.showWeakOntology })
+            }
+            className="h-3 w-3 rounded border-slate-600 bg-slate-800 text-cyan-500 disabled:opacity-40"
+          />
+          <span className={filters.edgeNamespaces.includes("ontology") ? "" : "opacity-40"}>
+            显示弱本体关系（别名/相关/变体）
+          </span>
+        </label>
       </FilterGroup>
 
       {/* Entity Type */}

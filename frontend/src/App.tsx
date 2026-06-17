@@ -101,6 +101,7 @@ export default function App() {
     entityTypes: [] as string[],
     status: [] as string[],
     confidence: [] as string[],
+    showIsA: true,
     showWeakOntology: false,
   });
   const [graphKey, setGraphKey] = useState(0);
@@ -952,16 +953,7 @@ export default function App() {
           highlightNodeIds={highlightNodeIds}
           sourceData={subgraphData}
         />
-        <GraphToolbar
-          showWeakOntology={activeFilters.showWeakOntology}
-          onToggleWeakOntology={() =>
-            setActiveFilters((prev) => ({
-              ...prev,
-              showWeakOntology: !prev.showWeakOntology,
-            }))
-          }
-          onRelayout={() => setGraphKey((k) => k + 1)}
-        />
+        <GraphToolbar onRelayout={() => setGraphKey((k) => k + 1)} />
       </div>
     );
 

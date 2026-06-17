@@ -99,7 +99,8 @@ interface GraphCanvasProps {
     entityTypes: string[];
     status: string[];
     confidence: string[];
-    showWeakOntology?: boolean;
+    showIsA: boolean;
+    showWeakOntology: boolean;
   };
   highlightNodeId?: string;
   highlightNodeIds?: string[];
@@ -135,14 +136,26 @@ function applyFilters(
     cy.edges().forEach((edge) => {
       const ns = edge.data("edge_namespace");
       const et = edge.data("edge_type");
+      const isIsA = ns === "ontology" && et === "is_a";
       const isWeakOntology = ns === "ontology" && weakOntologyTypes.has(et);
       const show =
         visibleNodeIds.has(edge.source().id()) &&
         visibleNodeIds.has(edge.target().id()) &&
         (edgeNsSet.size === 0 || edgeNsSet.has(ns)) &&
         (edgeTypeSet.size === 0 || edgeTypeSet.has(et)) &&
-        (!isWeakOntology || filters.showWeakOntology === true);
+        (!isIsA || filters.showIsA) &&
+        (!isWeakOntology || filters.showWeakOntology);
       edge.toggleClass("hidden", !show);
+    });
+
+    // 当边被过滤后，把因此变得孤立的节点也隐藏起来
+    cy.nodes().forEach((node) => {
+      if (node.hasClass("hidden")) return;
+      const hasVisibleEdge =
+        node.connectedEdges().filter((e) => !e.hasClass("hidden")).length > 0;
+      if (!hasVisibleEdge) {
+        node.addClass("hidden");
+      }
     });
   });
 }
