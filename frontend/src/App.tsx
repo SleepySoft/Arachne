@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { GraphEdge, IndustrialNode, Industry, Company } from "@/types";
 import { BatchUploader } from "@/components/BatchUploader";
 import { CompanyDetail } from "@/components/CompanyDetail";
@@ -8,16 +8,20 @@ import { CompanyNetworkCanvas } from "@/components/CompanyNetworkCanvas";
 import { CompanySidebar } from "@/components/CompanySidebar";
 import {
   getCompany,
+  getCompanySubgraph,
   getExplorationGraph,
   getIndustrySubgraph,
 } from "@/services/api";
 import { EdgeDetail } from "@/components/EdgeDetail";
 import { EdgeForm } from "@/components/EdgeForm";
+import { CollapsibleSection } from "@/components/CollapsibleSection";
+import { CompanyMultiSelector } from "@/components/CompanyMultiSelector";
 import { FilterPanel } from "@/components/FilterPanel";
 import { GraphCanvas } from "@/components/GraphCanvas";
+import { GraphToolbar } from "@/components/GraphToolbar";
 import { IndustryDetail } from "@/components/IndustryDetail";
+import { IndustryMultiSelector } from "@/components/IndustryMultiSelector";
 import { IndustryForm } from "@/components/IndustryForm";
-import { IndustrySidebar } from "@/components/IndustrySidebar";
 import { Layout } from "@/components/Layout";
 import { NodeDetail } from "@/components/NodeDetail";
 import { NodeContextMenu } from "@/components/NodeContextMenu";
@@ -72,7 +76,6 @@ export default function App() {
   // Top-level workspace state
   // ------------------------------------------------------------------
   const [mainView, setMainView] = useState<MainView>("industrial_graph");
-  const [industrialSubView, setIndustrialSubView] = useState<"filter" | "industry" | "company">("filter");
   const [companySubView, setCompanySubView] = useState<"company_list">("company_list");
 
   // ------------------------------------------------------------------
@@ -82,6 +85,8 @@ export default function App() {
   const [selectedEdge, setSelectedEdge] = useState<GraphEdge | null>(null);
   const [selectedIndustry, setSelectedIndustry] = useState<Industry | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [selectedIndustries, setSelectedIndustries] = useState<Industry[]>([]);
+  const [selectedCompanies, setSelectedCompanies] = useState<Company[]>([]);
   const [selectedRelation, setSelectedRelation] = useState<CEdge | null>(null);
   const [panel, setPanel] = useState<PanelType>("none");
   const [contextMenu, setContextMenu] = useState<{
@@ -96,6 +101,7 @@ export default function App() {
     entityTypes: [] as string[],
     status: [] as string[],
     confidence: [] as string[],
+    showWeakOntology: false,
   });
   const [graphKey, setGraphKey] = useState(0);
   const [subgraphData, setSubgraphData] = useState<{ nodes: IndustrialNode[]; edges: GraphEdge[] } | undefined>(undefined);
@@ -210,6 +216,8 @@ export default function App() {
     setSelectedEdge(null);
     setSelectedIndustry(null);
     setSelectedCompany(null);
+    setSelectedIndustries([]);
+    setSelectedCompanies([]);
     if (view === "industrial_graph") {
       setSubgraphData(undefined);
       setHighlightNodeIds(undefined);
@@ -225,24 +233,72 @@ export default function App() {
     }
   };
 
-  const handleSelectIndustry = async (industry: Industry) => {
-    setSelectedIndustry(industry);
-    setPanel("industry-detail");
-    setHighlightNodeIds(undefined);
-    // Auto-load the industry's subgraph into the main canvas as a filtered view
-    try {
-      const sg = await getIndustrySubgraph(industry.industry_id);
-      setSubgraphData({
-        nodes: sg.nodes as IndustrialNode[],
-        edges: sg.edges as GraphEdge[],
-      });
-      setGraphKey((k) => k + 1);
-    } catch {
-      // Silently fall back to showing the detail panel only
-    }
+  // Industrial graph: multi-select industries and companies
+  const handleToggleIndustry = (industry: Industry) => {
+    setSelectedIndustries((prev) => {
+      const exists = prev.some((i) => i.industry_id === industry.industry_id);
+      if (exists) {
+        return prev.filter((i) => i.industry_id !== industry.industry_id);
+      }
+      return [...prev, industry];
+    });
   };
 
-  // Select company from sidebar
+  const handleSelectIndustryDetail = (industry: Industry) => {
+    setSelectedIndustry(industry);
+    setPanel("industry-detail");
+  };
+
+  const handleToggleCompanyIndustrial = (company: Company) => {
+    setSelectedCompanies((prev) => {
+      const exists = prev.some((c) => c.company_id === company.company_id);
+      if (exists) {
+        return prev.filter((c) => c.company_id !== company.company_id);
+      }
+      return [...prev, company];
+    });
+  };
+
+  const handleSelectCompanyDetail = (company: Company) => {
+    setSelectedCompany(company);
+    setPanel("company-detail");
+  };
+
+  // Load merged subgraph whenever selected industries/companies change
+  useEffect(() => {
+    async function loadMergedSubgraph() {
+      if (selectedIndustries.length === 0 && selectedCompanies.length === 0) {
+        setSubgraphData(undefined);
+        return;
+      }
+      try {
+        const [industrySubgraphs, companySubgraphs] = await Promise.all([
+          Promise.all(selectedIndustries.map((i) => getIndustrySubgraph(i.industry_id))),
+          Promise.all(selectedCompanies.map((c) => getCompanySubgraph(c.company_id))),
+        ]);
+        const nodeMap = new Map<string, IndustrialNode>();
+        const edgeMap = new Map<string, GraphEdge>();
+        industrySubgraphs.forEach((sg) => {
+          sg.nodes.forEach((n) => nodeMap.set(n.node_id, n as IndustrialNode));
+          sg.edges.forEach((e) => edgeMap.set(e.edge_id, e as GraphEdge));
+        });
+        companySubgraphs.forEach((sg) => {
+          sg.nodes.forEach((n) => nodeMap.set(n.node_id, n as IndustrialNode));
+          sg.edges.forEach((e) => edgeMap.set(e.edge_id, e as GraphEdge));
+        });
+        setSubgraphData({
+          nodes: Array.from(nodeMap.values()),
+          edges: Array.from(edgeMap.values()),
+        });
+        setGraphKey((k) => k + 1);
+      } catch {
+        // Silently ignore
+      }
+    }
+    loadMergedSubgraph();
+  }, [selectedIndustries, selectedCompanies]);
+
+  // Select company from sidebar (company graph view)
   const handleSelectCompany = (company: Company) => {
     setSelectedCompany(company);
     setPanel("company-detail");
@@ -504,33 +560,73 @@ export default function App() {
   };
 
   // ------------------------------------------------------------------
-  // Industrial Graph — Left Sidebar with sub-tabs
+  // Industrial Graph — Unified Left Sidebar
   // ------------------------------------------------------------------
   const industrialLeftSidebar = (
-    <div className="flex h-full flex-col">
-      <div className="flex border-b border-slate-700">
-        <SubTab active={industrialSubView === "filter"} onClick={() => setIndustrialSubView("filter")} label="过滤" />
-        <SubTab active={industrialSubView === "industry"} onClick={() => setIndustrialSubView("industry")} label="行业" />
-        <SubTab active={industrialSubView === "company"} onClick={() => setIndustrialSubView("company")} label="公司" />
-      </div>
-      <div className="flex-1 overflow-auto">
-        {industrialSubView === "filter" && (
-          <FilterPanel filters={activeFilters} onChange={setActiveFilters} />
-        )}
-        {industrialSubView === "industry" && (
-          <IndustrySidebar
-            selectedId={selectedIndustry?.industry_id}
-            onSelect={handleSelectIndustry}
+    <div className="flex h-full flex-col overflow-hidden">
+      {/* Active selection chips */}
+      {(selectedIndustries.length > 0 || selectedCompanies.length > 0) && (
+        <div className="border-b border-slate-800 p-2">
+          <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            当前选择
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {selectedIndustries.map((ind) => (
+              <span
+                key={ind.industry_id}
+                className="flex items-center gap-1 rounded bg-cyan-900/30 px-1.5 py-0.5 text-[10px] text-cyan-300"
+              >
+                {ind.name_zh}
+                <button
+                  onClick={() => handleToggleIndustry(ind)}
+                  className="text-cyan-500 hover:text-cyan-200"
+                  title="移除"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+            {selectedCompanies.map((co) => (
+              <span
+                key={co.company_id}
+                className="flex items-center gap-1 rounded bg-amber-900/30 px-1.5 py-0.5 text-[10px] text-amber-300"
+              >
+                {co.name_zh}
+                <button
+                  onClick={() => handleToggleCompanyIndustrial(co)}
+                  className="text-amber-500 hover:text-amber-200"
+                  title="移除"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="flex-1 overflow-y-auto">
+        <CollapsibleSection title="行业" badge={selectedIndustries.length}>
+          <IndustryMultiSelector
+            selectedIds={selectedIndustries.map((i) => i.industry_id)}
+            onToggle={handleToggleIndustry}
+            onSelect={handleSelectIndustryDetail}
             onCreate={() => setPanel("industry-create")}
           />
-        )}
-        {industrialSubView === "company" && (
-          <CompanySidebar
-            selectedId={selectedCompany?.company_id}
-            onSelect={handleSelectCompany}
+        </CollapsibleSection>
+
+        <CollapsibleSection title="公司" badge={selectedCompanies.length}>
+          <CompanyMultiSelector
+            selectedIds={selectedCompanies.map((c) => c.company_id)}
+            onToggle={handleToggleCompanyIndustrial}
+            onSelect={handleSelectCompanyDetail}
             onCreate={() => setPanel("company-create")}
           />
-        )}
+        </CollapsibleSection>
+
+        <CollapsibleSection title="过滤">
+          <FilterPanel filters={activeFilters} onChange={setActiveFilters} />
+        </CollapsibleSection>
       </div>
     </div>
   );
@@ -561,26 +657,20 @@ export default function App() {
   // ------------------------------------------------------------------
   const industrialSearchPanel = (
     <div className="flex items-center gap-2">
-      {industrialSubView === "filter" && (
-        <SearchPanel
-          onSelectNode={(node) => {
-            setSelectedNode(node);
-            setPanel("node-detail");
-          }}
-          onCreateNode={() => setPanel("node-create")}
-          onCreateEdge={() => setPanel("edge-create")}
-          onUploadBatch={() => setPanel("batch-upload")}
-        />
-      )}
-      {industrialSubView === "industry" && (
-        <span className="text-xs text-slate-500">点击左侧行业在图谱中查看其子图</span>
-      )}
-      {industrialSubView === "company" && (
-        <span className="text-xs text-slate-500">点击左侧公司在图谱中高亮其暴露节点</span>
-      )}
-      {(subgraphData !== undefined || highlightNodeIds !== undefined) && (
+      <SearchPanel
+        onSelectNode={(node) => {
+          setSelectedNode(node);
+          setPanel("node-detail");
+        }}
+        onCreateNode={() => setPanel("node-create")}
+        onCreateEdge={() => setPanel("edge-create")}
+        onUploadBatch={() => setPanel("batch-upload")}
+      />
+      {(selectedIndustries.length > 0 || selectedCompanies.length > 0) && (
         <button
           onClick={() => {
+            setSelectedIndustries([]);
+            setSelectedCompanies([]);
             setSubgraphData(undefined);
             setHighlightNodeIds(undefined);
             setGraphKey((k) => k + 1);
@@ -851,16 +941,28 @@ export default function App() {
         </div>
       )
     ) : (
-      <GraphCanvas
-        key={graphKey}
-        onNodeClick={handleNodeClick}
-        onEdgeClick={handleEdgeClick}
-        onNodeContextMenu={handleNodeContextMenu}
-        filters={activeFilters}
-        highlightNodeId={selectedNode?.node_id}
-        highlightNodeIds={highlightNodeIds}
-        sourceData={subgraphData}
-      />
+      <div className="relative h-full w-full">
+        <GraphCanvas
+          key={graphKey}
+          onNodeClick={handleNodeClick}
+          onEdgeClick={handleEdgeClick}
+          onNodeContextMenu={handleNodeContextMenu}
+          filters={activeFilters}
+          highlightNodeId={selectedNode?.node_id}
+          highlightNodeIds={highlightNodeIds}
+          sourceData={subgraphData}
+        />
+        <GraphToolbar
+          showWeakOntology={activeFilters.showWeakOntology}
+          onToggleWeakOntology={() =>
+            setActiveFilters((prev) => ({
+              ...prev,
+              showWeakOntology: !prev.showWeakOntology,
+            }))
+          }
+          onRelayout={() => setGraphKey((k) => k + 1)}
+        />
+      </div>
     );
 
   // ------------------------------------------------------------------

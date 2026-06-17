@@ -12,7 +12,10 @@ interface FilterState {
   entityTypes: string[];
   status: string[];
   confidence: string[];
+  showWeakOntology: boolean;
 }
+
+type ArrayFilterKey = "edgeNamespaces" | "edgeTypes" | "entityTypes" | "status" | "confidence";
 
 interface FilterPanelProps {
   filters: FilterState;
@@ -23,7 +26,7 @@ const STATUSES = ["ACTIVE", "PENDING", "REJECTED"];
 const CONFIDENCES = ["HIGH", "MEDIUM", "LOW"];
 
 export function FilterPanel({ filters, onChange }: FilterPanelProps) {
-  const toggle = (key: keyof FilterState, value: string) => {
+  const toggle = (key: ArrayFilterKey, value: string) => {
     const arr = filters[key];
     const next = arr.includes(value)
       ? arr.filter((v) => v !== value)

@@ -18,7 +18,11 @@ cytoscape.use(dagre);
  * 2. 再对 ontology/is_a 关系做“环绕”修正，把子节点以同心圆方式排在父节点周围。
  */
 function runHybridLayout(cy: cytoscape.Core, fit = true) {
-  const dagreLayout = cy.layout({
+  // 先把 ontology 边排除在 Dagre 计算之外，避免 is_a/alias 等关系打乱产业流分层
+  const ontologyEdges = cy.edges('[edge_namespace = "ontology"]');
+  const layoutElements = cy.elements().not(ontologyEdges);
+
+  const dagreLayout = layoutElements.layout({
     name: "dagre",
     rankDir: "TB",
     nodeSep: 40,
@@ -30,7 +34,7 @@ function runHybridLayout(cy: cytoscape.Core, fit = true) {
   } as cytoscape.LayoutOptions);
 
   dagreLayout.one("layoutstop", () => {
-    // 只处理 ontology/is_a 边（source 是子类，target 是父类）
+    // Dagre 完成后，对 is_a 关系做环绕修正（source 是子类，target 是父类）
     const isAEdges = cy.edges(
       '[edge_namespace = "ontology"][edge_type = "is_a"]'
     );
@@ -55,10 +59,10 @@ function runHybridLayout(cy: cytoscape.Core, fit = true) {
         if (!parent || parent.length === 0) return;
         const center = parent.position();
         const count = children.length;
-        // 半径根据子节点数量动态调整，避免拥挤
-        const radius = Math.max(90, count * 22);
+        // 更大的环绕半径，效果更明显
+        const radius = Math.max(140, count * 32);
         const angleStep = (2 * Math.PI) / count;
-        // 以父节点相对画布中心的角度为起点，让环有一定方向感
+        // 以父节点相对画布中心的角度为起点，不同父节点的环方向不同，减少重叠
         const extent = cy.extent();
         const canvasCenterX = (extent.x1 + extent.x2) / 2;
         const canvasCenterY = (extent.y1 + extent.y2) / 2;
@@ -95,6 +99,7 @@ interface GraphCanvasProps {
     entityTypes: string[];
     status: string[];
     confidence: string[];
+    showWeakOntology?: boolean;
   };
   highlightNodeId?: string;
   highlightNodeIds?: string[];
@@ -126,14 +131,17 @@ function applyFilters(
       if (show) visibleNodeIds.add(node.id());
     });
 
+    const weakOntologyTypes = new Set(["alias_of", "related_term", "variant_of"]);
     cy.edges().forEach((edge) => {
       const ns = edge.data("edge_namespace");
       const et = edge.data("edge_type");
+      const isWeakOntology = ns === "ontology" && weakOntologyTypes.has(et);
       const show =
         visibleNodeIds.has(edge.source().id()) &&
         visibleNodeIds.has(edge.target().id()) &&
         (edgeNsSet.size === 0 || edgeNsSet.has(ns)) &&
-        (edgeTypeSet.size === 0 || edgeTypeSet.has(et));
+        (edgeTypeSet.size === 0 || edgeTypeSet.has(et)) &&
+        (!isWeakOntology || filters.showWeakOntology === true);
       edge.toggleClass("hidden", !show);
     });
   });
