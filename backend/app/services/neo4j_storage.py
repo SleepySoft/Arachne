@@ -510,30 +510,30 @@ async def list_edges(
 
 async def get_subgraph(node_id: str, depth: int = 2) -> tuple[List[IndustrialNode], List[GraphEdge]]:
     driver = get_async_driver()
+    # Neo4j does not allow parameters in path length patterns like [*1..$depth],
+    # so we safely interpolate the validated integer depth into the Cypher string.
     async with driver.session() as session:
         node_result = await session.run(
-            """
-            MATCH (n:IndustrialNode {node_id: $node_id})
-            OPTIONAL MATCH (n)-[*1..$depth]-(m:IndustrialNode)
+            f"""
+            MATCH (n:IndustrialNode {{node_id: $node_id}})
+            OPTIONAL MATCH (n)-[*1..{depth}]-(m:IndustrialNode)
             WITH collect(DISTINCT n) + collect(DISTINCT m) AS nodes
             UNWIND nodes AS node
-            RETURN DISTINCT node
+            RETURN DISTINCT node AS n
             """,
             node_id=node_id,
-            depth=depth,
         )
         nodes = [_node_from_record(r) async for r in node_result]
 
         edge_result = await session.run(
-            """
-            MATCH (n:IndustrialNode {node_id: $node_id})
-            OPTIONAL MATCH (n)-[r*1..$depth]-(m:IndustrialNode)
+            f"""
+            MATCH (n:IndustrialNode {{node_id: $node_id}})
+            OPTIONAL MATCH (n)-[r*1..{depth}]-(m:IndustrialNode)
             WITH [rel IN r | rel] AS rels
             UNWIND rels AS edge
             RETURN DISTINCT edge AS r, startNode(edge) AS start_node, endNode(edge) AS end_node
             """,
             node_id=node_id,
-            depth=depth,
         )
         edges = []
         async for r in edge_result:

@@ -180,10 +180,10 @@ async def get_company_subgraph(company_id: str):
             props["evidence"] = _evidence_from_db(props.get("evidence"))
             nodes.append(IndustrialNode(**props))
 
-        # Fetch edges between exposed nodes
+        # Fetch edges between exposed nodes (include both industrial flow and ontology relations)
         edge_result = await session.run(
             """
-            MATCH (a:IndustrialNode)-[r:INDUSTRIAL_FLOW]->(b:IndustrialNode)
+            MATCH (a:IndustrialNode)-[r:INDUSTRIAL_FLOW|ONTOLOGY]->(b:IndustrialNode)
             WHERE a.node_id IN $node_ids AND b.node_id IN $node_ids
             RETURN a.node_id AS from_node, b.node_id AS to_node,
                    r.edge_id AS edge_id, r.edge_namespace AS edge_namespace,

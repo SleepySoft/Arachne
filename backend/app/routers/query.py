@@ -51,6 +51,43 @@ async def get_incomplete_items(
     return await graph_service.get_incomplete_items(limit)
 
 
+@router.get("/health")
+async def health_check():
+    """Check connectivity to Neo4j and PostgreSQL."""
+    from app.services import neo4j_storage
+    from app.database_postgres import get_postgres_pool
+
+    result = {
+        "status": "ok",
+        "neo4j": "ok",
+        "postgres": "unknown",
+    }
+
+    # Neo4j check
+    try:
+        driver = neo4j_storage.get_async_driver()
+        async with driver.session() as session:
+            await session.run("RETURN 1 AS one")
+    except Exception as e:
+        result["neo4j"] = f"error: {str(e)}"
+        result["status"] = "degraded"
+
+    # PostgreSQL check
+    try:
+        pool = await get_postgres_pool()
+        if pool is None:
+            result["postgres"] = "not_configured"
+        else:
+            async with pool.acquire() as conn:
+                await conn.fetchval("SELECT 1")
+            result["postgres"] = "ok"
+    except Exception as e:
+        result["postgres"] = f"error: {str(e)}"
+        result["status"] = "degraded"
+
+    return result
+
+
 @router.get("/conflicts")
 async def get_conflicts():
     return await graph_service.detect_conflicts()

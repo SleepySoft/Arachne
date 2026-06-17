@@ -9,6 +9,7 @@ import { CompanySidebar } from "@/components/CompanySidebar";
 import {
   getCompany,
   getExplorationGraph,
+  getIndustrySubgraph,
 } from "@/services/api";
 import { EdgeDetail } from "@/components/EdgeDetail";
 import { EdgeForm } from "@/components/EdgeForm";
@@ -224,10 +225,21 @@ export default function App() {
     }
   };
 
-  const handleSelectIndustry = (industry: Industry) => {
+  const handleSelectIndustry = async (industry: Industry) => {
     setSelectedIndustry(industry);
     setPanel("industry-detail");
     setHighlightNodeIds(undefined);
+    // Auto-load the industry's subgraph into the main canvas as a filtered view
+    try {
+      const sg = await getIndustrySubgraph(industry.industry_id);
+      setSubgraphData({
+        nodes: sg.nodes as IndustrialNode[],
+        edges: sg.edges as GraphEdge[],
+      });
+      setGraphKey((k) => k + 1);
+    } catch {
+      // Silently fall back to showing the detail panel only
+    }
   };
 
   // Select company from sidebar

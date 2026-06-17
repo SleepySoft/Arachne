@@ -40,7 +40,7 @@ endpoints) rather than batch-computed and persisted.
 - **Backend**: `http://localhost:8000`
 - **Frontend**: `http://localhost:3000`
 - **Neo4j**: `bolt://localhost:7687` (user: `neo4j`, pass: `arachne123`)
-- **PostgreSQL**: `postgresql://postgres:postgres@localhost:5433/arachne` (not installed yet)
+- **PostgreSQL**: `postgresql://postgres:postgres@localhost:5433/arachne` (running, tables initialized)
 
 ### System Management
 - `arachne_manager.py` — Python cross-platform manager (`start/stop/status/stats/logs`)
@@ -217,6 +217,20 @@ backend/
 - `company_material.py`: material-flow based company connection endpoints
 - `computation_jobs.py`: async computation job tracking endpoints
 
+### Commit 12 — Top Bar DB Health Indicators (Neo4j + PostgreSQL)
+- `backend/app/routers/query.py`: added `GET /api/v1/query/health` endpoint that checks Neo4j and PostgreSQL connectivity
+- `frontend/src/services/api.ts`: added `getHealth()` wrapper
+- `frontend/src/components/StatsBar.tsx`: added Neo4j and PostgreSQL status dots with 10s polling; green = ok, amber = not configured, red = error
+
+### Commit 11 — Semiconductor Industry View: Start PostgreSQL + Create Industry + Mappings + Auto-filter
+- Started local PostgreSQL from `postgresql/pgsql/bin` on port 5433 (configured in `postgresql.conf`)
+- Initialized PostgreSQL tables via `init_postgres_tables()`
+- Created `semiconductor_industry` formal industry in PostgreSQL with description and evidence
+- Created 32 industry-to-node mappings linking the semiconductor industry to core nodes (materials, equipment, chips, business models, downstream applications)
+- Restarted backend so it picks up the PostgreSQL pool; industry endpoints now return data
+- `frontend/src/App.tsx`: selecting an industry in the sidebar now auto-loads the industry subgraph into the main canvas, so the main graph is filtered to show only nodes/edges belonging to that industry
+- Updated `AGENTS.md` to reflect PostgreSQL is running
+
 ### Commit 10 — Fuzzy Node Search + Duplicate Prevention + Incomplete Items (Frontend + Backend + CLI + Skills)
 - `backend/app/services/fuzzy_search.py`: pure-Python fuzzy matcher combining substring containment, character bigram Jaccard, token overlap, and `difflib.SequenceMatcher` similarity; no vector DB or external dependencies
 - `backend/app/routers/nodes.py`: added `GET /api/v1/nodes/fuzzy-search?query=&limit=&score_threshold=` endpoint
@@ -226,6 +240,7 @@ backend/
 - `frontend/src/components/QuickNodeForm.tsx` / `NodeForm.tsx`: debounced fuzzy search while typing; warns users about potential duplicates and lets them select an existing node instead of creating a new one
 - `cli/arachne_cli.py`: added `query --fuzzy-search <query>` and `query --incomplete-items` commands
 - `skills/arachne-api/SKILL.md`: documented fuzzy search and added an AI workflow for scanning and curating incomplete items
+- `backend/app/services/neo4j_storage.py`: fixed pre-existing `get_subgraph` Cypher bug where `$depth` parameter was used inside path length pattern and returned columns did not match `_node_from_record`/`_edge_from_record`
 - No new Python dependencies required
 
 ### Commit 9 — Quick Edge Creation (Frontend + Backend + CLI + Skills)
@@ -295,8 +310,8 @@ Missing or stubbed:
 - **Cross-domain exploration page** currently uses `company_exploration.py` endpoints (`/companies/{id}/exploration-graph`, `/companies/nodes/{id}/connected-companies`); the newer `/api/v1/explore/*` endpoints are not yet wired to the UI
 
 ### Infrastructure
-- [ ] **Install PostgreSQL locally** — system currently has no `psql`; backend code is ready but cannot run integration tests until PostgreSQL is installed
-- [ ] **Run full test suite** — all PostgreSQL-dependent tests skip when DB is unavailable; verify they pass after installation
+- [x] **Install/start PostgreSQL locally** — binary in `postgresql/pgsql/`, started on port 5433, tables initialized via `init_postgres_tables()`
+- [ ] **Run full test suite** — PostgreSQL is now available; run PG-dependent tests to verify
 
 ### Data / Batch Debt
 Historical batch construction logs list these as future work; none are implemented:

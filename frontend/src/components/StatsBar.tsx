@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Activity, Building2, GitBranch, Layers, Network } from "lucide-react";
-import { getStats } from "@/services/api";
+import { getHealth, getStats } from "@/services/api";
 export type MainView = "industrial_graph" | "company_graph";
 
 interface StatsBarProps {
@@ -13,6 +13,13 @@ export function StatsBar({ mainView, onChangeMainView }: StatsBarProps) {
     queryKey: ["stats"],
     queryFn: getStats,
     refetchInterval: 30000,
+  });
+
+  const { data: health } = useQuery({
+    queryKey: ["health"],
+    queryFn: getHealth,
+    refetchInterval: 10000,
+    retry: false,
   });
 
   const companyNetworkStats = { nodes: 0, edges: 0 };
@@ -36,6 +43,12 @@ export function StatsBar({ mainView, onChangeMainView }: StatsBarProps) {
             label="产业图"
           />
         </div>
+      </div>
+
+      {/* DB health indicators */}
+      <div className="flex items-center gap-3">
+        <StatusDot label="Neo4j" status={health?.neo4j === "ok" ? "ok" : "error"} />
+        <StatusDot label="PostgreSQL" status={health?.postgres === "ok" ? "ok" : health?.postgres === "not_configured" ? "warning" : "error"} />
       </div>
 
       {/* Stats — contextual by view */}
@@ -112,6 +125,18 @@ function StatItem({
       {icon}
       <span className="text-slate-400">{label}</span>
       <span className="font-mono font-semibold text-slate-200">{value}</span>
+    </div>
+  );
+}
+
+function StatusDot({ label, status }: { label: string; status: "ok" | "warning" | "error" }) {
+  const color =
+    status === "ok" ? "bg-emerald-500" : status === "warning" ? "bg-amber-500" : "bg-red-500";
+  const text = status === "ok" ? "text-emerald-400" : status === "warning" ? "text-amber-400" : "text-red-400";
+  return (
+    <div className="flex items-center gap-1.5 text-xs" title={`${label}: ${status}`}>
+      <span className={`h-2 w-2 rounded-full ${color}`} />
+      <span className={`font-medium ${text}`}>{label}</span>
     </div>
   );
 }

@@ -214,6 +214,11 @@ export const getStats = async (): Promise<GraphStats> => {
   return res.data;
 };
 
+export const getHealth = async (): Promise<{ status: string; neo4j: string; postgres: string }> => {
+  const res = await client.get("/query/health");
+  return res.data;
+};
+
 export const getConflicts = async (): Promise<unknown[]> => {
   const res = await client.get("/query/conflicts");
   return res.data;
