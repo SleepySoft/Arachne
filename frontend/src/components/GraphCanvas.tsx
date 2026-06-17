@@ -12,6 +12,79 @@ import { getNeighbors, getNode, listEdges, listNodes } from "@/services/api";
 
 cytoscape.use(dagre);
 
+/**
+ * 混合布局：
+ * 1. 先用 Dagre 对产业流（industrial_flow）做自上而下分层布局；
+ * 2. 再对 ontology/is_a 关系做“环绕”修正，把子节点以同心圆方式排在父节点周围。
+ */
+function runHybridLayout(cy: cytoscape.Core, fit = true) {
+  const dagreLayout = cy.layout({
+    name: "dagre",
+    rankDir: "TB",
+    nodeSep: 40,
+    edgeSep: 20,
+    rankSep: 80,
+    padding: 20,
+    fit,
+    animate: false,
+  } as cytoscape.LayoutOptions);
+
+  dagreLayout.one("layoutstop", () => {
+    // 只处理 ontology/is_a 边（source 是子类，target 是父类）
+    const isAEdges = cy.edges(
+      '[edge_namespace = "ontology"][edge_type = "is_a"]'
+    );
+    if (isAEdges.length === 0) return;
+
+    // 按父节点分组
+    const childrenByParent = new Map<string, cytoscape.NodeCollection>();
+    isAEdges.forEach((edge) => {
+      const parent = edge.target();
+      const child = edge.source();
+      const key = parent.id();
+      const existing = childrenByParent.get(key);
+      childrenByParent.set(
+        key,
+        existing ? existing.union(child) : cy.collection().union(child)
+      );
+    });
+
+    cy.batch(() => {
+      childrenByParent.forEach((children, parentId) => {
+        const parent = cy.getElementById(parentId);
+        if (!parent || parent.length === 0) return;
+        const center = parent.position();
+        const count = children.length;
+        // 半径根据子节点数量动态调整，避免拥挤
+        const radius = Math.max(90, count * 22);
+        const angleStep = (2 * Math.PI) / count;
+        // 以父节点相对画布中心的角度为起点，让环有一定方向感
+        const extent = cy.extent();
+        const canvasCenterX = (extent.x1 + extent.x2) / 2;
+        const canvasCenterY = (extent.y1 + extent.y2) / 2;
+        const startAngle = Math.atan2(
+          center.y - canvasCenterY,
+          center.x - canvasCenterX
+        );
+
+        children.forEach((child, index) => {
+          const angle = startAngle + index * angleStep;
+          child.position({
+            x: center.x + radius * Math.cos(angle),
+            y: center.y + radius * Math.sin(angle),
+          });
+        });
+      });
+    });
+
+    if (fit) {
+      cy.fit(cy.elements(), 40);
+    }
+  });
+
+  dagreLayout.run();
+}
+
 interface GraphCanvasProps {
   onNodeClick: (node: IndustrialNode) => void;
   onEdgeClick: (edge: GraphEdge) => void;
@@ -258,14 +331,8 @@ export function GraphCanvas({
               },
             },
           ],
-          layout: {
-            name: "dagre",
-            rankDir: "TB",
-            nodeSep: 40,
-            edgeSep: 20,
-            rankSep: 80,
-            padding: 20,
-          } as cytoscape.LayoutOptions,
+          // 初始不启用默认 dagre，改为在数据加载后执行混合布局
+          layout: { name: "preset" } as cytoscape.LayoutOptions,
           wheelSensitivity: 1.0,
           minZoom: 0.2,
           maxZoom: 3,
@@ -446,7 +513,7 @@ export function GraphCanvas({
             // 双击代表一次完整的子图合并操作，此时重新应用过滤器，并触发 dagre 全局重排，
             // 把之前由于“顺藤摸瓜”可能拉扯乱的局部拓扑结构重新梳理平整。
             applyFilters(cy, filtersRef.current);
-            cy.layout({ name: "dagre", rankDir: "TB", fit: false } as cytoscape.LayoutOptions).run();
+            runHybridLayout(cy, false);
 
           } catch (err) {
             console.error("Expand failed:", err);
@@ -454,6 +521,8 @@ export function GraphCanvas({
         });
 
         cyRef.current = cy;
+        // 使用混合布局：产业流自上而下，is_a 关系环绕父节点
+        runHybridLayout(cy, true);
         setLoading(false);
       } catch (err) {
         if (mounted) {
