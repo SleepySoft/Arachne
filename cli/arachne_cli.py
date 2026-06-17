@@ -236,6 +236,11 @@ def cmd_query_fuzzy_search(query: str, limit: int = 10):
     _print(result)
 
 
+def cmd_query_incomplete_items(limit: int = 100):
+    result = _request("GET", "/query/incomplete-items", params={"limit": limit})
+    _print(result)
+
+
 def cmd_quick_node(name_zh: str = None, name_en: str = None, entity_type: str = "unknown", notes: str = None):
     data = {
         "canonical_name_zh": name_zh,
@@ -283,6 +288,7 @@ Examples:
   %(prog)s query --stats
   %(prog)s query --search 激光雷达
   %(prog)s query --fuzzy-search "激光雷达" --limit 5
+  %(prog)s query --incomplete-items --limit 50
   %(prog)s quick-node --name-zh "六氟化铀" --entity-type material
   %(prog)s quick-edge --from lithium_metal --to battery_cell --edge-type material_flow
         """
@@ -392,7 +398,8 @@ Examples:
     p_query.add_argument("--list-nodes", action="store_true", help="List all nodes")
     p_query.add_argument("--search", help="Search nodes by name/alias")
     p_query.add_argument("--fuzzy-search", metavar="QUERY", help="Fuzzy search similar node names")
-    p_query.add_argument("--limit", type=int, default=10, help="Limit for fuzzy search (default: 10)")
+    p_query.add_argument("--incomplete-items", action="store_true", help="List all incomplete/draft nodes and edges")
+    p_query.add_argument("--limit", type=int, default=10, help="Limit for fuzzy/incomplete search (default: 10)")
     p_query.add_argument("--draft-only", action="store_true", help="List only draft/incomplete nodes")
 
     # quick-node
@@ -470,6 +477,8 @@ Examples:
             cmd_query_stats()
         elif args.fuzzy_search:
             cmd_query_fuzzy_search(args.fuzzy_search, args.limit)
+        elif args.incomplete_items:
+            cmd_query_incomplete_items(args.limit)
         elif args.list_nodes or args.search:
             cmd_query_list_nodes(args.search, draft_only=args.draft_only)
         elif args.draft_only:

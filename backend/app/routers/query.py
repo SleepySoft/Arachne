@@ -43,6 +43,14 @@ async def get_stats():
     return await graph_service.get_stats()
 
 
+@router.get("/incomplete-items")
+async def get_incomplete_items(
+    limit: int = Query(100, ge=1, le=1000),
+):
+    """Return a summary and lists of nodes/edges that need curation."""
+    return await graph_service.get_incomplete_items(limit)
+
+
 @router.get("/conflicts")
 async def get_conflicts():
     return await graph_service.detect_conflicts()

@@ -372,7 +372,76 @@ python cli/arachne_cli.py query --subgraph lidar_system --depth 2
 
 # 节点邻居
 python cli/arachne_cli.py query --neighbors lidar_system
+
+# 未竟项目扫描（AI 批量补全入口）
+python cli/arachne_cli.py query --incomplete-items --limit 50
 ```
+
+## AI 批量补全未竟项目工作流
+
+当用户要求“完善未竟项目”或“补全草稿节点”时，按以下流程执行：
+
+### 1. 拉取未竟清单
+
+调用 `GET /api/v1/query/incomplete-items?limit=100` 或 CLI：
+
+```bash
+python cli/arachne_cli.py query --incomplete-items --limit 100
+```
+
+返回结构包含：
+- `summary`: 各类问题数量（draft_nodes / pending_nodes / unknown_type_nodes / missing_definition_nodes / draft_edges / low_confidence_edges / placeholder_description_edges / isolated_nodes）
+- `nodes`: 每个节点的 `issues` 标签列表（如 `["draft_id", "unknown_type", "missing_definition"]`）
+- `edges`: 每个关系的 `issues` 标签列表（如 `["draft_id", "placeholder_description"]`）
+
+### 2. 优先级排序
+
+建议按以下顺序处理（越靠前越优先）：
+
+1. **孤立节点（isolated）且缺失定义**——先补定义，再建立关系
+2. **draft_id 节点**——给规范 `node_id`、完整定义、证据、正确类型
+3. **unknown_type 节点**——判断 entity_type
+4. **missing_definition 节点**——补充定义
+5. **pending_status 节点**——补充证据后标记为 ACTIVE（若证据充分）
+6. **draft_edge_ 关系**——给规范 `edge_id`、描述、证据
+7. **placeholder_description 关系**——替换自动生成的占位描述
+
+### 3. 单个节点补全 checklist
+
+对每个节点执行：
+
+- [ ] 用 `fuzzy-search` 检查是否已有相似节点；若有，考虑合并或跳过
+- [ ] 确认 `entity_type` 正确
+- [ ] 补充清晰定义（说明该实体是什么、做什么、属于哪一层）
+- [ ] 补充中文名/英文名/别名
+- [ ] 补充证据（source_title + quote 必填，source_url 可选）
+- [ ] 将 `node_id` 从 `draft_{uuid}` 替换为规范 snake_case ID（如 `lidar_system`）
+- [ ] 状态从 `PENDING` 改为 `ACTIVE`（证据充分时）
+- [ ] 置信度从 `LOW` 提升到 `MEDIUM`/`HIGH`（有证据支撑时）
+- [ ] 建立至少一条上下游/本体关系，避免孤立
+
+### 4. 批量提交
+
+补全后优先使用批量接口一次性更新/替换：
+
+```bash
+python cli/arachne_cli.py submit graph_batch_cleanup.json
+```
+
+批量文件应包含：
+- `nodes_to_upsert`: 完整补全后的节点（包括新 `node_id`）
+- `edges_to_upsert`: 新建/补全的关系
+- `rejected_or_pending`: 无法确认或应废弃的候选词
+
+### 5. 验证
+
+补全后再次调用：
+
+```bash
+python cli/arachne_cli.py query --incomplete-items --limit 100
+```
+
+确认目标问题已减少或消失。
 
 ## 创建前检查：避免重复
 

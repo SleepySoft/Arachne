@@ -77,6 +77,33 @@ export const fuzzySearchNodes = async (
   return res.data;
 };
 
+export const getIncompleteItems = async (limit = 100): Promise<{
+  summary: Record<string, number>;
+  total_issues: number;
+  nodes: {
+    node_id: string;
+    name_zh?: string;
+    name_en?: string;
+    status?: string;
+    entity_type?: string;
+    confidence?: string;
+    issues: string[];
+  }[];
+  edges: {
+    edge_id: string;
+    edge_namespace: string;
+    edge_type: string;
+    from_node: string;
+    to_node: string;
+    description?: string;
+    confidence?: string;
+    issues: string[];
+  }[];
+}> => {
+  const res = await client.get("/query/incomplete-items", { params: { limit } });
+  return res.data;
+};
+
 export const updateNode = async (
   nodeId: string,
   data: IndustrialNodeUpdate

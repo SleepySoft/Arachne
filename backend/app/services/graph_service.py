@@ -417,6 +417,153 @@ async def get_stats() -> GraphStats:
 # Conflict Detection
 # ---------------------------------------------------------------------------
 
+async def get_incomplete_items(limit: int = 100) -> dict:
+    """
+    Scan the graph for incomplete / draft / placeholder items that need
+    human or AI curation.
+
+    Returns a summary plus ranked lists of nodes and edges with issue tags.
+    """
+    driver = neo4j_storage.get_async_driver()
+    summary = {
+        "draft_nodes": 0,
+        "pending_nodes": 0,
+        "unknown_type_nodes": 0,
+        "missing_definition_nodes": 0,
+        "draft_edges": 0,
+        "low_confidence_edges": 0,
+        "placeholder_description_edges": 0,
+        "isolated_nodes": 0,
+    }
+    node_issues = []
+    edge_issues = []
+
+    async with driver.session() as session:
+        # Nodes with various incompleteness flags
+        result = await session.run(
+            """
+            MATCH (n:IndustrialNode)
+            RETURN n.node_id AS node_id,
+                   n.canonical_name_zh AS name_zh,
+                   n.canonical_name_en AS name_en,
+                   n.status AS status,
+                   n.entity_type AS entity_type,
+                   n.definition AS definition,
+                   n.confidence AS confidence,
+                   n.node_id STARTS WITH 'draft_' AS is_draft,
+                   n.status = 'PENDING' AS is_pending,
+                   n.entity_type = 'unknown' AS is_unknown_type,
+                   n.definition IS NULL OR n.definition = '' OR n.definition = '（定义待补充）' AS is_missing_definition
+            ORDER BY n.updated_at DESC
+            LIMIT $limit
+            """,
+            limit=limit,
+        )
+        async for rec in result:
+            issues = []
+            if rec["is_draft"]:
+                issues.append("draft_id")
+                summary["draft_nodes"] += 1
+            if rec["is_pending"]:
+                issues.append("pending_status")
+                summary["pending_nodes"] += 1
+            if rec["is_unknown_type"]:
+                issues.append("unknown_type")
+                summary["unknown_type_nodes"] += 1
+            if rec["is_missing_definition"]:
+                issues.append("missing_definition")
+                summary["missing_definition_nodes"] += 1
+            if issues:
+                node_issues.append({
+                    "node_id": rec["node_id"],
+                    "name_zh": rec["name_zh"],
+                    "name_en": rec["name_en"],
+                    "status": rec["status"],
+                    "entity_type": rec["entity_type"],
+                    "confidence": rec["confidence"],
+                    "issues": issues,
+                })
+
+        # Edges with incompleteness flags
+        result2 = await session.run(
+            """
+            MATCH (a:IndustrialNode)-[r:INDUSTRIAL_FLOW|ONTOLOGY]->(b:IndustrialNode)
+            RETURN r.edge_id AS edge_id,
+                   r.edge_namespace AS edge_namespace,
+                   r.edge_type AS edge_type,
+                   r.description AS description,
+                   r.confidence AS confidence,
+                   a.node_id AS from_node,
+                   b.node_id AS to_node,
+                   r.edge_id STARTS WITH 'draft_edge_' AS is_draft,
+                   r.confidence = 'LOW' AS is_low_confidence,
+                   r.description IS NULL OR r.description = '' OR r.description STARTS WITH '由系统自动生成' AS is_placeholder_desc
+            ORDER BY r.updated_at DESC
+            LIMIT $limit
+            """,
+            limit=limit,
+        )
+        async for rec in result2:
+            issues = []
+            if rec["is_draft"]:
+                issues.append("draft_id")
+                summary["draft_edges"] += 1
+            if rec["is_low_confidence"]:
+                issues.append("low_confidence")
+                summary["low_confidence_edges"] += 1
+            if rec["is_placeholder_desc"]:
+                issues.append("placeholder_description")
+                summary["placeholder_description_edges"] += 1
+            if issues:
+                edge_issues.append({
+                    "edge_id": rec["edge_id"],
+                    "edge_namespace": rec["edge_namespace"],
+                    "edge_type": rec["edge_type"],
+                    "from_node": rec["from_node"],
+                    "to_node": rec["to_node"],
+                    "description": rec["description"],
+                    "confidence": rec["confidence"],
+                    "issues": issues,
+                })
+
+        # Isolated nodes
+        result3 = await session.run(
+            """
+            MATCH (n:IndustrialNode)
+            WHERE NOT (n)-[:INDUSTRIAL_FLOW|ONTOLOGY]-()
+            RETURN n.node_id AS node_id,
+                   n.canonical_name_zh AS name_zh,
+                   n.canonical_name_en AS name_en
+            LIMIT $limit
+            """,
+            limit=limit,
+        )
+        async for rec in result3:
+            summary["isolated_nodes"] += 1
+            # Add isolated issue to existing node entry if present, else append
+            existing = next((x for x in node_issues if x["node_id"] == rec["node_id"]), None)
+            if existing:
+                if "isolated" not in existing["issues"]:
+                    existing["issues"].append("isolated")
+            else:
+                node_issues.append({
+                    "node_id": rec["node_id"],
+                    "name_zh": rec["name_zh"],
+                    "name_en": rec["name_en"],
+                    "status": None,
+                    "entity_type": None,
+                    "confidence": None,
+                    "issues": ["isolated"],
+                })
+
+    return {
+        "summary": summary,
+        "nodes": node_issues,
+        "edges": edge_issues,
+        "total_issues": len(node_issues) + len(edge_issues),
+    }
+
+
 async def detect_conflicts() -> List[dict]:
     """
     Detect potential conflicts in the graph:
