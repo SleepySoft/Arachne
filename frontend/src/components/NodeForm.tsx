@@ -24,6 +24,7 @@ const ENTITY_TYPES = [
   "application_system",
   "service",
   "technology_capability",
+  "process",
   "unknown",
 ];
 

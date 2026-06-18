@@ -46,6 +46,7 @@ class EntityType(str, Enum):
     APPLICATION_SYSTEM = "application_system"
     SERVICE = "service"
     TECHNOLOGY_CAPABILITY = "technology_capability"
+    PROCESS = "process"
     UNKNOWN = "unknown"
 
 

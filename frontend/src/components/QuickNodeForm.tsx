@@ -149,6 +149,7 @@ export function QuickNodeForm({ onSuccess, onCancel, initialName = "" }: QuickNo
           <option value="application_system">应用系统</option>
           <option value="service">服务</option>
           <option value="technology_capability">技术能力</option>
+          <option value="process">工艺/流程</option>
         </select>
         <input
           type="text"

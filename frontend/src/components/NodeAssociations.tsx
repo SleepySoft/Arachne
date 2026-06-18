@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, ChevronRight, Loader2, Building2, Factory } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronDown, ChevronRight, Loader2, Building2, Factory, X } from "lucide-react";
 import { IndustrialNode, Company, Industry } from "@/types";
-import { getCompaniesByNode, getIndustriesByNode } from "@/services/api";
+import { deleteIndustryMapping, getCompaniesByNode, getIndustriesByNode } from "@/services/api";
 import { NodeEdgeList } from "./NodeEdgeList";
 
 interface NodeAssociationsProps {
@@ -58,9 +58,18 @@ export function NodeAssociations({
   onSelectCompany,
   onSelectIndustry,
 }: NodeAssociationsProps) {
+  const queryClient = useQueryClient();
   const [relsOpen, setRelsOpen] = useState(true);
   const [companiesOpen, setCompaniesOpen] = useState(false);
   const [industriesOpen, setIndustriesOpen] = useState(false);
+
+  const removeMappingMutation = useMutation({
+    mutationFn: ({ industryId, mappingId }: { industryId: string; mappingId: string }) =>
+      deleteIndustryMapping(industryId, mappingId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["industries-by-node", node.node_id] });
+    },
+  });
 
   const {
     data: companiesData,
@@ -87,6 +96,7 @@ export function NodeAssociations({
   const companies = companiesData?.companies || [];
   const exposures = companiesData?.exposures || [];
   const industries = industriesData?.industries || [];
+  const mappings = industriesData?.mappings || [];
 
   return (
     <div className="space-y-2">
@@ -200,6 +210,24 @@ export function NodeAssociations({
                     {ind.industry_type} · {ind.status}
                   </div>
                 </div>
+                {mappings
+                  .filter((m) => m.industry_id === ind.industry_id)
+                  .map((m) => (
+                    <button
+                      key={m.mapping_id}
+                      title="移除该行业映射"
+                      disabled={removeMappingMutation.isPending}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(`确定移除行业映射 ${m.mapping_id} 吗？`)) {
+                          removeMappingMutation.mutate({ industryId: ind.industry_id, mappingId: m.mapping_id });
+                        }
+                      }}
+                      className="ml-1 shrink-0 rounded p-1 text-slate-500 hover:bg-red-900/20 hover:text-red-400 disabled:opacity-50"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  ))}
               </div>
             ))}
           </div>

@@ -12,6 +12,7 @@ export type EntityType =
   | "application_system"
   | "service"
   | "technology_capability"
+  | "process"
   | "unknown";
 
 export type IndustrialFlowType =
@@ -424,6 +425,7 @@ export const ENTITY_TYPE_COLORS: Record<EntityType, string> = {
   application_system: "#c084fc",
   service: "#f472b6",
   technology_capability: "#94a3b8",
+  process: "#f97316",
   unknown: "#64748b",
 };
 

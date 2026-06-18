@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 
 from app.database import get_async_driver
 from app.database_postgres import get_postgres_pool
+from app.services.ontology_rules import get_rule_by_checker
 
 
 class Severity(str, Enum):
@@ -990,3 +991,169 @@ class MissingIndustrialFlowDescriptionChecker(Checker):
                     )
                 )
         return issues
+
+
+@register_checker
+class EntityDomainBoundaryChecker(Checker):
+    """公司与产业实体在产业图中隔离。"""
+
+    check_id = "entity_domain_boundary"
+    name = "公司与产业实体隔离"
+    description = "检测 Neo4j 产业图中是否存在 :Company 与 :IndustrialNode 之间的边。"
+    severity = Severity.ERROR
+    fixable = True
+
+    def __init__(self):
+        rule = get_rule_by_checker(self.check_id)
+        if rule:
+            self.name = rule.title
+            self.description = rule.description
+            self.severity = Severity(rule.severity.value)
+            self.fixable = rule.fixable
+
+    async def run(self) -> List[CheckIssue]:
+        driver = get_async_driver()
+        issues: List[CheckIssue] = []
+        async with driver.session() as s:
+            result = await s.run(
+                """
+                MATCH (a)-[r:INDUSTRIAL_FLOW|ONTOLOGY]->(b)
+                WHERE (a:Company AND b:IndustrialNode) OR (a:IndustrialNode AND b:Company)
+                RETURN elementId(r) AS rel_id, r.edge_id AS edge_id,
+                       labels(a) AS from_labels, a.node_id AS from_id,
+                       labels(b) AS to_labels, b.node_id AS to_id,
+                       type(r) AS rel_type, r.edge_namespace AS ns, r.edge_type AS et
+                ORDER BY edge_id
+                """
+            )
+            async for rec in result:
+                issues.append(
+                    CheckIssue(
+                        issue_id=f"{self.check_id}:{rec['rel_id']}",
+                        check_id=self.check_id,
+                        severity=self.severity,
+                        title="公司与产业实体隔离违规",
+                        summary=(
+                            f"关系 `{rec['edge_id'] or rec['rel_id']}` 连接了 "
+                            f"{rec['from_labels']} `{rec['from_id']}` 与 "
+                            f"{rec['to_labels']} `{rec['to_id']}`。"
+                        ),
+                        details={
+                            "rel_id": rec["rel_id"],
+                            "edge_id": rec["edge_id"],
+                            "from_node": rec["from_id"],
+                            "from_labels": rec["from_labels"],
+                            "to_node": rec["to_id"],
+                            "to_labels": rec["to_labels"],
+                            "rel_type": rec["rel_type"],
+                            "edge_namespace": rec["ns"],
+                            "edge_type": rec["et"],
+                        },
+                        affected_ids=[rec["edge_id"] or rec["rel_id"], rec["from_id"], rec["to_id"]],
+                        fixable=True,
+                    )
+                )
+        return issues
+
+    async def fix(self, issues: List[CheckIssue]) -> FixResult:
+        rel_ids = [i.details.get("rel_id") for i in issues if i.details.get("rel_id")]
+        if not rel_ids:
+            return FixResult(check_id=self.check_id, fixed_count=0, skipped_count=0, messages=["没有问题需要修复"])
+        driver = get_async_driver()
+        async with driver.session() as s:
+            result = await s.run(
+                "MATCH ()-[r]->() WHERE elementId(r) IN $rel_ids DELETE r RETURN count(r) AS cnt",
+                {"rel_ids": rel_ids},
+            )
+            rec = await result.single()
+            deleted = rec["cnt"] if rec else 0
+        return FixResult(
+            check_id=self.check_id,
+            fixed_count=deleted,
+            skipped_count=len(rel_ids) - deleted,
+            messages=[f"已删除 {deleted} 条跨域违规关系"],
+        )
+
+
+@register_checker
+class DeviceToProductDirectEdgeChecker(Checker):
+    """设备类节点不直接指向产品节点。"""
+
+    check_id = "device_to_product_direct_edge"
+    name = "设备不直连产品"
+    description = "检测 entity_type='device' 的节点是否直接通过 INDUSTRIAL_FLOW 指向产品类节点。"
+    severity = Severity.ERROR
+    fixable = True
+
+    # 被视为“产品”的节点类型：设备不应直接指向它们
+    PRODUCT_TYPES = {"component", "module", "subsystem", "system", "platform", "application_system"}
+
+    def __init__(self):
+        rule = get_rule_by_checker(self.check_id)
+        if rule:
+            self.name = rule.title
+            self.description = rule.description
+            self.severity = Severity(rule.severity.value)
+            self.fixable = rule.fixable
+
+    async def run(self) -> List[CheckIssue]:
+        driver = get_async_driver()
+        issues: List[CheckIssue] = []
+        async with driver.session() as s:
+            result = await s.run(
+                """
+                MATCH (d:IndustrialNode {entity_type: 'device'})-[r:INDUSTRIAL_FLOW]->(p:IndustrialNode)
+                WHERE p.entity_type IN $product_types
+                RETURN elementId(r) AS rel_id, r.edge_id AS edge_id,
+                       d.node_id AS from_node, d.canonical_name_zh AS from_name,
+                       p.node_id AS to_node, p.canonical_name_zh AS to_name,
+                       p.entity_type AS to_type, r.edge_type AS et
+                ORDER BY edge_id
+                """,
+                {"product_types": list(self.PRODUCT_TYPES)},
+            )
+            async for rec in result:
+                issues.append(
+                    CheckIssue(
+                        issue_id=f"{self.check_id}:{rec['rel_id']}",
+                        check_id=self.check_id,
+                        severity=self.severity,
+                        title="设备直接指向产品",
+                        summary=(
+                            f"设备 `{rec['from_name'] or rec['from_node']}` "
+                            f"直接指向产品 `{rec['to_name'] or rec['to_node']}`（{rec['to_type']}）。"
+                        ),
+                        details={
+                            "rel_id": rec["rel_id"],
+                            "edge_id": rec["edge_id"],
+                            "from_node": rec["from_node"],
+                            "from_name": rec["from_name"],
+                            "to_node": rec["to_node"],
+                            "to_name": rec["to_name"],
+                            "to_type": rec["to_type"],
+                            "edge_type": rec["et"],
+                        },
+                        affected_ids=[rec["edge_id"] or rec["rel_id"], rec["from_node"], rec["to_node"]],
+                        fixable=True,
+                    )
+                )
+        return issues
+
+    async def fix(self, issues: List[CheckIssue]) -> FixResult:
+        rel_ids = [i.details.get("rel_id") for i in issues if i.details.get("rel_id")]
+        if not rel_ids:
+            return FixResult(check_id=self.check_id, fixed_count=0, skipped_count=0, messages=["没有问题需要修复"])
+        driver = get_async_driver()
+        async with driver.session() as s:
+            result = await s.run(
+                "MATCH ()-[r]->() WHERE elementId(r) IN $rel_ids DELETE r RETURN count(r) AS cnt",
+                {"rel_ids": rel_ids},
+            )
+            rec = await result.single()
+            deleted = rec["cnt"] if rec else 0
+        return FixResult(
+            check_id=self.check_id,
+            fixed_count=deleted,
+            skipped_count=len(rel_ids) - deleted,
+            messages=[f"已删除 {deleted} 条设备直连产品关系"],
+        )
