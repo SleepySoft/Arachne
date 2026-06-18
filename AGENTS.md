@@ -280,6 +280,15 @@ backend/
 - **Neo4j compatibility**: evidence serialized as JSON string; `neo4j.time.DateTime` → Python `datetime`
 - **Neo4j deployment**: local Windows install (Docker blocked by Zscaler)
 
+### Recent Changes
+- **Process node type + `produces` edge type**: `EntityType.PROCESS` and `IndustrialFlowType.PRODUCES` added to backend/frontend schemas; used for material/equipment → process → product flow modeling.
+- **Ontology rules registry**: `backend/app/services/ontology_rules.py` is the code-side single source of truth for design rules; `docs/ontology_design_rules.md` documents material/process granularity and the canonical `Input → Process → Output` flow.
+- **New DB checkers**: `entity_domain_boundary`, `device_to_product_direct_edge`, `input_to_product_direct_edge` enforce cross-domain isolation and the process-intermediation rule.
+- **Frontend modularization**: `frontend/src/App.tsx` refactored from 1120 lines to ~280 lines by extracting `useIndustrialGraph`, `useCompanyGraph`, and panel components under `frontend/src/components/panels/`.
+- **High-frequency process refactor**: Inserted process nodes for automotive steel/aluminum forming, copper processing, glass/optical fiber manufacturing, semiconductor wafer/design flows, and remaining domains (aluminum/cement/wood/real estate/paper/PCB/PET/plastic/rubber/steel sheet); `input_to_product_direct_edge` violations reduced from 46 to 0.
+- **Neo4j connection resilience**: Added connection pool settings (`max_connection_lifetime`, `connection_acquisition_timeout`, `max_connection_pool_size`) and global exception handlers for `ServiceUnavailable` / `SessionExpired` / `ConnectionResetError` to return 503 instead of crashing uvicorn.
+- **Node search ranking fix**: `list_nodes` now boosts exact matches, then prefix matches, then substring matches; also searches `canonical_name_en`. Searching "芯片" now returns the `chip` node first instead of being buried after other chip-related nodes.
+
 ---
 
 ## 5. Pending Work
@@ -340,6 +349,8 @@ Historical batch construction logs list these as future work; none are implement
 - All IDs use snake_case regex: `^[a-z][a-z0-9_]*$`, min 3 chars, max 64.
 - `RecordStatus`: `ACTIVE`, `PENDING`, `REJECTED`, `ARCHIVED`
 - `Confidence`: `HIGH`, `MEDIUM`, `LOW`
+- `EntityType` now includes `process` for manufacturing/process nodes.
+- `IndustrialFlowType` now includes `produces` for process → output relationships.
 - UUID fields now auto-generate; callers do not need to supply them.
 
 ### Git Hygiene
@@ -368,4 +379,4 @@ Historical batch construction logs list these as future work; none are implement
 
 ---
 
-*Last updated: 2026-06-16*
+*Last updated: 2026-06-18*

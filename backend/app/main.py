@@ -1,7 +1,8 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.config import get_settings
 from app.database import close_async_driver, init_db
@@ -42,6 +43,28 @@ app = FastAPI(
     redoc_url=f"{settings.API_V1_STR}/redoc",
     lifespan=lifespan,
 )
+
+
+@app.exception_handler(ConnectionResetError)
+@app.exception_handler(BrokenPipeError)
+async def connection_error_handler(_request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=503,
+        content={"detail": "Database connection was reset, please retry."},
+    )
+
+try:
+    from neo4j.exceptions import ServiceUnavailable, SessionExpired
+
+    @app.exception_handler(ServiceUnavailable)
+    @app.exception_handler(SessionExpired)
+    async def neo4j_unavailable_handler(_request: Request, exc: Exception):
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Neo4j is temporarily unavailable, please retry."},
+        )
+except ImportError:
+    pass
 
 app.add_middleware(
     CORSMiddleware,

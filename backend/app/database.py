@@ -13,6 +13,9 @@ def get_async_driver():
         _async_driver = AsyncGraphDatabase.driver(
             _settings.NEO4J_URI,
             auth=(_settings.NEO4J_USER, _settings.NEO4J_PASSWORD),
+            max_connection_lifetime=1800,
+            connection_acquisition_timeout=30,
+            max_connection_pool_size=50,
         )
     return _async_driver
 

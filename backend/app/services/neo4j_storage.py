@@ -268,7 +268,8 @@ async def list_nodes(
         params["status"] = status
     if search:
         where_parts.append(
-            "(n.canonical_name_zh CONTAINS $search OR n.node_id CONTAINS $search OR ANY(a IN n.aliases WHERE a CONTAINS $search))"
+            "(n.canonical_name_zh CONTAINS $search OR n.canonical_name_en CONTAINS $search "
+            "OR n.node_id CONTAINS $search OR ANY(a IN n.aliases WHERE a CONTAINS $search))"
         )
         params["search"] = search
     if draft_only:
@@ -286,14 +287,33 @@ async def list_nodes(
         count_record = await count_result.single()
         total = count_record["total"]
 
-        result = await session.run(
-            f"""
-            MATCH (n:IndustrialNode) WHERE {where_clause}
-            RETURN n ORDER BY n.canonical_name_zh
-            SKIP $skip LIMIT $limit
-            """,
-            **params,
-        )
+        if search:
+            # Boost exact matches, then prefix matches, then substring matches.
+            result = await session.run(
+                f"""
+                MATCH (n:IndustrialNode) WHERE {where_clause}
+                WITH n,
+                  CASE
+                    WHEN n.canonical_name_zh = $search OR n.canonical_name_en = $search
+                      OR n.node_id = $search OR ANY(a IN n.aliases WHERE a = $search) THEN 3
+                    WHEN n.canonical_name_zh STARTS WITH $search OR n.canonical_name_en STARTS WITH $search
+                      OR n.node_id STARTS WITH $search OR ANY(a IN n.aliases WHERE a STARTS WITH $search) THEN 2
+                    ELSE 1
+                  END AS score
+                RETURN n ORDER BY score DESC, n.canonical_name_zh
+                SKIP $skip LIMIT $limit
+                """,
+                **params,
+            )
+        else:
+            result = await session.run(
+                f"""
+                MATCH (n:IndustrialNode) WHERE {where_clause}
+                RETURN n ORDER BY n.canonical_name_zh
+                SKIP $skip LIMIT $limit
+                """,
+                **params,
+            )
         items = [_node_from_record(r) async for r in result]
         return items, total
 
