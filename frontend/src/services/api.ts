@@ -3,6 +3,9 @@ import {
   Company,
   CompanyNodeExposure,
   ComputationJob,
+  DbCheckMeta,
+  DbCheckResult,
+  DbFixResult,
   GraphEdge,
   GraphRegistrationBatch,
   GraphStats,
@@ -456,5 +459,30 @@ export const getMaterialCompanies = async (nodeId: string, excludeCompanyId?: st
   const res = await client.get(`/companies/nodes/${nodeId}/connected-companies`, {
     params: excludeCompanyId ? { exclude_company_id: excludeCompanyId } : undefined,
   });
+  return res.data;
+};
+
+
+// ============================================================
+// DB Checks
+// ============================================================
+
+export const listDbChecks = async (): Promise<DbCheckMeta[]> => {
+  const res = await client.get("/admin/db-checks");
+  return res.data;
+};
+
+export const runAllDbChecks = async (): Promise<DbCheckResult[]> => {
+  const res = await client.post("/admin/db-checks/run-all");
+  return res.data;
+};
+
+export const runDbCheck = async (checkId: string): Promise<DbCheckResult> => {
+  const res = await client.post(`/admin/db-checks/${checkId}/run`);
+  return res.data;
+};
+
+export const fixDbCheck = async (checkId: string, issueIds?: string[]): Promise<DbFixResult> => {
+  const res = await client.post(`/admin/db-checks/${checkId}/fix`, { issue_ids: issueIds });
   return res.data;
 };

@@ -6,7 +6,21 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.database import close_async_driver, init_db
 from app.database_postgres import close_postgres_pool, init_postgres_tables
-from app.routers import batches, business_batches, companies, company_exploration, company_material, computation_jobs, edges, explore, factual_graph, industries, nodes, query
+from app.routers import (
+    admin_checks,
+    batches,
+    business_batches,
+    companies,
+    company_exploration,
+    company_material,
+    computation_jobs,
+    edges,
+    explore,
+    factual_graph,
+    industries,
+    nodes,
+    query,
+)
 
 settings = get_settings()
 
@@ -49,6 +63,7 @@ app.include_router(business_batches.router, prefix=f"{settings.API_V1_STR}/busin
 app.include_router(factual_graph.router, prefix=f"{settings.API_V1_STR}/factual-graph", tags=["Factual Graph"])
 app.include_router(explore.router, prefix=f"{settings.API_V1_STR}/explore", tags=["Explore"])
 app.include_router(query.router, prefix=f"{settings.API_V1_STR}/query", tags=["Query"])
+app.include_router(admin_checks.router, prefix=f"{settings.API_V1_STR}/admin/db-checks", tags=["Admin"])
 
 
 @app.get("/health")

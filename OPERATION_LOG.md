@@ -685,3 +685,26 @@ aluminum_ingot → electronic_aluminum_foil → etched_foil → formed_foil
   3. `frontend/src/App.tsx`
      - 向 `NodeDetail` 传入 `handleSelectCompanyDetail` 和 `handleSelectIndustryDetail`。
 - **验证**：`npm run build` 通过，无 TypeScript 错误。
+
+
+---
+
+## 日期：2026-06-16（追加 5）
+
+### 节点浏览导航（上一个/下一个/历史窗口）
+
+- **需求**：实现类似代码跳转的节点浏览历史导航，支持上一个、下一个、历史窗口；处理节点不显示和浏览分叉；要求低侵入、可关闭。
+- **设计决策**：
+  - 采用**线性历史**模型：点击新节点时，如果当前不在历史末尾，则截断当前位置之后的记录，再追加新节点。这样实现简单、行为与浏览器一致，避免树状分叉的复杂性。
+  - 关闭功能后停止记录历史并隐藏 UI，再次开启时从历史空白开始，符合“最小代价关闭”。
+- **新增文件**：
+  - `frontend/src/hooks/useNodeNavigation.ts`：管理历史栈、当前索引、上一个/下一个/跳转/清空/开关状态，状态持久化到 `localStorage`。
+  - `frontend/src/components/NodeNavigation.tsx`：导航工具栏（上一个、下一个、历史窗口按钮）和历史列表弹窗。
+- **集成改动**：
+  - `frontend/src/App.tsx`：初始化 `useNodeNavigation`，在 `handleNodeClick` 中调用 `nav.push(node)`；新增 `handleNavBack` / `handleNavForward` / `handleNavGoto`；在产业图搜索栏区域渲染 `NodeNavigation`。
+- **特性**：
+  - 点击图谱节点或关联关系中的节点链接都会入栈。
+  - 上一个/下一个按钮在有历史时可用。
+  - 历史窗口展示浏览序列，当前节点高亮，点击可跳转。
+  - 跳转时复用已有的 `highlightNodeId` 机制：节点不在画布上会自动获取并加入中心高亮；被过滤器隐藏的节点会被强制显示。
+- **验证**：`npm run build` 通过，无 TypeScript 错误。

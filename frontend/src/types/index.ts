@@ -455,3 +455,43 @@ export const EDGE_TYPE_LABELS: Record<string, string> = {
   variant_of: "变体",
   related_term: "相关术语",
 };
+
+
+// Database check types
+export type CheckSeverity = "ERROR" | "WARNING" | "INFO";
+
+export interface DbCheckIssue {
+  issue_id: string;
+  check_id: string;
+  severity: CheckSeverity;
+  title: string;
+  summary: string;
+  details: Record<string, unknown>;
+  affected_ids: string[];
+  fixable: boolean;
+}
+
+export interface DbCheckResult {
+  check_id: string;
+  name: string;
+  description: string;
+  severity: CheckSeverity;
+  fixable: boolean;
+  issues: DbCheckIssue[];
+  issue_count: number;
+}
+
+export interface DbCheckMeta {
+  check_id: string;
+  name: string;
+  description: string;
+  severity: CheckSeverity;
+  fixable: boolean;
+}
+
+export interface DbFixResult {
+  check_id: string;
+  fixed_count: number;
+  skipped_count: number;
+  messages: string[];
+}

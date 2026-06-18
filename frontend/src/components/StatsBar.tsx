@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Building2, GitBranch, Layers, Network } from "lucide-react";
+import { Activity, Database, GitBranch, Layers, Network } from "lucide-react";
 import { getHealth, getStats } from "@/services/api";
-export type MainView = "industrial_graph" | "company_graph";
+export type MainView = "industrial_graph" | "company_graph" | "db_checks";
 
 interface StatsBarProps {
   mainView: MainView;
@@ -34,13 +34,19 @@ export function StatsBar({ mainView, onChangeMainView }: StatsBarProps) {
           <span className="ml-1 text-xs font-medium text-slate-500">产业本体图</span>
         </div>
 
-        {/* Main View Switcher — 公司视图已移除，保留单视图 */}
+        {/* Main View Switcher */}
         <div className="ml-4 flex items-center rounded-lg border border-slate-700 bg-slate-800 p-0.5">
           <ViewTab
             active={mainView === "industrial_graph"}
             onClick={() => onChangeMainView("industrial_graph")}
             icon={<GitBranch className="h-3 w-3" />}
             label="产业图"
+          />
+          <ViewTab
+            active={mainView === "db_checks"}
+            onClick={() => onChangeMainView("db_checks")}
+            icon={<Database className="h-3 w-3" />}
+            label="数据检查"
           />
         </div>
       </div>
@@ -66,10 +72,10 @@ export function StatsBar({ mainView, onChangeMainView }: StatsBarProps) {
               value={graphStats?.total_edges ?? "—"}
             />
           </>
-        ) : (
+        ) : mainView === "company_graph" ? (
           <>
             <StatItem
-              icon={<Building2 className="h-4 w-4 text-cyan-400" />}
+              icon={<Network className="h-4 w-4 text-cyan-400" />}
               label="公司"
               value={companyNetworkStats?.nodes ?? "—"}
             />
@@ -79,7 +85,7 @@ export function StatsBar({ mainView, onChangeMainView }: StatsBarProps) {
               value={companyNetworkStats?.edges ?? "—"}
             />
           </>
-        )}
+        ) : null}
       </div>
     </div>
   );

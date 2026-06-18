@@ -24,6 +24,7 @@ import { IndustryMultiSelector } from "@/components/IndustryMultiSelector";
 import { IndustryForm } from "@/components/IndustryForm";
 import { Layout } from "@/components/Layout";
 import { NodeDetail } from "@/components/NodeDetail";
+import { NodeNavigation } from "@/components/NodeNavigation";
 import { NodeContextMenu } from "@/components/NodeContextMenu";
 import { NodeCompaniesPanel } from "@/components/NodeCompaniesPanel";
 import { NodeForm } from "@/components/NodeForm";
@@ -31,8 +32,10 @@ import { NodeIndustriesPanel } from "@/components/NodeIndustriesPanel";
 import { SearchPanel } from "@/components/SearchPanel";
 import { StatsBar, MainView } from "@/components/StatsBar";
 import { CompanyMaterialModal } from "@/components/CompanyMaterialModal";
+import { DbChecksPage } from "@/pages/DbChecksPage";
 import { ExplorationCanvas, ExplorationNode as ENode, ExplorationEdge as EEdge } from "@/components/ExplorationCanvas";
 import { MaterialConnectionPanel } from "@/components/MaterialConnectionPanel";
+import { useNodeNavigation } from "@/hooks/useNodeNavigation";
 
 export type PanelType =
   | "none"
@@ -107,6 +110,9 @@ export default function App() {
   const [graphKey, setGraphKey] = useState(0);
   const [subgraphData, setSubgraphData] = useState<{ nodes: IndustrialNode[]; edges: GraphEdge[] } | undefined>(undefined);
   const [highlightNodeIds, setHighlightNodeIds] = useState<string[] | undefined>(undefined);
+
+  // Node navigation history (上一个/下一个/历史窗口)
+  const nav = useNodeNavigation();
 
   // ------------------------------------------------------------------
   // Company graph state
@@ -196,7 +202,35 @@ export default function App() {
     setSelectedEdge(null);
     setPanel("node-detail");
     setContextMenu((prev) => ({ ...prev, visible: false }));
-  }, []);
+    nav.push(node);
+  }, [nav]);
+
+  const handleNavBack = useCallback(() => {
+    const node = nav.back();
+    if (node) {
+      setSelectedNode(node);
+      setPanel("node-detail");
+    }
+  }, [nav]);
+
+  const handleNavForward = useCallback(() => {
+    const node = nav.forward();
+    if (node) {
+      setSelectedNode(node);
+      setPanel("node-detail");
+    }
+  }, [nav]);
+
+  const handleNavGoto = useCallback(
+    (targetIndex: number) => {
+      const node = nav.goto(targetIndex);
+      if (node) {
+        setSelectedNode(node);
+        setPanel("node-detail");
+      }
+    },
+    [nav]
+  );
 
   const handleNodeContextMenu = useCallback((node: IndustrialNode, x: number, y: number) => {
     setContextMenu({ visible: true, x, y, node });
@@ -658,6 +692,18 @@ export default function App() {
   // ------------------------------------------------------------------
   const industrialSearchPanel = (
     <div className="flex items-center gap-2">
+      <NodeNavigation
+        enabled={nav.enabled}
+        history={nav.history}
+        currentIndex={nav.index}
+        canGoBack={nav.canGoBack}
+        canGoForward={nav.canGoForward}
+        onBack={handleNavBack}
+        onForward={handleNavForward}
+        onGoto={handleNavGoto}
+        onToggleEnabled={nav.toggleEnabled}
+        onClear={nav.clear}
+      />
       <SearchPanel
         onSelectNode={(node) => {
           setSelectedNode(node);
@@ -963,6 +1009,19 @@ export default function App() {
   // ------------------------------------------------------------------
   // Render
   // ------------------------------------------------------------------
+  if (mainView === "db_checks") {
+    return (
+      <div className="flex h-screen w-full flex-col bg-slate-950">
+        <div className="h-14 shrink-0 border-b border-slate-800 bg-slate-900">
+          <StatsBar mainView={mainView} onChangeMainView={handleChangeMainView} />
+        </div>
+        <div className="flex-1 overflow-hidden">
+          <DbChecksPage />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <Layout
