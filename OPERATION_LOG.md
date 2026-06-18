@@ -618,3 +618,47 @@ aluminum_ingot → electronic_aluminum_foil → etched_foil → formed_foil
 - **相关脚本**：
   - `backend/add_wf6_route.py`：补充产业图节点/关系
   - `backend/add_wf6_industry_mappings.py`：补充行业映射
+
+
+---
+
+## 日期：2026-06-16（追加 2）
+
+### WF6 路线公司与物料关联补录
+
+- **问题**：用户反馈专题中看不到关联公司，此前确实未将公司与 `tungsten_hexafluoride` 节点建立 `CompanyNodeExposure`。
+- **补录公司**：
+  - **液化空气（air_liquide）**：全球电子级 WF6 主要供应商，约 24% 供应能力
+  - **林德（linde）**：全球电子级 WF6 主要供应商，约 21% 供应能力
+  - **华特气体（huat_gas）**：根据客户需求供应纯化 WF6 产品（公司公开回应暂无合成产能）
+- **依据**：Verified Market Reports 对 WF6 市场竞争格局的分析；华特气体投资者互动回复。
+- **操作**：
+  1. 通过 `POST /api/v1/companies/{id}/exposures` 新增 3 条暴露关系。
+  2. 调整 `generate_semiconductor_report.py` 的日期过滤与上游材料节点列表，重新生成研报。
+  3. 在研报专题中新增「已录入 93 家公司中的 WF6 关联企业」表格，并标注国内尚未录入的缺口玩家。
+- **相关脚本**：
+  - `backend/add_wf6_company_exposures.py`
+  - `backend/generate_semiconductor_report.py`
+
+
+---
+
+## 日期：2026-06-16（追加 3）
+
+### 前端节点关系面板优化
+
+- **用户反馈**：节点详情里的「关联关系」区域看不到中文名字，且上游应放上面；点击关联节点应跳转并显示（即使被过滤器隐藏）。
+- **改动内容**：
+  1. `frontend/src/components/NodeEdgeList.tsx`
+     - 拉取全量节点列表建立 `nodeMap`，用 `canonical_name_zh` 显示关联节点中文名。
+     - 关联节点名称改为可点击按钮，点击后调用 `onSelectNode` 跳转到对应节点详情。
+     - 调整顺序：**上游（incoming）放在上面，下游（outgoing）放在下面**。
+     - 添加按钮样式（`text-cyan-400 hover:underline`），鼠标悬停显示 node_id。
+  2. `frontend/src/components/NodeDetail.tsx`
+     - 新增 `onSelectNode` prop，透传给 `NodeEdgeList`。
+  3. `frontend/src/App.tsx`
+     - 向 `NodeDetail` 传入 `handleNodeClick`，实现节点跳转。
+  4. `frontend/src/components/GraphCanvas.tsx`
+     - 高亮节点时先移除 `hidden` 类，确保被过滤器隐藏的节点能显示出来。
+     - 对高亮节点的连接边做判断：若另一端点可见，则同步显示该边。
+- **验证**：`npm run build` 通过，无 TypeScript 错误。

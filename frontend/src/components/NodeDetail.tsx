@@ -9,9 +9,10 @@ interface NodeDetailProps {
   onEdit: () => void;
   onClose: () => void;
   onRefresh: () => void;
+  onSelectNode?: (node: IndustrialNode) => void;
 }
 
-export function NodeDetail({ node, onEdit, onClose, onRefresh }: NodeDetailProps) {
+export function NodeDetail({ node, onEdit, onClose, onRefresh, onSelectNode }: NodeDetailProps) {
   const deleteMutation = useMutation({
     mutationFn: deleteNode,
     onSuccess: () => {
@@ -123,6 +124,7 @@ export function NodeDetail({ node, onEdit, onClose, onRefresh }: NodeDetailProps
           <NodeEdgeList
             nodeId={node.node_id}
             onRefreshGraph={onRefresh}
+            onSelectNode={onSelectNode}
           />
         </div>
       </div>

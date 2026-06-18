@@ -1,17 +1,18 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Edit2, Trash2, Plus, ArrowUp, ArrowDown } from "lucide-react";
-import { GraphEdge } from "@/types";
-import { listEdges, deleteEdge } from "@/services/api";
+import { GraphEdge, IndustrialNode } from "@/types";
+import { listEdges, deleteEdge, listNodes, getNode } from "@/services/api";
 import { EdgeForm } from "./EdgeForm";
 import { QuickEdgeForm } from "./QuickEdgeForm";
 
 interface NodeEdgeListProps {
   nodeId: string;
   onRefreshGraph: () => void;
+  onSelectNode?: (node: IndustrialNode) => void;
 }
 
-export function NodeEdgeList({ nodeId, onRefreshGraph }: NodeEdgeListProps) {
+export function NodeEdgeList({ nodeId, onRefreshGraph, onSelectNode }: NodeEdgeListProps) {
   const queryClient = useQueryClient();
   const [editingEdge, setEditingEdge] = useState<GraphEdge | null>(null);
   const [creatingDirection, setCreatingDirection] = useState<"outgoing" | "incoming" | null>(null);
@@ -32,6 +33,20 @@ export function NodeEdgeList({ nodeId, onRefreshGraph }: NodeEdgeListProps) {
       queryKey: ["edges-incoming", nodeId],
       queryFn: () => listEdges(1, 100, undefined, undefined, undefined, nodeId),
     });
+
+    const { data: nodesData } = useQuery({
+      queryKey: ["all-nodes-for-edge-list"],
+      queryFn: () => listNodes(1, 1000),
+      staleTime: 60_000,
+    });
+
+    const nodeMap = useMemo(() => {
+      const map: Record<string, IndustrialNode> = {};
+      nodesData?.items.forEach((n) => {
+        map[n.node_id] = n;
+      });
+      return map;
+    }, [nodesData]);
 
     const deleteMutation = useMutation({
       mutationFn: deleteEdge,
@@ -56,8 +71,25 @@ export function NodeEdgeList({ nodeId, onRefreshGraph }: NodeEdgeListProps) {
       onRefreshGraph();
     };
 
+    const handleNodeClick = async (otherNodeId: string) => {
+      if (!onSelectNode) return;
+      const cached = nodeMap[otherNodeId];
+      if (cached) {
+        onSelectNode(cached);
+        return;
+      }
+      try {
+        const fetched = await getNode(otherNodeId);
+        onSelectNode(fetched);
+      } catch {
+        // ignore fetch errors
+      }
+    };
+
     const renderEdgeItem = (edge: GraphEdge, direction: "outgoing" | "incoming") => {
-      const otherNode = direction === "outgoing" ? edge.to_node : edge.from_node;
+      const otherNodeId = direction === "outgoing" ? edge.to_node : edge.from_node;
+      const otherNode = nodeMap[otherNodeId];
+      const displayName = otherNode?.canonical_name_zh || otherNodeId;
       const isIndustrial = edge.edge_namespace === "industrial_flow";
       return (
         <div
@@ -73,11 +105,25 @@ export function NodeEdgeList({ nodeId, onRefreshGraph }: NodeEdgeListProps) {
             <div className="truncate text-xs text-slate-200">
               {direction === "outgoing" ? (
                 <>
-                  <span className="text-slate-400">→</span> {otherNode}
+                  <span className="text-slate-400">→</span>{" "}
+                  <button
+                    onClick={() => handleNodeClick(otherNodeId)}
+                    className="text-cyan-400 hover:underline"
+                    title={otherNodeId}
+                  >
+                    {displayName}
+                  </button>
                 </>
               ) : (
                 <>
-                  {otherNode} <span className="text-slate-400">→</span>
+                  <button
+                    onClick={() => handleNodeClick(otherNodeId)}
+                    className="text-cyan-400 hover:underline"
+                    title={otherNodeId}
+                  >
+                    {displayName}
+                  </button>{" "}
+                  <span className="text-slate-400">→</span>
                 </>
               )}
             </div>
@@ -123,20 +169,20 @@ export function NodeEdgeList({ nodeId, onRefreshGraph }: NodeEdgeListProps) {
             {!isAdding && (
               <>
                 <button
-                  onClick={() => setCreatingDirection("outgoing")}
-                  className="flex items-center gap-1 rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400 hover:bg-slate-700 hover:text-cyan-400"
-                  title="添加下游关系"
-                >
-                  <Plus className="h-3 w-3" />
-                  下游
-                </button>
-                <button
                   onClick={() => setCreatingDirection("incoming")}
                   className="flex items-center gap-1 rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400 hover:bg-slate-700 hover:text-cyan-400"
                   title="添加上游关系"
                 >
                   <Plus className="h-3 w-3" />
                   上游
+                </button>
+                <button
+                  onClick={() => setCreatingDirection("outgoing")}
+                  className="flex items-center gap-1 rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400 hover:bg-slate-700 hover:text-cyan-400"
+                  title="添加下游关系"
+                >
+                  <Plus className="h-3 w-3" />
+                  下游
                 </button>
               </>
             )}
@@ -159,23 +205,23 @@ export function NodeEdgeList({ nodeId, onRefreshGraph }: NodeEdgeListProps) {
           />
         )}
 
-        {/* Outgoing */}
-        {outgoingEdges.length > 0 && (
-          <div className="space-y-1">
-            <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
-              下游 ({outgoingEdges.length})
-            </div>
-            {outgoingEdges.map((e) => renderEdgeItem(e, "outgoing"))}
-          </div>
-        )}
-
-        {/* Incoming */}
+        {/* Incoming — 上游放上面 */}
         {incomingEdges.length > 0 && (
           <div className="space-y-1">
             <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
               上游 ({incomingEdges.length})
             </div>
             {incomingEdges.map((e) => renderEdgeItem(e, "incoming"))}
+          </div>
+        )}
+
+        {/* Outgoing — 下游放下边 */}
+        {outgoingEdges.length > 0 && (
+          <div className="space-y-1">
+            <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+              下游 ({outgoingEdges.length})
+            </div>
+            {outgoingEdges.map((e) => renderEdgeItem(e, "outgoing"))}
           </div>
         )}
 

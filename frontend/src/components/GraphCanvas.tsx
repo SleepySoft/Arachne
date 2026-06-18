@@ -578,6 +578,14 @@ export function GraphCanvas({
     if (highlightNodeId) {
       const target = cy.getElementById(highlightNodeId);
       if (target.length) {
+        target.removeClass("hidden");
+        // 若关联边因另一端被隐藏而隐藏，当另一端可见时重新显示该边
+        target.connectedEdges().forEach((edge) => {
+          const other = edge.source().id() === target.id() ? edge.target() : edge.source();
+          if (!other.hasClass("hidden")) {
+            edge.removeClass("hidden");
+          }
+        });
         target.addClass("highlighted");
         cy.elements().not(target).not(target.neighborhood()).addClass("dimmed");
         // 平移到视野中心，不改变缩放级别
@@ -607,6 +615,7 @@ export function GraphCanvas({
             position: { x, y },
           });
           const added = cy2.getElementById(node.node_id);
+          added.removeClass("hidden");
           added.addClass("highlighted");
           cy2.elements().not(added).addClass("dimmed");
           cy2.animate({
