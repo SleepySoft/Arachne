@@ -25,7 +25,10 @@
 | `start-all.ps1` | 项目根目录 | `scripts/start-all.ps1` | 一键启动全系统的 PowerShell 脚本，长期复用 |
 | `stop-all.ps1` | 项目根目录 | `scripts/stop-all.ps1` | 一键停止全系统的 PowerShell 脚本，长期复用 |
 
-> 注：`arachne_manager.py` 内部的 `PROJECT_ROOT` 已由 `Path(__file__).parent` 改为 `Path(__file__).parent.parent`，确保从 `scripts/` 运行仍能正确定位项目根目录。
+> 注：
+> - `arachne_manager.py` 内部的 `PROJECT_ROOT` 已由 `Path(__file__).parent` 改为 `Path(__file__).parent.parent`，确保从 `scripts/` 运行仍能正确定位项目根目录。
+> - `start-all.ps1` 原先用 `$MyInvocation.MyCommand.Definition` 取脚本路径后再取一次父目录；脚本移动到 `scripts/` 后这会把 `scripts/` 当成项目根目录，导致找不到 Neo4j。已改为 `$projectRoot = Split-Path -Parent $PSScriptRoot`。
+> - `stop-all.ps1` 中停止后端的端口原来写死为 `8005`，与 `start-all.ps1` 启动的 `16060` 不一致，已修正为 `16060`。
 
 ### 2.2 根目录 → `temp/`（临时脚本/产物）
 

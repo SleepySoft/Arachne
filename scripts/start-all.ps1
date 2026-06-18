@@ -4,7 +4,7 @@
     一键启动 Arachne 全系统（Neo4j + 后端 + 前端）
 #>
 $ErrorActionPreference = "Stop"
-$projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Definition
+$projectRoot = Split-Path -Parent $PSScriptRoot
 
 function Test-Port($port) {
     $conn = Test-NetConnection -ComputerName localhost -Port $port -WarningAction SilentlyContinue
@@ -84,4 +84,4 @@ Write-Host "  Neo4j Browser:  http://localhost:7474"
 Write-Host "  Backend API:    http://localhost:16060/docs"
 Write-Host "  Frontend App:   http://localhost:3000"
 Write-Host ""
-Write-Host "To stop everything, run: .\stop-all.ps1" -ForegroundColor DarkGray
+Write-Host "To stop everything, run: .\scripts\stop-all.ps1" -ForegroundColor DarkGray

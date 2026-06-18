@@ -22,7 +22,7 @@ Write-Host "[1/3] Stopping Frontend..." -ForegroundColor Cyan
 Stop-ByPort 3000 "Frontend"
 
 Write-Host "[2/3] Stopping Backend..." -ForegroundColor Cyan
-Stop-ByPort 8005 "Backend"
+Stop-ByPort 16060 "Backend"
 
 Write-Host "[3/3] Stopping Neo4j..." -ForegroundColor Cyan
 # Neo4j runs on 7687 (java process) and 7474 (HTTP)
