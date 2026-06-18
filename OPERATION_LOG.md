@@ -576,3 +576,45 @@ aluminum_ingot → electronic_aluminum_foil → etched_foil → formed_foil
 
 1. **Phase 11b**: 事实关系图 Schema + Storage + Router（Person + 三类关系）已在 `backend/app/models/factual_graph_schema.py`、`backend/app/services/factual_graph_storage.py`、`backend/app/routers/factual_graph.py` 实现
 2. **Phase 11c**: 跨域探索接口（统一的 `/api/v1/explore/*`）已在 `backend/app/routers/explore.py` 实现
+
+
+---
+
+## 日期：2026-06-16
+
+### 半导体公司研究工作流第 4 步：产业链分类与研报生成
+
+- **目标**：按产业链上中下游分类整理已录入的 93 家国内外半导体公司，生成研报文档。
+- **执行内容**：
+  1. 补充半导体产业图缺失的上下游 `industrial_flow` 关系 36 条，覆盖材料→硅片、晶圆→制造、芯片→封测、芯片→终端应用等链路。
+  2. 基于 PostgreSQL 中 `created_at >= 2026-06-18` 的 131 条暴露关系，筛选出 93 家半导体公司。
+  3. 按 **上游材料、上游设备、EDA/IP、芯片设计、晶圆制造、封装测试** 六大环节进行分类。
+  4. 生成 Markdown 研报：`docs/semiconductor_company_research_report.md`。
+- **产出统计**：
+  - 公司总数：93
+  - 暴露关系：131
+  - 按国家/地区分布：CN 43、US 23、JP 13、TW 4、KR 2、NL 2、CH 1、DE 1、FR 1、GB 1、IE 1、IL 1
+- **相关脚本**：
+  - `backend/add_semiconductor_relations.py`：补充产业图关系
+  - `backend/generate_semiconductor_report.py`：生成研报
+
+
+---
+
+## 日期：2026-06-16（追加）
+
+### 专题补充：六氟化钨（WF6）与替代路线
+
+- **背景**：用户关注近期热门的六氟化钨供应链及替代路线。
+- **研究工作**：
+  1. 通过网络搜索梳理 WF6 在半导体 CVD/ALD 钨薄膜中的作用、供应风险（日本断供传闻）及氟污染瓶颈。
+  2. 整理主要替代路线：五氯化钨（WCl5）、六氯化钨（WCl6）、六羰基钨（W(CO)6）、ALD 钼（Mo）薄膜。
+  3. 在产业本体图中补充 7 个节点与 8 条产业流/本体关系，覆盖 WF6 → 钨薄膜 → 芯片及替代路线。
+  4. 将新节点映射到 `semiconductor_industry`。
+  5. 在 `docs/semiconductor_company_research_report.md` 末尾追加专题章节，分析国内已录入 93 家公司中的 WF6 相关布局与缺口。
+- **关键结论**：
+  - 已录入的 93 家公司中直接覆盖 WF6 合成/量产的标的稀缺；华特气体仅做纯化、雅克科技无 WF6 业务。
+  - 后续若扩展半导体公司样本，建议补充中船特气、昊华科技、和远气体、金宏气体等电子特气龙头。
+- **相关脚本**：
+  - `backend/add_wf6_route.py`：补充产业图节点/关系
+  - `backend/add_wf6_industry_mappings.py`：补充行业映射
