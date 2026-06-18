@@ -46,6 +46,36 @@
 
 ---
 
+## 2. 规范流程模式
+
+推荐用以下“漏斗型”结构描述从输入到产品的转化：
+
+```text
+材料/输入物  --material_flow-->  工艺过程
+设备/能力    --capability_supply-->  工艺过程
+设计数据     --information_flow-->  工艺过程
+
+工艺过程     --produces-->  产物 / 中间产物
+中间产物     --material_flow-->  下游工艺过程 或 下游产物
+```
+
+**说明：**
+
+- `produces` 专门用于“工艺过程 → 产出”，语义上比 `material_flow` 更精确。
+- 当产物继续作为下游输入时，仍使用 `material_flow`（也可理解为 `processes_into` 的语义）。
+- 禁止材料、设备、能力直接 `material_flow` / `capability_supply` / `information_flow` 到产品节点。
+
+**示例：**
+
+```text
+硅片 --material_flow--> 晶圆制造 --produces--> 晶圆
+光刻机 --capability_supply--> 光刻工艺
+光刻工艺 --composition--> 晶圆制造
+晶圆 --material_flow--> 芯片封装 --produces--> 芯片
+```
+
+---
+
 ## 2. 规则注册表
 
 | 规则 ID | 名称 | 严重级别 | 自动修复 | 类别 | Checker ID | 说明 |
@@ -66,6 +96,7 @@
 | R14 | 悬挂关系必须清理 | ERROR | √ | edge | `dangling_edges` | 边端点必须是存在的 IndustrialNode |
 | R15 | 行业映射和公司暴露不能悬空 | ERROR | √ | cross_domain | `dangling_industry_mappings` / `dangling_company_exposures` | 桥接表 node_id 必须在 Neo4j 中存在 |
 | R16 | 孤立节点需审查 | WARNING | × | quality | `orphan_nodes` | 无连接的节点需审查 |
+| R17 | 输入物/设备/能力不直接指向产品 | WARNING | × | edge | `input_to_product_direct_edge` | material/device/capability 必须先指向 process |
 
 ---
 
@@ -104,7 +135,27 @@ etching_machine --material_flow--> chip
 lithography_machine --capability_supply--> lithography_process
 photoresist --material_flow--> lithography_process
 lithography_process --material_flow--> wafer_manufacturing
-wafer_manufacturing --material_flow--> wafer
+wafer_manufacturing --produces--> wafer
+```
+
+### R17 输入物/设备/能力不直接指向产品
+
+**规则：** `material`、`device`、`technology_capability` 类型的节点不能通过 `material_flow` / `capability_supply` / `information_flow` 直接指向 `component` / `module` / `subsystem` / `system` / `platform` / `application_system` 等产品类节点。
+
+**理由：** 这违反了“输入 → 工艺过程 → 产出”的规范流程。原材料、设备、软件/数据能力都需要经过工艺/制造环节才能转化为产品。
+
+**反例：**
+
+```text
+铝 --material_flow--> 活塞
+EDA软件 --capability_supply--> 芯片
+```
+
+**正例：**
+
+```text
+铝 --material_flow--> 压铸工艺 --produces--> 活塞
+EDA软件 --information_flow--> 芯片设计 --produces--> 芯片
 ```
 
 ---

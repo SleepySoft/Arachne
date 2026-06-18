@@ -2,23 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { X, Users, ArrowUp, ArrowDown, Link2, Check } from "lucide-react";
 import { getMaterialConnections } from "@/services/api";
-
-interface CNode {
-  company_id: string;
-  name_zh: string;
-  company_type: string;
-  status: string;
-}
-
-interface CEdge {
-  from_company_id: string;
-  to_company_id: string;
-  path_count: number;
-  strength: number;
-  confidence: string;
-  relation_type?: string;
-  relation_subtype?: string;
-}
+import { CompanyNetworkNode, CompanyNetworkEdge } from "@/types";
 
 interface SelectedCompany {
   company_id: string;
@@ -34,7 +18,7 @@ interface CompanyMaterialModalProps {
   companyName: string;
   isOpen: boolean;
   onClose: () => void;
-  onAddToView: (nodes: CNode[], edges: CEdge[]) => void;
+  onAddToView: (nodes: CompanyNetworkNode[], edges: CompanyNetworkEdge[]) => void;
 }
 
 export function CompanyMaterialModal({
@@ -83,9 +67,9 @@ export function CompanyMaterialModal({
   };
 
   const handleAddToView = () => {
-    const nodes: CNode[] = [];
+    const nodes: CompanyNetworkNode[] = [];
     const nodeIds = new Set<string>();
-    const edges: CEdge[] = [];
+    const edges: CompanyNetworkEdge[] = [];
 
     selected.forEach((item) => {
       if (!nodeIds.has(item.company_id)) {
@@ -100,7 +84,7 @@ export function CompanyMaterialModal({
 
       // Create edge from anchor to selected company
       // direction determines the edge direction
-      const edge: CEdge =
+      const edge: CompanyNetworkEdge =
         item.direction === "upstream"
           ? {
               from_company_id: item.company_id,

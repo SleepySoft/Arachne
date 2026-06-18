@@ -947,6 +947,80 @@ class UnknownEntityTypeChecker(Checker):
 
 
 @register_checker
+class InputToProductDirectEdgeChecker(Checker):
+    """material / device / technology_capability 不直接指向产品节点。"""
+
+    check_id = "input_to_product_direct_edge"
+    name = "输入物/设备/能力不直连产品"
+    description = "检测 material、device、technology_capability 节点是否直接通过产业流指向产品类节点。"
+    severity = Severity.WARNING
+    fixable = False
+
+    INPUT_TYPES = {"material", "device", "technology_capability"}
+    PRODUCT_TYPES = {"component", "module", "subsystem", "system", "platform", "application_system"}
+    EDGE_TYPES = {"material_flow", "capability_supply", "information_flow"}
+
+    def __init__(self):
+        rule = get_rule_by_checker(self.check_id)
+        if rule:
+            self.name = rule.title
+            self.description = rule.description
+            self.severity = Severity(rule.severity.value)
+            self.fixable = rule.fixable
+
+    async def run(self) -> List[CheckIssue]:
+        driver = get_async_driver()
+        issues: List[CheckIssue] = []
+        async with driver.session() as s:
+            result = await s.run(
+                """
+                MATCH (a:IndustrialNode)-[r:INDUSTRIAL_FLOW]->(b:IndustrialNode)
+                WHERE a.entity_type IN $input_types
+                  AND b.entity_type IN $product_types
+                  AND r.edge_type IN $edge_types
+                RETURN elementId(r) AS rel_id, r.edge_id AS edge_id,
+                       a.node_id AS from_node, a.canonical_name_zh AS from_name, a.entity_type AS from_type,
+                       b.node_id AS to_node, b.canonical_name_zh AS to_name, b.entity_type AS to_type,
+                       r.edge_type AS et
+                ORDER BY edge_id
+                """,
+                {
+                    "input_types": list(self.INPUT_TYPES),
+                    "product_types": list(self.PRODUCT_TYPES),
+                    "edge_types": list(self.EDGE_TYPES),
+                },
+            )
+            async for rec in result:
+                issues.append(
+                    CheckIssue(
+                        issue_id=f"{self.check_id}:{rec['rel_id']}",
+                        check_id=self.check_id,
+                        severity=self.severity,
+                        title="输入物/设备/能力直接指向产品",
+                        summary=(
+                            f"`{rec['from_name'] or rec['from_node']}` ({rec['from_type']}) "
+                            f"通过 `{rec['et']}` 直接指向产品 "
+                            f"`{rec['to_name'] or rec['to_node']}` ({rec['to_type']})。"
+                        ),
+                        details={
+                            "rel_id": rec["rel_id"],
+                            "edge_id": rec["edge_id"],
+                            "from_node": rec["from_node"],
+                            "from_name": rec["from_name"],
+                            "from_type": rec["from_type"],
+                            "to_node": rec["to_node"],
+                            "to_name": rec["to_name"],
+                            "to_type": rec["to_type"],
+                            "edge_type": rec["et"],
+                        },
+                        affected_ids=[rec["edge_id"] or rec["rel_id"], rec["from_node"], rec["to_node"]],
+                        fixable=False,
+                    )
+                )
+        return issues
+
+
+@register_checker
 class MissingIndustrialFlowDescriptionChecker(Checker):
     """产业流关系缺少 description。"""
 

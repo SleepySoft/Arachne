@@ -57,6 +57,7 @@ class IndustrialFlowType(str, Enum):
     INFORMATION_FLOW = "information_flow"
     CAPABILITY_SUPPLY = "capability_supply"
     SERVICE_FLOW = "service_flow"
+    PRODUCES = "produces"          # 工艺过程 -> 产物/中间产物
 
 
 # ============================================================
@@ -71,6 +72,7 @@ EDGE_TYPE_LABELS: dict[str, str] = {
     "information_flow": "信息流",
     "capability_supply": "能力供给",
     "service_flow": "服务流",
+    "produces": "产出",
     # OntologyType
     "alias_of": "别名/同义",
     "is_a": "是一种",

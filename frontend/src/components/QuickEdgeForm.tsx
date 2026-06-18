@@ -25,6 +25,7 @@ const EDGE_TYPES: { value: IndustrialFlowType; label: string }[] = [
   { value: "information_flow", label: "信息流" },
   { value: "capability_supply", label: "能力供给" },
   { value: "service_flow", label: "服务流" },
+  { value: "produces", label: "产出" },
 ];
 
 export function QuickEdgeForm({

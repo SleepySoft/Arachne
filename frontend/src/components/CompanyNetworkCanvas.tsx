@@ -1,25 +1,9 @@
 import { useEffect, useRef } from "react";
 import cytoscape from "cytoscape";
 import dagre from "cytoscape-dagre";
+import { CompanyNetworkNode, CompanyNetworkEdge } from "@/types";
 
 cytoscape.use(dagre);
-
-interface CompanyNetworkNode {
-  company_id: string;
-  name_zh: string;
-  company_type: string;
-  status: string;
-}
-
-interface CompanyNetworkEdge {
-  from_company_id: string;
-  to_company_id: string;
-  path_count: number;
-  strength: number;
-  confidence: string;
-  relation_type?: string;
-  relation_subtype?: string;
-}
 
 interface CompanyNetworkCanvasProps {
   nodes: CompanyNetworkNode[];

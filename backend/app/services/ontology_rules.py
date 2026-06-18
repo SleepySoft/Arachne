@@ -218,6 +218,17 @@ ONTOLOGY_RULES: List[OntologyRule] = [
         examples=["新建节点未建立任何关系"],
         checker_id="orphan_nodes",
     ),
+    OntologyRule(
+        rule_id="R17",
+        title="输入物/设备/能力不直接指向产品",
+        description="material、device、technology_capability 类型的节点不能通过 material_flow / capability_supply / information_flow 直接指向 component / module / subsystem / system / platform / application_system 等产品类节点。它们必须先指向 process / service / technology_capability 节点。",
+        severity=Severity.WARNING,
+        category=RuleCategory.EDGE,
+        fixable=False,
+        rationale="原材料、设备和能力都需要经过工艺/制造环节才能转化为产品；直接连边会掩盖产业链结构，也与 'Material -> Process -> Output' 的规范流程冲突。",
+        examples=["铝 --material_flow--> 活塞", "EDA软件 --capability_supply--> 芯片", "光刻机 --capability_supply--> 晶圆"],
+        checker_id="input_to_product_direct_edge",
+    ),
 ]
 
 

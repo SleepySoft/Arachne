@@ -21,7 +21,8 @@ export type IndustrialFlowType =
   | "energy_flow"
   | "information_flow"
   | "capability_supply"
-  | "service_flow";
+  | "service_flow"
+  | "produces";
 
 export type OntologyType =
   | "alias_of"
@@ -451,6 +452,7 @@ export const EDGE_TYPE_LABELS: Record<string, string> = {
   information_flow: "信息流",
   capability_supply: "能力供给",
   service_flow: "服务流",
+  produces: "产出",
   // OntologyType
   alias_of: "别名/同义",
   is_a: "是一种",
@@ -497,3 +499,48 @@ export interface DbFixResult {
   skipped_count: number;
   messages: string[];
 }
+
+// ============================================================
+// UI / Shared Types
+// ============================================================
+
+export type PanelType =
+  | "none"
+  | "node-detail"
+  | "edge-detail"
+  | "node-create"
+  | "node-edit"
+  | "edge-create"
+  | "edge-edit"
+  | "batch-upload"
+  | "industry-detail"
+  | "industry-create"
+  | "industry-edit"
+  | "company-detail"
+  | "company-create"
+  | "company-edit"
+  | "node-companies"
+  | "node-industries"
+  | "company-relation-detail";
+
+// Company network node type used for canvas
+export interface CompanyNetworkNode {
+  company_id: string;
+  name_zh: string;
+  company_type: string;
+  status: string;
+}
+
+export interface CompanyNetworkEdge {
+  from_company_id: string;
+  to_company_id: string;
+  path_count: number;
+  strength: number;
+  confidence: string;
+  relation_type?: string;
+  relation_subtype?: string;
+}
+
+// Backward-compatible aliases
+export type CNode = CompanyNetworkNode;
+export type CEdge = CompanyNetworkEdge;

@@ -36,6 +36,7 @@ const INDUSTRIAL_FLOW_TYPES = [
   "information_flow",
   "capability_supply",
   "service_flow",
+  "produces",
 ];
 
 const ONTOLOGY_TYPES = ["alias_of", "is_a", "variant_of", "related_term"];

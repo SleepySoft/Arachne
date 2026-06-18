@@ -1,1014 +1,33 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { GraphEdge, IndustrialNode, Industry, Company } from "@/types";
-import { BatchUploader } from "@/components/BatchUploader";
-import { CompanyDetail } from "@/components/CompanyDetail";
-import { CompanyForm } from "@/components/CompanyForm";
-import { CompanyGraphEmptyState } from "@/components/CompanyGraphEmptyState";
-import { CompanyNetworkCanvas } from "@/components/CompanyNetworkCanvas";
-import { CompanySidebar } from "@/components/CompanySidebar";
-import {
-  getCompany,
-  getCompanySubgraph,
-  getExplorationGraph,
-  getIndustrySubgraph,
-} from "@/services/api";
-import { EdgeDetail } from "@/components/EdgeDetail";
-import { EdgeForm } from "@/components/EdgeForm";
-import { CollapsibleSection } from "@/components/CollapsibleSection";
-import { CompanyMultiSelector } from "@/components/CompanyMultiSelector";
-import { FilterPanel } from "@/components/FilterPanel";
+import { useState } from "react";
+import { StatsBar, MainView } from "@/components/StatsBar";
+import { DbChecksPage } from "@/pages/DbChecksPage";
+import { Layout } from "@/components/Layout";
 import { GraphCanvas } from "@/components/GraphCanvas";
 import { GraphToolbar } from "@/components/GraphToolbar";
-import { IndustryDetail } from "@/components/IndustryDetail";
-import { IndustryMultiSelector } from "@/components/IndustryMultiSelector";
-import { IndustryForm } from "@/components/IndustryForm";
-import { Layout } from "@/components/Layout";
-import { NodeDetail } from "@/components/NodeDetail";
-import { NodeNavigation } from "@/components/NodeNavigation";
 import { NodeContextMenu } from "@/components/NodeContextMenu";
-import { NodeCompaniesPanel } from "@/components/NodeCompaniesPanel";
-import { NodeForm } from "@/components/NodeForm";
-import { NodeIndustriesPanel } from "@/components/NodeIndustriesPanel";
-import { SearchPanel } from "@/components/SearchPanel";
-import { StatsBar, MainView } from "@/components/StatsBar";
+import { CompanyGraphEmptyState } from "@/components/CompanyGraphEmptyState";
+import { CompanyNetworkCanvas } from "@/components/CompanyNetworkCanvas";
+import { ExplorationCanvas } from "@/components/ExplorationCanvas";
 import { CompanyMaterialModal } from "@/components/CompanyMaterialModal";
-import { DbChecksPage } from "@/pages/DbChecksPage";
-import { ExplorationCanvas, ExplorationNode as ENode, ExplorationEdge as EEdge } from "@/components/ExplorationCanvas";
 import { MaterialConnectionPanel } from "@/components/MaterialConnectionPanel";
-import { useNodeNavigation } from "@/hooks/useNodeNavigation";
-
-export type PanelType =
-  | "none"
-  | "node-detail"
-  | "edge-detail"
-  | "node-create"
-  | "node-edit"
-  | "edge-create"
-  | "edge-edit"
-  | "batch-upload"
-  | "industry-detail"
-  | "industry-create"
-  | "industry-edit"
-  | "company-detail"
-  | "company-create"
-  | "company-edit"
-  | "node-companies"
-  | "node-industries"
-  | "company-relation-detail";
-
-// Company network node type used for canvas
-interface CNode {
-  company_id: string;
-  name_zh: string;
-  company_type: string;
-  status: string;
-}
-
-interface CEdge {
-  from_company_id: string;
-  to_company_id: string;
-  path_count: number;
-  strength: number;
-  confidence: string;
-  relation_type?: string;
-  relation_subtype?: string;
-}
+import { IndustrialSidebar } from "@/components/panels/IndustrialSidebar";
+import { IndustrialSearchPanel } from "@/components/panels/IndustrialSearchPanel";
+import { CompanySidebarPanel } from "@/components/panels/CompanySidebarPanel";
+import { CompanySearchPanel } from "@/components/panels/CompanySearchPanel";
+import { RightPanel } from "@/components/panels/RightPanel";
+import { useIndustrialGraph } from "@/hooks/useIndustrialGraph";
+import { useCompanyGraph } from "@/hooks/useCompanyGraph";
 
 export default function App() {
-  // ------------------------------------------------------------------
-  // Top-level workspace state
-  // ------------------------------------------------------------------
   const [mainView, setMainView] = useState<MainView>("industrial_graph");
-  const [companySubView, setCompanySubView] = useState<"company_list">("company_list");
-
-  // ------------------------------------------------------------------
-  // Industrial graph state
-  // ------------------------------------------------------------------
-  const [selectedNode, setSelectedNode] = useState<IndustrialNode | null>(null);
-  const [selectedEdge, setSelectedEdge] = useState<GraphEdge | null>(null);
-  const [selectedIndustry, setSelectedIndustry] = useState<Industry | null>(null);
-  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-  const [selectedIndustries, setSelectedIndustries] = useState<Industry[]>([]);
-  const [selectedCompanies, setSelectedCompanies] = useState<Company[]>([]);
-  const [selectedRelation, setSelectedRelation] = useState<CEdge | null>(null);
-  const [panel, setPanel] = useState<PanelType>("none");
-  const [contextMenu, setContextMenu] = useState<{
-    visible: boolean;
-    x: number;
-    y: number;
-    node: IndustrialNode | null;
-  }>({ visible: false, x: 0, y: 0, node: null });
-  const [activeFilters, setActiveFilters] = useState({
-    edgeNamespaces: ["industrial_flow", "ontology"] as string[],
-    edgeTypes: [] as string[],
-    entityTypes: [] as string[],
-    status: [] as string[],
-    confidence: [] as string[],
-    showIsA: true,
-    showWeakOntology: false,
-  });
-  const [graphKey, setGraphKey] = useState(0);
-  const [subgraphData, setSubgraphData] = useState<{ nodes: IndustrialNode[]; edges: GraphEdge[] } | undefined>(undefined);
-  const [highlightNodeIds, setHighlightNodeIds] = useState<string[] | undefined>(undefined);
-
-  // Node navigation history (上一个/下一个/历史窗口)
-  const nav = useNodeNavigation();
-
-  // ------------------------------------------------------------------
-  // Company graph state
-  // ------------------------------------------------------------------
-  const [companyDisplayMode, setCompanyDisplayMode] = useState<"empty" | "global" | "local">("empty");
-  const [companyNetworkData] = useState<{ nodes: CNode[]; edges: CEdge[] } | null>(null);
-
-  // orderedChain: exploration path (max 2, oldest auto-removed)
-  const [orderedChain, setOrderedChain] = useState<string[]>([]);
-  // fixedIds: double-click pinned nodes, never auto-removed
-  const [fixedIds, setFixedIds] = useState<Set<string>>(new Set());
-  // nodeStore: cache of all nodes ever loaded
-  const [nodeStore, setNodeStore] = useState<Map<string, CNode>>(new Map());
-  // permanentEdges: edges between visible permanent nodes
-  const [permanentEdges, setPermanentEdges] = useState<CEdge[]>([]);
-
-  // Current focus: the node whose upstream/downstream are shown as preview
-  const [currentFocusId, setCurrentFocusId] = useState<string | null>(null);
-
-  // Preview: temporary translucent nodes/edges for the current focus
-  const [previewData, setPreviewData] = useState<{ centerId: string; nodes: CNode[]; edges: CEdge[] } | null>(null);
-
-  const [isDrawingGlobal] = useState(false);
-
-  // Company explore mode: "bulk" = auto-load all upstream/downstream (current behavior)
-  // "manual" = heterogeneous graph exploration (company + material nodes)
-  const [companyExploreMode, setCompanyExploreMode] = useState<"bulk" | "manual">("bulk");
-
-  // Exploration graph data (for manual mode)
-  const [explorationData, setExplorationData] = useState<{ nodes: ENode[]; edges: EEdge[] } | null>(null);
-
-  // Material panel state (for manual exploration mode)
-  const [materialPanelOpen, setMaterialPanelOpen] = useState(false);
-  const [selectedMaterialNode, setSelectedMaterialNode] = useState<{ id: string; name: string } | null>(null);
-
-  // Material modal state
-  const [materialModalOpen, setMaterialModalOpen] = useState(false);
-
-  // Selected exploration edge for detail display
-  const [selectedExplorationEdge, setSelectedExplorationEdge] = useState<EEdge | null>(null);
-
-  // ------------------------------------------------------------------
-  // Derived data for canvas
-  // ------------------------------------------------------------------
-  const permanentIds = useMemo(() => {
-    const ids = new Set<string>([...orderedChain, ...fixedIds]);
-    return ids;
-  }, [orderedChain, fixedIds]);
-
-  const allCompanyNodes = useMemo(() => {
-    const map = new Map<string, CNode>();
-    permanentIds.forEach((id) => {
-      const node = nodeStore.get(id);
-      if (node) map.set(id, node);
-    });
-    previewData?.nodes.forEach((n) => {
-      if (!map.has(n.company_id)) map.set(n.company_id, n);
-    });
-    return Array.from(map.values());
-  }, [permanentIds, nodeStore, previewData]);
-
-  const allCompanyEdges = useMemo(() => {
-    const seen = new Set<string>();
-    const edges: CEdge[] = [];
-    const key = (e: CEdge) => `${e.from_company_id}->${e.to_company_id}`;
-    // Permanent edges (both ends still visible)
-    permanentEdges.forEach((e) => {
-      if (permanentIds.has(e.from_company_id) && permanentIds.has(e.to_company_id)) {
-        if (!seen.has(key(e))) { seen.add(key(e)); edges.push(e); }
-      }
-    });
-    previewData?.edges.forEach((e) => {
-      if (!seen.has(key(e))) { seen.add(key(e)); edges.push(e); }
-    });
-    return edges;
-  }, [permanentEdges, permanentIds, previewData]);
-
-  const previewNodeIds = useMemo(() => {
-    return previewData?.nodes.map((n) => n.company_id).filter((id) => !permanentIds.has(id)) ?? [];
-  }, [previewData, permanentIds]);
-
-  // ------------------------------------------------------------------
-  // Handlers
-  // ------------------------------------------------------------------
-  const handleNodeClick = useCallback((node: IndustrialNode) => {
-    setSelectedNode(node);
-    setSelectedEdge(null);
-    setPanel("node-detail");
-    setContextMenu((prev) => ({ ...prev, visible: false }));
-    nav.push(node);
-  }, [nav]);
-
-  const handleNavBack = useCallback(() => {
-    const node = nav.back();
-    if (node) {
-      setSelectedNode(node);
-      setPanel("node-detail");
-    }
-  }, [nav]);
-
-  const handleNavForward = useCallback(() => {
-    const node = nav.forward();
-    if (node) {
-      setSelectedNode(node);
-      setPanel("node-detail");
-    }
-  }, [nav]);
-
-  const handleNavGoto = useCallback(
-    (targetIndex: number) => {
-      const node = nav.goto(targetIndex);
-      if (node) {
-        setSelectedNode(node);
-        setPanel("node-detail");
-      }
-    },
-    [nav]
-  );
-
-  const handleNodeContextMenu = useCallback((node: IndustrialNode, x: number, y: number) => {
-    setContextMenu({ visible: true, x, y, node });
-  }, []);
-
-  const handleEdgeClick = useCallback((edge: GraphEdge) => {
-    setSelectedEdge(edge);
-    setSelectedNode(null);
-    setPanel("edge-detail");
-  }, []);
-
-  const refreshGraph = () => setGraphKey((k) => k + 1);
 
   const handleChangeMainView = (view: MainView) => {
     setMainView(view);
-    setPanel("none");
-    setSelectedNode(null);
-    setSelectedEdge(null);
-    setSelectedIndustry(null);
-    setSelectedCompany(null);
-    setSelectedIndustries([]);
-    setSelectedCompanies([]);
-    if (view === "industrial_graph") {
-      setSubgraphData(undefined);
-      setHighlightNodeIds(undefined);
-    } else {
-      setCompanyDisplayMode("empty");
-      setOrderedChain([]);
-      setFixedIds(new Set());
-      setNodeStore(new Map());
-      setPermanentEdges([]);
-      setCurrentFocusId(null);
-      setPreviewData(null);
-      setExplorationData(null);
-    }
   };
 
-  // Industrial graph: multi-select industries and companies
-  const handleToggleIndustry = (industry: Industry) => {
-    setSelectedIndustries((prev) => {
-      const exists = prev.some((i) => i.industry_id === industry.industry_id);
-      if (exists) {
-        return prev.filter((i) => i.industry_id !== industry.industry_id);
-      }
-      return [...prev, industry];
-    });
-  };
+  const industrial = useIndustrialGraph();
+  const company = useCompanyGraph();
 
-  const handleSelectIndustryDetail = (industry: Industry) => {
-    setSelectedIndustry(industry);
-    setPanel("industry-detail");
-  };
-
-  const handleToggleCompanyIndustrial = (company: Company) => {
-    setSelectedCompanies((prev) => {
-      const exists = prev.some((c) => c.company_id === company.company_id);
-      if (exists) {
-        return prev.filter((c) => c.company_id !== company.company_id);
-      }
-      return [...prev, company];
-    });
-  };
-
-  const handleSelectCompanyDetail = (company: Company) => {
-    setSelectedCompany(company);
-    setPanel("company-detail");
-  };
-
-  // Load merged subgraph whenever selected industries/companies change
-  useEffect(() => {
-    async function loadMergedSubgraph() {
-      if (selectedIndustries.length === 0 && selectedCompanies.length === 0) {
-        setSubgraphData(undefined);
-        return;
-      }
-      try {
-        const [industrySubgraphs, companySubgraphs] = await Promise.all([
-          Promise.all(selectedIndustries.map((i) => getIndustrySubgraph(i.industry_id))),
-          Promise.all(selectedCompanies.map((c) => getCompanySubgraph(c.company_id))),
-        ]);
-        const nodeMap = new Map<string, IndustrialNode>();
-        const edgeMap = new Map<string, GraphEdge>();
-        industrySubgraphs.forEach((sg) => {
-          sg.nodes.forEach((n) => nodeMap.set(n.node_id, n as IndustrialNode));
-          sg.edges.forEach((e) => edgeMap.set(e.edge_id, e as GraphEdge));
-        });
-        companySubgraphs.forEach((sg) => {
-          sg.nodes.forEach((n) => nodeMap.set(n.node_id, n as IndustrialNode));
-          sg.edges.forEach((e) => edgeMap.set(e.edge_id, e as GraphEdge));
-        });
-        setSubgraphData({
-          nodes: Array.from(nodeMap.values()),
-          edges: Array.from(edgeMap.values()),
-        });
-        setGraphKey((k) => k + 1);
-      } catch {
-        // Silently ignore
-      }
-    }
-    loadMergedSubgraph();
-  }, [selectedIndustries, selectedCompanies]);
-
-  // Select company from sidebar (company graph view)
-  const handleSelectCompany = (company: Company) => {
-    setSelectedCompany(company);
-    setPanel("company-detail");
-    setHighlightNodeIds(undefined);
-
-    if (mainView !== "company_graph") return;
-
-    const isManual = companyExploreMode === "manual";
-
-    if (isManual) {
-      // Manual/exploration mode: load heterogeneous graph centered on this company
-      setCompanyDisplayMode("local");
-      setCurrentFocusId(company.company_id);
-      loadExplorationGraph(company.company_id);
-      return;
-    }
-
-    if (companyDisplayMode === "empty") {
-      startInvestigation(company, true);
-    } else if (companyDisplayMode === "global") {
-      setCurrentFocusId(company.company_id);
-      loadPreview(company.company_id);
-    } else if (companyDisplayMode === "local") {
-      if (orderedChain.includes(company.company_id) || fixedIds.has(company.company_id)) {
-        setCurrentFocusId(company.company_id);
-        loadPreview(company.company_id);
-      } else {
-        startInvestigation(company, true);
-      }
-    }
-  };
-
-  // Start a new investigation chain from a company
-  const startInvestigation = (company: Company, autoPreview: boolean = true) => {
-    const node: CNode = {
-      company_id: company.company_id,
-      name_zh: company.name_zh,
-      company_type: company.company_type || "unknown",
-      status: "ACTIVE",
-    };
-    setOrderedChain([company.company_id]);
-    setFixedIds(new Set());
-    setNodeStore(new Map([[company.company_id, node]]));
-    setPermanentEdges([]);
-    setCurrentFocusId(company.company_id);
-    setCompanyDisplayMode("local");
-    setPreviewData(null);
-    if (autoPreview) loadPreview(company.company_id);
-  };
-
-  // Load exploration graph (heterogeneous: company + material nodes)
-  const loadExplorationGraph = async (companyId: string) => {
-    try {
-      const data = await getExplorationGraph(companyId);
-      setExplorationData(data);
-    } catch {
-      setExplorationData(null);
-    }
-  };
-
-  // Load preview (temporary translucent network) for a given company
-  const loadPreview = async (_companyId: string) => {
-    // Company view upstream/downstream APIs have been removed.
-    // Preview based on inferred industrial relations is no longer available.
-    // Use /api/v1/explore endpoints for cross-domain exploration instead.
-    setPreviewData(null);
-  };
-
-  // Click on a node inside the exploration canvas (manual mode)
-  const handleExplorationNodeClick = async (node: ENode) => {
-    if (node.type === "company") {
-      try {
-        const full = await getCompany(node.id);
-        setSelectedCompany(full);
-      } catch {
-        setSelectedCompany({
-          company_id: node.id,
-          name_zh: node.label,
-          company_type: node.company_type || "unknown",
-        } as Company);
-      }
-      setPanel("company-detail");
-      setCurrentFocusId(node.id);
-      setMaterialPanelOpen(false);
-    } else {
-      // Material node clicked: open connection panel
-      setCurrentFocusId(node.id);
-      setSelectedMaterialNode({ id: node.id, name: node.label });
-      setMaterialPanelOpen(true);
-    }
-  };
-
-  // Add selected companies to the exploration graph
-  const handleAddCompaniesToExploration = (companies: { id: string; label: string; direction: "peer" | "upstream" | "downstream"; via_node_id?: string; via_node_name?: string; activity_type: string }[]) => {
-    if (!explorationData || !selectedMaterialNode) return;
-
-    const newNodes: ENode[] = [];
-    const newEdges: EEdge[] = [];
-    const existingNodeIds = new Set(explorationData.nodes.map((n) => n.id));
-    const existingEdgeKeys = new Set(explorationData.edges.map((e) => `${e.source}→${e.target}`));
-
-    companies.forEach((c) => {
-      // Add company node if not exists
-      if (!existingNodeIds.has(c.id)) {
-        newNodes.push({
-          id: c.id,
-          type: "company",
-          label: c.label,
-          company_type: "unknown",
-          activity_type: c.activity_type,
-        });
-        existingNodeIds.add(c.id);
-      }
-
-      // All directions connect directly to the selected material node
-      const edgeKey = `${c.id}→${selectedMaterialNode.id}`;
-      if (!existingEdgeKeys.has(edgeKey)) {
-        newEdges.push({
-          source: c.id,
-          target: selectedMaterialNode.id,
-          type: "exposure",
-          activity_type: c.activity_type,
-          label: c.direction === "peer"
-            ? undefined
-            : c.direction === "upstream"
-              ? `原料: ${c.via_node_name || c.via_node_id}`
-              : `下游: ${c.via_node_name || c.via_node_id}`,
-        });
-        existingEdgeKeys.add(edgeKey);
-      }
-    });
-
-    setExplorationData({
-      nodes: [...explorationData.nodes, ...newNodes],
-      edges: [...explorationData.edges, ...newEdges],
-    });
-  };
-
-  // Click on a node inside the company network canvas
-  const handleCompanyNodeClick = async (companyNode: CNode) => {
-    const cid = companyNode.company_id;
-    const isManual = companyExploreMode === "manual";
-
-    // Always update detail panel
-    try {
-      const full = await getCompany(cid);
-      setSelectedCompany(full);
-    } catch {
-      setSelectedCompany(companyNode as unknown as Company);
-    }
-    setPanel("company-detail");
-
-    if (companyDisplayMode === "global") {
-      if (currentFocusId === cid) {
-        startInvestigation(companyNode as unknown as Company, !isManual);
-      } else {
-        setCurrentFocusId(cid);
-        if (!isManual) loadPreview(cid);
-      }
-      return;
-    }
-
-    if (companyDisplayMode !== "local") return;
-
-    const chainIndex = orderedChain.indexOf(cid);
-
-    if (chainIndex >= 0) {
-      // Click a chain node: truncate to this node
-      const newChain = orderedChain.slice(0, chainIndex + 1);
-      setOrderedChain(newChain);
-      setCurrentFocusId(cid);
-      if (!isManual) loadPreview(cid);
-    } else if (previewData && cid !== previewData.centerId) {
-      // Click a preview node: append to chain
-      const newChain = [...orderedChain, cid];
-      setOrderedChain(newChain);
-
-      // Cache node
-      setNodeStore((prev) => {
-        const next = new Map(prev);
-        next.set(cid, companyNode);
-        return next;
-      });
-
-      // Add connecting edges to permanentEdges
-      const visibleIds = new Set([...orderedChain, ...fixedIds]);
-      const newEdges = previewData.edges.filter((e) =>
-        (e.from_company_id === cid && visibleIds.has(e.to_company_id)) ||
-        (e.to_company_id === cid && visibleIds.has(e.from_company_id))
-      );
-      if (newEdges.length > 0) {
-        setPermanentEdges((prev) => {
-          const seen = new Set(prev.map((e) => `${e.from_company_id}->${e.to_company_id}`));
-          return [...prev, ...newEdges.filter((e) => !seen.has(`${e.from_company_id}->${e.to_company_id}`))];
-        });
-      }
-
-      setCurrentFocusId(cid);
-      loadPreview(cid);
-    }
-  };
-
-  // Double-click on a node inside the company network canvas
-  const handleCompanyNodeDblClick = async (companyNode: CNode) => {
-    const cid = companyNode.company_id;
-
-    if (companyDisplayMode === "global") {
-      startInvestigation(companyNode as unknown as Company);
-      return;
-    }
-
-    if (companyDisplayMode !== "local") return;
-
-    if (previewData && previewData.centerId === cid) {
-      // Double-click the current focus node: pin all current preview nodes
-      const previewNodeIds = previewData.nodes.map((n) => n.company_id);
-      setFixedIds((prev) => {
-        const next = new Set(prev);
-        previewNodeIds.forEach((id) => next.add(id));
-        return next;
-      });
-
-      setNodeStore((prev) => {
-        const next = new Map(prev);
-        previewData.nodes.forEach((n) => {
-          if (!next.has(n.company_id)) next.set(n.company_id, n);
-        });
-        return next;
-      });
-
-      setPermanentEdges((prev) => {
-        const seen = new Set(prev.map((e) => `${e.from_company_id}->${e.to_company_id}`));
-        const newEdges = previewData.edges.filter((e) => !seen.has(`${e.from_company_id}->${e.to_company_id}`));
-        return [...prev, ...newEdges];
-      });
-
-      setPreviewData(null);
-    }
-  };
-
-  // Click on an edge inside the company network canvas
-  const handleCompanyEdgeClick = (edge: CEdge) => {
-    setSelectedRelation(edge);
-    setPanel("company-relation-detail");
-  };
-
-  const handleLoadSubgraph = (nodes: unknown[], edges: unknown[]) => {
-    setSubgraphData({
-      nodes: nodes as IndustrialNode[],
-      edges: edges as GraphEdge[],
-    });
-    setGraphKey((k) => k + 1);
-    setHighlightNodeIds(undefined);
-  };
-
-  const handleHighlightNodes = (nodeIds: string[]) => {
-    setHighlightNodeIds(nodeIds);
-    setSubgraphData(undefined);
-  };
-
-  // ------------------------------------------------------------------
-  // Industrial Graph — Unified Left Sidebar
-  // ------------------------------------------------------------------
-  const industrialLeftSidebar = (
-    <div className="flex h-full flex-col overflow-hidden">
-      {/* Active selection chips */}
-      {(selectedIndustries.length > 0 || selectedCompanies.length > 0) && (
-        <div className="border-b border-slate-800 p-2">
-          <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-            当前选择
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {selectedIndustries.map((ind) => (
-              <span
-                key={ind.industry_id}
-                className="flex items-center gap-1 rounded bg-cyan-900/30 px-1.5 py-0.5 text-[10px] text-cyan-300"
-              >
-                {ind.name_zh}
-                <button
-                  onClick={() => handleToggleIndustry(ind)}
-                  className="text-cyan-500 hover:text-cyan-200"
-                  title="移除"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-            {selectedCompanies.map((co) => (
-              <span
-                key={co.company_id}
-                className="flex items-center gap-1 rounded bg-amber-900/30 px-1.5 py-0.5 text-[10px] text-amber-300"
-              >
-                {co.name_zh}
-                <button
-                  onClick={() => handleToggleCompanyIndustrial(co)}
-                  className="text-amber-500 hover:text-amber-200"
-                  title="移除"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="flex-1 overflow-y-auto">
-        <CollapsibleSection title="行业" badge={selectedIndustries.length}>
-          <IndustryMultiSelector
-            selectedIds={selectedIndustries.map((i) => i.industry_id)}
-            onToggle={handleToggleIndustry}
-            onSelect={handleSelectIndustryDetail}
-            onCreate={() => setPanel("industry-create")}
-          />
-        </CollapsibleSection>
-
-        <CollapsibleSection title="公司" badge={selectedCompanies.length}>
-          <CompanyMultiSelector
-            selectedIds={selectedCompanies.map((c) => c.company_id)}
-            onToggle={handleToggleCompanyIndustrial}
-            onSelect={handleSelectCompanyDetail}
-            onCreate={() => setPanel("company-create")}
-          />
-        </CollapsibleSection>
-
-        <CollapsibleSection title="过滤">
-          <FilterPanel filters={activeFilters} onChange={setActiveFilters} />
-        </CollapsibleSection>
-      </div>
-    </div>
-  );
-
-  // ------------------------------------------------------------------
-  // Company Graph — Left Sidebar with sub-tabs
-  // ------------------------------------------------------------------
-  const companyLeftSidebar = (
-    <div className="flex h-full flex-col">
-      <div className="flex border-b border-slate-700">
-        <SubTab active={companySubView === "company_list"} onClick={() => setCompanySubView("company_list")} label="公司列表" />
-      </div>
-      <div className="flex-1 overflow-auto">
-        {companySubView === "company_list" && (
-          <CompanySidebar
-            selectedId={selectedCompany?.company_id}
-            onSelect={handleSelectCompany}
-            onCreate={() => setPanel("company-create")}
-          />
-        )}
-
-      </div>
-    </div>
-  );
-
-  // ------------------------------------------------------------------
-  // Search panel / Toolbar area
-  // ------------------------------------------------------------------
-  const industrialSearchPanel = (
-    <div className="flex items-center gap-2">
-      <NodeNavigation
-        enabled={nav.enabled}
-        history={nav.history}
-        currentIndex={nav.index}
-        canGoBack={nav.canGoBack}
-        canGoForward={nav.canGoForward}
-        onBack={handleNavBack}
-        onForward={handleNavForward}
-        onGoto={handleNavGoto}
-        onToggleEnabled={nav.toggleEnabled}
-        onClear={nav.clear}
-      />
-      <SearchPanel
-        onSelectNode={(node) => {
-          setSelectedNode(node);
-          setPanel("node-detail");
-        }}
-        onCreateNode={() => setPanel("node-create")}
-        onCreateEdge={() => setPanel("edge-create")}
-        onUploadBatch={() => setPanel("batch-upload")}
-      />
-      {(selectedIndustries.length > 0 || selectedCompanies.length > 0) && (
-        <button
-          onClick={() => {
-            setSelectedIndustries([]);
-            setSelectedCompanies([]);
-            setSubgraphData(undefined);
-            setHighlightNodeIds(undefined);
-            setGraphKey((k) => k + 1);
-          }}
-          className="ml-auto flex items-center gap-1 rounded-md bg-amber-600/20 px-2.5 py-1 text-xs font-medium text-amber-400 hover:bg-amber-600/30 transition-colors"
-        >
-          返回全图
-        </button>
-      )}
-    </div>
-  );
-
-  const companySearchPanel = (
-    <div className="flex items-center gap-2">
-      <div className="flex items-center rounded border border-slate-700 bg-slate-800/50 overflow-hidden">
-        <button
-          onClick={() => setCompanyExploreMode("bulk")}
-          className={`px-2 py-1 text-[10px] font-medium transition-colors ${
-            companyExploreMode === "bulk"
-              ? "bg-cyan-600/20 text-cyan-400"
-              : "text-slate-500 hover:text-slate-300"
-          }`}
-          title="自动加载全部上下游关联"
-        >
-          全量
-        </button>
-        <button
-          onClick={() => setCompanyExploreMode("manual")}
-          className={`px-2 py-1 text-[10px] font-medium transition-colors ${
-            companyExploreMode === "manual"
-              ? "bg-cyan-600/20 text-cyan-400"
-              : "text-slate-500 hover:text-slate-300"
-          }`}
-          title="只显示通过物料关联面板选择的公司"
-        >
-          探索
-        </button>
-      </div>
-      {companyDisplayMode === "empty" && (
-        <span className="text-xs text-slate-500">选择一个公司开始浏览，或绘制全局图</span>
-      )}
-      {companyDisplayMode === "local" && (
-        <div className="flex items-center gap-1 overflow-hidden">
-          {companyExploreMode === "manual" ? (
-            selectedExplorationEdge ? (
-              <span className="text-xs text-slate-300">
-                {selectedExplorationEdge.type === "exposure"
-                  ? `${selectedExplorationEdge.source} → ${selectedExplorationEdge.target}${selectedExplorationEdge.label ? " (" + selectedExplorationEdge.label + ")" : ""}`
-                  : `${selectedExplorationEdge.source} → ${selectedExplorationEdge.target} (${selectedExplorationEdge.edge_type || "industrial_flow"})`}
-              </span>
-            ) : (
-              <span className="text-xs text-slate-500">点击物料节点探索关联公司，点击边查看连接详情</span>
-            )
-          ) : (
-            <>
-              {orderedChain.map((id, idx) => (
-                <span key={id} className="flex items-center gap-1">
-                  {idx > 0 && <span className="text-slate-600">→</span>}
-                  <span className={`text-xs ${id === currentFocusId ? "text-cyan-400 font-medium" : "text-slate-400"}`}>
-                    {nodeStore.get(id)?.name_zh || id}
-                  </span>
-                </span>
-              ))}
-              {fixedIds.size > 0 && (
-                <span className="text-xs text-amber-500 ml-1">
-                  (+{fixedIds.size} 固定)
-                </span>
-              )}
-              {previewData && (
-                <span className="text-xs text-slate-500 ml-1">— 关联节点临时显示</span>
-              )}
-            </>
-          )}
-        </div>
-      )}
-      {companyDisplayMode === "global" && (
-        <span className="text-xs text-slate-500">全局网络视图 — 点击节点高亮，双击开始考察</span>
-      )}
-      {companyDisplayMode !== "empty" && (
-        <button
-          onClick={() => {
-            setCompanyDisplayMode("empty");
-            setOrderedChain([]);
-            setFixedIds(new Set());
-            setNodeStore(new Map());
-            setPermanentEdges([]);
-            setCurrentFocusId(null);
-            setPreviewData(null);
-            setExplorationData(null);
-            setSelectedExplorationEdge(null);
-            setMaterialPanelOpen(false);
-          }}
-          className="ml-auto flex items-center gap-1 rounded-md bg-amber-600/20 px-2.5 py-1 text-xs font-medium text-amber-400 hover:bg-amber-600/30 transition-colors"
-        >
-          清空视图
-        </button>
-      )}
-    </div>
-  );
-
-  // ------------------------------------------------------------------
-  // Right Panel (shared detail panels)
-  // ------------------------------------------------------------------
-  const rightPanel =
-    panel === "node-detail" && selectedNode ? (
-      <NodeDetail
-        node={selectedNode}
-        onEdit={() => setPanel("node-edit")}
-        onClose={() => { setPanel("none"); setSelectedNode(null); }}
-        onRefresh={refreshGraph}
-        onSelectNode={handleNodeClick}
-        onSelectCompany={handleSelectCompanyDetail}
-        onSelectIndustry={handleSelectIndustryDetail}
-      />
-    ) : panel === "edge-detail" && selectedEdge ? (
-      <EdgeDetail
-        edge={selectedEdge}
-        onEdit={() => setPanel("edge-edit")}
-        onClose={() => { setPanel("none"); setSelectedEdge(null); }}
-        onRefresh={refreshGraph}
-      />
-    ) : panel === "node-create" ? (
-      <NodeForm
-        mode="create"
-        onClose={() => setPanel("none")}
-        onSuccess={(node) => { setSelectedNode(node); setPanel("node-detail"); refreshGraph(); }}
-      />
-    ) : panel === "node-edit" && selectedNode ? (
-      <NodeForm
-        mode="edit"
-        node={selectedNode}
-        onClose={() => setPanel("node-detail")}
-        onSuccess={(node) => { setSelectedNode(node); setPanel("node-detail"); refreshGraph(); }}
-      />
-    ) : panel === "edge-create" ? (
-      <EdgeForm
-        mode="create"
-        onClose={() => setPanel("none")}
-        onSuccess={(edge) => { setSelectedEdge(edge); setPanel("edge-detail"); refreshGraph(); }}
-      />
-    ) : panel === "edge-edit" && selectedEdge ? (
-      <EdgeForm
-        mode="edit"
-        edge={selectedEdge}
-        onClose={() => setPanel("edge-detail")}
-        onSuccess={(edge) => { setSelectedEdge(edge); setPanel("edge-detail"); refreshGraph(); }}
-      />
-    ) : panel === "batch-upload" ? (
-      <BatchUploader onClose={() => setPanel("none")} onSuccess={refreshGraph} />
-    ) : panel === "industry-detail" && selectedIndustry ? (
-      <IndustryDetail
-        industry={selectedIndustry}
-        onEdit={() => setPanel("industry-edit")}
-        onClose={() => { setPanel("none"); setSelectedIndustry(null); }}
-        onRefresh={refreshGraph}
-        onLoadSubgraph={handleLoadSubgraph}
-        onHighlightNodes={handleHighlightNodes}
-      />
-    ) : panel === "industry-create" ? (
-      <IndustryForm
-        mode="create"
-        onClose={() => setPanel("none")}
-        onSuccess={(ind) => { setSelectedIndustry(ind); setPanel("industry-detail"); }}
-      />
-    ) : panel === "industry-edit" && selectedIndustry ? (
-      <IndustryForm
-        mode="edit"
-        industry={selectedIndustry}
-        onClose={() => setPanel("industry-detail")}
-        onSuccess={(ind) => { setSelectedIndustry(ind); setPanel("industry-detail"); }}
-      />
-    ) : panel === "company-relation-detail" && selectedRelation ? (
-      <div className="flex h-full flex-col items-center justify-center bg-slate-900 text-slate-400">
-        <p className="text-sm">公司视图已重构</p>
-        <p className="mt-1 text-xs">此功能已移除，请使用探索接口</p>
-        <button
-          onClick={() => { setPanel("none"); setSelectedRelation(null); }}
-          className="mt-3 rounded bg-slate-800 px-3 py-1 text-xs hover:bg-slate-700"
-        >
-          关闭
-        </button>
-      </div>
-    ) : panel === "company-detail" && selectedCompany ? (
-      <CompanyDetail
-        company={selectedCompany}
-        onEdit={() => setPanel("company-edit")}
-        onClose={() => { setPanel("none"); setSelectedCompany(null); }}
-        onRefresh={refreshGraph}
-        onFocusInGraph={(id) => setCurrentFocusId(id)}
-        onOpenMaterialModal={() => setMaterialModalOpen(true)}
-        onAddExposure={() => alert("添加暴露功能待实现")}
-      />
-    ) : panel === "company-create" ? (
-      <CompanyForm
-        mode="create"
-        onClose={() => setPanel("none")}
-        onSuccess={(co) => { setSelectedCompany(co); setPanel("company-detail"); }}
-      />
-    ) : panel === "company-edit" && selectedCompany ? (
-      <CompanyForm
-        mode="edit"
-        company={selectedCompany}
-        onClose={() => setPanel("company-detail")}
-        onSuccess={(co) => { setSelectedCompany(co); setPanel("company-detail"); }}
-      />
-    ) : panel === "node-companies" && contextMenu.node ? (
-      <NodeCompaniesPanel
-        nodeId={contextMenu.node.node_id}
-        nodeName={contextMenu.node.canonical_name_zh}
-        onClose={() => setPanel("none")}
-        onSelectCompany={(company) => { setSelectedCompany(company); setPanel("company-detail"); }}
-      />
-    ) : panel === "node-industries" && contextMenu.node ? (
-      <NodeIndustriesPanel
-        nodeId={contextMenu.node.node_id}
-        nodeName={contextMenu.node.canonical_name_zh}
-        onClose={() => setPanel("none")}
-        onSelectIndustry={(industry) => { setSelectedIndustry(industry); setPanel("industry-detail"); }}
-      />
-    ) : null;
-
-  // ------------------------------------------------------------------
-  // Center Canvas
-  // ------------------------------------------------------------------
-  const centerCanvas =
-    mainView === "company_graph" ? (
-      companyDisplayMode === "empty" ? (
-        <CompanyGraphEmptyState
-          companyCount={companyNetworkData?.nodes.length ?? 200}
-          relationCount={companyNetworkData?.edges.length ?? 1142}
-          onDrawGlobal={() => {
-            // Global company network view has been removed.
-            // Use /api/v1/explore endpoints for cross-domain exploration.
-            alert("全局公司网络视图已移除。请使用探索接口。");
-          }}
-          isLoading={isDrawingGlobal}
-        />
-      ) : companyDisplayMode === "local" ? (
-        companyExploreMode === "manual" ? (
-          <ExplorationCanvas
-            nodes={explorationData?.nodes ?? []}
-            edges={explorationData?.edges ?? []}
-            onNodeClick={handleExplorationNodeClick}
-            onEdgeClick={(edge) => setSelectedExplorationEdge(edge)}
-            highlightNodeId={currentFocusId}
-          />
-        ) : (
-          <CompanyNetworkCanvas
-            nodes={allCompanyNodes}
-            edges={allCompanyEdges}
-            highlightCompanyId={currentFocusId}
-            previewNodeIds={previewNodeIds}
-            onNodeClick={handleCompanyNodeClick}
-            onNodeDblClick={handleCompanyNodeDblClick}
-            onEdgeClick={handleCompanyEdgeClick}
-          />
-        )
-      ) : companyDisplayMode === "global" && companyNetworkData ? (
-        <CompanyNetworkCanvas
-          nodes={companyNetworkData.nodes}
-          edges={companyNetworkData.edges}
-          highlightCompanyId={currentFocusId}
-          dimUnrelated={!!currentFocusId}
-          onNodeClick={handleCompanyNodeClick}
-          onNodeDblClick={handleCompanyNodeDblClick}
-          onEdgeClick={handleCompanyEdgeClick}
-        />
-      ) : (
-        <div className="flex h-full w-full items-center justify-center bg-slate-950">
-          <div className="text-sm text-slate-500">加载中...</div>
-        </div>
-      )
-    ) : (
-      <div className="relative h-full w-full">
-        <GraphCanvas
-          key={graphKey}
-          onNodeClick={handleNodeClick}
-          onEdgeClick={handleEdgeClick}
-          onNodeContextMenu={handleNodeContextMenu}
-          filters={activeFilters}
-          highlightNodeId={selectedNode?.node_id}
-          highlightNodeIds={highlightNodeIds}
-          sourceData={subgraphData}
-        />
-        <GraphToolbar onRelayout={() => setGraphKey((k) => k + 1)} />
-      </div>
-    );
-
-  // ------------------------------------------------------------------
-  // Render
-  // ------------------------------------------------------------------
   if (mainView === "db_checks") {
     return (
       <div className="flex h-screen w-full flex-col bg-slate-950">
@@ -1022,46 +41,225 @@ export default function App() {
     );
   }
 
+  const industrialWorkspace = (
+    <Layout
+      topBar={
+        <StatsBar mainView={mainView} onChangeMainView={handleChangeMainView} />
+      }
+      leftSidebar={
+        <IndustrialSidebar
+          selectedIndustries={industrial.selectedIndustries}
+          selectedCompanies={industrial.selectedCompanies}
+          activeFilters={industrial.activeFilters}
+          onToggleIndustry={industrial.handleToggleIndustry}
+          onSelectIndustry={industrial.handleSelectIndustryDetail}
+          onToggleCompany={industrial.handleToggleCompany}
+          onSelectCompany={industrial.handleSelectCompanyDetail}
+          onCreateIndustry={() => industrial.setPanel("industry-create")}
+          onCreateCompany={() => industrial.setPanel("company-create")}
+          onChangeFilters={industrial.setActiveFilters}
+        />
+      }
+      centerCanvas={
+        <div className="relative h-full w-full">
+          <GraphCanvas
+            key={industrial.graphKey}
+            onNodeClick={industrial.handleNodeClick}
+            onEdgeClick={industrial.handleEdgeClick}
+            onNodeContextMenu={industrial.handleNodeContextMenu}
+            filters={industrial.activeFilters}
+            highlightNodeId={industrial.selectedNode?.node_id}
+            highlightNodeIds={industrial.highlightNodeIds}
+            sourceData={industrial.subgraphData}
+          />
+          <GraphToolbar onRelayout={() => industrial.setGraphKey((k) => k + 1)} />
+        </div>
+      }
+      searchPanel={
+        <IndustrialSearchPanel
+          nav={industrial.nav}
+          onNavBack={industrial.handleNavBack}
+          onNavForward={industrial.handleNavForward}
+          onNavGoto={industrial.handleNavGoto}
+          onSelectNode={(node) => {
+            industrial.setSelectedNode(node);
+            industrial.setPanel("node-detail");
+          }}
+          onCreateNode={() => industrial.setPanel("node-create")}
+          onCreateEdge={() => industrial.setPanel("edge-create")}
+          onUploadBatch={() => industrial.setPanel("batch-upload")}
+          hasActiveSelection={
+            industrial.selectedIndustries.length > 0 ||
+            industrial.selectedCompanies.length > 0
+          }
+          onResetSelection={industrial.resetSelections}
+        />
+      }
+      rightPanel={
+        <RightPanel
+          panel={industrial.panel}
+          selectedNode={industrial.selectedNode}
+          selectedEdge={industrial.selectedEdge}
+          selectedIndustry={industrial.selectedIndustry}
+          selectedCompany={industrial.selectedCompany}
+          selectedRelation={null}
+          contextMenuNode={industrial.contextMenu.node}
+          refreshGraph={industrial.refreshGraph}
+          setPanel={industrial.setPanel}
+          setSelectedNode={industrial.setSelectedNode}
+          setSelectedEdge={industrial.setSelectedEdge}
+          setSelectedIndustry={industrial.setSelectedIndustry}
+          setSelectedCompany={industrial.setSelectedCompany}
+          onLoadSubgraph={industrial.handleLoadSubgraph}
+          onHighlightNodes={industrial.handleHighlightNodes}
+          onSelectNode={industrial.handleNodeClick}
+          onSelectCompany={industrial.handleSelectCompanyDetail}
+          onSelectIndustry={industrial.handleSelectIndustryDetail}
+        />
+      }
+    />
+  );
+
+  const companyCenterCanvas =
+    company.companyDisplayMode === "empty" ? (
+      <CompanyGraphEmptyState
+        companyCount={company.companyNetworkData?.nodes.length ?? 200}
+        relationCount={company.companyNetworkData?.edges.length ?? 1142}
+        onDrawGlobal={() => {
+          alert("全局公司网络视图已移除。请使用探索接口。");
+        }}
+        isLoading={company.isDrawingGlobal}
+      />
+    ) : company.companyDisplayMode === "local" ? (
+      company.companyExploreMode === "manual" ? (
+        <ExplorationCanvas
+          nodes={company.explorationData?.nodes ?? []}
+          edges={company.explorationData?.edges ?? []}
+          onNodeClick={company.handleExplorationNodeClick}
+          onEdgeClick={(edge) => company.setSelectedExplorationEdge(edge)}
+          highlightNodeId={company.currentFocusId}
+        />
+      ) : (
+        <CompanyNetworkCanvas
+          nodes={company.allCompanyNodes}
+          edges={company.allCompanyEdges}
+          highlightCompanyId={company.currentFocusId}
+          previewNodeIds={company.previewNodeIds}
+          onNodeClick={company.handleCompanyNodeClick}
+          onNodeDblClick={company.handleCompanyNodeDblClick}
+          onEdgeClick={company.handleCompanyEdgeClick}
+        />
+      )
+    ) : company.companyDisplayMode === "global" && company.companyNetworkData ? (
+      <CompanyNetworkCanvas
+        nodes={company.companyNetworkData.nodes}
+        edges={company.companyNetworkData.edges}
+        highlightCompanyId={company.currentFocusId}
+        dimUnrelated={!!company.currentFocusId}
+        onNodeClick={company.handleCompanyNodeClick}
+        onNodeDblClick={company.handleCompanyNodeDblClick}
+        onEdgeClick={company.handleCompanyEdgeClick}
+      />
+    ) : (
+      <div className="flex h-full w-full items-center justify-center bg-slate-950">
+        <div className="text-sm text-slate-500">加载中...</div>
+      </div>
+    );
+
+  const companyWorkspace = (
+    <Layout
+      topBar={
+        <StatsBar mainView={mainView} onChangeMainView={handleChangeMainView} />
+      }
+      leftSidebar={
+        <CompanySidebarPanel
+          selectedId={company.selectedCompany?.company_id}
+          companySubView="company_list"
+          setCompanySubView={() => {}}
+          onSelectCompany={company.handleSelectCompany}
+          onCreateCompany={() => company.setPanel("company-create")}
+        />
+      }
+      centerCanvas={companyCenterCanvas}
+      searchPanel={
+        <CompanySearchPanel
+          companyExploreMode={company.companyExploreMode}
+          setCompanyExploreMode={company.setCompanyExploreMode}
+          companyDisplayMode={company.companyDisplayMode}
+          orderedChain={company.orderedChain}
+          fixedIds={company.fixedIds}
+          nodeStore={company.nodeStore}
+          currentFocusId={company.currentFocusId}
+          previewData={company.previewData}
+          selectedExplorationEdge={company.selectedExplorationEdge}
+          onClear={company.clearView}
+        />
+      }
+      rightPanel={
+        <RightPanel
+          panel={company.panel}
+          selectedNode={null}
+          selectedEdge={null}
+          selectedIndustry={null}
+          selectedCompany={company.selectedCompany}
+          selectedRelation={company.selectedRelation}
+          contextMenuNode={null}
+          refreshGraph={() => {}}
+          setPanel={company.setPanel}
+          setSelectedNode={() => {}}
+          setSelectedEdge={() => {}}
+          setSelectedIndustry={() => {}}
+          setSelectedCompany={company.setSelectedCompany}
+          onLoadSubgraph={() => {}}
+          onHighlightNodes={() => {}}
+          onSelectNode={() => {}}
+          onSelectCompany={() => {}}
+          onSelectIndustry={() => {}}
+          onFocusInGraph={(id) => company.setCurrentFocusId(id)}
+          onOpenMaterialModal={() => company.setMaterialModalOpen(true)}
+        />
+      }
+    />
+  );
+
   return (
     <>
-      <Layout
-        topBar={<StatsBar mainView={mainView} onChangeMainView={handleChangeMainView} />}
-        leftSidebar={mainView === "industrial_graph" ? industrialLeftSidebar : companyLeftSidebar}
-        centerCanvas={centerCanvas}
-        searchPanel={mainView === "industrial_graph" ? industrialSearchPanel : companySearchPanel}
-        rightPanel={rightPanel}
-      />
-      {contextMenu.visible && contextMenu.node && (
-        <NodeContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          nodeName={contextMenu.node.canonical_name_zh}
-          onShowCompanies={() => { setPanel("node-companies"); setContextMenu((prev) => ({ ...prev, visible: false })); }}
-          onShowIndustries={() => { setPanel("node-industries"); setContextMenu((prev) => ({ ...prev, visible: false })); }}
-          onClose={() => setContextMenu((prev) => ({ ...prev, visible: false }))}
-        />
-      )}
-      {selectedCompany && materialModalOpen && (
-        <CompanyMaterialModal
-          companyId={selectedCompany.company_id}
-          companyName={selectedCompany.name_zh}
-          isOpen={materialModalOpen}
-          onClose={() => setMaterialModalOpen(false)}
-          onAddToView={(nodes, edges) => {
-            setNodeStore((prev) => {
-              const next = new Map(prev);
-              nodes.forEach((n) => {
-                if (!next.has(n.company_id)) next.set(n.company_id, n);
-              });
-              return next;
-            });
-            setPermanentEdges((prev) => {
-              const seen = new Set(prev.map((e) => `${e.from_company_id}->${e.to_company_id}`));
-              const newEdges = edges.filter((e) => !seen.has(`${e.from_company_id}->${e.to_company_id}`));
-              return [...prev, ...newEdges];
-            });
-            if (selectedCompany) {
-              setNodeStore((prev) => {
+      {mainView === "company_graph" ? companyWorkspace : industrialWorkspace}
+
+      {mainView === "industrial_graph" &&
+        industrial.contextMenu.visible &&
+        industrial.contextMenu.node && (
+          <NodeContextMenu
+            x={industrial.contextMenu.x}
+            y={industrial.contextMenu.y}
+            nodeName={industrial.contextMenu.node.canonical_name_zh}
+            onShowCompanies={() => {
+              industrial.setPanel("node-companies");
+              industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
+            }}
+            onShowIndustries={() => {
+              industrial.setPanel("node-industries");
+              industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
+            }}
+            onClose={() =>
+              industrial.setContextMenu((prev) => ({ ...prev, visible: false }))
+            }
+          />
+        )}
+
+      {mainView === "company_graph" &&
+        company.selectedCompany &&
+        company.materialModalOpen && (
+          <CompanyMaterialModal
+            companyId={company.selectedCompany.company_id}
+            companyName={company.selectedCompany.name_zh}
+            isOpen={company.materialModalOpen}
+            onClose={() => company.setMaterialModalOpen(false)}
+            onAddToView={(nodes, edges) => {
+              company.handleAddToViewFromModal(nodes, edges);
+              const selectedCompany = company.selectedCompany;
+              if (!selectedCompany) return;
+              company.setNodeStore((prev) => {
                 const next = new Map(prev);
                 if (!next.has(selectedCompany.company_id)) {
                   next.set(selectedCompany.company_id, {
@@ -1073,48 +271,24 @@ export default function App() {
                 }
                 return next;
               });
-            }
-            setCompanyDisplayMode("local");
-            setCurrentFocusId(selectedCompany.company_id);
-          }}
-        />
-      )}
-      {materialPanelOpen && selectedMaterialNode && selectedCompany && (
-        <MaterialConnectionPanel
-          nodeId={selectedMaterialNode.id}
-          nodeName={selectedMaterialNode.name}
-          anchorCompanyId={selectedCompany.company_id}
-          isOpen={materialPanelOpen}
-          onClose={() => setMaterialPanelOpen(false)}
-          onAddCompanies={handleAddCompaniesToExploration}
-        />
-      )}
-    </>
-  );
-}
+              company.setCurrentFocusId(selectedCompany.company_id);
+            }}
+          />
+        )}
 
-// ---------------------------------------------------------------------------
-// Sub-tab component for left sidebar
-// ---------------------------------------------------------------------------
-function SubTab({
-  active,
-  onClick,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex-1 px-2 py-2 text-[11px] font-medium transition-colors ${
-        active
-          ? "border-b-2 border-cyan-500 text-cyan-400"
-          : "text-slate-500 hover:text-slate-300"
-      }`}
-    >
-      {label}
-    </button>
+      {mainView === "company_graph" &&
+        company.materialPanelOpen &&
+        company.selectedMaterialNode &&
+        company.selectedCompany && (
+          <MaterialConnectionPanel
+            nodeId={company.selectedMaterialNode.id}
+            nodeName={company.selectedMaterialNode.name}
+            anchorCompanyId={company.selectedCompany.company_id}
+            isOpen={company.materialPanelOpen}
+            onClose={() => company.setMaterialPanelOpen(false)}
+            onAddCompanies={company.handleAddCompaniesToExploration}
+          />
+        )}
+    </>
   );
 }
