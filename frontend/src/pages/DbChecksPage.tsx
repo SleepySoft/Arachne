@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -33,15 +33,39 @@ export function DbChecksPage() {
   const [expandedIssues, setExpandedIssues] = useState<Record<string, boolean>>({});
   const [fixing, setFixing] = useState<Record<string, boolean>>({});
   const [fixResults, setFixResults] = useState<Record<string, DbFixResult>>({});
+  const [error, setError] = useState<string | null>(null);
+
+  const handleError = (err: unknown, context: string) => {
+    let message = context;
+    if (err && typeof err === "object" && "response" in err) {
+      const axiosErr = err as { response?: { status?: number; statusText?: string; data?: unknown } };
+      message += `：${axiosErr.response?.status ?? ""} ${axiosErr.response?.statusText ?? ""}`;
+      if (axiosErr.response?.data && typeof axiosErr.response.data === "object") {
+        const data = axiosErr.response.data as { detail?: string; message?: string };
+        if (data.detail || data.message) message += `（${data.detail || data.message}）`;
+      }
+    } else if (err instanceof Error) {
+      message += `：${err.message}`;
+    }
+    setError(message);
+  };
 
   const { data: checkers, isLoading: checkersLoading } = useQuery({
     queryKey: ["db-checks-meta"],
     queryFn: listDbChecks,
+    retry: false,
   });
+
+  useEffect(() => {
+    if (!checkers && !checkersLoading) {
+      setError("加载检查器列表失败，请确认后端服务已启动。");
+    }
+  }, [checkers, checkersLoading]);
 
   const runAllMutation = useMutation({
     mutationFn: runAllDbChecks,
     onSuccess: (data) => {
+      setError(null);
       setResults(data);
       const expanded: Record<string, boolean> = {};
       data.forEach((r) => {
@@ -50,17 +74,20 @@ export function DbChecksPage() {
       setExpandedChecks(expanded);
       setFixResults({});
     },
+    onError: (err) => handleError(err, "运行全部检查失败"),
   });
 
   const runOneMutation = useMutation({
     mutationFn: runDbCheck,
     onSuccess: (data) => {
+      setError(null);
       setResults((prev) => {
         const filtered = prev.filter((r) => r.check_id !== data.check_id);
         return [...filtered, data];
       });
       setExpandedChecks((prev) => ({ ...prev, [data.check_id]: data.issue_count > 0 }));
     },
+    onError: (err, checkId) => handleError(err, `运行检查器 ${checkId} 失败`),
   });
 
   const toggleCheck = (checkId: string) => {
@@ -77,6 +104,7 @@ export function DbChecksPage() {
     }
     setFixing((prev) => ({ ...prev, [checkId]: true }));
     try {
+      setError(null);
       const res = await fixDbCheck(checkId, issueIds);
       setFixResults((prev) => ({ ...prev, [checkId]: res }));
       const refreshed = await runDbCheck(checkId);
@@ -84,6 +112,8 @@ export function DbChecksPage() {
         const filtered = prev.filter((r) => r.check_id !== refreshed.check_id);
         return [...filtered, refreshed];
       });
+    } catch (err) {
+      handleError(err, `修复 ${checkId} 失败`);
     } finally {
       setFixing((prev) => ({ ...prev, [checkId]: false }));
     }
@@ -114,6 +144,20 @@ export function DbChecksPage() {
           运行全部检查
         </button>
       </div>
+
+      {/* Error banner */}
+      {error && (
+        <div className="flex items-center gap-2 border-b border-red-900/30 bg-red-950/30 px-6 py-2 text-xs text-red-400">
+          <AlertTriangle className="h-4 w-4" />
+          <span>{error}</span>
+          <button
+            onClick={() => setError(null)}
+            className="ml-auto rounded px-2 py-0.5 text-[10px] hover:bg-red-900/30"
+          >
+            关闭
+          </button>
+        </div>
+      )}
 
       {/* Summary */}
       {results.length > 0 && (
