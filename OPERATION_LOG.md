@@ -662,3 +662,26 @@ aluminum_ingot → electronic_aluminum_foil → etched_foil → formed_foil
      - 高亮节点时先移除 `hidden` 类，确保被过滤器隐藏的节点能显示出来。
      - 对高亮节点的连接边做判断：若另一端点可见，则同步显示该边。
 - **验证**：`npm run build` 通过，无 TypeScript 错误。
+
+
+---
+
+## 日期：2026-06-16（追加 4）
+
+### 节点详情关联区域重构：折叠 + 关联公司/行业 + 异步加载
+
+- **用户反馈**：节点详情里的「关联关系」区域需要做成可折叠；下方增加「关联公司」「关联行业」；查询慢时显示加载动画。
+- **改动内容**：
+  1. 新增 `frontend/src/components/NodeAssociations.tsx`
+     - 用可折叠面板分别包裹：关联关系、关联公司、关联行业。
+     - 「关联关系」默认展开，「关联公司/行业」默认收起，点击标题可展开/折叠。
+     - 「关联公司」调用 `GET /api/v1/companies/by-node/{node_id}`，按需异步加载，显示 `Loader2` 转圈圈。
+     - 「关联行业」调用 `GET /api/v1/industries/by-node/{node_id}`，按需异步加载。
+     - 关联公司/行业条目显示中文名、国家/地区、活动类型/角色或行业类型/状态。
+     - 公司/行业名称可点击，跳转对应详情面板。
+  2. `frontend/src/components/NodeDetail.tsx`
+     - 使用 `NodeAssociations` 替换原来的 `NodeEdgeList`。
+     - 新增 `onSelectCompany`、`onSelectIndustry` props。
+  3. `frontend/src/App.tsx`
+     - 向 `NodeDetail` 传入 `handleSelectCompanyDetail` 和 `handleSelectIndustryDetail`。
+- **验证**：`npm run build` 通过，无 TypeScript 错误。

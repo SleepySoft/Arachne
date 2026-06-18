@@ -783,6 +783,8 @@ export default function App() {
         onClose={() => { setPanel("none"); setSelectedNode(null); }}
         onRefresh={refreshGraph}
         onSelectNode={handleNodeClick}
+        onSelectCompany={handleSelectCompanyDetail}
+        onSelectIndustry={handleSelectIndustryDetail}
       />
     ) : panel === "edge-detail" && selectedEdge ? (
       <EdgeDetail

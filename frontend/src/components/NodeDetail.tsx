@@ -1,8 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
 import { Edit2, Trash2, X } from "lucide-react";
-import { IndustrialNode } from "@/types";
+import { IndustrialNode, Company, Industry } from "@/types";
 import { deleteNode } from "@/services/api";
-import { NodeEdgeList } from "./NodeEdgeList";
+import { NodeAssociations } from "./NodeAssociations";
 
 interface NodeDetailProps {
   node: IndustrialNode;
@@ -10,9 +10,11 @@ interface NodeDetailProps {
   onClose: () => void;
   onRefresh: () => void;
   onSelectNode?: (node: IndustrialNode) => void;
+  onSelectCompany?: (company: Company) => void;
+  onSelectIndustry?: (industry: Industry) => void;
 }
 
-export function NodeDetail({ node, onEdit, onClose, onRefresh, onSelectNode }: NodeDetailProps) {
+export function NodeDetail({ node, onEdit, onClose, onRefresh, onSelectNode, onSelectCompany, onSelectIndustry }: NodeDetailProps) {
   const deleteMutation = useMutation({
     mutationFn: deleteNode,
     onSuccess: () => {
@@ -119,12 +121,14 @@ export function NodeDetail({ node, onEdit, onClose, onRefresh, onSelectNode }: N
           </div>
         )}
 
-        {/* Relationship section: single entry point */}
+        {/* Associations: relationships, companies, industries */}
         <div className="border-t border-slate-800 pt-3">
-          <NodeEdgeList
-            nodeId={node.node_id}
+          <NodeAssociations
+            node={node}
             onRefreshGraph={onRefresh}
             onSelectNode={onSelectNode}
+            onSelectCompany={onSelectCompany}
+            onSelectIndustry={onSelectIndustry}
           />
         </div>
       </div>
