@@ -43,8 +43,8 @@ endpoints) rather than batch-computed and persisted.
 - **PostgreSQL**: `postgresql://postgres:postgres@localhost:5433/arachne` (running, tables initialized)
 
 ### System Management
-- `arachne_manager.py` — Python cross-platform manager (`start/stop/status/stats/logs`)
-- `start-all.ps1` / `stop-all.ps1` — PowerShell one-click scripts
+- `scripts/arachne_manager.py` — Python cross-platform manager (`start/stop/status/stats/logs`)
+- `scripts/start-all.ps1` / `scripts/stop-all.ps1` — PowerShell one-click scripts
 - See `README.md` for troubleshooting.
 
 ---

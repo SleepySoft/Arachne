@@ -33,7 +33,7 @@ import httpx
 import psutil
 
 # ── Configuration ──────────────────────────────────────────
-PROJECT_ROOT = Path(__file__).parent.resolve()
+PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 
 NEO4J_DIR = PROJECT_ROOT / "neo4j-community-5.26.0"
 NEO4J_HTTP_PORT = 7474
