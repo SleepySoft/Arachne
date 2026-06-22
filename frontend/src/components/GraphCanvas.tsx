@@ -55,7 +55,10 @@ function runHybridLayout(
     if (fit) {
       // 只 fit 到父节点及其子节点，不要把整个邻域拉进来导致缩放过小
       const fitCollection = expandedParents.union(expandedParents.descendants());
-      cy.fit(fitCollection, 40);
+      cy.animate(
+        { fit: { eles: fitCollection, padding: 40 } },
+        { duration: 250, easing: "ease-in-out-cubic" }
+      );
     }
     return;
   }
@@ -164,6 +167,7 @@ interface GraphCanvasProps {
   editMode?: EditMode;
   connectSourceNodeId?: string | null;
   expandedProcessParents?: string[];
+  onToggleProcessExpansion?: (nodeId: string) => void;
 }
 
 function applyFilters(
@@ -294,6 +298,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     editMode = "default",
     connectSourceNodeId = null,
     expandedProcessParents = [],
+    onToggleProcessExpansion,
   },
   ref
 ) {
@@ -315,6 +320,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   const editModeRef = useRef(editMode);
   const connectSourceNodeIdRef = useRef(connectSourceNodeId);
   const expandedProcessParentsRef = useRef(expandedProcessParents);
+  const onToggleProcessExpansionRef = useRef(onToggleProcessExpansion);
 
   useEffect(() => {
     onNodeClickRef.current = onNodeClick;
@@ -367,6 +373,10 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   useEffect(() => {
     expandedProcessParentsRef.current = expandedProcessParents;
   }, [expandedProcessParents]);
+
+  useEffect(() => {
+    onToggleProcessExpansionRef.current = onToggleProcessExpansion;
+  }, [onToggleProcessExpansion]);
 
   useImperativeHandle(ref, () => ({
     addNode: (node, position) => {
@@ -796,6 +806,16 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
           const node = evt.target;
           const nodeId = node.id();
 
+          // 如果该节点有 part_of 子工艺，双击用来展开/收起，不再走邻居展开
+          const hasPartOfChildren =
+            cy
+              .edges('[edge_namespace = "ontology"][edge_type = "part_of"]')
+              .filter((edge) => edge.target().id() === nodeId).length > 0;
+          if (hasPartOfChildren) {
+            onToggleProcessExpansionRef.current?.(nodeId);
+            return;
+          }
+
           // 【设计理由: 双击即固化】
           // 无论这个节点之前是不是预览节点，既然用户双击了它，就立刻把它变成主图实体。
           node.removeClass("external");
@@ -914,10 +934,13 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     if (!cy) return;
     syncCompoundParents(cy, expandedProcessParents);
     applyFilters(cy, filtersRef.current, expandedProcessParents);
-    // 确保 Cytoscape 已经应用 parent 关系后再读取 children
-    requestAnimationFrame(() => {
-      runHybridLayout(cy, true, expandedProcessParents);
-    });
+    // 收起时（expandedProcessParents 为空）不再触发全局重排，避免视图乱跳；
+    // 展开时再做局部径向布局并平滑动画 fit 到复合节点。
+    if (expandedProcessParents.length > 0) {
+      requestAnimationFrame(() => {
+        runHybridLayout(cy, true, expandedProcessParents);
+      });
+    }
   }, [expandedProcessParents]);
 
   // Connect mode source highlight

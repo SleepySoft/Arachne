@@ -99,6 +99,7 @@ export default function App() {
             editMode={industrial.editMode}
             connectSourceNodeId={industrial.connectSource?.node_id || null}
             expandedProcessParents={industrial.expandedProcessParents}
+            onToggleProcessExpansion={industrial.toggleProcessParent}
           />
           <GraphToolbar
             onRelayout={() => industrial.setGraphKey((k) => k + 1)}
