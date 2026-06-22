@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Maximize2, Plus, Search, X } from "lucide-react";
-import { GraphEdge, IndustrialFlowEdgeQuickCreate, IndustrialFlowType } from "@/types";
+import { GraphEdge, IndustrialFlowEdgeQuickCreate, IndustrialFlowType, IndustrialNode } from "@/types";
 import { getNode, listNodes, quickCreateEdge } from "@/services/api";
 
 interface QuickEdgeFormProps {
   anchorNodeId: string;
   direction: "upstream" | "downstream";
+  initialTargetNodeId?: string;
+  initialTargetNode?: IndustrialNode;
   onSuccess?: (edge: GraphEdge) => void;
   onCancel?: () => void;
   onExpand?: (draft: {
@@ -31,13 +33,20 @@ const EDGE_TYPES: { value: IndustrialFlowType; label: string }[] = [
 export function QuickEdgeForm({
   anchorNodeId,
   direction,
+  initialTargetNodeId,
+  initialTargetNode,
   onSuccess,
   onCancel,
   onExpand,
 }: QuickEdgeFormProps) {
   const queryClient = useQueryClient();
   const [query, setQuery] = useState("");
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(
+    initialTargetNodeId || null
+  );
+  const [selectedNodeOverride, setSelectedNodeOverride] = useState<IndustrialNode | null>(
+    initialTargetNode || null
+  );
   const [edgeType, setEdgeType] = useState<IndustrialFlowType>("material_flow");
   const [description, setDescription] = useState("");
   const [notes, setNotes] = useState("");
@@ -54,7 +63,15 @@ export function QuickEdgeForm({
     enabled: query.length >= 1,
   });
 
-  const selectedNode = searchData?.items.find((n) => n.node_id === selectedNodeId) || null;
+  const selectedNode =
+    selectedNodeOverride ||
+    searchData?.items.find((n) => n.node_id === selectedNodeId) ||
+    null;
+
+  useEffect(() => {
+    if (initialTargetNodeId) setSelectedNodeId(initialTargetNodeId);
+    if (initialTargetNode) setSelectedNodeOverride(initialTargetNode);
+  }, [initialTargetNodeId, initialTargetNode]);
 
   const isUpstream = direction === "upstream";
   const fromNodeId = isUpstream ? selectedNodeId : anchorNodeId;
@@ -169,6 +186,7 @@ export function QuickEdgeForm({
           onChange={(e) => {
             setQuery(e.target.value);
             if (selectedNodeId) setSelectedNodeId(null);
+            if (selectedNodeOverride) setSelectedNodeOverride(null);
           }}
           placeholder={isUpstream ? "搜索上游节点（供应商）..." : "搜索下游节点（客户/应用）..."}
           className="w-full rounded border border-slate-700 bg-slate-800 py-1.5 pl-6 pr-2 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"

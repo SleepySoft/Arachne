@@ -27,6 +27,16 @@ interface RightPanelProps {
   selectedRelation: CompanyNetworkEdge | null;
   contextMenuNode: IndustrialNode | null;
   refreshGraph: () => void;
+  onNodeCreated?: (node: IndustrialNode, position?: { x: number; y: number }) => void;
+  pendingNodePosition?: { x: number; y: number } | null;
+  edgePrefillData?: {
+    from_node?: string;
+    to_node?: string;
+    edge_type?: string;
+    description?: string;
+    notes?: string;
+  } | null;
+  clearPendingEdgePrefill?: () => void;
   setPanel: (panel: PanelType) => void;
   setSelectedNode: (node: IndustrialNode | null) => void;
   setSelectedEdge: (edge: GraphEdge | null) => void;
@@ -51,6 +61,10 @@ export function RightPanel({
   selectedRelation,
   contextMenuNode,
   refreshGraph,
+  onNodeCreated,
+  pendingNodePosition,
+  edgePrefillData,
+  clearPendingEdgePrefill,
   setPanel,
   setSelectedNode,
   setSelectedEdge,
@@ -104,7 +118,11 @@ export function RightPanel({
         onSuccess={(node) => {
           setSelectedNode(node);
           setPanel("node-detail");
-          refreshGraph();
+          if (pendingNodePosition) {
+            onNodeCreated?.(node, pendingNodePosition);
+          } else {
+            refreshGraph();
+          }
         }}
       />
     );
@@ -129,10 +147,15 @@ export function RightPanel({
     return (
       <EdgeForm
         mode="create"
-        onClose={() => setPanel("none")}
+        prefillData={edgePrefillData || undefined}
+        onClose={() => {
+          clearPendingEdgePrefill?.();
+          setPanel("none");
+        }}
         onSuccess={(edge) => {
           setSelectedEdge(edge);
           setPanel("edge-detail");
+          clearPendingEdgePrefill?.();
           refreshGraph();
         }}
       />

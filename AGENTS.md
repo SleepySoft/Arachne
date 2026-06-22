@@ -289,6 +289,8 @@ backend/
 - **Semiconductor industry process layer**: Added `chip_packaging_and_testing` and `electronics_system_integration` process nodes, mapped all front-end and back-end process nodes to `semiconductor_industry`, and redirected chip's direct application-system edges through the new process layer. `chip` out-degree reduced from 9 to 2; reverse_industrial_flow conflicts reduced from 3 to 2.
 - **Neo4j connection resilience**: Added connection pool settings (`max_connection_lifetime`, `connection_acquisition_timeout`, `max_connection_pool_size`) and global exception handlers for `ServiceUnavailable` / `SessionExpired` / `ConnectionResetError` to return 503 instead of crashing uvicorn.
 - **Node search ranking fix**: `list_nodes` now boosts exact matches, then prefix matches, then substring matches; also searches `canonical_name_en`. Searching "芯片" now returns the `chip` node first instead of being buried after other chip-related nodes.
+- **Front-end process link to wafer manufacturing**: Added `is_a` ontology edges from `lithography_process`, `etching_process`, `thin_film_deposition_process`, `ion_implantation_process`, `cmp_process`, `cleaning_process`, and `metrology_inspection` to `wafer_manufacturing`. This resolves the reported isolation of `photoresist` / `lithography_process` by connecting them into the wafer manufacturing flow.
+- **Graph visual editing mode**: Implemented in `GraphCanvas` with right-click canvas → create node (quick/full), right-click edge → delete, Delete key to remove selected edge, and a connect-mode toolbar to draw edges between nodes. The canvas exposes imperative methods (`addNode`/`addEdge`/`removeEdge`) so edits appear immediately without a full graph reload.
 
 ---
 

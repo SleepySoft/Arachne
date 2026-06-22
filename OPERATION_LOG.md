@@ -708,3 +708,56 @@ aluminum_ingot → electronic_aluminum_foil → etched_foil → formed_foil
   - 历史窗口展示浏览序列，当前节点高亮，点击可跳转。
   - 跳转时复用已有的 `highlightNodeId` 机制：节点不在画布上会自动获取并加入中心高亮；被过滤器隐藏的节点会被强制显示。
 - **验证**：`npm run build` 通过，无 TypeScript 错误。
+
+
+---
+
+## 日期：2026-06-16（追加 6）
+
+### 半导体前道工艺链路补齐（光刻胶 / 光刻工艺孤立问题）
+
+- **用户反馈**：`photoresist`（光刻胶）和 `lithography_process`（光刻工艺）在产业图中显示为孤立节点，需要检查并补齐它们与设备、材料、晶圆制造之间的工艺链路。
+- **检查结论**：
+  - `photoresist` 已有边：`photoresist -> lithography_process`（material_flow）、`photoresist -> lithography_machine`（material_flow）、`photoresist -> track_coater_developer`（material_flow），以及 `duv_photoresist/euv_photoresist -> photoresist`（is_a）。
+  - `lithography_process` 已有边：来自 `photoresist`、`duv_photoresist`、`euv_photoresist`（material_flow），以及来自 `lithography_machine`、`track_coater_developer`（capability_supply）。
+  - 真正缺失的是：前道单步工艺节点与聚合工艺 `wafer_manufacturing` 之间没有 `is_a` 关系，导致这些工艺在晶圆制造主流程中看起来孤立。
+- **补齐操作**：
+  - 通过 `POST /api/v1/edges` 为 7 个前道/量测工艺节点创建 `is_a` 本体边，指向 `wafer_manufacturing`：
+    - `lithography_process`、`etching_process`、`thin_film_deposition_process`、`ion_implantation_process`、`cmp_process`、`cleaning_process`、`metrology_inspection`。
+  - 边 ID 形如 `{process}_is_a_wafer_manufacturing`，置信度 MEDIUM，附半导体制造工艺概述证据。
+- **验证**：
+  - `GET /api/v1/industries/semiconductor_industry/subgraph` 返回 78 节点 / 124 条边。
+  - `lithography_process` 现在通过 `is_a` 与 `wafer_manufacturing` 相连；`photoresist` 经由 `lithography_process` 接入晶圆制造流程。
+
+
+---
+
+## 日期：2026-06-16（追加 7）
+
+### 产业图可视化编辑模式
+
+- **需求**：用户希望边浏览边编辑，支持在画布右键空白处创建节点、右键边删除、按 Delete 删除选中边、以及“连线模式”直接从一个节点拖拽连线到另一个节点；均支持快速创建和完整表单两种入口。
+- **实现改动**：
+  1. `frontend/src/components/GraphCanvas.tsx`
+     - 通过 `forwardRef` 暴露 `addNode`、`addEdge`、`removeEdge`、`removeNode` 方法，让父组件在 API 成功后立即更新 Cytoscape 实例，无需整图重排。
+     - 新增 `editMode` / `connectSourceNodeId` props；连线模式下点击节点依次选择起点、终点，空白处点击取消起点。
+     - 增加 `cxttap` 事件监听：节点右键、边右键、空白画布右键分别触发对应菜单。
+     - 增加键盘 `Delete/Backspace` 监听，选中边时可直接删除。
+     - 起点高亮样式 `.connect-source`。
+  2. `frontend/src/hooks/useIndustrialGraph.ts`
+     - 新增编辑态：`editMode`、`connectSource`、`connectTarget`、`connectFormPosition`。
+     - 新增画布右键菜单、边右键菜单、连线模式相关状态与处理器。
+  3. 新增组件：
+     - `CanvasContextMenu.tsx`：右键空白画布 → “快速创建节点” / “完整创建节点”。
+     - `EdgeContextMenu.tsx`：右键边 → “删除连线”。
+     - `ConnectEdgePanel.tsx`：连线选定起点/终点后弹出快速/完整创建边表单。
+  4. `frontend/src/components/QuickEdgeForm.tsx`
+     - 支持 `initialTargetNodeId` / `initialTargetNode`，在连线模式下自动预填终点。
+  5. `frontend/src/components/GraphToolbar.tsx`
+     - 新增“连线”开关按钮，高亮显示当前处于连线模式。
+  6. `frontend/src/components/panels/RightPanel.tsx`
+     - `NodeForm` 支持 `pendingNodePosition`，完整创建节点后可将节点放到右键点击位置。
+     - `EdgeForm` 支持 `edgePrefillData` 和 `clearPendingEdgePrefill`。
+  7. `frontend/src/App.tsx`
+     - 整合上述组件，处理 API 调用与 Cytoscape 实例更新，删除边后同步关闭详情面板。
+- **验证**：`npm run build` 通过，无 TypeScript 错误。

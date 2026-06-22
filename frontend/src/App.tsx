@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { StatsBar, MainView } from "@/components/StatsBar";
 import { DbChecksPage } from "@/pages/DbChecksPage";
 import { Layout } from "@/components/Layout";
-import { GraphCanvas } from "@/components/GraphCanvas";
+import { GraphCanvas, GraphCanvasRef } from "@/components/GraphCanvas";
 import { GraphToolbar } from "@/components/GraphToolbar";
 import { NodeContextMenu } from "@/components/NodeContextMenu";
 import { CompanyGraphEmptyState } from "@/components/CompanyGraphEmptyState";
@@ -10,6 +10,11 @@ import { CompanyNetworkCanvas } from "@/components/CompanyNetworkCanvas";
 import { ExplorationCanvas } from "@/components/ExplorationCanvas";
 import { CompanyMaterialModal } from "@/components/CompanyMaterialModal";
 import { MaterialConnectionPanel } from "@/components/MaterialConnectionPanel";
+import { CanvasContextMenu } from "@/components/CanvasContextMenu";
+import { EdgeContextMenu } from "@/components/EdgeContextMenu";
+import { ConnectEdgePanel } from "@/components/ConnectEdgePanel";
+import { QuickNodeForm } from "@/components/QuickNodeForm";
+import { deleteEdge } from "@/services/api";
 import { IndustrialSidebar } from "@/components/panels/IndustrialSidebar";
 import { IndustrialSearchPanel } from "@/components/panels/IndustrialSearchPanel";
 import { CompanySidebarPanel } from "@/components/panels/CompanySidebarPanel";
@@ -27,6 +32,11 @@ export default function App() {
 
   const industrial = useIndustrialGraph();
   const company = useCompanyGraph();
+  const graphCanvasRef = useRef<GraphCanvasRef>(null);
+  const [quickNodeAt, setQuickNodeAt] = useState<{
+    node: { x: number; y: number };
+    visible: boolean;
+  } | null>(null);
 
   if (mainView === "db_checks") {
     return (
@@ -63,16 +73,37 @@ export default function App() {
       centerCanvas={
         <div className="relative h-full w-full">
           <GraphCanvas
+            ref={graphCanvasRef}
             key={industrial.graphKey}
             onNodeClick={industrial.handleNodeClick}
             onEdgeClick={industrial.handleEdgeClick}
             onNodeContextMenu={industrial.handleNodeContextMenu}
+            onEdgeContextMenu={industrial.handleEdgeContextMenu}
+            onCanvasContextMenu={industrial.handleCanvasContextMenu}
+            onEdgeDelete={(edge) => {
+              deleteEdge(edge.edge_id).then(() => {
+                graphCanvasRef.current?.removeEdge(edge.edge_id);
+                if (industrial.selectedEdge?.edge_id === edge.edge_id) {
+                  industrial.setSelectedEdge(null);
+                  industrial.setPanel("none");
+                }
+                industrial.refreshGraph();
+              });
+            }}
+            onConnectSourceSelect={industrial.handleConnectSourceSelect}
+            onConnectTargetSelect={industrial.handleConnectTargetSelect}
             filters={industrial.activeFilters}
             highlightNodeId={industrial.selectedNode?.node_id}
             highlightNodeIds={industrial.highlightNodeIds}
             sourceData={industrial.subgraphData}
+            editMode={industrial.editMode}
+            connectSourceNodeId={industrial.connectSource?.node_id || null}
           />
-          <GraphToolbar onRelayout={() => industrial.setGraphKey((k) => k + 1)} />
+          <GraphToolbar
+            onRelayout={() => industrial.setGraphKey((k) => k + 1)}
+            editMode={industrial.editMode}
+            onToggleEditMode={industrial.toggleEditMode}
+          />
         </div>
       }
       searchPanel={
@@ -105,6 +136,15 @@ export default function App() {
           selectedRelation={null}
           contextMenuNode={industrial.contextMenu.node}
           refreshGraph={industrial.refreshGraph}
+          onNodeCreated={(node, position) => {
+            if (position) {
+              graphCanvasRef.current?.addNode(node, position);
+              industrial.setPendingNodePosition(null);
+            }
+          }}
+          pendingNodePosition={industrial.pendingNodePosition}
+          edgePrefillData={industrial.pendingEdgePrefill}
+          clearPendingEdgePrefill={industrial.clearPendingEdgePrefill}
           setPanel={industrial.setPanel}
           setSelectedNode={industrial.setSelectedNode}
           setSelectedEdge={industrial.setSelectedEdge}
@@ -246,6 +286,89 @@ export default function App() {
             }
           />
         )}
+
+      {mainView === "industrial_graph" && industrial.canvasMenu.visible && (
+        <CanvasContextMenu
+          x={industrial.canvasMenu.x}
+          y={industrial.canvasMenu.y}
+          onQuickCreate={() => {
+            if (industrial.pendingNodePosition) {
+              setQuickNodeAt({
+                node: industrial.pendingNodePosition,
+                visible: true,
+              });
+            }
+            industrial.handleCloseCanvasMenu();
+          }}
+          onFullCreate={() => {
+            industrial.setPanel("node-create");
+            industrial.handleCloseCanvasMenu();
+          }}
+          onClose={industrial.handleCloseCanvasMenu}
+        />
+      )}
+
+      {mainView === "industrial_graph" &&
+        industrial.edgeMenu.visible &&
+        industrial.edgeMenu.edge && (
+          <EdgeContextMenu
+            x={industrial.edgeMenu.x}
+            y={industrial.edgeMenu.y}
+            onDelete={() => {
+              const edge = industrial.edgeMenu.edge;
+              if (edge) {
+                deleteEdge(edge.edge_id).then(() => {
+                  graphCanvasRef.current?.removeEdge(edge.edge_id);
+                  if (industrial.selectedEdge?.edge_id === edge.edge_id) {
+                    industrial.setSelectedEdge(null);
+                    industrial.setPanel("none");
+                  }
+                  industrial.refreshGraph();
+                });
+              }
+              industrial.handleCloseEdgeMenu();
+            }}
+            onClose={industrial.handleCloseEdgeMenu}
+          />
+        )}
+
+      {mainView === "industrial_graph" &&
+        industrial.editMode === "connect" &&
+        industrial.connectSource &&
+        industrial.connectTarget && (
+          <ConnectEdgePanel
+            source={industrial.connectSource}
+            target={industrial.connectTarget}
+            x={industrial.connectFormPosition?.x ?? industrial.canvasMenu.x}
+            y={industrial.connectFormPosition?.y ?? industrial.canvasMenu.y}
+            onSuccess={(edge) => {
+              graphCanvasRef.current?.addEdge(edge);
+              industrial.exitEditMode();
+            }}
+            onClose={() => {
+              industrial.handleCancelConnect();
+            }}
+            onExpand={(draft) => {
+              industrial.handleOpenFullEdgeCreate(draft);
+              industrial.handleCancelConnect();
+            }}
+          />
+        )}
+
+      {mainView === "industrial_graph" && quickNodeAt?.visible && (
+        <div
+          className="fixed z-50 w-80 rounded-lg border border-slate-700 bg-slate-900/95 p-3 shadow-xl backdrop-blur"
+          style={{ left: quickNodeAt.node.x, top: quickNodeAt.node.y }}
+        >
+          <QuickNodeForm
+            onCancel={() => setQuickNodeAt(null)}
+            onSuccess={(node) => {
+              graphCanvasRef.current?.addNode(node, quickNodeAt.node);
+              setQuickNodeAt(null);
+            }}
+          />
+        </div>
+      )}
 
       {mainView === "company_graph" &&
         company.selectedCompany &&

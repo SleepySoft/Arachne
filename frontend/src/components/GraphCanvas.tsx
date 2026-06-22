@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import cytoscape from "cytoscape";
 import dagre from "cytoscape-dagre";
 import {
@@ -89,10 +89,24 @@ function runHybridLayout(cy: cytoscape.Core, fit = true) {
   dagreLayout.run();
 }
 
+export type EditMode = "default" | "connect";
+
+export interface GraphCanvasRef {
+  addNode: (node: IndustrialNode, position?: { x: number; y: number }) => void;
+  addEdge: (edge: GraphEdge) => void;
+  removeEdge: (edgeId: string) => void;
+  removeNode: (nodeId: string) => void;
+}
+
 interface GraphCanvasProps {
   onNodeClick: (node: IndustrialNode) => void;
   onEdgeClick: (edge: GraphEdge) => void;
   onNodeContextMenu?: (node: IndustrialNode, x: number, y: number) => void;
+  onEdgeContextMenu?: (edge: GraphEdge, x: number, y: number) => void;
+  onCanvasContextMenu?: (x: number, y: number) => void;
+  onEdgeDelete?: (edge: GraphEdge) => void;
+  onConnectSourceSelect?: (node: IndustrialNode | null, position?: { x: number; y: number }) => void;
+  onConnectTargetSelect?: (node: IndustrialNode, position?: { x: number; y: number }) => void;
   filters: {
     edgeNamespaces: string[];
     edgeTypes: string[];
@@ -105,6 +119,8 @@ interface GraphCanvasProps {
   highlightNodeId?: string;
   highlightNodeIds?: string[];
   sourceData?: { nodes: IndustrialNode[]; edges: GraphEdge[] };
+  editMode?: EditMode;
+  connectSourceNodeId?: string | null;
 }
 
 function applyFilters(
@@ -160,15 +176,25 @@ function applyFilters(
   });
 }
 
-export function GraphCanvas({
-  onNodeClick,
-  onEdgeClick,
-  onNodeContextMenu,
-  filters,
-  highlightNodeId,
-  highlightNodeIds,
-  sourceData,
-}: GraphCanvasProps) {
+export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function GraphCanvas(
+  {
+    onNodeClick,
+    onEdgeClick,
+    onNodeContextMenu,
+    onEdgeContextMenu,
+    onCanvasContextMenu,
+    onEdgeDelete,
+    onConnectSourceSelect,
+    onConnectTargetSelect,
+    filters,
+    highlightNodeId,
+    highlightNodeIds,
+    sourceData,
+    editMode = "default",
+    connectSourceNodeId = null,
+  },
+  ref
+) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
   const [loading, setLoading] = useState(true);
@@ -177,8 +203,15 @@ export function GraphCanvas({
   const onNodeClickRef = useRef(onNodeClick);
   const onEdgeClickRef = useRef(onEdgeClick);
   const onNodeContextMenuRef = useRef(onNodeContextMenu);
+  const onEdgeContextMenuRef = useRef(onEdgeContextMenu);
+  const onCanvasContextMenuRef = useRef(onCanvasContextMenu);
+  const onEdgeDeleteRef = useRef(onEdgeDelete);
+  const onConnectSourceSelectRef = useRef(onConnectSourceSelect);
+  const onConnectTargetSelectRef = useRef(onConnectTargetSelect);
   const filtersRef = useRef(filters);
   const sourceDataRef = useRef(sourceData);
+  const editModeRef = useRef(editMode);
+  const connectSourceNodeIdRef = useRef(connectSourceNodeId);
 
   useEffect(() => {
     onNodeClickRef.current = onNodeClick;
@@ -200,9 +233,104 @@ export function GraphCanvas({
     sourceDataRef.current = sourceData;
   }, [sourceData]);
 
+  useEffect(() => {
+    onEdgeContextMenuRef.current = onEdgeContextMenu;
+  }, [onEdgeContextMenu]);
+
+  useEffect(() => {
+    onCanvasContextMenuRef.current = onCanvasContextMenu;
+  }, [onCanvasContextMenu]);
+
+  useEffect(() => {
+    onEdgeDeleteRef.current = onEdgeDelete;
+  }, [onEdgeDelete]);
+
+  useEffect(() => {
+    onConnectSourceSelectRef.current = onConnectSourceSelect;
+  }, [onConnectSourceSelect]);
+
+  useEffect(() => {
+    onConnectTargetSelectRef.current = onConnectTargetSelect;
+  }, [onConnectTargetSelect]);
+
+  useEffect(() => {
+    editModeRef.current = editMode;
+  }, [editMode]);
+
+  useEffect(() => {
+    connectSourceNodeIdRef.current = connectSourceNodeId;
+  }, [connectSourceNodeId]);
+
+  useImperativeHandle(ref, () => ({
+    addNode: (node, position) => {
+      const cy = cyRef.current;
+      if (!cy) return;
+      const existing = cy.getElementById(node.node_id);
+      if (existing.length > 0) {
+        if (position) existing.position(position);
+        return;
+      }
+      let pos = position;
+      if (!pos) {
+        const extent = cy.extent();
+        pos = { x: (extent.x1 + extent.x2) / 2, y: (extent.y1 + extent.y2) / 2 };
+      }
+      cy.add({
+        data: {
+          id: node.node_id,
+          label: node.canonical_name_zh,
+          entity_type: node.entity_type,
+          status: node.status,
+          confidence: node.confidence,
+          raw: node,
+        },
+        position: pos,
+      });
+      applyFilters(cy, filtersRef.current);
+      // 新创建的节点即使暂时没有边也要显示出来，避免被过滤器隐藏
+      const added = cy.getElementById(node.node_id);
+      if (added.length > 0) added.removeClass("hidden");
+    },
+    addEdge: (edge) => {
+      const cy = cyRef.current;
+      if (!cy) return;
+      if (cy.getElementById(edge.edge_id).length > 0) return;
+      const sourceInGraph = cy.getElementById(edge.from_node).length > 0;
+      const targetInGraph = cy.getElementById(edge.to_node).length > 0;
+      if (!sourceInGraph || !targetInGraph) return;
+      cy.add({
+        data: {
+          id: edge.edge_id,
+          source: edge.from_node,
+          target: edge.to_node,
+          edge_namespace: edge.edge_namespace,
+          edge_type: edge.edge_type,
+          label: edge.edge_type_label || edge.edge_type,
+          raw: edge,
+        },
+      });
+      applyFilters(cy, filtersRef.current);
+    },
+    removeEdge: (edgeId) => {
+      const cy = cyRef.current;
+      if (!cy) return;
+      const el = cy.getElementById(edgeId);
+      if (el.length > 0) cy.remove(el);
+      applyFilters(cy, filtersRef.current);
+    },
+    removeNode: (nodeId) => {
+      const cy = cyRef.current;
+      if (!cy) return;
+      const el = cy.getElementById(nodeId);
+      if (el.length > 0) cy.remove(el);
+      applyFilters(cy, filtersRef.current);
+    },
+  }));
+
   // Initial load — only once
   useEffect(() => {
     let mounted = true;
+    let keyHandler: ((e: KeyboardEvent) => void) | undefined;
     async function init() {
       try {
         setLoading(true);
@@ -345,6 +473,16 @@ export function GraphCanvas({
               },
             },
             {
+              selector: ".connect-source",
+              style: {
+                "border-color": "#22d3ee",
+                "border-width": 4,
+                "background-color": "#0ea5e9",
+                color: "#e0f2fe",
+                "text-background-color": "#0c4a6e",
+              },
+            },
+            {
               selector: ":selected",
               style: {
                 "border-color": "#22d3ee",
@@ -365,6 +503,24 @@ export function GraphCanvas({
         cy.on("tap", "node", async (evt) => {
           const node = evt.target;
           const rawData = node.data("raw") as IndustrialNode;
+
+          // 连线模式：第一次点击选起点，第二次点击选终点
+          if (editModeRef.current === "connect") {
+            const sourceId = connectSourceNodeIdRef.current;
+            const clickPos = {
+              x: (evt.originalEvent as MouseEvent).clientX,
+              y: (evt.originalEvent as MouseEvent).clientY,
+            };
+            if (!sourceId) {
+              onConnectSourceSelectRef.current?.(rawData, clickPos);
+            } else if (sourceId === node.id()) {
+              onConnectSourceSelectRef.current?.(null);
+            } else {
+              onConnectTargetSelectRef.current?.(rawData, clickPos);
+            }
+            return;
+          }
+
           onNodeClickRef.current(rawData);
 
           // 仅在存在源数据(子图模式)时，开启探索视野功能
@@ -463,14 +619,42 @@ export function GraphCanvas({
         });
 
         // ==========================================
-        // 3. 画布空白处单击事件：重置图谱状态
+        // 3. 画布空白处单击事件：重置图谱状态 / 取消连线
         // ==========================================
         cy.on("tap", (evt) => {
           if (evt.target === cy) {
+            // 连线模式下点空白处取消当前选中的起点
+            if (editModeRef.current === "connect" && connectSourceNodeIdRef.current) {
+              onConnectSourceSelectRef.current?.(null);
+            }
             // 【设计理由: 提供安全的撤退路径】
             // 点空白处取消所有高亮，并清理掉所有临时的半透明预览节点
             cy.elements().removeClass("highlighted dimmed");
             cy.elements(".external").remove();
+          }
+        });
+
+        // ==========================================
+        // 3.5 右键菜单事件：节点 / 边 / 空白画布
+        // ==========================================
+        cy.on("cxttap", "node", (evt) => {
+          const node = evt.target;
+          const rawData = node.data("raw") as IndustrialNode;
+          const e = evt.originalEvent as MouseEvent;
+          onNodeContextMenuRef.current?.(rawData, e.clientX, e.clientY);
+        });
+
+        cy.on("cxttap", "edge", (evt) => {
+          const edge = evt.target;
+          const rawData = edge.data("raw") as GraphEdge;
+          const e = evt.originalEvent as MouseEvent;
+          onEdgeContextMenuRef.current?.(rawData, e.clientX, e.clientY);
+        });
+
+        cy.on("cxttap", (evt) => {
+          if (evt.target === cy) {
+            const e = evt.originalEvent as MouseEvent;
+            onCanvasContextMenuRef.current?.(e.clientX, e.clientY);
           }
         });
 
@@ -541,6 +725,26 @@ export function GraphCanvas({
           }
         });
 
+        // 键盘删除：选中边时按 Delete/Backspace 删除
+        keyHandler = (e: KeyboardEvent) => {
+          const target = e.target as HTMLElement;
+          if (
+            target &&
+            (target.tagName === "INPUT" ||
+              target.tagName === "TEXTAREA" ||
+              target.isContentEditable)
+          ) {
+            return;
+          }
+          if (e.key !== "Delete" && e.key !== "Backspace") return;
+          const selectedEdge = cy.$(":selected").filter("edge");
+          if (selectedEdge.length > 0) {
+            const rawData = selectedEdge.data("raw") as GraphEdge;
+            onEdgeDeleteRef.current?.(rawData);
+          }
+        };
+        window.addEventListener("keydown", keyHandler);
+
         cyRef.current = cy;
         // 使用混合布局：产业流自上而下，is_a 关系环绕父节点
         runHybridLayout(cy, true);
@@ -555,6 +759,7 @@ export function GraphCanvas({
     init();
     return () => {
       mounted = false;
+      if (keyHandler) window.removeEventListener("keydown", keyHandler);
       if (cyRef.current) {
         cyRef.current.destroy();
         cyRef.current = null;
@@ -569,6 +774,17 @@ export function GraphCanvas({
     if (!cy) return;
     applyFilters(cy, filters);
   }, [filters]);
+
+  // Connect mode source highlight
+  useEffect(() => {
+    const cy = cyRef.current;
+    if (!cy) return;
+    cy.nodes().removeClass("connect-source");
+    if (connectSourceNodeId) {
+      const source = cy.getElementById(connectSourceNodeId);
+      if (source.length > 0) source.addClass("connect-source");
+    }
+  }, [connectSourceNodeId]);
 
   // Highlight single node
   useEffect(() => {
@@ -671,35 +887,8 @@ export function GraphCanvas({
       <div
         ref={containerRef}
         className="h-full w-full"
-        onContextMenu={(e) => {
-          e.preventDefault();
-          const cy = cyRef.current;
-          if (!cy || cy.nodes().length === 0) return;
-
-          const rect = containerRef.current!.getBoundingClientRect();
-          const mouseX = e.clientX - rect.left;
-          const mouseY = e.clientY - rect.top;
-
-          // 找到鼠标位置下的节点（使用渲染坐标 hit-test）
-          const clickedNode = cy.nodes().toArray().find((node) => {
-            const bb = node.renderedBoundingBox({
-              includeOverlays: false,
-              includeLabels: false,
-            });
-            return (
-              mouseX >= bb.x1 &&
-              mouseX <= bb.x2 &&
-              mouseY >= bb.y1 &&
-              mouseY <= bb.y2
-            );
-          });
-
-          if (clickedNode && onNodeContextMenuRef.current) {
-            const rawData = clickedNode.data("raw") as IndustrialNode;
-            onNodeContextMenuRef.current(rawData, e.clientX, e.clientY);
-          }
-        }}
+        onContextMenu={(e) => e.preventDefault()}
       />
     </div>
   );
-}
+});

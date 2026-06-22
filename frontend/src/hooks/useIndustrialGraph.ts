@@ -6,6 +6,7 @@ import {
   Company,
   PanelType,
 } from "@/types";
+import { EditMode } from "@/components/GraphCanvas";
 import { getCompanySubgraph, getIndustrySubgraph } from "@/services/api";
 import { useNodeNavigation } from "./useNodeNavigation";
 
@@ -33,6 +34,32 @@ export function useIndustrialGraph() {
     showWeakOntology: false,
   });
   const [graphKey, setGraphKey] = useState(0);
+  const [editMode, setEditMode] = useState<EditMode>("default");
+  const [connectSource, setConnectSource] = useState<IndustrialNode | null>(null);
+  const [connectTarget, setConnectTarget] = useState<IndustrialNode | null>(null);
+  const [connectFormPosition, setConnectFormPosition] = useState<{ x: number; y: number } | null>(null);
+  const [canvasMenu, setCanvasMenu] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+  }>({ visible: false, x: 0, y: 0 });
+  const [edgeMenu, setEdgeMenu] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    edge: GraphEdge | null;
+  }>({ visible: false, x: 0, y: 0, edge: null });
+  const [pendingNodePosition, setPendingNodePosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [pendingEdgePrefill, setPendingEdgePrefill] = useState<{
+    from_node: string;
+    to_node: string;
+    edge_type: string;
+    description?: string;
+    notes?: string;
+  } | null>(null);
   const [subgraphData, setSubgraphData] = useState<
     { nodes: IndustrialNode[]; edges: GraphEdge[] } | undefined
   >(undefined);
@@ -184,6 +211,87 @@ export function useIndustrialGraph() {
     loadMergedSubgraph();
   }, [selectedIndustries, selectedCompanies]);
 
+  // ===== Edit mode helpers =====
+  const toggleEditMode = useCallback(() => {
+    setEditMode((prev) => {
+      const next = prev === "default" ? "connect" : "default";
+      if (next === "default") {
+        setConnectSource(null);
+        setConnectTarget(null);
+      }
+      return next;
+    });
+  }, []);
+
+  const exitEditMode = useCallback(() => {
+    setEditMode("default");
+    setConnectSource(null);
+    setConnectTarget(null);
+    setConnectFormPosition(null);
+  }, []);
+
+  const handleCanvasContextMenu = useCallback((x: number, y: number) => {
+    setCanvasMenu({ visible: true, x, y });
+    setPendingNodePosition({ x, y });
+  }, []);
+
+  const handleCloseCanvasMenu = useCallback(() => {
+    setCanvasMenu((prev) => ({ ...prev, visible: false }));
+    setPendingNodePosition(null);
+  }, []);
+
+  const handleEdgeContextMenu = useCallback(
+    (edge: GraphEdge, x: number, y: number) => {
+      setEdgeMenu({ visible: true, x, y, edge });
+    },
+    []
+  );
+
+  const handleCloseEdgeMenu = useCallback(() => {
+    setEdgeMenu({ visible: false, x: 0, y: 0, edge: null });
+  }, []);
+
+  const handleConnectSourceSelect = useCallback(
+    (node: IndustrialNode | null, position?: { x: number; y: number }) => {
+      setConnectSource(node);
+      setConnectTarget(null);
+      if (position) setConnectFormPosition(position);
+    },
+    []
+  );
+
+  const handleConnectTargetSelect = useCallback(
+    (node: IndustrialNode, position?: { x: number; y: number }) => {
+      setConnectTarget(node);
+      if (position) setConnectFormPosition(position);
+    },
+    []
+  );
+
+  const handleCancelConnect = useCallback(() => {
+    setConnectSource(null);
+    setConnectTarget(null);
+    setConnectFormPosition(null);
+  }, []);
+
+  const handleOpenFullEdgeCreate = useCallback(
+    (draft: {
+      from_node: string;
+      to_node: string;
+      edge_type: string;
+      description?: string;
+      notes?: string;
+    }) => {
+      setPendingEdgePrefill(draft);
+      setPanel("edge-create");
+    },
+    []
+  );
+
+  const clearPendingEdgePrefill = useCallback(() => {
+    setPendingEdgePrefill(null);
+  }, []);
+
   return {
     selectedNode,
     setSelectedNode,
@@ -225,5 +333,30 @@ export function useIndustrialGraph() {
     handleLoadSubgraph,
     handleHighlightNodes,
     resetSelections,
+    // edit mode
+    editMode,
+    setEditMode,
+    toggleEditMode,
+    exitEditMode,
+    connectSource,
+    connectTarget,
+    connectFormPosition,
+    handleConnectSourceSelect,
+    handleConnectTargetSelect,
+    handleCancelConnect,
+    canvasMenu,
+    setCanvasMenu,
+    handleCanvasContextMenu,
+    handleCloseCanvasMenu,
+    edgeMenu,
+    setEdgeMenu,
+    handleEdgeContextMenu,
+    handleCloseEdgeMenu,
+    pendingNodePosition,
+    setPendingNodePosition,
+    pendingEdgePrefill,
+    setPendingEdgePrefill,
+    handleOpenFullEdgeCreate,
+    clearPendingEdgePrefill,
   };
 }

@@ -36,7 +36,7 @@ RecordStatus = NodeStatus
 
 class EntityType(str, Enum):
     MATERIAL = "material"
-    COMPONENT = "component"
+    COMPONENT = "compon"
     DEVICE = "device"
     MODULE = "module"
     SUBSYSTEM = "subsystem"
