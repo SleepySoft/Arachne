@@ -27,6 +27,7 @@ export type IndustrialFlowType =
 export type OntologyType =
   | "alias_of"
   | "is_a"
+  | "part_of"
   | "variant_of"
   | "related_term";
 
@@ -456,6 +457,7 @@ export const EDGE_TYPE_LABELS: Record<string, string> = {
   // OntologyType
   alias_of: "别名/同义",
   is_a: "是一种",
+  part_of: "组成部分",
   variant_of: "变体",
   related_term: "相关术语",
 };

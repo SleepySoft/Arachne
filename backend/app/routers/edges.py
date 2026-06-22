@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Body, HTTPException, Query
 
 from app.models.schemas import (
     GraphEdge,
@@ -60,16 +60,16 @@ async def get_edge(edge_id: str):
 
 
 @router.put("/{edge_id}", response_model=GraphEdge)
-async def update_edge(edge_id: str, data):
+async def update_edge(edge_id: str, data: dict = Body(...)):
     existing = await graph_service.get_edge(edge_id)
     if not existing:
         raise HTTPException(status_code=404, detail="Edge not found")
 
     ns = existing.edge_namespace
     if ns == "industrial_flow":
-        update_data = IndustrialFlowEdgeUpdate(**data.model_dump(exclude_unset=True))
+        update_data = IndustrialFlowEdgeUpdate(**data)
     else:
-        update_data = OntologyEdgeUpdate(**data.model_dump(exclude_unset=True))
+        update_data = OntologyEdgeUpdate(**data)
 
     edge = await graph_service.update_edge(edge_id, update_data, ns)
     if not edge:

@@ -36,7 +36,7 @@ RecordStatus = NodeStatus
 
 class EntityType(str, Enum):
     MATERIAL = "material"
-    COMPONENT = "compon"
+    COMPONENT = "component"
     DEVICE = "device"
     MODULE = "module"
     SUBSYSTEM = "subsystem"
@@ -76,6 +76,7 @@ EDGE_TYPE_LABELS: dict[str, str] = {
     # OntologyType
     "alias_of": "别名/同义",
     "is_a": "是一种",
+    "part_of": "组成部分",
     "variant_of": "变体",
     "related_term": "相关术语",
 }
@@ -84,6 +85,7 @@ EDGE_TYPE_LABELS: dict[str, str] = {
 class OntologyType(str, Enum):
     ALIAS_OF = "alias_of"
     IS_A = "is_a"
+    PART_OF = "part_of"
     VARIANT_OF = "variant_of"
     RELATED_TERM = "related_term"
 
@@ -430,6 +432,7 @@ class IndustrialFlowEdgeQuickCreate(BaseModel):
 
 
 class IndustrialFlowEdgeUpdate(BaseModel):
+    edge_type: Optional[IndustrialFlowType] = None
     description: Optional[str] = None
     evidence: Optional[List[Evidence]] = None
     confidence: Optional[Confidence] = None
@@ -494,6 +497,7 @@ class OntologyEdgeCreate(BaseModel):
 
 
 class OntologyEdgeUpdate(BaseModel):
+    edge_type: Optional[OntologyType] = None
     description: Optional[str] = None
     evidence: Optional[List[Evidence]] = None
     confidence: Optional[Confidence] = None

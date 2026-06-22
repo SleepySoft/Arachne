@@ -47,6 +47,8 @@ interface RightPanelProps {
   onSelectNode: (node: IndustrialNode) => void;
   onSelectCompany: (company: Company) => void;
   onSelectIndustry: (industry: Industry) => void;
+  isProcessExpanded?: boolean;
+  onToggleProcessExpansion?: () => void;
   onFocusInGraph?: (companyId: string) => void;
   onOpenMaterialModal?: () => void;
   onAddExposure?: () => void;
@@ -75,6 +77,8 @@ export function RightPanel({
   onSelectNode,
   onSelectCompany,
   onSelectIndustry,
+  isProcessExpanded,
+  onToggleProcessExpansion,
   onFocusInGraph,
   onOpenMaterialModal,
   onAddExposure,
@@ -92,6 +96,8 @@ export function RightPanel({
         onSelectNode={onSelectNode}
         onSelectCompany={onSelectCompany}
         onSelectIndustry={onSelectIndustry}
+        isProcessExpanded={isProcessExpanded}
+        onToggleProcessExpansion={onToggleProcessExpansion}
       />
     );
   }

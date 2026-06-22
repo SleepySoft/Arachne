@@ -17,7 +17,49 @@ cytoscape.use(dagre);
  * 1. 先用 Dagre 对产业流（industrial_flow）做自上而下分层布局；
  * 2. 再对 ontology/is_a 关系做“环绕”修正，把子节点以同心圆方式排在父节点周围。
  */
-function runHybridLayout(cy: cytoscape.Core, fit = true) {
+function layoutExpandedCompound(cy: cytoscape.Core, parentId: string) {
+  const parent = cy.getElementById(parentId);
+  if (parent.length === 0) return;
+  const center = parent.position();
+  const children = parent.children();
+  const count = children.length;
+  if (count === 0) return;
+  const radius = Math.max(160, count * 38);
+  const angleStep = (2 * Math.PI) / count;
+  children.forEach((child, index) => {
+    const angle = index * angleStep;
+    child.position({
+      x: center.x + radius * Math.cos(angle),
+      y: center.y + radius * Math.sin(angle),
+    });
+  });
+}
+
+function runHybridLayout(
+  cy: cytoscape.Core,
+  fit = true,
+  expandedProcessParents: string[] = []
+) {
+  // 如果存在 compound parent（part_of 展开），用简单的径向布局把子工艺排在父节点周围
+  // 不依赖 :parent 选择器（隐藏子节点时可能无法命中），直接用 expandedProcessParents 选择父节点
+  const expandedParents =
+    expandedProcessParents.length > 0
+      ? cy.collection().union(
+          expandedProcessParents
+            .map((id) => cy.getElementById(id))
+            .filter((ele) => ele.length > 0)
+        )
+      : cy.nodes(":parent");
+  if (expandedParents.length > 0) {
+    expandedParents.forEach((parent) => layoutExpandedCompound(cy, parent.id()));
+    if (fit) {
+      // 只 fit 到父节点及其子节点，不要把整个邻域拉进来导致缩放过小
+      const fitCollection = expandedParents.union(expandedParents.descendants());
+      cy.fit(fitCollection, 40);
+    }
+    return;
+  }
+
   // 先把 ontology 边排除在 Dagre 计算之外，避免 is_a/alias 等关系打乱产业流分层
   const ontologyEdges = cy.edges('[edge_namespace = "ontology"]');
   const layoutElements = cy.elements().not(ontologyEdges);
@@ -121,17 +163,31 @@ interface GraphCanvasProps {
   sourceData?: { nodes: IndustrialNode[]; edges: GraphEdge[] };
   editMode?: EditMode;
   connectSourceNodeId?: string | null;
+  expandedProcessParents?: string[];
 }
 
 function applyFilters(
   cy: cytoscape.Core,
-  filters: GraphCanvasProps["filters"]
+  filters: GraphCanvasProps["filters"],
+  expandedProcessParents: string[] = []
 ) {
   const entityTypeSet = new Set(filters.entityTypes);
   const statusSet = new Set(filters.status);
   const confidenceSet = new Set(filters.confidence);
   const edgeNsSet = new Set(filters.edgeNamespaces);
   const edgeTypeSet = new Set(filters.edgeTypes);
+  const expandedParentSet = new Set(expandedProcessParents);
+
+  // part_of 边：source 是子节点，target 是父节点
+  const childToParent = new Map<string, string>();
+  cy.edges().forEach((edge) => {
+    if (
+      edge.data("edge_namespace") === "ontology" &&
+      edge.data("edge_type") === "part_of"
+    ) {
+      childToParent.set(edge.source().id(), edge.target().id());
+    }
+  });
 
   const visibleNodeIds = new Set<string>();
 
@@ -140,10 +196,17 @@ function applyFilters(
       const et = node.data("entity_type");
       const st = node.data("status");
       const cf = node.data("confidence");
-      const show =
+      let show =
         (entityTypeSet.size === 0 || entityTypeSet.has(et)) &&
         (statusSet.size === 0 || statusSet.has(st)) &&
         (confidenceSet.size === 0 || confidenceSet.has(cf));
+      // 如果节点是某个未展开父节点的子工艺，则隐藏
+      if (show) {
+        const parentId = childToParent.get(node.id());
+        if (parentId && !expandedParentSet.has(parentId)) {
+          show = false;
+        }
+      }
       node.toggleClass("hidden", !show);
       if (show) visibleNodeIds.add(node.id());
     });
@@ -176,6 +239,44 @@ function applyFilters(
   });
 }
 
+function syncCompoundParents(
+  cy: cytoscape.Core,
+  expandedProcessParents: string[]
+) {
+  const expandedSet = new Set(expandedProcessParents);
+  const childToParent = new Map<string, string>();
+  cy.edges('[edge_namespace = "ontology"][edge_type = "part_of"]').forEach(
+    (edge) => {
+      childToParent.set(edge.source().id(), edge.target().id());
+    }
+  );
+  // eslint-disable-next-line no-console
+  console.log("[syncCompoundParents] part_of edges:", childToParent.size, "expanded:", expandedProcessParents);
+
+  cy.batch(() => {
+    cy.nodes().forEach((node) => {
+      const parentId = childToParent.get(node.id());
+      if (!parentId) return;
+      const parent = cy.getElementById(parentId);
+      if (parent.length === 0) return;
+
+      if (expandedSet.has(parentId)) {
+        if (node.data("parent") !== parentId) {
+          // 在 move 前先把 hidden 去掉，避免 Cytoscape 在子节点不可见时无法识别 parent
+          node.removeClass("hidden");
+          node.move({ parent: parentId });
+          parent.addClass("compound-parent");
+        }
+      } else {
+        if (node.data("parent")) {
+          node.move({ parent: null });
+          parent.removeClass("compound-parent");
+        }
+      }
+    });
+  });
+}
+
 export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function GraphCanvas(
   {
     onNodeClick,
@@ -192,6 +293,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     sourceData,
     editMode = "default",
     connectSourceNodeId = null,
+    expandedProcessParents = [],
   },
   ref
 ) {
@@ -212,6 +314,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   const sourceDataRef = useRef(sourceData);
   const editModeRef = useRef(editMode);
   const connectSourceNodeIdRef = useRef(connectSourceNodeId);
+  const expandedProcessParentsRef = useRef(expandedProcessParents);
 
   useEffect(() => {
     onNodeClickRef.current = onNodeClick;
@@ -261,6 +364,10 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     connectSourceNodeIdRef.current = connectSourceNodeId;
   }, [connectSourceNodeId]);
 
+  useEffect(() => {
+    expandedProcessParentsRef.current = expandedProcessParents;
+  }, [expandedProcessParents]);
+
   useImperativeHandle(ref, () => ({
     addNode: (node, position) => {
       const cy = cyRef.current;
@@ -286,7 +393,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         },
         position: pos,
       });
-      applyFilters(cy, filtersRef.current);
+      applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current);
       // 新创建的节点即使暂时没有边也要显示出来，避免被过滤器隐藏
       const added = cy.getElementById(node.node_id);
       if (added.length > 0) added.removeClass("hidden");
@@ -309,21 +416,21 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
           raw: edge,
         },
       });
-      applyFilters(cy, filtersRef.current);
+      applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current);
     },
     removeEdge: (edgeId) => {
       const cy = cyRef.current;
       if (!cy) return;
       const el = cy.getElementById(edgeId);
       if (el.length > 0) cy.remove(el);
-      applyFilters(cy, filtersRef.current);
+      applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current);
     },
     removeNode: (nodeId) => {
       const cy = cyRef.current;
       if (!cy) return;
       const el = cy.getElementById(nodeId);
       if (el.length > 0) cy.remove(el);
-      applyFilters(cy, filtersRef.current);
+      applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current);
     },
   }));
 
@@ -470,6 +577,30 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
                 "target-arrow-color": "#475569",
                 color: "#475569",
                 "text-background-color": "#0f172a",
+              },
+            },
+            {
+              selector: ":parent, .compound-parent",
+              style: {
+                "background-opacity": 0.18,
+                "background-color": "#0ea5e9",
+                "border-color": "#38bdf8",
+                "border-width": 3,
+                "border-opacity": 0.9,
+                "border-style": "dashed",
+                shape: "rectangle",
+                "padding-top": "24px",
+                "padding-bottom": "24px",
+                "padding-left": "24px",
+                "padding-right": "24px",
+                "min-width": "160px",
+                "min-height": "160px",
+                "text-valign": "top",
+                "text-halign": "center",
+                "text-margin-y": 10,
+                color: "#e0f2fe",
+                "font-size": "12px",
+                "font-weight": "bold",
               },
             },
             {
@@ -717,7 +848,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
             // 【设计理由: 重整骨架】
             // 双击代表一次完整的子图合并操作，此时重新应用过滤器，并触发 dagre 全局重排，
             // 把之前由于“顺藤摸瓜”可能拉扯乱的局部拓扑结构重新梳理平整。
-            applyFilters(cy, filtersRef.current);
+            applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current);
             runHybridLayout(cy, false);
 
           } catch (err) {
@@ -772,8 +903,22 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   useEffect(() => {
     const cy = cyRef.current;
     if (!cy) return;
-    applyFilters(cy, filters);
+    applyFilters(cy, filters, expandedProcessParentsRef.current);
   }, [filters]);
+
+  // Sync compound parents and re-layout when process expansion changes
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log("[GraphCanvas] expandedProcessParents changed:", expandedProcessParents);
+    const cy = cyRef.current;
+    if (!cy) return;
+    syncCompoundParents(cy, expandedProcessParents);
+    applyFilters(cy, filtersRef.current, expandedProcessParents);
+    // 确保 Cytoscape 已经应用 parent 关系后再读取 children
+    requestAnimationFrame(() => {
+      runHybridLayout(cy, true, expandedProcessParents);
+    });
+  }, [expandedProcessParents]);
 
   // Connect mode source highlight
   useEffect(() => {

@@ -761,3 +761,95 @@ aluminum_ingot → electronic_aluminum_foil → etched_foil → formed_foil
   7. `frontend/src/App.tsx`
      - 整合上述组件，处理 API 调用与 Cytoscape 实例更新，删除边后同步关闭详情面板。
 - **验证**：`npm run build` 通过，无 TypeScript 错误。
+
+
+---
+
+## 日期：2026-06-16（追加 8）
+
+### 修复 `/api/v1/nodes` 500 错误（EntityType 枚举拼写错误）
+
+- **现象**：前端加载图谱时 `GET /api/v1/nodes?page=1&page_size=1000` 返回 500 Internal Server Error。
+- **排查**：重启后端并查看错误日志，发现 `neo4j_storage._node_from_record` 构造 `IndustrialNode` 时校验失败：
+  - 数据库中大量节点 `entity_type = "component"`
+  - 但 `backend/app/models/schemas.py` 中 `EntityType.COMPONENT = "compon"`（拼写错误，少了 `"ent"`）
+- **修复**：将 `EntityType.COMPONENT` 的值改为 `"component"`。
+- **验证**：
+  - 重启后端后 `/api/v1/nodes?page=1&page_size=1000` 返回 200，共 797 个节点。
+  - 检查数据库中无 `entity_type = "compon"` 的节点，无需数据迁移。
+- **副作用**：无；前端 `component` 选项与类型定义一致。
+
+
+---
+
+## 日期：2026-06-16（追加 9）
+
+### 工艺层级建模：用 `part_of` + 可收起子工艺解决“晶圆制造”过载
+
+- **问题**：`wafer_manufacturing` 节点承载了过多直接边（输入材料、输出产品、子工艺 is_a），导致它成为超级 hub，无法表达“不同物料用于不同工艺、工艺之间有上下游”。
+- **机制设计**：
+  - 引入新的本体关系 `part_of`（组成部分），专门表达“子工艺是聚合工艺的组成部分”。
+  - 把前道子工艺与 `wafer_manufacturing` 之间的 `is_a` 边全部迁移为 `part_of`。
+  - 把本应属于子工艺输入的物料边迁移到对应子工艺：
+    - `tungsten_film -> thin_film_deposition_process`
+    - `molybdenum_film -> thin_film_deposition_process`
+  - 前端增加“可展开集合”交互：
+    - 节点详情里显示“展开子工艺 (N)” / “收起子工艺”按钮。
+    - 父节点收起时，其 `part_of` 子工艺节点及相关边被隐藏，只保留父节点本身的聚合输入/输出。
+    - 父节点展开时，子工艺节点和它们自己的物料/设备/上下游边重新显示。
+- **后端改动**：
+  - `backend/app/models/schemas.py`：新增 `OntologyType.PART_OF = "part_of"` 及标签；`IndustrialFlowEdgeUpdate` / `OntologyEdgeUpdate` 支持更新 `edge_type`。
+  - `backend/app/routers/edges.py`：修复 `PUT /edges/{edge_id}` 未声明 `Body` 导致只能走 query 的 bug。
+- **前端改动**：
+  - `frontend/src/types/index.ts`：新增 `part_of` 类型和标签。
+  - `frontend/src/components/EdgeForm.tsx`：ontology 类型选项增加 `part_of`。
+  - `frontend/src/components/GraphCanvas.tsx`：根据 `part_of` 边和 `expandedProcessParents` 状态过滤子工艺显示。
+  - `frontend/src/components/NodeDetail.tsx`：查询 `part_of` 子工艺数量并显示展开/收起按钮。
+  - `frontend/src/hooks/useIndustrialGraph.ts`：管理 `expandedProcessParents` 状态。
+- **验证**：
+  - `npm run build` 通过。
+  - `/api/v1/query/stats`：`part_of` 7 条，`is_a` 从 46 降至 39；`tungsten_film`/`molybdenum_film` 边已指向 `thin_film_deposition_process`。
+
+
+---
+
+## 日期：2026-06-16（追加 10）
+
+### 用 Cytoscape Compound Node 试验“晶圆制造”工艺聚合
+
+- **目标**：把 `wafer_manufacturing` 从“超级 hub”变成一个可展开的 compound node（复合节点），物料细化连到具体子工艺。
+- **数据细化**：
+  - 已迁移的 `tungsten_film`、`molybdenum_film` 继续指向 `thin_film_deposition_process`。
+  - 新增迁移：`silicon_wafer_to_wafer_manufacturing` 改为 `silicon_wafer_to_lithography_process`，硅片作为衬底首先进入光刻工艺。
+  - 保留在父工艺上的聚合边：
+    - 输入：`chip_design -> wafer_manufacturing`（信息流，整体工艺都需要设计数据）
+    - 输出：`wafer_manufacturing -> chip / wafer / semiconductor_device`
+- **前端改动**：
+  - `frontend/src/components/GraphCanvas.tsx`
+    - 元素初始化时保留 `part_of` 关系，但不预设 parent；展开时才把子工艺移入父节点。
+    - 新增 `syncCompoundParents()`：根据 `expandedProcessParents` 用 `node.move({ parent })` 动态组建/解散 compound node。
+    - 布局逻辑调整：检测到 `:parent` 存在时切换为内置 `cose` 布局（dagre 不支持复合节点），否则保持原有 dagre + is_a 环绕布局。
+    - 新增 `:parent` 样式：半透明蓝框矩形，子工艺画在框内。
+- **交互方式**：
+  - 默认 `wafer_manufacturing` 收起，显示为普通节点。
+  - 在节点详情点击「展开子工艺 (7)」，7 个前道/量测工艺移入 `wafer_manufacturing` 形成 compound node，并自动切换为 cose 布局。
+  - 点击「收起子工艺」解散 compound，回归 dagre 分层布局。
+- **验证**：
+  - `npm run build` 通过。
+  - API 验证：`wafer_manufacturing` 只剩 1 条信息输入和 3 条产出，`part_of` 子工艺 7 条。
+- **待观察**：cose 布局在大图上的效果；如果太乱，后续可换成 `cytoscape-fcose` 或 `cytoscape-cose-bilkent`。
+
+
+---
+
+## 日期：2026-06-16（追加 11）
+
+### 优化 compound node 可视化效果
+
+- **问题反馈**：用户展开 `wafer_manufacturing` 后没有明显看到聚合效果。
+- **原因**：最初使用 Cytoscape 内置 `cose` 布局，它会把整图所有节点重新排布，容易把 compound node 淹没在大图里；且 parent 容器样式太淡。
+- **优化**：
+  - 把 `cose` 全局布局改为**局部径向布局**：展开后，7 个子工艺以 `wafer_manufacturing` 为中心均匀分布在一个圆上，不扰动其它节点。
+  - 展开后自动把视野 fit 到 compound node 及其邻居。
+  - 增强 `:parent` 样式：半透明蓝底、3px 虚线边框、加粗标签，让容器更明显。
+- **验证**：`npm run build` 通过。

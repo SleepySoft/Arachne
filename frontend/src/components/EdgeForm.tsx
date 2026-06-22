@@ -39,7 +39,7 @@ const INDUSTRIAL_FLOW_TYPES = [
   "produces",
 ];
 
-const ONTOLOGY_TYPES = ["alias_of", "is_a", "variant_of", "related_term"];
+const ONTOLOGY_TYPES = ["alias_of", "is_a", "part_of", "variant_of", "related_term"];
 const CONFIDENCES = ["HIGH", "MEDIUM", "LOW"];
 
 export function EdgeForm({ mode, edge, defaultFromNode, defaultToNode, prefillData, onClose, onSuccess }: EdgeFormProps) {

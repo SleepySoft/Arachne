@@ -1,7 +1,7 @@
-import { useMutation } from "@tanstack/react-query";
-import { Edit2, Trash2, X } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Edit2, Layers, Trash2, X } from "lucide-react";
 import { IndustrialNode, Company, Industry } from "@/types";
-import { deleteNode } from "@/services/api";
+import { deleteNode, listEdges } from "@/services/api";
 import { NodeAssociations } from "./NodeAssociations";
 
 interface NodeDetailProps {
@@ -12,9 +12,21 @@ interface NodeDetailProps {
   onSelectNode?: (node: IndustrialNode) => void;
   onSelectCompany?: (company: Company) => void;
   onSelectIndustry?: (industry: Industry) => void;
+  isProcessExpanded?: boolean;
+  onToggleProcessExpansion?: () => void;
 }
 
-export function NodeDetail({ node, onEdit, onClose, onRefresh, onSelectNode, onSelectCompany, onSelectIndustry }: NodeDetailProps) {
+export function NodeDetail({
+  node,
+  onEdit,
+  onClose,
+  onRefresh,
+  onSelectNode,
+  onSelectCompany,
+  onSelectIndustry,
+  isProcessExpanded = false,
+  onToggleProcessExpansion,
+}: NodeDetailProps) {
   const deleteMutation = useMutation({
     mutationFn: deleteNode,
     onSuccess: () => {
@@ -22,6 +34,13 @@ export function NodeDetail({ node, onEdit, onClose, onRefresh, onSelectNode, onS
       onClose();
     },
   });
+
+  const { data: childrenEdges } = useQuery({
+    queryKey: ["part-of-children", node.node_id],
+    queryFn: () => listEdges(1, 100, "ontology", "part_of", undefined, node.node_id),
+    staleTime: 60_000,
+  });
+  const childCount = childrenEdges?.items.length ?? 0;
 
   return (
     <div className="space-y-4 p-4">
@@ -119,6 +138,24 @@ export function NodeDetail({ node, onEdit, onClose, onRefresh, onSelectNode, onS
             <div className="text-[10px] font-semibold uppercase text-slate-500">备注</div>
             <div className="mt-1 text-xs text-slate-400">{node.notes}</div>
           </div>
+        )}
+
+        {childCount > 0 && onToggleProcessExpansion && (
+          <button
+            onClick={() => {
+              // eslint-disable-next-line no-console
+              console.log("[NodeDetail] toggle expansion for", node.node_id);
+              onToggleProcessExpansion?.();
+            }}
+            className={`flex w-full items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-xs font-medium transition-colors ${
+              isProcessExpanded
+                ? "border-cyan-700/50 bg-cyan-900/20 text-cyan-400 hover:bg-cyan-900/30"
+                : "border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800"
+            }`}
+          >
+            <Layers className="h-3.5 w-3.5" />
+            {isProcessExpanded ? "收起子工艺" : `展开子工艺 (${childCount})`}
+          </button>
         )}
 
         {/* Associations: relationships, companies, industries */}

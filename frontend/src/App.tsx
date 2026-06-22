@@ -98,6 +98,7 @@ export default function App() {
             sourceData={industrial.subgraphData}
             editMode={industrial.editMode}
             connectSourceNodeId={industrial.connectSource?.node_id || null}
+            expandedProcessParents={industrial.expandedProcessParents}
           />
           <GraphToolbar
             onRelayout={() => industrial.setGraphKey((k) => k + 1)}
@@ -155,6 +156,16 @@ export default function App() {
           onSelectNode={industrial.handleNodeClick}
           onSelectCompany={industrial.handleSelectCompanyDetail}
           onSelectIndustry={industrial.handleSelectIndustryDetail}
+          isProcessExpanded={
+            industrial.selectedNode
+              ? industrial.isProcessParentExpanded(industrial.selectedNode.node_id)
+              : false
+          }
+          onToggleProcessExpansion={() => {
+            if (industrial.selectedNode) {
+              industrial.toggleProcessParent(industrial.selectedNode.node_id);
+            }
+          }}
         />
       }
     />

@@ -66,6 +66,7 @@ export function useIndustrialGraph() {
   const [highlightNodeIds, setHighlightNodeIds] = useState<
     string[] | undefined
   >(undefined);
+  const [expandedProcessParents, setExpandedProcessParents] = useState<string[]>([]);
 
   const nav = useNodeNavigation();
 
@@ -268,6 +269,17 @@ export function useIndustrialGraph() {
     []
   );
 
+  const toggleProcessParent = useCallback((nodeId: string) => {
+    setExpandedProcessParents((prev) =>
+      prev.includes(nodeId) ? prev.filter((id) => id !== nodeId) : [...prev, nodeId]
+    );
+  }, []);
+
+  const isProcessParentExpanded = useCallback(
+    (nodeId: string) => expandedProcessParents.includes(nodeId),
+    [expandedProcessParents]
+  );
+
   const handleCancelConnect = useCallback(() => {
     setConnectSource(null);
     setConnectTarget(null);
@@ -344,6 +356,10 @@ export function useIndustrialGraph() {
     handleConnectSourceSelect,
     handleConnectTargetSelect,
     handleCancelConnect,
+    expandedProcessParents,
+    setExpandedProcessParents,
+    toggleProcessParent,
+    isProcessParentExpanded,
     canvasMenu,
     setCanvasMenu,
     handleCanvasContextMenu,
