@@ -157,3 +157,6 @@ out/
 *.bak
 *.swp
 *~
+
+temp/
+git
