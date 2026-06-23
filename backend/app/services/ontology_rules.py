@@ -105,7 +105,7 @@ ONTOLOGY_RULES: List[OntologyRule] = [
         category=RuleCategory.EDGE,
         fixable=True,
         rationale="重复边会导致权重计算、路径搜索和可视化混乱。",
-        examples=["wafer -> chip 存在两条 composition 边"],
+        examples=["wafer -> chip 存在两条 structural_composition 边"],
         checker_id="duplicate_edges",
     ),
     OntologyRule(
@@ -116,7 +116,7 @@ ONTOLOGY_RULES: List[OntologyRule] = [
         category=RuleCategory.EDGE,
         fixable=False,
         rationale="描述是审图和后续维护的主要依据。",
-        examples=["material_flow 边 description 为空"],
+        examples=["material_input 边 description 为空"],
         checker_id="missing_industrial_flow_description",
     ),
     OntologyRule(
@@ -127,7 +127,7 @@ ONTOLOGY_RULES: List[OntologyRule] = [
         category=RuleCategory.EDGE,
         fixable=False,
         rationale="产业流通常有明确上下游方向；双向关系可能意味着粒度或分类错误。",
-        examples=["A material_flow B 且 B material_flow A"],
+        examples=["A material_input B 且 B material_input A"],
         checker_id="reverse_industrial_flow",
     ),
     OntologyRule(
@@ -221,12 +221,12 @@ ONTOLOGY_RULES: List[OntologyRule] = [
     OntologyRule(
         rule_id="R17",
         title="输入物/设备/能力不直接指向产品",
-        description="material、device、technology_capability 类型的节点不能通过 material_flow / capability_supply / information_flow 直接指向 component / module / subsystem / system / platform / application_system 等产品类节点。它们必须先指向 process / service / technology_capability 节点。",
+        description="material、device、technology_capability 类型的节点不能通过 material_input / equipment_enablement / capability_enablement / information_input 直接指向 component / module / subsystem / system / platform / application_system 等产品类节点。它们必须先指向 process / service / technology_capability 节点。",
         severity=Severity.WARNING,
         category=RuleCategory.EDGE,
         fixable=False,
         rationale="原材料、设备和能力都需要经过工艺/制造环节才能转化为产品；直接连边会掩盖产业链结构，也与 'Material -> Process -> Output' 的规范流程冲突。",
-        examples=["铝 --material_flow--> 活塞", "EDA软件 --capability_supply--> 芯片", "光刻机 --capability_supply--> 晶圆"],
+        examples=["铝 --material_input--> 活塞", "EDA软件 --capability_enablement--> 芯片设计", "光刻机 --equipment_enablement--> 晶圆制造"],
         checker_id="input_to_product_direct_edge",
     ),
 ]

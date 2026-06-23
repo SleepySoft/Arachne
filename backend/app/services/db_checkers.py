@@ -958,7 +958,12 @@ class InputToProductDirectEdgeChecker(Checker):
 
     INPUT_TYPES = {"material", "device", "technology_capability"}
     PRODUCT_TYPES = {"component", "module", "subsystem", "system", "platform", "application_system"}
-    EDGE_TYPES = {"material_flow", "capability_supply", "information_flow"}
+    EDGE_TYPES = {
+        "material_input",
+        "equipment_enablement",
+        "capability_enablement",
+        "information_input",
+    }
 
     def __init__(self):
         rule = get_rule_by_checker(self.check_id)

@@ -30,13 +30,16 @@ interface EdgeFormProps {
 const EDGE_NAMESPACES = ["industrial_flow", "ontology"] as const;
 
 const INDUSTRIAL_FLOW_TYPES = [
-  "material_flow",
-  "composition",
-  "energy_flow",
-  "information_flow",
-  "capability_supply",
-  "service_flow",
-  "produces",
+  "material_input",
+  "energy_input",
+  "information_input",
+  "equipment_enablement",
+  "process_output",
+  "service_provision",
+  "capability_enablement",
+  "structural_composition",
+  "supply_relation",
+  "unknown",
 ];
 
 const ONTOLOGY_TYPES = ["alias_of", "is_a", "part_of", "variant_of", "related_term"];
@@ -48,7 +51,7 @@ export function EdgeForm({ mode, edge, defaultFromNode, defaultToNode, prefillDa
     edge_id: edge?.edge_id || "",
     from_node: edge?.from_node || defaultFromNode || prefillData?.from_node || "",
     to_node: edge?.to_node || defaultToNode || prefillData?.to_node || "",
-    edge_type: edge?.edge_type || prefillData?.edge_type || "material_flow",
+    edge_type: edge?.edge_type || prefillData?.edge_type || "material_input",
     description: edge?.description || prefillData?.description || "",
     confidence: edge?.confidence || "LOW",
     notes: edge?.notes || prefillData?.notes || "",
@@ -135,7 +138,7 @@ export function EdgeForm({ mode, edge, defaultFromNode, defaultToNode, prefillDa
               setNamespace(ns);
               setForm({
                 ...form,
-                edge_type: ns === "industrial_flow" ? "material_flow" : "alias_of",
+                edge_type: ns === "industrial_flow" ? "material_input" : "alias_of",
               });
             }}
             className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none disabled:opacity-50"

@@ -93,36 +93,36 @@ nodes = [
 # ====== EDGES TO CREATE ======
 edges = [
     # Financial
-    make_edge("public_deposit_to_loan", "public_deposit", "loan_service", "service_flow", "公众存款为银行贷款业务提供资金来源"),
-    make_edge("public_deposit_to_interbank", "public_deposit", "interbank_lending_service", "service_flow", "公众存款为银行同业拆借业务提供资金基础"),
-    make_edge("public_deposit_to_bond_inv", "public_deposit", "bond_investment_service", "service_flow", "公众存款为银行债券投资业务提供资金基础"),
-    make_edge("financial_bond_to_bond_inv", "financial_bond", "bond_investment_service", "service_flow", "金融债券是债券投资服务的主要标的之一"),
+    make_edge("public_deposit_to_loan", "public_deposit", "loan_service", "service_provision", "公众存款为银行贷款业务提供资金来源"),
+    make_edge("public_deposit_to_interbank", "public_deposit", "interbank_lending_service", "service_provision", "公众存款为银行同业拆借业务提供资金基础"),
+    make_edge("public_deposit_to_bond_inv", "public_deposit", "bond_investment_service", "service_provision", "公众存款为银行债券投资业务提供资金基础"),
+    make_edge("financial_bond_to_bond_inv", "financial_bond", "bond_investment_service", "service_provision", "金融债券是债券投资服务的主要标的之一"),
 
     # Real estate
-    make_edge("land_to_residential", "land", "residential_property", "material_flow", "土地是商品住宅开发的基础要素投入"),
-    make_edge("land_to_commercial", "land", "commercial_property", "material_flow", "土地是商业地产开发的基础要素投入"),
-    make_edge("cement_to_construction", "cement", "construction_service", "material_flow", "水泥是建筑施工服务的主要原材料输入"),
-    make_edge("construction_to_residential", "construction_service", "residential_property", "service_flow", "建筑施工服务将土地和材料转化为商品住宅"),
-    make_edge("construction_to_commercial", "construction_service", "commercial_property", "service_flow", "建筑施工服务将土地和材料转化为商业地产"),
-    make_edge("residential_to_property_mgmt", "residential_property", "property_management_service", "service_flow", "商品住宅交付后需要物业服务进行维护管理"),
-    make_edge("commercial_to_property_mgmt", "commercial_property", "property_management_service", "service_flow", "商业地产交付后需要物业服务进行维护管理"),
-    make_edge("residential_to_rental", "residential_property", "housing_rental_service", "service_flow", "商品住宅可通过租赁服务提供给承租人使用"),
+    make_edge("land_to_residential", "land", "residential_property", "material_input", "土地是商品住宅开发的基础要素投入"),
+    make_edge("land_to_commercial", "land", "commercial_property", "material_input", "土地是商业地产开发的基础要素投入"),
+    make_edge("cement_to_construction", "cement", "construction_service", "material_input", "水泥是建筑施工服务的主要原材料输入"),
+    make_edge("construction_to_residential", "construction_service", "residential_property", "service_provision", "建筑施工服务将土地和材料转化为商品住宅"),
+    make_edge("construction_to_commercial", "construction_service", "commercial_property", "service_provision", "建筑施工服务将土地和材料转化为商业地产"),
+    make_edge("residential_to_property_mgmt", "residential_property", "property_management_service", "service_provision", "商品住宅交付后需要物业服务进行维护管理"),
+    make_edge("commercial_to_property_mgmt", "commercial_property", "property_management_service", "service_provision", "商业地产交付后需要物业服务进行维护管理"),
+    make_edge("residential_to_rental", "residential_property", "housing_rental_service", "service_provision", "商品住宅可通过租赁服务提供给承租人使用"),
 
     # Rail
-    make_edge("rail_vehicle_to_maintenance", "rail_vehicle", "rail_maintenance_service", "service_flow", "轨道车辆需要运维服务进行检修和保养"),
-    make_edge("signaling_to_maintenance", "signaling_system", "rail_maintenance_service", "service_flow", "信号系统需要运维服务进行维护和升级"),
-    make_edge("power_to_maintenance", "power_supply_system", "rail_maintenance_service", "service_flow", "供电系统需要运维服务进行维护和保障"),
+    make_edge("rail_vehicle_to_maintenance", "rail_vehicle", "rail_maintenance_service", "service_provision", "轨道车辆需要运维服务进行检修和保养"),
+    make_edge("signaling_to_maintenance", "signaling_system", "rail_maintenance_service", "service_provision", "信号系统需要运维服务进行维护和升级"),
+    make_edge("power_to_maintenance", "power_supply_system", "rail_maintenance_service", "service_provision", "供电系统需要运维服务进行维护和保障"),
 
     # Landscaping
-    make_edge("nursery_to_greening", "nursery_stock", "greening_construction_service", "material_flow", "苗木是绿化施工服务的主要植物材料输入"),
-    make_edge("soil_to_greening", "soil", "greening_construction_service", "material_flow", "土壤是绿化施工服务的基础栽培介质"),
-    make_edge("gardening_to_greening", "gardening_material", "greening_construction_service", "material_flow", "园艺材料为绿化施工服务提供辅助支持"),
-    make_edge("design_to_greening", "landscape_design_service", "greening_construction_service", "service_flow", "景观设计服务为绿化施工提供设计方案和指导"),
-    make_edge("greening_to_eco_restore", "greening_construction_service", "ecological_restoration_service", "service_flow", "绿化施工服务是生态修复服务的实施手段之一"),
+    make_edge("nursery_to_greening", "nursery_stock", "greening_construction_service", "material_input", "苗木是绿化施工服务的主要植物材料输入"),
+    make_edge("soil_to_greening", "soil", "greening_construction_service", "material_input", "土壤是绿化施工服务的基础栽培介质"),
+    make_edge("gardening_to_greening", "gardening_material", "greening_construction_service", "material_input", "园艺材料为绿化施工服务提供辅助支持"),
+    make_edge("design_to_greening", "landscape_design_service", "greening_construction_service", "service_provision", "景观设计服务为绿化施工提供设计方案和指导"),
+    make_edge("greening_to_eco_restore", "greening_construction_service", "ecological_restoration_service", "service_provision", "绿化施工服务是生态修复服务的实施手段之一"),
 
     # Solar
-    make_edge("silicon_to_pv_module", "silicon_material", "photovoltaic_module", "material_flow", "硅材料是光伏组件的核心原材料"),
-    make_edge("pv_glass_to_module", "pv_glass", "photovoltaic_module", "composition", "光伏玻璃是光伏组件的重要组成部分"),
+    make_edge("silicon_to_pv_module", "silicon_material", "photovoltaic_module", "material_input", "硅材料是光伏组件的核心原材料"),
+    make_edge("pv_glass_to_module", "pv_glass", "photovoltaic_module", "structural_composition", "光伏玻璃是光伏组件的重要组成部分"),
 ]
 
 print(f"Creating {len(nodes)} nodes...")

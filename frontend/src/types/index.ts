@@ -16,13 +16,16 @@ export type EntityType =
   | "unknown";
 
 export type IndustrialFlowType =
-  | "material_flow"
-  | "composition"
-  | "energy_flow"
-  | "information_flow"
-  | "capability_supply"
-  | "service_flow"
-  | "produces";
+  | "material_input"
+  | "energy_input"
+  | "information_input"
+  | "equipment_enablement"
+  | "process_output"
+  | "service_provision"
+  | "capability_enablement"
+  | "structural_composition"
+  | "supply_relation"
+  | "unknown";
 
 export type OntologyType =
   | "alias_of"
@@ -447,13 +450,16 @@ export const CONFIDENCE_OPACITY: Record<Confidence, number> = {
 
 export const EDGE_TYPE_LABELS: Record<string, string> = {
   // IndustrialFlowType
-  material_flow: "物料流",
-  composition: "组成/构成",
-  energy_flow: "能量流",
-  information_flow: "信息流",
-  capability_supply: "能力供给",
-  service_flow: "服务流",
-  produces: "产出",
+  material_input: "物料输入",
+  energy_input: "能量输入",
+  information_input: "信息输入",
+  equipment_enablement: "设备使能",
+  process_output: "工艺产出",
+  service_provision: "服务提供",
+  capability_enablement: "能力使能",
+  structural_composition: "结构组成",
+  supply_relation: "供应关系",
+  unknown: "未知关系",
   // OntologyType
   alias_of: "别名/同义",
   is_a: "是一种",

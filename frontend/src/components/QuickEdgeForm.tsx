@@ -21,13 +21,16 @@ interface QuickEdgeFormProps {
 }
 
 const EDGE_TYPES: { value: IndustrialFlowType; label: string }[] = [
-  { value: "material_flow", label: "物料流" },
-  { value: "composition", label: "组成/构成" },
-  { value: "energy_flow", label: "能量流" },
-  { value: "information_flow", label: "信息流" },
-  { value: "capability_supply", label: "能力供给" },
-  { value: "service_flow", label: "服务流" },
-  { value: "produces", label: "产出" },
+  { value: "material_input", label: "物料输入" },
+  { value: "energy_input", label: "能量输入" },
+  { value: "information_input", label: "信息输入" },
+  { value: "equipment_enablement", label: "设备使能" },
+  { value: "process_output", label: "工艺产出" },
+  { value: "service_provision", label: "服务提供" },
+  { value: "capability_enablement", label: "能力使能" },
+  { value: "structural_composition", label: "结构组成" },
+  { value: "supply_relation", label: "供应关系" },
+  { value: "unknown", label: "未知关系" },
 ];
 
 export function QuickEdgeForm({
@@ -47,7 +50,7 @@ export function QuickEdgeForm({
   const [selectedNodeOverride, setSelectedNodeOverride] = useState<IndustrialNode | null>(
     initialTargetNode || null
   );
-  const [edgeType, setEdgeType] = useState<IndustrialFlowType>("material_flow");
+  const [edgeType, setEdgeType] = useState<IndustrialFlowType>("material_input");
   const [description, setDescription] = useState("");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);

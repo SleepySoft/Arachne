@@ -51,13 +51,16 @@ class EntityType(str, Enum):
 
 
 class IndustrialFlowType(str, Enum):
-    MATERIAL_FLOW = "material_flow"
-    COMPOSITION = "composition"
-    ENERGY_FLOW = "energy_flow"
-    INFORMATION_FLOW = "information_flow"
-    CAPABILITY_SUPPLY = "capability_supply"
-    SERVICE_FLOW = "service_flow"
-    PRODUCES = "produces"          # 工艺过程 -> 产物/中间产物
+    MATERIAL_INPUT = "material_input"                     # 物料输入
+    ENERGY_INPUT = "energy_input"                         # 能量输入
+    INFORMATION_INPUT = "information_input"               # 信息输入
+    EQUIPMENT_ENABLEMENT = "equipment_enablement"         # 设备使能
+    PROCESS_OUTPUT = "process_output"                     # 工艺产出
+    SERVICE_PROVISION = "service_provision"               # 服务提供
+    CAPABILITY_ENABLEMENT = "capability_enablement"       # 能力使能
+    STRUCTURAL_COMPOSITION = "structural_composition"     # 结构组成
+    SUPPLY_RELATION = "supply_relation"                   # 供应关系（摘要级上下游、缺少明确中间工艺、产业链层级）
+    UNKNOWN = "unknown"                                   # 未知/待分类
 
 
 # ============================================================
@@ -66,13 +69,16 @@ class IndustrialFlowType(str, Enum):
 
 EDGE_TYPE_LABELS: dict[str, str] = {
     # IndustrialFlowType
-    "material_flow": "物料流",
-    "composition": "组成/构成",
-    "energy_flow": "能量流",
-    "information_flow": "信息流",
-    "capability_supply": "能力供给",
-    "service_flow": "服务流",
-    "produces": "产出",
+    "material_input": "物料输入",
+    "energy_input": "能量输入",
+    "information_input": "信息输入",
+    "equipment_enablement": "设备使能",
+    "process_output": "工艺产出",
+    "service_provision": "服务提供",
+    "capability_enablement": "能力使能",
+    "structural_composition": "结构组成",
+    "supply_relation": "供应关系",
+    "unknown": "未知关系",
     # OntologyType
     "alias_of": "别名/同义",
     "is_a": "是一种",
@@ -408,8 +414,8 @@ class IndustrialFlowEdgeQuickCreate(BaseModel):
         description="下游节点 ID，接收上游节点的输入",
     )
     edge_type: IndustrialFlowType = Field(
-        default=IndustrialFlowType.MATERIAL_FLOW,
-        description="关系类型；留空默认 material_flow",
+        default=IndustrialFlowType.MATERIAL_INPUT,
+        description="关系类型；留空默认 material_input",
     )
     description: Optional[str] = Field(
         default=None,
