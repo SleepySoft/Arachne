@@ -158,5 +158,6 @@ out/
 *.swp
 *~
 
+.kimi/
 temp/
-git
+postgresql/
