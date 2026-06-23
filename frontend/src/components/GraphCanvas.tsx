@@ -170,6 +170,20 @@ interface GraphCanvasProps {
   onToggleProcessExpansion?: (nodeId: string) => void;
 }
 
+function suppressInternalPartOfEdges(
+  cy: cytoscape.Core,
+  expandedProcessParents: string[] = []
+) {
+  const expandedSet = new Set(expandedProcessParents);
+  cy.batch(() => {
+    cy.edges('[edge_namespace = "ontology"][edge_type = "part_of"]').forEach((edge) => {
+      if (expandedSet.has(edge.target().id())) {
+        edge.addClass("hidden");
+      }
+    });
+  });
+}
+
 function applyFilters(
   cy: cytoscape.Core,
   filters: GraphCanvasProps["filters"],
@@ -269,19 +283,31 @@ function applyFilters(
       const et = edge.data("edge_type");
       const isIsA = ns === "ontology" && et === "is_a";
       const isWeakOntology = ns === "ontology" && weakOntologyTypes.has(et);
+      // 展开 process group 后，不显示父节点到子节点的 part_of 边，关系已用复合节点表达
+      const isInternalPartOf =
+        ns === "ontology" &&
+        et === "part_of" &&
+        expandedParentSet.has(edge.target().id());
       const show =
         visibleNodeIds.has(edge.source().id()) &&
         visibleNodeIds.has(edge.target().id()) &&
         (edgeNsSet.size === 0 || edgeNsSet.has(ns)) &&
         (edgeTypeSet.size === 0 || edgeTypeSet.has(et)) &&
         (!isIsA || filters.showIsA) &&
-        (!isWeakOntology || filters.showWeakOntology);
+        (!isWeakOntology || filters.showWeakOntology) &&
+        !isInternalPartOf;
       edge.toggleClass("hidden", !show);
     });
 
     // 当边被过滤后，把因此变得孤立的节点也隐藏起来
+    // 但展开后的复合父节点（process group）即使没有可见边，也要保留，因为子节点在里面
     cy.nodes().forEach((node) => {
       if (node.hasClass("hidden")) return;
+      const isCompoundParent = node.isParent() || node.hasClass("compound-parent");
+      if (isCompoundParent) {
+        const hasVisibleChild = node.children().filter((n) => !n.hasClass("hidden")).length > 0;
+        if (hasVisibleChild) return;
+      }
       const hasVisibleEdge =
         node.connectedEdges().filter((e) => !e.hasClass("hidden")).length > 0;
       if (!hasVisibleEdge) {
@@ -832,6 +858,9 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
                   }
                 });
               });
+
+              // 预览边也要遵守“展开后的 process group 内部不显示 part_of 线”
+              suppressInternalPartOfEdges(cy, expandedProcessParentsRef.current);
             } catch (err) {
               console.error("Show external neighbors failed:", err);
             }
