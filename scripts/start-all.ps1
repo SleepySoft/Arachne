@@ -1,9 +1,10 @@
 #requires -Version 5.1
 <#
 .SYNOPSIS
-    一键启动 Arachne 全系统（Neo4j + 后端 + 前端）
+    一键启动 Arachne 全系统（Neo4j + PostgreSQL + 后端 + 前端）
 #>
 $ErrorActionPreference = "Stop"
+$ProgressPreference = "SilentlyContinue"
 $projectRoot = Split-Path -Parent $PSScriptRoot
 
 function Test-Port($port) {
@@ -25,7 +26,7 @@ function Wait-ForPort($port, $label, $timeoutSec = 60) {
 }
 
 # ── Neo4j ──────────────────────────────────────────────
-Write-Host "[1/3] Starting Neo4j..." -ForegroundColor Cyan
+Write-Host "[1/4] Starting Neo4j..." -ForegroundColor Cyan
 if (Test-Port 7687) {
     Write-Host "  Neo4j already running on port 7687" -ForegroundColor Yellow
 } else {
@@ -39,8 +40,25 @@ if (Test-Port 7687) {
     if (-not (Wait-ForPort 7687 "Neo4j" 30)) { exit 1 }
 }
 
+# ── PostgreSQL ─────────────────────────────────────────
+Write-Host "[2/4] Starting PostgreSQL..." -ForegroundColor Cyan
+if (Test-Port 5433) {
+    Write-Host "  PostgreSQL already running on port 5433" -ForegroundColor Yellow
+} else {
+    $pgsqlHome = Join-Path $projectRoot "postgresql\pgsql"
+    if (-not (Test-Path $pgsqlHome)) {
+        Write-Host "  ERROR: PostgreSQL not found at $pgsqlHome" -ForegroundColor Red
+        exit 1
+    }
+    $pgCtl = Join-Path $pgsqlHome "bin\pg_ctl.exe"
+    $pgData = Join-Path $pgsqlHome "data"
+    $pgLog = Join-Path $pgsqlHome "logfile"
+    Start-Process -FilePath $pgCtl -ArgumentList "-D `"$pgData`" -l `"$pgLog`" start" -WindowStyle Hidden -WorkingDirectory $pgsqlHome
+    if (-not (Wait-ForPort 5433 "PostgreSQL" 30)) { exit 1 }
+}
+
 # ── Backend ────────────────────────────────────────────
-Write-Host "[2/3] Starting Backend (FastAPI)..." -ForegroundColor Cyan
+Write-Host "[3/4] Starting Backend (FastAPI)..." -ForegroundColor Cyan
 if (Test-Port 16060) {
     Write-Host "  Backend already running on port 16060" -ForegroundColor Yellow
 } else {
@@ -68,7 +86,7 @@ if (Test-Port 16060) {
 }
 
 # ── Frontend ───────────────────────────────────────────
-Write-Host "[3/3] Starting Frontend (Vite)..." -ForegroundColor Cyan
+Write-Host "[4/4] Starting Frontend (Vite)..." -ForegroundColor Cyan
 if (Test-Port 3000) {
     Write-Host "  Frontend already running on port 3000" -ForegroundColor Yellow
 } else {
@@ -81,6 +99,7 @@ if (Test-Port 3000) {
 Write-Host ""
 Write-Host "All services are running!" -ForegroundColor Green
 Write-Host "  Neo4j Browser:  http://localhost:7474"
+Write-Host "  PostgreSQL:     localhost:5433"
 Write-Host "  Backend API:    http://localhost:16060/docs"
 Write-Host "  Frontend App:   http://localhost:3000"
 Write-Host ""

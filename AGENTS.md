@@ -30,7 +30,7 @@ endpoints) rather than batch-computed and persisted.
 |---|---|
 | Backend | FastAPI (Python 3.12) |
 | Graph DB | Neo4j 5.26.0 (local install) |
-| Relational DB | PostgreSQL (planned, code ready, not installed locally) |
+| Relational DB | PostgreSQL (local install in `postgresql/pgsql/`, port 5433) |
 | Async DB Driver | `neo4j` (async), `asyncpg` (PostgreSQL) |
 | Frontend | React + Vite (dev server on :3000) |
 | Test | pytest + pytest-asyncio |
@@ -43,8 +43,7 @@ endpoints) rather than batch-computed and persisted.
 - **PostgreSQL**: `postgresql://postgres:postgres@localhost:5433/arachne` (running, tables initialized)
 
 ### System Management
-- `scripts/arachne_manager.py` — Python cross-platform manager (`start/stop/status/stats/logs`)
-- `scripts/start-all.ps1` / `scripts/stop-all.ps1` — PowerShell one-click scripts
+- `scripts/start-all.ps1` / `scripts/stop-all.ps1` — PowerShell one-click scripts (Neo4j + PostgreSQL + Backend + Frontend)
 - See `README.md` for troubleshooting.
 
 ---
@@ -244,7 +243,7 @@ backend/
 - No new Python dependencies required
 
 ### Commit 9 — Quick Edge Creation (Frontend + Backend + CLI + Skills)
-- `schemas.py`: added `IndustrialFlowEdgeQuickCreate` input model with auto-generated `edge_id`, default `edge_type=material_flow`, and auto-generated description
+- `schemas.py`: added `IndustrialFlowEdgeQuickCreate` input model with auto-generated `edge_id`, default `edge_type=material_input`, and auto-generated description
 - `graph_service.py`: added `quick_create_edge()` service that validates endpoints, resolves a unique `edge_id`, fills placeholders, and creates an `IndustrialFlowEdge`
 - `edges.py`: added `POST /api/v1/edges/quick-create` endpoint
 - `QuickEdgeForm.tsx`: new minimal form to add an upstream/downstream edge, with searchable node picker, edge-type selector, optional description/notes, and an "expand to full form" button that pre-fills `EdgeForm`
@@ -281,7 +280,7 @@ backend/
 - **Neo4j deployment**: local Windows install (Docker blocked by Zscaler)
 
 ### Recent Changes
-- **Process node type + `produces` edge type**: `EntityType.PROCESS` and `IndustrialFlowType.PRODUCES` added to backend/frontend schemas; used for material/equipment → process → product flow modeling.
+- **Process node type + `process_output` edge type**: `EntityType.PROCESS` and `IndustrialFlowType.PROCESS_OUTPUT` added to backend/frontend schemas; used for material/equipment → process → product flow modeling.
 - **Ontology rules registry**: `backend/app/services/ontology_rules.py` is the code-side single source of truth for design rules; `docs/ontology_design_rules.md` documents material/process granularity and the canonical `Input → Process → Output` flow.
 - **New DB checkers**: `entity_domain_boundary`, `device_to_product_direct_edge`, `input_to_product_direct_edge` enforce cross-domain isolation and the process-intermediation rule.
 - **Frontend modularization**: `frontend/src/App.tsx` refactored from 1120 lines to ~280 lines by extracting `useIndustrialGraph`, `useCompanyGraph`, and panel components under `frontend/src/components/panels/`.
@@ -356,7 +355,7 @@ Historical batch construction logs list these as future work; none are implement
 - `RecordStatus`: `ACTIVE`, `PENDING`, `REJECTED`, `ARCHIVED`
 - `Confidence`: `HIGH`, `MEDIUM`, `LOW`
 - `EntityType` now includes `process` for manufacturing/process nodes.
-- `IndustrialFlowType` now includes `produces` for process → output relationships.
+- `IndustrialFlowType` now includes `process_output` for process → output relationships.
 - UUID fields now auto-generate; callers do not need to supply them.
 
 ### Git Hygiene
