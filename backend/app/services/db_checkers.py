@@ -957,7 +957,8 @@ class InputToProductDirectEdgeChecker(Checker):
     fixable = False
 
     INPUT_TYPES = {"material", "device", "technology_capability"}
-    PRODUCT_TYPES = {"component", "module", "subsystem", "system", "platform", "application_system"}
+    # 产品/交付物类节点：上游输入需先经过 process / service / technology_capability 中转
+    PRODUCT_TYPES = {"part", "device", "equipment", "system", "platform", "software"}
     EDGE_TYPES = {
         "material_input",
         "equipment_enablement",
@@ -1154,85 +1155,5 @@ class EntityDomainBoundaryChecker(Checker):
         )
 
 
-@register_checker
-class DeviceToProductDirectEdgeChecker(Checker):
-    """设备类节点不直接指向产品节点。"""
-
-    check_id = "device_to_product_direct_edge"
-    name = "设备不直连产品"
-    description = "检测 entity_type='device' 的节点是否直接通过 INDUSTRIAL_FLOW 指向产品类节点。"
-    severity = Severity.ERROR
-    fixable = True
-
-    # 被视为“产品”的节点类型：设备不应直接指向它们
-    PRODUCT_TYPES = {"component", "module", "subsystem", "system", "platform", "application_system"}
-
-    def __init__(self):
-        rule = get_rule_by_checker(self.check_id)
-        if rule:
-            self.name = rule.title
-            self.description = rule.description
-            self.severity = Severity(rule.severity.value)
-            self.fixable = rule.fixable
-
-    async def run(self) -> List[CheckIssue]:
-        driver = get_async_driver()
-        issues: List[CheckIssue] = []
-        async with driver.session() as s:
-            result = await s.run(
-                """
-                MATCH (d:IndustrialNode {entity_type: 'device'})-[r:INDUSTRIAL_FLOW]->(p:IndustrialNode)
-                WHERE p.entity_type IN $product_types
-                RETURN elementId(r) AS rel_id, r.edge_id AS edge_id,
-                       d.node_id AS from_node, d.canonical_name_zh AS from_name,
-                       p.node_id AS to_node, p.canonical_name_zh AS to_name,
-                       p.entity_type AS to_type, r.edge_type AS et
-                ORDER BY edge_id
-                """,
-                {"product_types": list(self.PRODUCT_TYPES)},
-            )
-            async for rec in result:
-                issues.append(
-                    CheckIssue(
-                        issue_id=f"{self.check_id}:{rec['rel_id']}",
-                        check_id=self.check_id,
-                        severity=self.severity,
-                        title="设备直接指向产品",
-                        summary=(
-                            f"设备 `{rec['from_name'] or rec['from_node']}` "
-                            f"直接指向产品 `{rec['to_name'] or rec['to_node']}`（{rec['to_type']}）。"
-                        ),
-                        details={
-                            "rel_id": rec["rel_id"],
-                            "edge_id": rec["edge_id"],
-                            "from_node": rec["from_node"],
-                            "from_name": rec["from_name"],
-                            "to_node": rec["to_node"],
-                            "to_name": rec["to_name"],
-                            "to_type": rec["to_type"],
-                            "edge_type": rec["et"],
-                        },
-                        affected_ids=[rec["edge_id"] or rec["rel_id"], rec["from_node"], rec["to_node"]],
-                        fixable=True,
-                    )
-                )
-        return issues
-
-    async def fix(self, issues: List[CheckIssue]) -> FixResult:
-        rel_ids = [i.details.get("rel_id") for i in issues if i.details.get("rel_id")]
-        if not rel_ids:
-            return FixResult(check_id=self.check_id, fixed_count=0, skipped_count=0, messages=["没有问题需要修复"])
-        driver = get_async_driver()
-        async with driver.session() as s:
-            result = await s.run(
-                "MATCH ()-[r]->() WHERE elementId(r) IN $rel_ids DELETE r RETURN count(r) AS cnt",
-                {"rel_ids": rel_ids},
-            )
-            rec = await result.single()
-            deleted = rec["cnt"] if rec else 0
-        return FixResult(
-            check_id=self.check_id,
-            fixed_count=deleted,
-            skipped_count=len(rel_ids) - deleted,
-            messages=[f"已删除 {deleted} 条设备直连产品关系"],
-        )
+# Note: device-to-product direct edge checking is now covered by input_to_product_direct_edge
+# (R17) which includes material/device/technology_capability -> product flows.

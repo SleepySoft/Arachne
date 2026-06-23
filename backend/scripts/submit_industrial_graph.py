@@ -60,12 +60,12 @@ nodes = [
     make_node("loan_service", "贷款服务", "Loan Service", "service", "银行向企业或个人提供资金支持并收取利息的金融服务。", "银行核心资产业务"),
     make_node("interbank_lending_service", "同业拆借服务", "Interbank Lending Service", "service", "金融机构之间进行短期资金融通的服务。", "银行流动性管理工具"),
     make_node("bond_investment_service", "债券投资服务", "Bond Investment Service", "service", "银行利用资金购买政府债券、金融债券等固定收益证券的投资服务。", "银行资金运用业务"),
-    make_node("financial_bond", "金融债券", "Financial Bond", "component", "银行及其他金融机构为筹集资金而发行的债务凭证。", "银行主动负债工具"),
+    make_node("financial_bond", "金融债券", "Financial Bond", "service", "银行及其他金融机构为筹集资金而发行的债务凭证。", "银行主动负债工具"),
 
     # Real estate
     make_node("land", "土地", "Land", "material", "用于房地产开发建设的土地资源，是房地产产业链的最上游要素。", "房地产开发基础要素"),
-    make_node("residential_property", "商品住宅", "Residential Property", "component", "面向个人消费者销售的住房产品，房地产企业的核心产出。", "房地产开发核心产出"),
-    make_node("commercial_property", "商业地产", "Commercial Property", "component", "用于商业经营的地产项目，包括写字楼、商场、酒店等。", "房地产开发商业产出"),
+    make_node("residential_property", "商品住宅", "Residential Property", "service", "面向个人消费者销售的住房产品，房地产企业的核心产出。", "房地产开发核心产出"),
+    make_node("commercial_property", "商业地产", "Commercial Property", "service", "用于商业经营的地产项目，包括写字楼、商场、酒店等。", "房地产开发商业产出"),
     make_node("property_management_service", "物业服务", "Property Management Service", "service", "对已交付使用的物业进行维护、管理和运营的服务。", "房地产后服务"),
     make_node("housing_rental_service", "房屋租赁服务", "Housing Rental Service", "service", "将自有或受托管理的房屋出租给承租人使用并收取租金的服务。", "房地产运营服务"),
     make_node("construction_service", "建筑施工服务", "Construction Service", "service", "按照设计图纸和规范要求，将建筑材料转化为建筑物的工程服务。", "房地产开发核心环节"),
@@ -73,8 +73,8 @@ nodes = [
 
     # Rail transportation
     make_node("rail_vehicle", "轨道车辆", "Rail Vehicle", "device", "在轨道上运行的机车、动车组、地铁车辆等交通工具。", "轨道交通核心装备"),
-    make_node("signaling_system", "信号系统", "Signaling System", "subsystem", "用于控制列车运行、保证行车安全的通信与控制系统。", "轨道交通安全系统"),
-    make_node("power_supply_system", "供电系统", "Power Supply System", "subsystem", "为轨道交通提供牵引动力和运营用电的电力供应系统。", "轨道交通动力系统"),
+    make_node("signaling_system", "信号系统", "Signaling System", "system", "用于控制列车运行、保证行车安全的通信与控制系统。", "轨道交通安全系统"),
+    make_node("power_supply_system", "供电系统", "Power Supply System", "system", "为轨道交通提供牵引动力和运营用电的电力供应系统。", "轨道交通动力系统"),
     make_node("rail_maintenance_service", "轨道运维服务", "Rail Maintenance Service", "service", "对轨道交通线路、车辆、设备进行日常检修、维护和运营管理的综合服务。", "轨道交通后服务"),
 
     # Landscaping

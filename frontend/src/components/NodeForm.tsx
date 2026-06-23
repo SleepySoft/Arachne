@@ -14,17 +14,18 @@ interface NodeFormProps {
 
 const ENTITY_TYPES = [
   "material",
-  "component",
+  "part",
   "device",
-  "module",
-  "subsystem",
+  "equipment",
   "system",
-  "platform",
+  "software",
   "infrastructure",
-  "application_system",
+  "process",
   "service",
   "technology_capability",
-  "process",
+  "platform",
+  "standard",
+  "data_asset",
   "unknown",
 ];
 

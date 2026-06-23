@@ -139,17 +139,18 @@ export function QuickNodeForm({ onSuccess, onCancel, initialName = "" }: QuickNo
         >
           <option value="unknown">未知类型</option>
           <option value="material">材料</option>
-          <option value="component">部件</option>
-          <option value="device">器件</option>
-          <option value="module">模块</option>
-          <option value="subsystem">子系统</option>
+          <option value="part">零件/部件</option>
+          <option value="device">器件/装置</option>
+          <option value="equipment">装备/设备</option>
           <option value="system">系统</option>
-          <option value="platform">平台</option>
+          <option value="software">软件</option>
           <option value="infrastructure">基础设施</option>
-          <option value="application_system">应用系统</option>
+          <option value="process">工艺/流程</option>
           <option value="service">服务</option>
           <option value="technology_capability">技术能力</option>
-          <option value="process">工艺/流程</option>
+          <option value="platform">平台</option>
+          <option value="standard">标准/协议</option>
+          <option value="data_asset">数据资产</option>
         </select>
         <input
           type="text"

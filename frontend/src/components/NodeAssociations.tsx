@@ -78,7 +78,6 @@ export function NodeAssociations({
   } = useQuery({
     queryKey: ["companies-by-node", node.node_id],
     queryFn: () => getCompaniesByNode(node.node_id),
-    enabled: companiesOpen,
     staleTime: 60_000,
   });
 
@@ -89,7 +88,6 @@ export function NodeAssociations({
   } = useQuery({
     queryKey: ["industries-by-node", node.node_id],
     queryFn: () => getIndustriesByNode(node.node_id),
-    enabled: industriesOpen,
     staleTime: 60_000,
   });
 

@@ -74,7 +74,7 @@ python cli/arachne_cli.py submit graph_batch_001.json
       "node_id": "laser",
       "canonical_name_zh": "激光器",
       "definition": "能够产生并发射激光的光源器件。",
-      "entity_type": "component",
+      "entity_type": "device",
       "evidence": [
         {
           "source_title": "激光原理与应用",
@@ -302,17 +302,17 @@ curl "http://localhost:8005/api/v1/nodes/fuzzy-search?query=%E6%BF%80%E5%85%89%E
 当需要快速连接两个已有节点、先占位后补全证据时，使用 `quick-edge`：
 
 ```bash
-# 最简单的上下游关系（默认 material_flow）
+# 最简单的上下游关系（默认 material_input）
 python cli/arachne_cli.py quick-edge --from laser --to lidar_system
 
 # 指定关系类型和备注
 python cli/arachne_cli.py quick-edge --from battery_cell --to electric_vehicle \
-  --edge-type composition --notes "待补充pack集成证据"
+  --edge-type structural_composition --notes "待补充pack集成证据"
 ```
 
 系统会：
 - 自动生成 `edge_id`：优先使用 `{from_node}_to_{to_node}`；若冲突或超长则回退到 `draft_edge_{uuid}`
-- 默认 `edge_namespace = industrial_flow`、`edge_type = material_flow`、`confidence = LOW`
+- 默认 `edge_namespace = industrial_flow`、`edge_type = material_input`、`confidence = LOW`
 - 描述留空时自动生成：`{from_node} 为 {to_node} 提供输入`
 - `from_node` 和 `to_node` 必须已存在，且不允许自环
 
@@ -478,9 +478,9 @@ python cli/arachne_cli.py industry list --search 智能驾驶
 
 | 字段 | 允许取值 |
 |---|---|
-| `entity_type` | `material`, `component`, `device`, `module`, `subsystem`, `system`, `platform`, `infrastructure`, `application_system`, `service`, `technology_capability`, `unknown` |
+| `entity_type` | `material`, `part`, `device`, `equipment`, `system`, `software`, `infrastructure`, `process`, `service`, `technology_capability`, `platform`, `standard`, `data_asset`, `unknown` |
 | `edge_namespace` | `industrial_flow`, `ontology` |
-| `industrial_flow` 的 `edge_type` | `material_flow`, `composition`, `energy_flow`, `information_flow`, `capability_supply`, `service_flow` |
+| `industrial_flow` 的 `edge_type` | `material_input`, `energy_input`, `information_input`, `equipment_enablement`, `process_output`, `service_provision`, `capability_enablement`, `structural_composition`, `supply_relation`, `unknown` |
 | `ontology` 的 `edge_type` | `alias_of`, `is_a`, `variant_of`, `related_term` |
 | `status` | `ACTIVE`, `PENDING`, `REJECTED`, `ARCHIVED` |
 | `confidence` | `HIGH`, `MEDIUM`, `LOW` |

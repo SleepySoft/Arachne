@@ -13,11 +13,10 @@
 - `canonical_name_zh`：中文标准名，简洁准确
 - `definition`：必须说明"是什么"、"技术原理"、"核心功能"、"主要输入输出"
 - `entity_type`：从以下类型中选择
-  - material（材料）、component（部件）、device（器件）
-  - module（模块）、subsystem（子系统）、system（系统）
-  - platform（平台）、infrastructure（基础设施）
-  - application_system（应用系统）、service（服务）
-  - technology_capability（技术能力）、unknown（未知）
+  - material（材料）、part（零件/部件）、device（器件/装置）、equipment（装备/设备）
+  - system（系统）、software（软件）、platform（平台）、infrastructure（基础设施）
+  - process（工艺/流程）、service（服务）、technology_capability（技术能力）
+  - standard（标准/协议）、data_asset（数据资产）、unknown（未知）
 
 ### 2. Evidence 规范
 

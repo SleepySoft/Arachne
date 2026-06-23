@@ -2,17 +2,18 @@ export type Confidence = "HIGH" | "MEDIUM" | "LOW";
 export type NodeStatus = "ACTIVE" | "PENDING" | "REJECTED";
 export type EntityType =
   | "material"
-  | "component"
+  | "part"
   | "device"
-  | "module"
-  | "subsystem"
+  | "equipment"
   | "system"
-  | "platform"
+  | "software"
   | "infrastructure"
-  | "application_system"
+  | "process"
   | "service"
   | "technology_capability"
-  | "process"
+  | "platform"
+  | "standard"
+  | "data_asset"
   | "unknown";
 
 export type IndustrialFlowType =
@@ -420,17 +421,18 @@ export interface ComputationJob {
 
 export const ENTITY_TYPE_COLORS: Record<EntityType, string> = {
   material: "#f87171",
-  component: "#fb923c",
+  part: "#fb923c",
   device: "#fbbf24",
-  module: "#a3e635",
-  subsystem: "#34d399",
+  equipment: "#f59e0b",
   system: "#22d3ee",
-  platform: "#60a5fa",
+  software: "#c084fc",
   infrastructure: "#818cf8",
-  application_system: "#c084fc",
+  process: "#f97316",
   service: "#f472b6",
   technology_capability: "#94a3b8",
-  process: "#f97316",
+  platform: "#60a5fa",
+  standard: "#a78bfa",
+  data_asset: "#2dd4bf",
   unknown: "#64748b",
 };
 

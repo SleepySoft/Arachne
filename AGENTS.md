@@ -280,6 +280,7 @@ backend/
 - **Neo4j deployment**: local Windows install (Docker blocked by Zscaler)
 
 ### Recent Changes
+- **EntityType redesign**: Replaced old taxonomy (`component`, `module`, `subsystem`, `application_system`) with new industrial ontology types (`part`, `equipment`, `software`, `standard`, `data_asset`). Deprecated values kept in `EntityType_Deprecated`. Migrated 797 Neo4j nodes with default mapping; `component` → `part`, `subsystem` → `system`, `application_system` → `software`. Frontend type union, colors, and node forms updated. Prompts/skills updated to new types.
 - **Process node type + `process_output` edge type**: `EntityType.PROCESS` and `IndustrialFlowType.PROCESS_OUTPUT` added to backend/frontend schemas; used for material/equipment → process → product flow modeling.
 - **Ontology rules registry**: `backend/app/services/ontology_rules.py` is the code-side single source of truth for design rules; `docs/ontology_design_rules.md` documents material/process granularity and the canonical `Input → Process → Output` flow.
 - **New DB checkers**: `entity_domain_boundary`, `device_to_product_direct_edge`, `input_to_product_direct_edge` enforce cross-domain isolation and the process-intermediation rule.

@@ -253,7 +253,7 @@ def cmd_quick_node(name_zh: str = None, name_en: str = None, entity_type: str = 
     print("\n[OK] Draft node created")
 
 
-def cmd_quick_edge(from_node: str, to_node: str, edge_type: str = "material_flow", description: str = None, notes: str = None):
+def cmd_quick_edge(from_node: str, to_node: str, edge_type: str = "material_input", description: str = None, notes: str = None):
     data = {
         "from_node": from_node,
         "to_node": to_node,
@@ -290,7 +290,7 @@ Examples:
   %(prog)s query --fuzzy-search "激光雷达" --limit 5
   %(prog)s query --incomplete-items --limit 50
   %(prog)s quick-node --name-zh "六氟化铀" --entity-type material
-  %(prog)s quick-edge --from lithium_metal --to battery_cell --edge-type material_flow
+  %(prog)s quick-edge --from lithium_metal --to battery_cell --edge-type material_input
         """
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -407,8 +407,9 @@ Examples:
     p_quick.add_argument("--name-zh", help="Chinese name")
     p_quick.add_argument("--name-en", help="English name")
     p_quick.add_argument("--entity-type", default="unknown", choices=[
-        "material", "component", "device", "module", "subsystem", "system",
-        "platform", "infrastructure", "application_system", "service", "technology_capability", "unknown"
+        "material", "part", "device", "equipment", "system", "software",
+        "infrastructure", "process", "service", "technology_capability",
+        "platform", "standard", "data_asset", "unknown"
     ], help="Entity type (default: unknown)")
     p_quick.add_argument("--notes", help="Notes, e.g. '待 AI 补全'")
 
@@ -416,9 +417,11 @@ Examples:
     p_qedge = subparsers.add_parser("quick-edge", help="Quickly create a draft industrial flow edge with minimal fields")
     p_qedge.add_argument("--from", required=True, dest="from_node", help="Source node ID")
     p_qedge.add_argument("--to", required=True, dest="to_node", help="Target node ID")
-    p_qedge.add_argument("--edge-type", default="material_flow", choices=[
-        "material_flow", "composition", "energy_flow", "information_flow", "capability_supply", "service_flow"
-    ], help="Edge type (default: material_flow)")
+    p_qedge.add_argument("--edge-type", default="material_input", choices=[
+        "material_input", "energy_input", "information_input", "equipment_enablement",
+        "process_output", "service_provision", "capability_enablement",
+        "structural_composition", "supply_relation", "unknown"
+    ], help="Edge type (default: material_input)")
     p_qedge.add_argument("--description", help="Optional description; auto-generated if omitted")
     p_qedge.add_argument("--notes", help="Notes, e.g. '待 AI 补全'")
 
