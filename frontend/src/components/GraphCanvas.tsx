@@ -254,6 +254,7 @@ function syncCompoundParents(
       childToParent.set(edge.source().id(), edge.target().id());
     }
   );
+  const parentIds = new Set(childToParent.values());
   // eslint-disable-next-line no-console
   console.log("[syncCompoundParents] part_of edges:", childToParent.size, "expanded:", expandedProcessParents);
 
@@ -277,6 +278,15 @@ function syncCompoundParents(
           parent.removeClass("compound-parent");
         }
       }
+    });
+
+    // 给所有拥有 part_of 子工艺的父节点打上“可展开”标记（即使当前收起）
+    parentIds.forEach((parentId) => {
+      const parent = cy.getElementById(parentId);
+      if (parent.length > 0) parent.addClass("process-group");
+    });
+    cy.nodes(".process-group").forEach((node) => {
+      if (!parentIds.has(node.id())) node.removeClass("process-group");
     });
   });
 }
@@ -590,16 +600,35 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
               },
             },
             {
+              selector: ".process-group",
+              style: {
+                // 收起态的“可展开”组标识：实心琥珀色填充 + 深色实线边框，明显区别于普通节点
+                shape: "round-rectangle",
+                width: 46,
+                height: 46,
+                "background-opacity": 0.35,
+                "background-color": "#fbbf24",
+                "border-color": "#78350f",
+                "border-width": 3,
+                "border-opacity": 0.95,
+                "border-style": "solid",
+                color: "#fef3c7",
+                "font-weight": "bold",
+                label: (ele: cytoscape.NodeSingular) => `📁 ${ele.data("label") || ele.id()}`,
+                "text-background-color": "#451a03",
+                "text-background-opacity": 0.9,
+                "text-background-padding": "2px 6px",
+                "text-background-shape": "roundrectangle",
+              },
+            },
+            {
               selector: ":parent, .compound-parent",
               style: {
-                "background-opacity": 0.18,
-                "background-color": "#0ea5e9",
-                "border-color": "#38bdf8",
+                // 展开态在 .process-group 基础上扩大并加 Padding
+                "background-opacity": 0.22,
                 "border-width": 3,
-                "border-opacity": 0.9,
-                "border-style": "dashed",
-                shape: "rectangle",
-                "padding-top": "24px",
+                "border-opacity": 0.95,
+                "padding-top": "28px",
                 "padding-bottom": "24px",
                 "padding-left": "24px",
                 "padding-right": "24px",
@@ -608,9 +637,8 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
                 "text-valign": "top",
                 "text-halign": "center",
                 "text-margin-y": 10,
-                color: "#e0f2fe",
                 "font-size": "12px",
-                "font-weight": "bold",
+                label: (ele: cytoscape.NodeSingular) => `📁 ${ele.data("label") || ele.id()}`,
               },
             },
             {
@@ -868,6 +896,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
             // 【设计理由: 重整骨架】
             // 双击代表一次完整的子图合并操作，此时重新应用过滤器，并触发 dagre 全局重排，
             // 把之前由于“顺藤摸瓜”可能拉扯乱的局部拓扑结构重新梳理平整。
+            syncCompoundParents(cy, expandedProcessParentsRef.current);
             applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current);
             runHybridLayout(cy, false);
 
@@ -897,6 +926,9 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         window.addEventListener("keydown", keyHandler);
 
         cyRef.current = cy;
+        // 初始标记所有可展开工艺组，并应用过滤器隐藏 part_of 子节点
+        syncCompoundParents(cy, expandedProcessParentsRef.current);
+        applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current);
         // 使用混合布局：产业流自上而下，is_a 关系环绕父节点
         runHybridLayout(cy, true);
         setLoading(false);
