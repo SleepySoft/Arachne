@@ -193,9 +193,13 @@ function applyFilters(
     }
   });
 
-  const visibleNodeIds = new Set<string>();
-
   cy.batch(() => {
+    // 清除上一次折叠产生的聚合边
+    cy.edges(".aggregated-edge").remove();
+
+    const visibleNodeIds = new Set<string>();
+    let hiddenChildren = cy.collection();
+
     cy.nodes().forEach((node) => {
       const et = node.data("entity_type");
       const st = node.data("status");
@@ -209,11 +213,55 @@ function applyFilters(
         const parentId = childToParent.get(node.id());
         if (parentId && !expandedParentSet.has(parentId)) {
           show = false;
+          hiddenChildren = hiddenChildren.union(node);
         }
       }
       node.toggleClass("hidden", !show);
       if (show) visibleNodeIds.add(node.id());
     });
+
+    // 为被折叠的子工艺创建“聚合边”，让外部连接指向父节点，避免上游节点变成孤立点
+    if (hiddenChildren.length > 0) {
+      hiddenChildren.forEach((child) => {
+        const parentId = childToParent.get(child.id());
+        if (!parentId) return;
+        child.connectedEdges().forEach((edge) => {
+          // 跳过 part_of 父子边本身
+          if (
+            edge.data("edge_namespace") === "ontology" &&
+            edge.data("edge_type") === "part_of"
+          ) {
+            return;
+          }
+          const other = edge.source().id() === child.id() ? edge.target() : edge.source();
+          // 只处理另一端当前可见且不是父节点的边
+          if (other.id() === parentId || !visibleNodeIds.has(other.id())) return;
+
+          const isOutgoing = edge.source().id() === child.id();
+          const aggSource = isOutgoing ? parentId : other.id();
+          const aggTarget = isOutgoing ? other.id() : parentId;
+          const aggId = `agg:${edge.id()}`;
+          if (cy.getElementById(aggId).length > 0) return;
+
+          cy.add({
+            group: "edges",
+            data: {
+              id: aggId,
+              source: aggSource,
+              target: aggTarget,
+              edge_namespace: edge.data("edge_namespace"),
+              edge_type: edge.data("edge_type"),
+              label: edge.data("label"),
+              aggregated: true,
+              original_edge_id: edge.id(),
+            },
+            classes: "aggregated-edge",
+            selectable: false,
+            grabbable: false,
+          });
+        });
+      });
+    }
 
     const weakOntologyTypes = new Set(["alias_of", "related_term", "variant_of"]);
     cy.edges().forEach((edge) => {
@@ -600,6 +648,16 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
               },
             },
             {
+              selector: ".aggregated-edge",
+              style: {
+                "line-style": "dashed",
+                width: 1,
+                opacity: 0.65,
+                "target-arrow-shape": "triangle",
+                "arrow-scale": 0.6,
+              },
+            },
+            {
               selector: ".process-group",
               style: {
                 // 收起态的“可展开”组标识：实心琥珀色填充 + 深色实线边框，明显区别于普通节点
@@ -784,7 +842,9 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         // 2. 边单击事件：单纯透传数据
         // ==========================================
         cy.on("tap", "edge", (evt) => {
-          onEdgeClickRef.current(evt.target.data("raw") as GraphEdge);
+          const edge = evt.target;
+          if (edge.hasClass("aggregated-edge")) return;
+          onEdgeClickRef.current(edge.data("raw") as GraphEdge);
         });
 
         // ==========================================
@@ -815,6 +875,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
 
         cy.on("cxttap", "edge", (evt) => {
           const edge = evt.target;
+          if (edge.hasClass("aggregated-edge")) return;
           const rawData = edge.data("raw") as GraphEdge;
           const e = evt.originalEvent as MouseEvent;
           onEdgeContextMenuRef.current?.(rawData, e.clientX, e.clientY);
