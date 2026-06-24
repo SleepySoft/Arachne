@@ -5,11 +5,26 @@ import {
   ExplorationEdge as EEdge,
   ExplorationNode as ENode,
 } from "@/components/ExplorationCanvas";
+import { PanelState, usePanelStack } from "./usePanelStack";
 
 export function useCompanyGraph() {
-  const [panel, setPanel] = useState<PanelType>("none");
-  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-  const [selectedRelation, setSelectedRelation] = useState<CompanyNetworkEdge | null>(null);
+  const ps = usePanelStack();
+  const panel = ps.panel;
+  const selectedCompany = ps.selectedCompany;
+  const selectedRelation = ps.selectedRelation;
+
+  const setPanel = useCallback(
+    (next: PanelType) => ps.replace({ panel: next }),
+    [ps]
+  );
+  const pushPanel = useCallback(
+    (patch: Partial<PanelState>) => ps.push(patch),
+    [ps]
+  );
+  const popPanel = ps.pop;
+  const closePanel = ps.clear;
+  const setSelectedCompany = ps.setSelectedCompany;
+  const setSelectedRelation = ps.setSelectedRelation;
 
   const [companyDisplayMode, setCompanyDisplayMode] = useState<
     "empty" | "global" | "local"
@@ -165,8 +180,11 @@ export function useCompanyGraph() {
   // Select company from sidebar (company graph view)
   const handleSelectCompany = useCallback(
     (company: Company) => {
-      setSelectedCompany(company);
-      setPanel("company-detail");
+      pushPanel({
+        panel: "company-detail",
+        selectedCompany: company,
+        selectedRelation: null,
+      });
 
       const isManual = companyExploreMode === "manual";
 
@@ -195,24 +213,28 @@ export function useCompanyGraph() {
         }
       }
     },
-    [companyDisplayMode, companyExploreMode, fixedIds, loadExplorationGraph, loadPreview, orderedChain, startInvestigation]
+    [companyDisplayMode, companyExploreMode, fixedIds, loadExplorationGraph, loadPreview, orderedChain, pushPanel, startInvestigation]
   );
 
   // Click on a node inside the exploration canvas (manual mode)
   const handleExplorationNodeClick = useCallback(
     async (node: ENode) => {
       if (node.type === "company") {
+        let company: Company | undefined;
         try {
-          const full = await getCompany(node.id);
-          setSelectedCompany(full);
+          company = await getCompany(node.id);
         } catch {
-          setSelectedCompany({
+          company = {
             company_id: node.id,
             name_zh: node.label,
             company_type: node.company_type || "unknown",
-          } as Company);
+          } as Company;
         }
-        setPanel("company-detail");
+        pushPanel({
+          panel: "company-detail",
+          selectedCompany: company,
+          selectedRelation: null,
+        });
         setCurrentFocusId(node.id);
         setMaterialPanelOpen(false);
       } else {
@@ -222,7 +244,7 @@ export function useCompanyGraph() {
         setMaterialPanelOpen(true);
       }
     },
-    []
+    [pushPanel]
   );
 
   // Add selected companies to the exploration graph
@@ -293,13 +315,17 @@ export function useCompanyGraph() {
       const isManual = companyExploreMode === "manual";
 
       // Always update detail panel
+      let company: Company | undefined;
       try {
-        const full = await getCompany(cid);
-        setSelectedCompany(full);
+        company = await getCompany(cid);
       } catch {
-        setSelectedCompany(companyNode as unknown as Company);
+        company = companyNode as unknown as Company;
       }
-      setPanel("company-detail");
+      pushPanel({
+        panel: "company-detail",
+        selectedCompany: company,
+        selectedRelation: null,
+      });
 
       if (companyDisplayMode === "global") {
         if (currentFocusId === cid) {
@@ -366,6 +392,7 @@ export function useCompanyGraph() {
       loadPreview,
       orderedChain,
       previewData,
+      pushPanel,
       startInvestigation,
     ]
   );
@@ -416,10 +443,16 @@ export function useCompanyGraph() {
   );
 
   // Click on an edge inside the company network canvas
-  const handleCompanyEdgeClick = useCallback((edge: CompanyNetworkEdge) => {
-    setSelectedRelation(edge);
-    setPanel("company-relation-detail");
-  }, []);
+  const handleCompanyEdgeClick = useCallback(
+    (edge: CompanyNetworkEdge) => {
+      pushPanel({
+        panel: "company-relation-detail",
+        selectedRelation: edge,
+        selectedCompany: null,
+      });
+    },
+    [pushPanel]
+  );
 
   const handleAddToViewFromModal = useCallback(
     (nodes: CompanyNetworkNode[], edges: CompanyNetworkEdge[]) => {
@@ -447,6 +480,9 @@ export function useCompanyGraph() {
   return {
     panel,
     setPanel,
+    pushPanel,
+    popPanel,
+    closePanel,
     selectedCompany,
     setSelectedCompany,
     selectedRelation,

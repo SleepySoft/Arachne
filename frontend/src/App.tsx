@@ -51,6 +51,51 @@ export default function App() {
     );
   }
 
+  const industrialRightPanel =
+    industrial.panel !== "none" ? (
+      <RightPanel
+        panel={industrial.panel}
+        selectedNode={industrial.selectedNode}
+        selectedEdge={industrial.selectedEdge}
+        selectedIndustry={industrial.selectedIndustry}
+        selectedCompany={industrial.selectedCompany}
+        selectedRelation={null}
+        contextMenuNode={industrial.contextMenuNode}
+        refreshGraph={industrial.refreshGraph}
+        onNodeCreated={(node, position) => {
+          if (position) {
+            graphCanvasRef.current?.addNode(node, position);
+            industrial.setPendingNodePosition(null);
+          }
+        }}
+        pendingNodePosition={industrial.pendingNodePosition}
+        edgePrefillData={industrial.pendingEdgePrefill}
+        clearPendingEdgePrefill={industrial.clearPendingEdgePrefill}
+        setPanel={industrial.setPanel}
+        onPushPanel={industrial.pushPanel}
+        onBackPanel={industrial.popPanel}
+        setSelectedNode={industrial.setSelectedNode}
+        setSelectedEdge={industrial.setSelectedEdge}
+        setSelectedIndustry={industrial.setSelectedIndustry}
+        setSelectedCompany={industrial.setSelectedCompany}
+        onLoadSubgraph={industrial.handleLoadSubgraph}
+        onHighlightNodes={industrial.handleHighlightNodes}
+        onSelectNode={industrial.handleNodeClick}
+        onSelectCompany={industrial.handleSelectCompanyDetail}
+        onSelectIndustry={industrial.handleSelectIndustryDetail}
+        isProcessExpanded={
+          industrial.selectedNode
+            ? industrial.isProcessParentExpanded(industrial.selectedNode.node_id)
+            : false
+        }
+        onToggleProcessExpansion={() => {
+          if (industrial.selectedNode) {
+            industrial.toggleProcessParent(industrial.selectedNode.node_id);
+          }
+        }}
+      />
+    ) : null;
+
   const industrialWorkspace = (
     <Layout
       topBar={
@@ -65,8 +110,8 @@ export default function App() {
           onSelectIndustry={industrial.handleSelectIndustryDetail}
           onToggleCompany={industrial.handleToggleCompany}
           onSelectCompany={industrial.handleSelectCompanyDetail}
-          onCreateIndustry={() => industrial.setPanel("industry-create")}
-          onCreateCompany={() => industrial.setPanel("company-create")}
+          onCreateIndustry={() => industrial.pushPanel({ panel: "industry-create" })}
+          onCreateCompany={() => industrial.pushPanel({ panel: "company-create" })}
           onChangeFilters={industrial.setActiveFilters}
         />
       }
@@ -84,8 +129,7 @@ export default function App() {
               deleteEdge(edge.edge_id).then(() => {
                 graphCanvasRef.current?.removeEdge(edge.edge_id);
                 if (industrial.selectedEdge?.edge_id === edge.edge_id) {
-                  industrial.setSelectedEdge(null);
-                  industrial.setPanel("none");
+                  industrial.closePanel();
                 }
                 industrial.refreshGraph();
               });
@@ -114,13 +158,18 @@ export default function App() {
           onNavBack={industrial.handleNavBack}
           onNavForward={industrial.handleNavForward}
           onNavGoto={industrial.handleNavGoto}
-          onSelectNode={(node) => {
-            industrial.setSelectedNode(node);
-            industrial.setPanel("node-detail");
-          }}
-          onCreateNode={() => industrial.setPanel("node-create")}
-          onCreateEdge={() => industrial.setPanel("edge-create")}
-          onUploadBatch={() => industrial.setPanel("batch-upload")}
+          onSelectNode={(node) =>
+            industrial.pushPanel({
+              panel: "node-detail",
+              selectedNode: node,
+              selectedEdge: null,
+              selectedIndustry: null,
+              selectedCompany: null,
+            })
+          }
+          onCreateNode={() => industrial.pushPanel({ panel: "node-create" })}
+          onCreateEdge={() => industrial.pushPanel({ panel: "edge-create" })}
+          onUploadBatch={() => industrial.pushPanel({ panel: "batch-upload" })}
           hasActiveSelection={
             industrial.selectedIndustries.length > 0 ||
             industrial.selectedCompanies.length > 0
@@ -128,47 +177,7 @@ export default function App() {
           onResetSelection={industrial.resetSelections}
         />
       }
-      rightPanel={
-        <RightPanel
-          panel={industrial.panel}
-          selectedNode={industrial.selectedNode}
-          selectedEdge={industrial.selectedEdge}
-          selectedIndustry={industrial.selectedIndustry}
-          selectedCompany={industrial.selectedCompany}
-          selectedRelation={null}
-          contextMenuNode={industrial.contextMenu.node}
-          refreshGraph={industrial.refreshGraph}
-          onNodeCreated={(node, position) => {
-            if (position) {
-              graphCanvasRef.current?.addNode(node, position);
-              industrial.setPendingNodePosition(null);
-            }
-          }}
-          pendingNodePosition={industrial.pendingNodePosition}
-          edgePrefillData={industrial.pendingEdgePrefill}
-          clearPendingEdgePrefill={industrial.clearPendingEdgePrefill}
-          setPanel={industrial.setPanel}
-          setSelectedNode={industrial.setSelectedNode}
-          setSelectedEdge={industrial.setSelectedEdge}
-          setSelectedIndustry={industrial.setSelectedIndustry}
-          setSelectedCompany={industrial.setSelectedCompany}
-          onLoadSubgraph={industrial.handleLoadSubgraph}
-          onHighlightNodes={industrial.handleHighlightNodes}
-          onSelectNode={industrial.handleNodeClick}
-          onSelectCompany={industrial.handleSelectCompanyDetail}
-          onSelectIndustry={industrial.handleSelectIndustryDetail}
-          isProcessExpanded={
-            industrial.selectedNode
-              ? industrial.isProcessParentExpanded(industrial.selectedNode.node_id)
-              : false
-          }
-          onToggleProcessExpansion={() => {
-            if (industrial.selectedNode) {
-              industrial.toggleProcessParent(industrial.selectedNode.node_id);
-            }
-          }}
-        />
-      }
+      rightPanel={industrialRightPanel}
     />
   );
 
@@ -218,6 +227,34 @@ export default function App() {
       </div>
     );
 
+  const companyRightPanel =
+    company.panel !== "none" ? (
+      <RightPanel
+        panel={company.panel}
+        selectedNode={null}
+        selectedEdge={null}
+        selectedIndustry={null}
+        selectedCompany={company.selectedCompany}
+        selectedRelation={company.selectedRelation}
+        contextMenuNode={null}
+        refreshGraph={() => {}}
+        setPanel={company.setPanel}
+        onPushPanel={company.pushPanel}
+        onBackPanel={company.popPanel}
+        setSelectedNode={() => {}}
+        setSelectedEdge={() => {}}
+        setSelectedIndustry={() => {}}
+        setSelectedCompany={company.setSelectedCompany}
+        onLoadSubgraph={() => {}}
+        onHighlightNodes={() => {}}
+        onSelectNode={() => {}}
+        onSelectCompany={() => {}}
+        onSelectIndustry={() => {}}
+        onFocusInGraph={(id) => company.setCurrentFocusId(id)}
+        onOpenMaterialModal={() => company.setMaterialModalOpen(true)}
+      />
+    ) : null;
+
   const companyWorkspace = (
     <Layout
       topBar={
@@ -229,7 +266,7 @@ export default function App() {
           companySubView="company_list"
           setCompanySubView={() => {}}
           onSelectCompany={company.handleSelectCompany}
-          onCreateCompany={() => company.setPanel("company-create")}
+          onCreateCompany={() => company.pushPanel({ panel: "company-create" })}
         />
       }
       centerCanvas={companyCenterCanvas}
@@ -247,30 +284,7 @@ export default function App() {
           onClear={company.clearView}
         />
       }
-      rightPanel={
-        <RightPanel
-          panel={company.panel}
-          selectedNode={null}
-          selectedEdge={null}
-          selectedIndustry={null}
-          selectedCompany={company.selectedCompany}
-          selectedRelation={company.selectedRelation}
-          contextMenuNode={null}
-          refreshGraph={() => {}}
-          setPanel={company.setPanel}
-          setSelectedNode={() => {}}
-          setSelectedEdge={() => {}}
-          setSelectedIndustry={() => {}}
-          setSelectedCompany={company.setSelectedCompany}
-          onLoadSubgraph={() => {}}
-          onHighlightNodes={() => {}}
-          onSelectNode={() => {}}
-          onSelectCompany={() => {}}
-          onSelectIndustry={() => {}}
-          onFocusInGraph={(id) => company.setCurrentFocusId(id)}
-          onOpenMaterialModal={() => company.setMaterialModalOpen(true)}
-        />
-      }
+      rightPanel={companyRightPanel}
     />
   );
 
@@ -286,11 +300,17 @@ export default function App() {
             y={industrial.contextMenu.y}
             nodeName={industrial.contextMenu.node.canonical_name_zh}
             onShowCompanies={() => {
-              industrial.setPanel("node-companies");
+              industrial.pushPanel({
+                panel: "node-companies",
+                contextMenuNode: industrial.contextMenu.node,
+              });
               industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
             }}
             onShowIndustries={() => {
-              industrial.setPanel("node-industries");
+              industrial.pushPanel({
+                panel: "node-industries",
+                contextMenuNode: industrial.contextMenu.node,
+              });
               industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
             }}
             onClose={() =>
@@ -313,7 +333,7 @@ export default function App() {
             industrial.handleCloseCanvasMenu();
           }}
           onFullCreate={() => {
-            industrial.setPanel("node-create");
+            industrial.pushPanel({ panel: "node-create" });
             industrial.handleCloseCanvasMenu();
           }}
           onClose={industrial.handleCloseCanvasMenu}
@@ -332,8 +352,7 @@ export default function App() {
                 deleteEdge(edge.edge_id).then(() => {
                   graphCanvasRef.current?.removeEdge(edge.edge_id);
                   if (industrial.selectedEdge?.edge_id === edge.edge_id) {
-                    industrial.setSelectedEdge(null);
-                    industrial.setPanel("none");
+                    industrial.closePanel();
                   }
                   industrial.refreshGraph();
                 });

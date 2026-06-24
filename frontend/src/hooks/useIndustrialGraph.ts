@@ -9,15 +9,35 @@ import {
 import { EditMode } from "@/components/GraphCanvas";
 import { getCompanySubgraph, getIndustrySubgraph } from "@/services/api";
 import { useNodeNavigation } from "./useNodeNavigation";
+import { PanelState, usePanelStack } from "./usePanelStack";
 
 export function useIndustrialGraph() {
-  const [selectedNode, setSelectedNode] = useState<IndustrialNode | null>(null);
-  const [selectedEdge, setSelectedEdge] = useState<GraphEdge | null>(null);
-  const [selectedIndustry, setSelectedIndustry] = useState<Industry | null>(null);
-  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const ps = usePanelStack();
+  const panel = ps.panel;
+  const selectedNode = ps.selectedNode;
+  const selectedEdge = ps.selectedEdge;
+  const selectedIndustry = ps.selectedIndustry;
+  const selectedCompany = ps.selectedCompany;
+  const contextMenuNode = ps.contextMenuNode;
+
+  const setPanel = useCallback(
+    (next: PanelType) => ps.replace({ panel: next }),
+    [ps]
+  );
+  const pushPanel = useCallback(
+    (patch: Partial<PanelState>) => ps.push(patch),
+    [ps]
+  );
+  const popPanel = ps.pop;
+  const closePanel = ps.clear;
+
+  const setSelectedNode = ps.setSelectedNode;
+  const setSelectedEdge = ps.setSelectedEdge;
+  const setSelectedIndustry = ps.setSelectedIndustry;
+  const setSelectedCompany = ps.setSelectedCompany;
+
   const [selectedIndustries, setSelectedIndustries] = useState<Industry[]>([]);
   const [selectedCompanies, setSelectedCompanies] = useState<Company[]>([]);
-  const [panel, setPanel] = useState<PanelType>("none");
   const [contextMenu, setContextMenu] = useState<{
     visible: boolean;
     x: number;
@@ -72,40 +92,53 @@ export function useIndustrialGraph() {
 
   const handleNodeClick = useCallback(
     (node: IndustrialNode) => {
-      setSelectedNode(node);
-      setSelectedEdge(null);
-      setPanel("node-detail");
+      pushPanel({
+        panel: "node-detail",
+        selectedNode: node,
+        selectedEdge: null,
+        selectedIndustry: null,
+        selectedCompany: null,
+      });
       setContextMenu((prev) => ({ ...prev, visible: false }));
       nav.push(node);
     },
-    [nav]
+    [nav, pushPanel]
   );
 
   const handleNavBack = useCallback(() => {
     const node = nav.back();
     if (node) {
-      setSelectedNode(node);
-      setPanel("node-detail");
+      ps.replace({
+        panel: "node-detail",
+        selectedNode: node,
+        selectedEdge: null,
+      });
     }
-  }, [nav]);
+  }, [nav, ps]);
 
   const handleNavForward = useCallback(() => {
     const node = nav.forward();
     if (node) {
-      setSelectedNode(node);
-      setPanel("node-detail");
+      ps.replace({
+        panel: "node-detail",
+        selectedNode: node,
+        selectedEdge: null,
+      });
     }
-  }, [nav]);
+  }, [nav, ps]);
 
   const handleNavGoto = useCallback(
     (targetIndex: number) => {
       const node = nav.goto(targetIndex);
       if (node) {
-        setSelectedNode(node);
-        setPanel("node-detail");
+        ps.replace({
+          panel: "node-detail",
+          selectedNode: node,
+          selectedEdge: null,
+        });
       }
     },
-    [nav]
+    [nav, ps]
   );
 
   const handleNodeContextMenu = useCallback(
@@ -115,11 +148,18 @@ export function useIndustrialGraph() {
     []
   );
 
-  const handleEdgeClick = useCallback((edge: GraphEdge) => {
-    setSelectedEdge(edge);
-    setSelectedNode(null);
-    setPanel("edge-detail");
-  }, []);
+  const handleEdgeClick = useCallback(
+    (edge: GraphEdge) => {
+      pushPanel({
+        panel: "edge-detail",
+        selectedEdge: edge,
+        selectedNode: null,
+        selectedIndustry: null,
+        selectedCompany: null,
+      });
+    },
+    [pushPanel]
+  );
 
   const refreshGraph = useCallback(() => setGraphKey((k) => k + 1), []);
 
@@ -133,10 +173,17 @@ export function useIndustrialGraph() {
     });
   }, []);
 
-  const handleSelectIndustryDetail = useCallback((industry: Industry) => {
-    setSelectedIndustry(industry);
-    setPanel("industry-detail");
-  }, []);
+  const handleSelectIndustryDetail = useCallback(
+    (industry: Industry) => {
+      pushPanel({
+        panel: "industry-detail",
+        selectedIndustry: industry,
+        selectedNode: null,
+        selectedCompany: null,
+      });
+    },
+    [pushPanel]
+  );
 
   const handleToggleCompanyIndustrial = useCallback((company: Company) => {
     setSelectedCompanies((prev) => {
@@ -148,10 +195,17 @@ export function useIndustrialGraph() {
     });
   }, []);
 
-  const handleSelectCompanyDetail = useCallback((company: Company) => {
-    setSelectedCompany(company);
-    setPanel("company-detail");
-  }, []);
+  const handleSelectCompanyDetail = useCallback(
+    (company: Company) => {
+      pushPanel({
+        panel: "company-detail",
+        selectedCompany: company,
+        selectedNode: null,
+        selectedIndustry: null,
+      });
+    },
+    [pushPanel]
+  );
 
   const handleLoadSubgraph = useCallback(
     (nodes: unknown[], edges: unknown[]) => {
@@ -295,9 +349,15 @@ export function useIndustrialGraph() {
       notes?: string;
     }) => {
       setPendingEdgePrefill(draft);
-      setPanel("edge-create");
+      pushPanel({
+        panel: "edge-create",
+        selectedNode: null,
+        selectedEdge: null,
+        selectedIndustry: null,
+        selectedCompany: null,
+      });
     },
-    []
+    [pushPanel]
   );
 
   const clearPendingEdgePrefill = useCallback(() => {
@@ -319,6 +379,11 @@ export function useIndustrialGraph() {
     setSelectedCompanies,
     panel,
     setPanel,
+    pushPanel,
+    popPanel,
+    closePanel,
+    canGoBackPanel: ps.canGoBack,
+    contextMenuNode,
     contextMenu,
     setContextMenu,
     activeFilters,

@@ -17,6 +17,7 @@ import {
   Industry,
   PanelType,
 } from "@/types";
+import { PanelState } from "@/hooks/usePanelStack";
 
 interface RightPanelProps {
   panel: PanelType;
@@ -38,6 +39,8 @@ interface RightPanelProps {
   } | null;
   clearPendingEdgePrefill?: () => void;
   setPanel: (panel: PanelType) => void;
+  onPushPanel: (state: Partial<PanelState>) => void;
+  onBackPanel: () => void;
   setSelectedNode: (node: IndustrialNode | null) => void;
   setSelectedEdge: (edge: GraphEdge | null) => void;
   setSelectedIndustry: (industry: Industry | null) => void;
@@ -68,6 +71,8 @@ export function RightPanel({
   edgePrefillData,
   clearPendingEdgePrefill,
   setPanel,
+  onPushPanel,
+  onBackPanel,
   setSelectedNode,
   setSelectedEdge,
   setSelectedIndustry,
@@ -87,11 +92,8 @@ export function RightPanel({
     return (
       <NodeDetail
         node={selectedNode}
-        onEdit={() => setPanel("node-edit")}
-        onClose={() => {
-          setPanel("none");
-          setSelectedNode(null);
-        }}
+        onEdit={() => onPushPanel({ panel: "node-edit", selectedNode })}
+        onClose={onBackPanel}
         onRefresh={refreshGraph}
         onSelectNode={onSelectNode}
         onSelectCompany={onSelectCompany}
@@ -106,11 +108,8 @@ export function RightPanel({
     return (
       <EdgeDetail
         edge={selectedEdge}
-        onEdit={() => setPanel("edge-edit")}
-        onClose={() => {
-          setPanel("none");
-          setSelectedEdge(null);
-        }}
+        onEdit={() => onPushPanel({ panel: "edge-edit", selectedEdge })}
+        onClose={onBackPanel}
         onRefresh={refreshGraph}
       />
     );
@@ -120,7 +119,7 @@ export function RightPanel({
     return (
       <NodeForm
         mode="create"
-        onClose={() => setPanel("none")}
+        onClose={onBackPanel}
         onSuccess={(node) => {
           setSelectedNode(node);
           setPanel("node-detail");
@@ -139,7 +138,7 @@ export function RightPanel({
       <NodeForm
         mode="edit"
         node={selectedNode}
-        onClose={() => setPanel("node-detail")}
+        onClose={onBackPanel}
         onSuccess={(node) => {
           setSelectedNode(node);
           setPanel("node-detail");
@@ -156,7 +155,7 @@ export function RightPanel({
         prefillData={edgePrefillData || undefined}
         onClose={() => {
           clearPendingEdgePrefill?.();
-          setPanel("none");
+          onBackPanel();
         }}
         onSuccess={(edge) => {
           setSelectedEdge(edge);
@@ -173,7 +172,7 @@ export function RightPanel({
       <EdgeForm
         mode="edit"
         edge={selectedEdge}
-        onClose={() => setPanel("edge-detail")}
+        onClose={onBackPanel}
         onSuccess={(edge) => {
           setSelectedEdge(edge);
           setPanel("edge-detail");
@@ -186,8 +185,11 @@ export function RightPanel({
   if (panel === "batch-upload") {
     return (
       <BatchUploader
-        onClose={() => setPanel("none")}
-        onSuccess={refreshGraph}
+        onClose={onBackPanel}
+        onSuccess={() => {
+          refreshGraph();
+          onBackPanel();
+        }}
       />
     );
   }
@@ -196,11 +198,8 @@ export function RightPanel({
     return (
       <IndustryDetail
         industry={selectedIndustry}
-        onEdit={() => setPanel("industry-edit")}
-        onClose={() => {
-          setPanel("none");
-          setSelectedIndustry(null);
-        }}
+        onEdit={() => onPushPanel({ panel: "industry-edit", selectedIndustry })}
+        onClose={onBackPanel}
         onRefresh={refreshGraph}
         onLoadSubgraph={onLoadSubgraph}
         onHighlightNodes={onHighlightNodes}
@@ -212,7 +211,7 @@ export function RightPanel({
     return (
       <IndustryForm
         mode="create"
-        onClose={() => setPanel("none")}
+        onClose={onBackPanel}
         onSuccess={(ind) => {
           setSelectedIndustry(ind);
           setPanel("industry-detail");
@@ -226,7 +225,7 @@ export function RightPanel({
       <IndustryForm
         mode="edit"
         industry={selectedIndustry}
-        onClose={() => setPanel("industry-detail")}
+        onClose={onBackPanel}
         onSuccess={(ind) => {
           setSelectedIndustry(ind);
           setPanel("industry-detail");
@@ -241,9 +240,7 @@ export function RightPanel({
         <p className="text-sm">公司视图已重构</p>
         <p className="mt-1 text-xs">此功能已移除，请使用探索接口</p>
         <button
-          onClick={() => {
-            setPanel("none");
-          }}
+          onClick={onBackPanel}
           className="mt-3 rounded bg-slate-800 px-3 py-1 text-xs hover:bg-slate-700"
         >
           关闭
@@ -256,11 +253,8 @@ export function RightPanel({
     return (
       <CompanyDetail
         company={selectedCompany}
-        onEdit={() => setPanel("company-edit")}
-        onClose={() => {
-          setPanel("none");
-          setSelectedCompany(null);
-        }}
+        onEdit={() => onPushPanel({ panel: "company-edit", selectedCompany })}
+        onClose={onBackPanel}
         onRefresh={refreshGraph}
         onFocusInGraph={onFocusInGraph}
         onOpenMaterialModal={onOpenMaterialModal}
@@ -273,7 +267,7 @@ export function RightPanel({
     return (
       <CompanyForm
         mode="create"
-        onClose={() => setPanel("none")}
+        onClose={onBackPanel}
         onSuccess={(co) => {
           setSelectedCompany(co);
           setPanel("company-detail");
@@ -287,7 +281,7 @@ export function RightPanel({
       <CompanyForm
         mode="edit"
         company={selectedCompany}
-        onClose={() => setPanel("company-detail")}
+        onClose={onBackPanel}
         onSuccess={(co) => {
           setSelectedCompany(co);
           setPanel("company-detail");
@@ -301,11 +295,15 @@ export function RightPanel({
       <NodeCompaniesPanel
         nodeId={contextMenuNode.node_id}
         nodeName={contextMenuNode.canonical_name_zh}
-        onClose={() => setPanel("none")}
-        onSelectCompany={(company) => {
-          setSelectedCompany(company);
-          setPanel("company-detail");
-        }}
+        onClose={onBackPanel}
+        onSelectCompany={(company) =>
+          onPushPanel({
+            panel: "company-detail",
+            selectedCompany: company,
+            selectedNode: null,
+            selectedIndustry: null,
+          })
+        }
       />
     );
   }
@@ -315,11 +313,15 @@ export function RightPanel({
       <NodeIndustriesPanel
         nodeId={contextMenuNode.node_id}
         nodeName={contextMenuNode.canonical_name_zh}
-        onClose={() => setPanel("none")}
-        onSelectIndustry={(industry) => {
-          setSelectedIndustry(industry);
-          setPanel("industry-detail");
-        }}
+        onClose={onBackPanel}
+        onSelectIndustry={(industry) =>
+          onPushPanel({
+            panel: "industry-detail",
+            selectedIndustry: industry,
+            selectedNode: null,
+            selectedCompany: null,
+          })
+        }
       />
     );
   }
