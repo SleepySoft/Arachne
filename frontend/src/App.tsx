@@ -582,6 +582,13 @@ export default function App() {
               }
               industrial.handleCloseEdgeMenu();
             }}
+            onPull={() => {
+              const edge = industrial.edgeMenu.edge;
+              if (edge) {
+                graphCanvasRef.current?.pullEdgeEndpointsIntoView(edge.edge_id);
+              }
+              industrial.handleCloseEdgeMenu();
+            }}
             onClose={industrial.handleCloseEdgeMenu}
           />
         )}

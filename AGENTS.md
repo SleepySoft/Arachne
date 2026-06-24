@@ -273,6 +273,12 @@ backend/
 - `test_industry_storage.py`: removed stale `IndustryCreate` import
 - `StatsBar.tsx` / `App.tsx`: fixed pre-existing TypeScript errors that blocked the production build (dead `MainView` type, unused setters)
 
+### Commit 13 — 节点拉近 (Edge Pull)
+- `frontend/src/components/EdgeContextMenu.tsx`: added "拉近节点" menu item (only shown when an `onPull` handler is provided)
+- `frontend/src/components/GraphCanvas.tsx`: exposed `pullEdgeEndpointsIntoView(edgeId)` via ref; moves off-screen endpoint(s) of the selected edge into the current viewport while keeping the camera and other node positions unchanged
+- `frontend/src/App.tsx`: wired the edge context menu's "拉近节点" action to `GraphCanvasRef.pullEdgeEndpointsIntoView`
+- Movement is animated (200 ms ease-out); if both endpoints are off-screen, both are pulled toward the viewport center
+
 ### Historical Fixes (carried over)
 - **HTTP 422 fix**: `page_size` query limit relaxed from `le=100` to `le=1000`
 - **Frontend filter bug**: `GraphCanvas` `useEffect` deps fixed with `useRef` + `useCallback`

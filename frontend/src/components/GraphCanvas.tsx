@@ -165,6 +165,7 @@ export interface GraphCanvasRef {
   setCamera: (camera: { pan: { x: number; y: number }; zoom: number }) => void;
   getNodePositions: () => Record<string, { x: number; y: number }>;
   setNodePositions: (positions: Record<string, { x: number; y: number }>) => void;
+  pullEdgeEndpointsIntoView: (edgeId: string) => void;
 }
 
 interface GraphCanvasProps {
@@ -646,6 +647,104 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         applyPendingViewState(cy);
       } else {
         pendingPositionsRef.current = positions;
+      }
+    },
+    pullEdgeEndpointsIntoView: (edgeId) => {
+      const cy = cyRef.current;
+      if (!cy) return;
+      const edge = cy.getElementById(edgeId);
+      if (!edge || edge.length === 0 || edge.hasClass("aggregated-edge")) return;
+      const source = edge.source();
+      const target = edge.target();
+      if (!source || !target || source.length === 0 || target.length === 0) return;
+
+      const extent = cy.extent();
+      const zoom = cy.zoom();
+      const marginScreen = 80;
+      const marginModel = marginScreen / zoom;
+      const minX = extent.x1 + marginModel;
+      const maxX = extent.x2 - marginModel;
+      const minY = extent.y1 + marginModel;
+      const maxY = extent.y2 - marginModel;
+
+      const isVisible = (node: cytoscape.NodeSingular) => {
+        const p = node.position();
+        return p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY;
+      };
+
+      const clampToViewport = (p: cytoscape.Position) => ({
+        x: Math.max(minX, Math.min(maxX, p.x)),
+        y: Math.max(minY, Math.min(maxY, p.y)),
+      });
+
+      const normalize = (p: cytoscape.Position) => {
+        const len = Math.sqrt(p.x * p.x + p.y * p.y) || 1;
+        return { x: p.x / len, y: p.y / len };
+      };
+
+      const sourceVisible = isVisible(source);
+      const targetVisible = isVisible(target);
+      if (sourceVisible && targetVisible) return;
+
+      const desiredScreenDistance = 200;
+      const desiredModelDistance = desiredScreenDistance / zoom;
+
+      if (sourceVisible && !targetVisible) {
+        const dir = normalize({
+          x: target.position().x - source.position().x,
+          y: target.position().y - source.position().y,
+        });
+        target.animate(
+          {
+            position: clampToViewport({
+              x: source.position().x + dir.x * desiredModelDistance,
+              y: source.position().y + dir.y * desiredModelDistance,
+            }),
+          },
+          { duration: 200, easing: "ease-out" }
+        );
+      } else if (!sourceVisible && targetVisible) {
+        const dir = normalize({
+          x: source.position().x - target.position().x,
+          y: source.position().y - target.position().y,
+        });
+        source.animate(
+          {
+            position: clampToViewport({
+              x: target.position().x + dir.x * desiredModelDistance,
+              y: target.position().y + dir.y * desiredModelDistance,
+            }),
+          },
+          { duration: 200, easing: "ease-out" }
+        );
+      } else {
+        const center = { x: (extent.x1 + extent.x2) / 2, y: (extent.y1 + extent.y2) / 2 };
+        const dirSource = normalize({
+          x: source.position().x - center.x,
+          y: source.position().y - center.y,
+        });
+        const dirTarget = normalize({
+          x: target.position().x - center.x,
+          y: target.position().y - center.y,
+        });
+        source.animate(
+          {
+            position: clampToViewport({
+              x: center.x + dirSource.x * desiredModelDistance,
+              y: center.y + dirSource.y * desiredModelDistance,
+            }),
+          },
+          { duration: 200, easing: "ease-out" }
+        );
+        target.animate(
+          {
+            position: clampToViewport({
+              x: center.x + dirTarget.x * desiredModelDistance,
+              y: center.y + dirTarget.y * desiredModelDistance,
+            }),
+          },
+          { duration: 200, easing: "ease-out" }
+        );
       }
     },
   }));
