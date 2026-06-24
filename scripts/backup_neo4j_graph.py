@@ -9,7 +9,7 @@ from pathlib import Path
 from neo4j import GraphDatabase
 from neo4j.time import DateTime as Neo4jDateTime
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 def serialize_value(v):

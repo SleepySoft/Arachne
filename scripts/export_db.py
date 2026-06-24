@@ -5,9 +5,9 @@ Arachne Database Export Script
 Export all Neo4j and PostgreSQL data to JSON files.
 
 Usage:
-    cd backend && python scripts/export_db.py
-    cd backend && python scripts/export_db.py --output-dir ../data/ArachneData/newest
-    cd backend && python scripts/export_db.py
+    python scripts/export_db.py
+    python scripts/export_db.py --output-dir data/ArachneData/newest
+    python scripts/export_db.py
 
 Output structure:
     <output_dir>/
@@ -35,7 +35,7 @@ from uuid import UUID
 from pathlib import Path
 
 # Add parent dir to path so we can import app.*
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 
 from app.config import get_settings
 from app.database import get_async_driver, close_async_driver
@@ -186,7 +186,7 @@ def main():
         output_dir = Path(args.output_dir)
     else:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_dir = Path(__file__).resolve().parent.parent.parent / "data" / "backup" / timestamp
+        output_dir = Path(__file__).resolve().parent.parent / "data" / "backup" / timestamp
 
     output_dir.mkdir(parents=True, exist_ok=True)
     print(f"Exporting to: {output_dir}")

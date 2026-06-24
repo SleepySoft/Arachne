@@ -78,7 +78,7 @@
 
 ### 4.1 备份
 
-重构前已用 `backend/scripts/export_db.py` 备份：
+重构前已用 `scripts/export_db.py` 备份：
 
 ```text
 data/backup/20260618_145516/

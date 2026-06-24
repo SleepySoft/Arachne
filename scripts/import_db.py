@@ -5,9 +5,9 @@ Arachne Database Import Script
 Import Neo4j and PostgreSQL data from JSON files produced by export_db.py.
 
 Usage:
-    cd backend && python scripts/import_db.py --input-dir ../data/backup/20240115_120000
-    cd backend && python scripts/import_db.py --input-dir ../data/backup/20240115_120000 --clear
-    cd backend && python scripts/import_db.py --input-dir ../data/backup/20240115_120000
+    python scripts/import_db.py --input-dir data/backup/20240115_120000
+    python scripts/import_db.py --input-dir data/backup/20240115_120000 --clear
+    python scripts/import_db.py --input-dir data/backup/20240115_120000
 
 Options:
     --clear             Drop existing data before import (DESTRUCTIVE)
@@ -24,7 +24,7 @@ from pathlib import Path
 from datetime import datetime
 
 # Add parent dir to path so we can import app.*
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 
 from app.config import get_settings
 from app.database import get_async_driver, close_async_driver
