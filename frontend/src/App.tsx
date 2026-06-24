@@ -158,15 +158,7 @@ export default function App() {
           onNavBack={industrial.handleNavBack}
           onNavForward={industrial.handleNavForward}
           onNavGoto={industrial.handleNavGoto}
-          onSelectNode={(node) =>
-            industrial.pushPanel({
-              panel: "node-detail",
-              selectedNode: node,
-              selectedEdge: null,
-              selectedIndustry: null,
-              selectedCompany: null,
-            })
-          }
+          onSelectNode={industrial.openNodeDetail}
           onCreateNode={() => industrial.pushPanel({ panel: "node-create" })}
           onCreateEdge={() => industrial.pushPanel({ panel: "edge-create" })}
           onUploadBatch={() => industrial.pushPanel({ panel: "batch-upload" })}

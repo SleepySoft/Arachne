@@ -90,8 +90,9 @@ export function useIndustrialGraph() {
 
   const nav = useNodeNavigation();
 
-  const handleNodeClick = useCallback(
+  const openNodeDetail = useCallback(
     (node: IndustrialNode) => {
+      closePanel();
       pushPanel({
         panel: "node-detail",
         selectedNode: node,
@@ -99,46 +100,55 @@ export function useIndustrialGraph() {
         selectedIndustry: null,
         selectedCompany: null,
       });
+    },
+    [closePanel, pushPanel]
+  );
+
+  const openEdgeDetail = useCallback(
+    (edge: GraphEdge) => {
+      closePanel();
+      pushPanel({
+        panel: "edge-detail",
+        selectedEdge: edge,
+        selectedNode: null,
+        selectedIndustry: null,
+        selectedCompany: null,
+      });
+    },
+    [closePanel, pushPanel]
+  );
+
+  const handleNodeClick = useCallback(
+    (node: IndustrialNode) => {
+      openNodeDetail(node);
       setContextMenu((prev) => ({ ...prev, visible: false }));
       nav.push(node);
     },
-    [nav, pushPanel]
+    [nav, openNodeDetail]
   );
 
   const handleNavBack = useCallback(() => {
     const node = nav.back();
     if (node) {
-      ps.replace({
-        panel: "node-detail",
-        selectedNode: node,
-        selectedEdge: null,
-      });
+      openNodeDetail(node);
     }
-  }, [nav, ps]);
+  }, [nav, openNodeDetail]);
 
   const handleNavForward = useCallback(() => {
     const node = nav.forward();
     if (node) {
-      ps.replace({
-        panel: "node-detail",
-        selectedNode: node,
-        selectedEdge: null,
-      });
+      openNodeDetail(node);
     }
-  }, [nav, ps]);
+  }, [nav, openNodeDetail]);
 
   const handleNavGoto = useCallback(
     (targetIndex: number) => {
       const node = nav.goto(targetIndex);
       if (node) {
-        ps.replace({
-          panel: "node-detail",
-          selectedNode: node,
-          selectedEdge: null,
-        });
+        openNodeDetail(node);
       }
     },
-    [nav, ps]
+    [nav, openNodeDetail]
   );
 
   const handleNodeContextMenu = useCallback(
@@ -150,15 +160,9 @@ export function useIndustrialGraph() {
 
   const handleEdgeClick = useCallback(
     (edge: GraphEdge) => {
-      pushPanel({
-        panel: "edge-detail",
-        selectedEdge: edge,
-        selectedNode: null,
-        selectedIndustry: null,
-        selectedCompany: null,
-      });
+      openEdgeDetail(edge);
     },
-    [pushPanel]
+    [openEdgeDetail]
   );
 
   const refreshGraph = useCallback(() => setGraphKey((k) => k + 1), []);
@@ -395,6 +399,8 @@ export function useIndustrialGraph() {
     highlightNodeIds,
     setHighlightNodeIds,
     nav,
+    openNodeDetail,
+    openEdgeDetail,
     handleNodeClick,
     handleNavBack,
     handleNavForward,

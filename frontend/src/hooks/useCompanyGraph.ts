@@ -177,6 +177,30 @@ export function useCompanyGraph() {
     }
   }, []);
 
+  const openCompanyDetail = useCallback(
+    (company: Company) => {
+      closePanel();
+      pushPanel({
+        panel: "company-detail",
+        selectedCompany: company,
+        selectedRelation: null,
+      });
+    },
+    [closePanel, pushPanel]
+  );
+
+  const openRelationDetail = useCallback(
+    (edge: CompanyNetworkEdge) => {
+      closePanel();
+      pushPanel({
+        panel: "company-relation-detail",
+        selectedRelation: edge,
+        selectedCompany: null,
+      });
+    },
+    [closePanel, pushPanel]
+  );
+
   // Select company from sidebar (company graph view)
   const handleSelectCompany = useCallback(
     (company: Company) => {
@@ -230,11 +254,7 @@ export function useCompanyGraph() {
             company_type: node.company_type || "unknown",
           } as Company;
         }
-        pushPanel({
-          panel: "company-detail",
-          selectedCompany: company,
-          selectedRelation: null,
-        });
+        openCompanyDetail(company);
         setCurrentFocusId(node.id);
         setMaterialPanelOpen(false);
       } else {
@@ -244,7 +264,7 @@ export function useCompanyGraph() {
         setMaterialPanelOpen(true);
       }
     },
-    [pushPanel]
+    [openCompanyDetail]
   );
 
   // Add selected companies to the exploration graph
@@ -321,11 +341,7 @@ export function useCompanyGraph() {
       } catch {
         company = companyNode as unknown as Company;
       }
-      pushPanel({
-        panel: "company-detail",
-        selectedCompany: company,
-        selectedRelation: null,
-      });
+      openCompanyDetail(company);
 
       if (companyDisplayMode === "global") {
         if (currentFocusId === cid) {
@@ -392,7 +408,7 @@ export function useCompanyGraph() {
       loadPreview,
       orderedChain,
       previewData,
-      pushPanel,
+      openCompanyDetail,
       startInvestigation,
     ]
   );
@@ -445,13 +461,9 @@ export function useCompanyGraph() {
   // Click on an edge inside the company network canvas
   const handleCompanyEdgeClick = useCallback(
     (edge: CompanyNetworkEdge) => {
-      pushPanel({
-        panel: "company-relation-detail",
-        selectedRelation: edge,
-        selectedCompany: null,
-      });
+      openRelationDetail(edge);
     },
-    [pushPanel]
+    [openRelationDetail]
   );
 
   const handleAddToViewFromModal = useCallback(
@@ -523,6 +535,8 @@ export function useCompanyGraph() {
     startInvestigation,
     loadExplorationGraph,
     loadPreview,
+    openCompanyDetail,
+    openRelationDetail,
     handleSelectCompany,
     handleExplorationNodeClick,
     handleAddCompaniesToExploration,
