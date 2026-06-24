@@ -1,20 +1,22 @@
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { StatsBar, MainView } from "@/components/StatsBar";
 import { DbChecksPage } from "@/pages/DbChecksPage";
 import { Layout } from "@/components/Layout";
 import { GraphCanvas, GraphCanvasRef } from "@/components/GraphCanvas";
 import { GraphToolbar } from "@/components/GraphToolbar";
+import { ViewToolbar } from "@/components/ViewToolbar";
+import { ViewManagerModal } from "@/components/ViewManagerModal";
+import { CompanyNetworkCanvas, CompanyNetworkCanvasRef } from "@/components/CompanyNetworkCanvas";
+import { ExplorationCanvas, ExplorationCanvasRef } from "@/components/ExplorationCanvas";
 import { NodeContextMenu } from "@/components/NodeContextMenu";
 import { CompanyGraphEmptyState } from "@/components/CompanyGraphEmptyState";
-import { CompanyNetworkCanvas } from "@/components/CompanyNetworkCanvas";
-import { ExplorationCanvas } from "@/components/ExplorationCanvas";
 import { CompanyMaterialModal } from "@/components/CompanyMaterialModal";
 import { MaterialConnectionPanel } from "@/components/MaterialConnectionPanel";
 import { CanvasContextMenu } from "@/components/CanvasContextMenu";
 import { EdgeContextMenu } from "@/components/EdgeContextMenu";
 import { ConnectEdgePanel } from "@/components/ConnectEdgePanel";
 import { QuickNodeForm } from "@/components/QuickNodeForm";
-import { deleteEdge } from "@/services/api";
+import { deleteEdge, listCompanies, listIndustries } from "@/services/api";
 import { IndustrialSidebar } from "@/components/panels/IndustrialSidebar";
 import { IndustrialSearchPanel } from "@/components/panels/IndustrialSearchPanel";
 import { CompanySidebarPanel } from "@/components/panels/CompanySidebarPanel";
@@ -22,6 +24,13 @@ import { CompanySearchPanel } from "@/components/panels/CompanySearchPanel";
 import { RightPanel } from "@/components/panels/RightPanel";
 import { useIndustrialGraph } from "@/hooks/useIndustrialGraph";
 import { useCompanyGraph } from "@/hooks/useCompanyGraph";
+import { useSavedViews } from "@/hooks/useSavedViews";
+import {
+  buildIndustrialSnapshot,
+  applyIndustrialSnapshot,
+  buildCompanySnapshot,
+  applyCompanySnapshot,
+} from "@/lib/viewSerializer";
 
 export default function App() {
   const [mainView, setMainView] = useState<MainView>("industrial_graph");
@@ -33,6 +42,134 @@ export default function App() {
   const industrial = useIndustrialGraph();
   const company = useCompanyGraph();
   const graphCanvasRef = useRef<GraphCanvasRef>(null);
+  const companyNetworkCanvasRef = useRef<CompanyNetworkCanvasRef>(null);
+  const explorationCanvasRef = useRef<ExplorationCanvasRef>(null);
+
+  const [allIndustries, setAllIndustries] = useState<import("@/types").Industry[]>([]);
+  const [allCompanies, setAllCompanies] = useState<import("@/types").Company[]>([]);
+  const [industrialViewToRestore, setIndustrialViewToRestore] = useState<
+    import("@/types/view").IndustrialViewState | null
+  >(null);
+  const [companyViewToRestore, setCompanyViewToRestore] = useState<
+    import("@/types/view").CompanyViewState | null
+  >(null);
+  const [importMessage, setImportMessage] = useState<string | null>(null);
+  const [viewManagerOpen, setViewManagerOpen] = useState(false);
+  const [viewManagerWorkspace, setViewManagerWorkspace] = useState<import("@/types/view").WorkspaceType>("industrial");
+  const savedViews = useSavedViews();
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([listIndustries(1, 1000), listCompanies(1, 1000)])
+      .then(([industries, companies]) => {
+        if (cancelled) return;
+        setAllIndustries(industries.items);
+        setAllCompanies(companies.items);
+      })
+      .catch(() => {
+        // ignore
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!importMessage) return;
+    const timer = setTimeout(() => setImportMessage(null), 4000);
+    return () => clearTimeout(timer);
+  }, [importMessage]);
+
+  useEffect(() => {
+    if (!industrialViewToRestore) return;
+    const timer = setTimeout(() => setIndustrialViewToRestore(null), 3000);
+    return () => clearTimeout(timer);
+  }, [industrialViewToRestore]);
+
+  useEffect(() => {
+    if (!companyViewToRestore) return;
+    const timer = setTimeout(() => setCompanyViewToRestore(null), 3000);
+    return () => clearTimeout(timer);
+  }, [companyViewToRestore]);
+
+  const handleSaveCurrentView = useCallback(() => {
+    const name = window.prompt("为当前视图命名：");
+    if (!name || !name.trim()) return;
+    if (mainView === "industrial_graph") {
+      const payload = buildIndustrialSnapshot(
+        {
+          selectedIndustries: industrial.selectedIndustries,
+          selectedCompanies: industrial.selectedCompanies,
+          activeFilters: industrial.activeFilters,
+          expandedProcessParents: industrial.expandedProcessParents,
+          canvasRef: graphCanvasRef,
+        },
+        name.trim()
+      );
+      savedViews.saveView(name.trim(), "industrial", payload);
+    } else if (mainView === "company_graph") {
+      const activeRef =
+        company.companyDisplayMode === "local" && company.companyExploreMode === "manual"
+          ? explorationCanvasRef
+          : companyNetworkCanvasRef;
+      const payload = buildCompanySnapshot(
+        {
+          companyDisplayMode: company.companyDisplayMode,
+          companyExploreMode: company.companyExploreMode,
+          orderedChain: company.orderedChain,
+          fixedIds: company.fixedIds,
+          currentFocusId: company.currentFocusId,
+          explorationData: company.explorationData,
+          canvasRef: activeRef,
+        },
+        name.trim()
+      );
+      savedViews.saveView(name.trim(), "company", payload);
+    }
+  }, [
+    mainView,
+    industrial.selectedIndustries,
+    industrial.selectedCompanies,
+    industrial.activeFilters,
+    industrial.expandedProcessParents,
+    company.companyDisplayMode,
+    company.companyExploreMode,
+    company.orderedChain,
+    company.fixedIds,
+    company.currentFocusId,
+    company.explorationData,
+    savedViews,
+  ]);
+
+  const handleOpenViewManager = useCallback(() => {
+    setViewManagerWorkspace(mainView === "company_graph" ? "company" : "industrial");
+    setViewManagerOpen(true);
+  }, [mainView]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target &&
+        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)
+      ) {
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+        if (e.key === "s" || e.key === "S") {
+          e.preventDefault();
+          handleSaveCurrentView();
+        }
+        if (e.key === "o" || e.key === "O") {
+          e.preventDefault();
+          handleOpenViewManager();
+        }
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [handleSaveCurrentView, handleOpenViewManager]);
+
   const [quickNodeAt, setQuickNodeAt] = useState<{
     node: { x: number; y: number };
     visible: boolean;
@@ -144,12 +281,55 @@ export default function App() {
             connectSourceNodeId={industrial.connectSource?.node_id || null}
             expandedProcessParents={industrial.expandedProcessParents}
             onToggleProcessExpansion={industrial.toggleProcessParent}
+            restoredPositions={industrialViewToRestore?.nodePositions}
+            restoredCamera={industrialViewToRestore?.camera}
           />
           <GraphToolbar
             onRelayout={() => industrial.setGraphKey((k) => k + 1)}
             editMode={industrial.editMode}
             onToggleEditMode={industrial.toggleEditMode}
           />
+          <div className="absolute left-3 top-14 z-10">
+            <ViewToolbar
+              workspace="industrial"
+              savedViews={savedViews}
+              onSave={(name) =>
+                buildIndustrialSnapshot(
+                  {
+                    selectedIndustries: industrial.selectedIndustries,
+                    selectedCompanies: industrial.selectedCompanies,
+                    activeFilters: industrial.activeFilters,
+                    expandedProcessParents: industrial.expandedProcessParents,
+                    canvasRef: graphCanvasRef,
+                  },
+                  name
+                )
+              }
+              onLoad={(view) => {
+                const result = applyIndustrialSnapshot(view, {
+                  setSelectedIndustries: industrial.setSelectedIndustries,
+                  setSelectedCompanies: industrial.setSelectedCompanies,
+                  setActiveFilters: industrial.setActiveFilters,
+                  setExpandedProcessParents: industrial.setExpandedProcessParents,
+                  setGraphKey: industrial.setGraphKey,
+                  setSubgraphData: industrial.setSubgraphData,
+                  setHighlightNodeIds: industrial.setHighlightNodeIds,
+                  allIndustries,
+                  allCompanies,
+                  onSetRestored: setIndustrialViewToRestore,
+                });
+                if (result.missingIndustryIds.length > 0 || result.missingCompanyIds.length > 0) {
+                  setImportMessage(
+                    `已恢复视图。缺失 ${result.missingIndustryIds.length} 个行业、${result.missingCompanyIds.length} 个公司。`
+                  );
+                }
+              }}
+              onManage={() => {
+                setViewManagerWorkspace("industrial");
+                setViewManagerOpen(true);
+              }}
+            />
+          </div>
         </div>
       }
       searchPanel={
@@ -186,14 +366,17 @@ export default function App() {
     ) : company.companyDisplayMode === "local" ? (
       company.companyExploreMode === "manual" ? (
         <ExplorationCanvas
+          ref={explorationCanvasRef}
           nodes={company.explorationData?.nodes ?? []}
           edges={company.explorationData?.edges ?? []}
           onNodeClick={company.handleExplorationNodeClick}
           onEdgeClick={(edge) => company.setSelectedExplorationEdge(edge)}
           highlightNodeId={company.currentFocusId}
+          restoredCamera={companyViewToRestore?.camera}
         />
       ) : (
         <CompanyNetworkCanvas
+          ref={companyNetworkCanvasRef}
           nodes={company.allCompanyNodes}
           edges={company.allCompanyEdges}
           highlightCompanyId={company.currentFocusId}
@@ -201,10 +384,12 @@ export default function App() {
           onNodeClick={company.handleCompanyNodeClick}
           onNodeDblClick={company.handleCompanyNodeDblClick}
           onEdgeClick={company.handleCompanyEdgeClick}
+          restoredCamera={companyViewToRestore?.camera}
         />
       )
     ) : company.companyDisplayMode === "global" && company.companyNetworkData ? (
       <CompanyNetworkCanvas
+        ref={companyNetworkCanvasRef}
         nodes={company.companyNetworkData.nodes}
         edges={company.companyNetworkData.edges}
         highlightCompanyId={company.currentFocusId}
@@ -212,6 +397,7 @@ export default function App() {
         onNodeClick={company.handleCompanyNodeClick}
         onNodeDblClick={company.handleCompanyNodeDblClick}
         onEdgeClick={company.handleCompanyEdgeClick}
+        restoredCamera={companyViewToRestore?.camera}
       />
     ) : (
       <div className="flex h-full w-full items-center justify-center bg-slate-950">
@@ -247,6 +433,11 @@ export default function App() {
       />
     ) : null;
 
+  const activeCompanyCanvasRef =
+    company.companyDisplayMode === "local" && company.companyExploreMode === "manual"
+      ? explorationCanvasRef
+      : companyNetworkCanvasRef;
+
   const companyWorkspace = (
     <Layout
       topBar={
@@ -261,7 +452,47 @@ export default function App() {
           onCreateCompany={() => company.pushPanel({ panel: "company-create" })}
         />
       }
-      centerCanvas={companyCenterCanvas}
+      centerCanvas={
+        <div className="relative h-full w-full">
+          {companyCenterCanvas}
+          <div className="absolute left-3 top-3 z-10">
+            <ViewToolbar
+              workspace="company"
+              savedViews={savedViews}
+              onSave={(name) =>
+                buildCompanySnapshot(
+                  {
+                    companyDisplayMode: company.companyDisplayMode,
+                    companyExploreMode: company.companyExploreMode,
+                    orderedChain: company.orderedChain,
+                    fixedIds: company.fixedIds,
+                    currentFocusId: company.currentFocusId,
+                    explorationData: company.explorationData,
+                    canvasRef: activeCompanyCanvasRef,
+                  },
+                  name
+                )
+              }
+              onLoad={(view) => {
+                applyCompanySnapshot(view, {
+                  setCompanyDisplayMode: company.setCompanyDisplayMode,
+                  setCompanyExploreMode: company.setCompanyExploreMode,
+                  setOrderedChain: company.setOrderedChain,
+                  setFixedIds: company.setFixedIds,
+                  setCurrentFocusId: company.setCurrentFocusId,
+                  setExplorationData: company.setExplorationData,
+                  setPreviewData: company.setPreviewData,
+                  onSetRestored: setCompanyViewToRestore,
+                });
+              }}
+              onManage={() => {
+                setViewManagerWorkspace("company");
+                setViewManagerOpen(true);
+              }}
+            />
+          </div>
+        </div>
+      }
       searchPanel={
         <CompanySearchPanel
           companyExploreMode={company.companyExploreMode}
@@ -435,6 +666,53 @@ export default function App() {
             onAddCompanies={company.handleAddCompaniesToExploration}
           />
         )}
+
+      {viewManagerOpen && (
+        <ViewManagerModal
+          workspace={viewManagerWorkspace}
+          savedViews={savedViews}
+          onLoad={(view) => {
+            if (viewManagerWorkspace === "industrial") {
+              const result = applyIndustrialSnapshot(view, {
+                setSelectedIndustries: industrial.setSelectedIndustries,
+                setSelectedCompanies: industrial.setSelectedCompanies,
+                setActiveFilters: industrial.setActiveFilters,
+                setExpandedProcessParents: industrial.setExpandedProcessParents,
+                setGraphKey: industrial.setGraphKey,
+                setSubgraphData: industrial.setSubgraphData,
+                setHighlightNodeIds: industrial.setHighlightNodeIds,
+                allIndustries,
+                allCompanies,
+                onSetRestored: setIndustrialViewToRestore,
+              });
+              if (result.missingIndustryIds.length > 0 || result.missingCompanyIds.length > 0) {
+                setImportMessage(
+                  `已恢复视图。缺失 ${result.missingIndustryIds.length} 个行业、${result.missingCompanyIds.length} 个公司。`
+                );
+              }
+            } else {
+              applyCompanySnapshot(view, {
+                setCompanyDisplayMode: company.setCompanyDisplayMode,
+                setCompanyExploreMode: company.setCompanyExploreMode,
+                setOrderedChain: company.setOrderedChain,
+                setFixedIds: company.setFixedIds,
+                setCurrentFocusId: company.setCurrentFocusId,
+                setExplorationData: company.setExplorationData,
+                setPreviewData: company.setPreviewData,
+                onSetRestored: setCompanyViewToRestore,
+              });
+            }
+            setViewManagerOpen(false);
+          }}
+          onClose={() => setViewManagerOpen(false)}
+        />
+      )}
+
+      {importMessage && (
+        <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-lg border border-slate-700 bg-slate-900/95 px-4 py-2 text-xs text-slate-200 shadow-xl backdrop-blur">
+          {importMessage}
+        </div>
+      )}
     </>
   );
 }

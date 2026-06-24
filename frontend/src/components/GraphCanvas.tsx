@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import cytoscape from "cytoscape";
 import dagre from "cytoscape-dagre";
 import {
@@ -50,7 +50,8 @@ function runHybridLayout(
   cy: cytoscape.Core,
   fit = true,
   expandedProcessParents: string[] = [],
-  dragPositions?: Map<string, cytoscape.Position>
+  dragPositions?: Map<string, cytoscape.Position>,
+  onComplete?: () => void
 ) {
   // 如果存在 compound parent（part_of 展开），用简单的径向布局把子工艺排在父节点周围
   // 不依赖 :parent 选择器（隐藏子节点时可能无法命中），直接用 expandedProcessParents 选择父节点
@@ -71,6 +72,9 @@ function runHybridLayout(
         { fit: { eles: fitCollection, padding: 40 } },
         { duration: 250, easing: "ease-in-out-cubic" }
       );
+      if (onComplete) setTimeout(onComplete, 300);
+    } else {
+      onComplete?.();
     }
     return;
   }
@@ -141,6 +145,10 @@ function runHybridLayout(
     if (fit) {
       cy.fit(cy.elements(), 40);
     }
+    if (onComplete) {
+      // Allow fit animation to settle before notifying completion
+      setTimeout(onComplete, fit ? 300 : 0);
+    }
   });
 
   dagreLayout.run();
@@ -153,9 +161,15 @@ export interface GraphCanvasRef {
   addEdge: (edge: GraphEdge) => void;
   removeEdge: (edgeId: string) => void;
   removeNode: (nodeId: string) => void;
+  getCamera: () => { pan: { x: number; y: number }; zoom: number } | null;
+  setCamera: (camera: { pan: { x: number; y: number }; zoom: number }) => void;
+  getNodePositions: () => Record<string, { x: number; y: number }>;
+  setNodePositions: (positions: Record<string, { x: number; y: number }>) => void;
 }
 
 interface GraphCanvasProps {
+  restoredPositions?: Record<string, { x: number; y: number }>;
+  restoredCamera?: { pan: { x: number; y: number }; zoom: number };
   onNodeClick: (node: IndustrialNode) => void;
   onEdgeClick: (edge: GraphEdge) => void;
   onNodeContextMenu?: (node: IndustrialNode, x: number, y: number) => void;
@@ -417,6 +431,8 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     highlightNodeId,
     highlightNodeIds,
     sourceData,
+    restoredPositions,
+    restoredCamera,
     editMode = "default",
     connectSourceNodeId = null,
     expandedProcessParents = [],
@@ -444,6 +460,8 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   const expandedProcessParentsRef = useRef(expandedProcessParents);
   const onToggleProcessExpansionRef = useRef(onToggleProcessExpansion);
   const processGroupDragPositionsRef = useRef<Map<string, cytoscape.Position>>(new Map());
+  const pendingPositionsRef = useRef<Record<string, { x: number; y: number }> | null>(null);
+  const pendingCameraRef = useRef<{ pan: { x: number; y: number }; zoom: number } | null>(null);
 
   useEffect(() => {
     onNodeClickRef.current = onNodeClick;
@@ -500,6 +518,41 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   useEffect(() => {
     onToggleProcessExpansionRef.current = onToggleProcessExpansion;
   }, [onToggleProcessExpansion]);
+
+  const applyPendingViewState = useCallback((cy: cytoscape.Core) => {
+    if (!cy) return;
+    const positions = pendingPositionsRef.current;
+    const camera = pendingCameraRef.current;
+
+    if (positions && Object.keys(positions).length > 0) {
+      const visibleIds = new Set(cy.nodes().map((n) => n.id()));
+      const matched = new Set<string>();
+      cy.batch(() => {
+        cy.nodes().forEach((n) => {
+          const pos = positions[n.id()];
+          if (pos) {
+            n.position(pos);
+            matched.add(n.id());
+          }
+        });
+      });
+      const missingRatio = visibleIds.size > 0 ? (visibleIds.size - matched.size) / visibleIds.size : 0;
+      // If too many saved positions are missing, fall back to a full relayout.
+      if (missingRatio > 0.5) {
+        runHybridLayout(cy, true, expandedProcessParentsRef.current, processGroupDragPositionsRef.current);
+      }
+    }
+
+    if (camera) {
+      cy.animate(
+        { pan: camera.pan, zoom: camera.zoom },
+        { duration: 0 }
+      );
+    }
+
+    pendingPositionsRef.current = null;
+    pendingCameraRef.current = null;
+  }, []);
 
   useImperativeHandle(ref, () => ({
     addNode: (node, position) => {
@@ -564,6 +617,36 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
       const el = cy.getElementById(nodeId);
       if (el.length > 0) cy.remove(el);
       applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current);
+    },
+    getCamera: () => {
+      const cy = cyRef.current;
+      if (!cy) return null;
+      return { pan: cy.pan(), zoom: cy.zoom() };
+    },
+    setCamera: (camera) => {
+      const cy = cyRef.current;
+      if (cy) {
+        cy.animate({ pan: camera.pan, zoom: camera.zoom }, { duration: 0 });
+      } else {
+        pendingCameraRef.current = camera;
+      }
+    },
+    getNodePositions: () => {
+      const cy = cyRef.current;
+      if (!cy) return {};
+      const positions: Record<string, { x: number; y: number }> = {};
+      cy.nodes().forEach((n) => {
+        positions[n.id()] = { ...n.position() };
+      });
+      return positions;
+    },
+    setNodePositions: (positions) => {
+      const cy = cyRef.current;
+      if (cy) {
+        applyPendingViewState(cy);
+      } else {
+        pendingPositionsRef.current = positions;
+      }
     },
   }));
 
@@ -1081,11 +1164,20 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         window.addEventListener("keydown", keyHandler);
 
         cyRef.current = cy;
+        // 如果正在恢复已保存视图，把展开工艺组的父节点位置预置到拖拽记录中，
+        // 这样 syncCompoundParents / layoutExpandedCompound 会以该位置为中心，
+        // 而不是让 Cytoscape 根据子节点重新计算父节点位置。
+        if (restoredPositions) {
+          expandedProcessParentsRef.current.forEach((parentId) => {
+            const pos = restoredPositions[parentId];
+            if (pos) processGroupDragPositionsRef.current.set(parentId, pos);
+          });
+        }
         // 初始标记所有可展开工艺组，并应用过滤器隐藏 part_of 子节点
         syncCompoundParents(cy, expandedProcessParentsRef.current, processGroupDragPositionsRef.current);
         applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current);
         // 使用混合布局：产业流自上而下，is_a 关系环绕父节点
-        runHybridLayout(cy, true);
+        runHybridLayout(cy, true, expandedProcessParentsRef.current, processGroupDragPositionsRef.current, () => applyPendingViewState(cy));
         setLoading(false);
       } catch (err) {
         if (mounted) {
@@ -1127,8 +1219,11 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     // 展开时只做局部径向布局，不 fit，保证 group 原地展开。
     if (expandedProcessParents.length > 0) {
       requestAnimationFrame(() => {
-        runHybridLayout(cy, false, expandedProcessParents, processGroupDragPositionsRef.current);
+        runHybridLayout(cy, false, expandedProcessParents, processGroupDragPositionsRef.current, () => applyPendingViewState(cy));
       });
+    } else {
+      // Collapse: still try to apply any queued view state (camera is independent of layout)
+      applyPendingViewState(cy);
     }
   }, [expandedProcessParents]);
 
@@ -1142,6 +1237,19 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
       if (source.length > 0) source.addClass("connect-source");
     }
   }, [connectSourceNodeId]);
+
+  // Queue restored view state (positions + camera) to be applied after the next layout finishes.
+  useEffect(() => {
+    if (!restoredPositions && !restoredCamera) return;
+    if (restoredPositions) pendingPositionsRef.current = restoredPositions;
+    if (restoredCamera) pendingCameraRef.current = restoredCamera;
+    // If the graph is already initialized and no layout is in progress, apply immediately;
+    // otherwise the pending state will be picked up by the layout completion callback.
+    const cy = cyRef.current;
+    if (cy && !cy.animated()) {
+      applyPendingViewState(cy);
+    }
+  }, [restoredPositions, restoredCamera]);
 
   // Highlight single node
   useEffect(() => {

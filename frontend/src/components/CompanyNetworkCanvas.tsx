@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from "react";
 import cytoscape from "cytoscape";
 import dagre from "cytoscape-dagre";
 import { CompanyNetworkNode, CompanyNetworkEdge } from "@/types";
@@ -6,6 +6,7 @@ import { CompanyNetworkNode, CompanyNetworkEdge } from "@/types";
 cytoscape.use(dagre);
 
 interface CompanyNetworkCanvasProps {
+  restoredCamera?: { pan: { x: number; y: number }; zoom: number };
   nodes: CompanyNetworkNode[];
   edges: CompanyNetworkEdge[];
   onNodeClick?: (company: CompanyNetworkNode) => void;
@@ -116,7 +117,14 @@ function computeManualLayout(
   return positions;
 }
 
-export function CompanyNetworkCanvas({
+export interface CompanyNetworkCanvasRef {
+  getCamera: () => { pan: { x: number; y: number }; zoom: number } | null;
+  setCamera: (camera: { pan: { x: number; y: number }; zoom: number }) => void;
+  getNodePositions: () => Record<string, { x: number; y: number }>;
+  setNodePositions: (positions: Record<string, { x: number; y: number }>) => void;
+}
+
+export const CompanyNetworkCanvas = forwardRef<CompanyNetworkCanvasRef, CompanyNetworkCanvasProps>(function CompanyNetworkCanvas({
   nodes,
   edges,
   onNodeClick,
@@ -125,13 +133,67 @@ export function CompanyNetworkCanvas({
   highlightCompanyId,
   dimUnrelated,
   previewNodeIds,
-}: CompanyNetworkCanvasProps) {
+  restoredCamera,
+}, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
   const onNodeClickRef = useRef(onNodeClick);
   const onNodeDblClickRef = useRef(onNodeDblClick);
   const onEdgeClickRef = useRef(onEdgeClick);
   const highlightRef = useRef(highlightCompanyId);
+  const pendingPositionsRef = useRef<Record<string, { x: number; y: number }> | null>(null);
+  const pendingCameraRef = useRef<{ pan: { x: number; y: number }; zoom: number } | null>(null);
+
+  const applyPendingViewState = useCallback((cy: cytoscape.Core) => {
+    const positions = pendingPositionsRef.current;
+    const camera = pendingCameraRef.current;
+
+    if (positions && Object.keys(positions).length > 0) {
+      cy.batch(() => {
+        cy.nodes().forEach((n) => {
+          const pos = positions[n.id()];
+          if (pos) n.position(pos);
+        });
+      });
+    }
+
+    if (camera) {
+      cy.animate({ pan: camera.pan, zoom: camera.zoom }, { duration: 0 });
+    }
+
+    pendingPositionsRef.current = null;
+    pendingCameraRef.current = null;
+  }, []);
+
+  useImperativeHandle(ref, () => ({
+    getCamera: () => {
+      const cy = cyRef.current;
+      if (!cy) return null;
+      return { pan: cy.pan(), zoom: cy.zoom() };
+    },
+    setCamera: (camera) => {
+      const cy = cyRef.current;
+      if (cy) {
+        cy.animate({ pan: camera.pan, zoom: camera.zoom }, { duration: 0 });
+      } else {
+        pendingCameraRef.current = camera;
+      }
+    },
+    getNodePositions: () => {
+      const cy = cyRef.current;
+      if (!cy) return {};
+      const positions: Record<string, { x: number; y: number }> = {};
+      cy.nodes().forEach((n) => {
+        positions[n.id()] = { ...n.position() };
+      });
+      return positions;
+    },
+    setNodePositions: (positions) => {
+      const cy = cyRef.current;
+      pendingPositionsRef.current = positions;
+      if (cy) applyPendingViewState(cy);
+    },
+  }));
 
   useEffect(() => {
     onNodeClickRef.current = onNodeClick;
@@ -430,7 +492,18 @@ export function CompanyNetworkCanvas({
         animationEasing: "ease-out",
       } as cytoscape.LayoutOptions).run();
     }
+
+    // Apply any queued view state after layout animations have had a chance to start/finish.
+    setTimeout(() => applyPendingViewState(cy), 450);
   }, [nodes, edges]);
+
+  // Apply restored camera when provided.
+  useEffect(() => {
+    if (!restoredCamera) return;
+    const cy = cyRef.current;
+    pendingCameraRef.current = restoredCamera;
+    if (cy) applyPendingViewState(cy);
+  }, [restoredCamera]);
 
   // 高亮控制
   useEffect(() => {
@@ -502,4 +575,4 @@ export function CompanyNetworkCanvas({
   }
 
   return <div ref={containerRef} className="h-full w-full bg-slate-950" />;
-}
+});

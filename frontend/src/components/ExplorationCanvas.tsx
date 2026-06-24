@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from "react";
 import cytoscape from "cytoscape";
 // dagre is already registered by CompanyNetworkCanvas
 
@@ -23,6 +23,7 @@ export interface ExplorationEdge {
 }
 
 interface ExplorationCanvasProps {
+  restoredCamera?: { pan: { x: number; y: number }; zoom: number };
   nodes: ExplorationNode[];
   edges: ExplorationEdge[];
   onNodeClick?: (node: ExplorationNode) => void;
@@ -42,18 +43,79 @@ function edgeKey(e: ExplorationEdge) {
   return `${e.source}→${e.target}`;
 }
 
-export function ExplorationCanvas({
+export interface ExplorationCanvasRef {
+  getCamera: () => { pan: { x: number; y: number }; zoom: number } | null;
+  setCamera: (camera: { pan: { x: number; y: number }; zoom: number }) => void;
+  getNodePositions: () => Record<string, { x: number; y: number }>;
+  setNodePositions: (positions: Record<string, { x: number; y: number }>) => void;
+}
+
+export const ExplorationCanvas = forwardRef<ExplorationCanvasRef, ExplorationCanvasProps>(function ExplorationCanvas({
   nodes,
   edges,
   onNodeClick,
   onEdgeClick,
   highlightNodeId,
-}: ExplorationCanvasProps) {
+  restoredCamera,
+}, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
   const onNodeClickRef = useRef(onNodeClick);
   const onEdgeClickRef = useRef(onEdgeClick);
   const highlightRef = useRef(highlightNodeId);
+  const pendingPositionsRef = useRef<Record<string, { x: number; y: number }> | null>(null);
+  const pendingCameraRef = useRef<{ pan: { x: number; y: number }; zoom: number } | null>(null);
+
+  const applyPendingViewState = useCallback((cy: cytoscape.Core) => {
+    const positions = pendingPositionsRef.current;
+    const camera = pendingCameraRef.current;
+
+    if (positions && Object.keys(positions).length > 0) {
+      cy.batch(() => {
+        cy.nodes().forEach((n) => {
+          const pos = positions[n.id()];
+          if (pos) n.position(pos);
+        });
+      });
+    }
+
+    if (camera) {
+      cy.animate({ pan: camera.pan, zoom: camera.zoom }, { duration: 0 });
+    }
+
+    pendingPositionsRef.current = null;
+    pendingCameraRef.current = null;
+  }, []);
+
+  useImperativeHandle(ref, () => ({
+    getCamera: () => {
+      const cy = cyRef.current;
+      if (!cy) return null;
+      return { pan: cy.pan(), zoom: cy.zoom() };
+    },
+    setCamera: (camera) => {
+      const cy = cyRef.current;
+      if (cy) {
+        cy.animate({ pan: camera.pan, zoom: camera.zoom }, { duration: 0 });
+      } else {
+        pendingCameraRef.current = camera;
+      }
+    },
+    getNodePositions: () => {
+      const cy = cyRef.current;
+      if (!cy) return {};
+      const positions: Record<string, { x: number; y: number }> = {};
+      cy.nodes().forEach((n) => {
+        positions[n.id()] = { ...n.position() };
+      });
+      return positions;
+    },
+    setNodePositions: (positions) => {
+      const cy = cyRef.current;
+      pendingPositionsRef.current = positions;
+      if (cy) applyPendingViewState(cy);
+    },
+  }));
 
   useEffect(() => {
     onNodeClickRef.current = onNodeClick;
@@ -303,7 +365,17 @@ export function ExplorationCanvas({
         target.addClass("highlighted");
       }
     }
+
+    setTimeout(() => applyPendingViewState(cy), 450);
   }, [nodes, edges]);
+
+  // Apply restored camera when provided.
+  useEffect(() => {
+    if (!restoredCamera) return;
+    const cy = cyRef.current;
+    pendingCameraRef.current = restoredCamera;
+    if (cy) applyPendingViewState(cy);
+  }, [restoredCamera]);
 
   // Highlight effect
   useEffect(() => {
@@ -329,4 +401,4 @@ export function ExplorationCanvas({
         )}
       </div>
     );
-}
+});
