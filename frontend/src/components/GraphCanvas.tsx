@@ -17,11 +17,18 @@ cytoscape.use(dagre);
  * 1. 先用 Dagre 对产业流（industrial_flow）做自上而下分层布局；
  * 2. 再对 ontology/is_a 关系做“环绕”修正，把子节点以同心圆方式排在父节点周围。
  */
-function layoutExpandedCompound(cy: cytoscape.Core, parentId: string) {
+function layoutExpandedCompound(
+  cy: cytoscape.Core,
+  parentId: string,
+  dragPositions?: Map<string, cytoscape.Position>
+) {
   const parent = cy.getElementById(parentId);
   if (parent.length === 0) return;
-  const center = parent.position();
+  const dragPos = dragPositions?.get(parentId);
+  const center = dragPos ? { ...dragPos } : { ...parent.position() };
   const children = parent.children();
+  // eslint-disable-next-line no-console
+  console.log("[layoutExpandedCompound] parentId:", parentId, "dragPos:", dragPos, "center:", center, "children:", children.length);
   const count = children.length;
   if (count === 0) return;
   const radius = Math.max(160, count * 38);
@@ -33,12 +40,17 @@ function layoutExpandedCompound(cy: cytoscape.Core, parentId: string) {
       y: center.y + radius * Math.sin(angle),
     });
   });
+  // 把父节点固定到布局中心，防止 Cytoscape 自动把它拉到子节点旧位置
+  parent.position(center);
+  // eslint-disable-next-line no-console
+  console.log("[layoutExpandedCompound] set parent position to:", center, "after:", parent.position());
 }
 
 function runHybridLayout(
   cy: cytoscape.Core,
   fit = true,
-  expandedProcessParents: string[] = []
+  expandedProcessParents: string[] = [],
+  dragPositions?: Map<string, cytoscape.Position>
 ) {
   // 如果存在 compound parent（part_of 展开），用简单的径向布局把子工艺排在父节点周围
   // 不依赖 :parent 选择器（隐藏子节点时可能无法命中），直接用 expandedProcessParents 选择父节点
@@ -51,7 +63,7 @@ function runHybridLayout(
         )
       : cy.nodes(":parent");
   if (expandedParents.length > 0) {
-    expandedParents.forEach((parent) => layoutExpandedCompound(cy, parent.id()));
+    expandedParents.forEach((parent) => layoutExpandedCompound(cy, parent.id(), dragPositions));
     if (fit) {
       // 只 fit 到父节点及其子节点，不要把整个邻域拉进来导致缩放过小
       const fitCollection = expandedParents.union(expandedParents.descendants());
@@ -319,7 +331,8 @@ function applyFilters(
 
 function syncCompoundParents(
   cy: cytoscape.Core,
-  expandedProcessParents: string[]
+  expandedProcessParents: string[],
+  dragPositions?: Map<string, cytoscape.Position>
 ) {
   const expandedSet = new Set(expandedProcessParents);
   const childToParent = new Map<string, string>();
@@ -331,6 +344,19 @@ function syncCompoundParents(
   const parentIds = new Set(childToParent.values());
   // eslint-disable-next-line no-console
   console.log("[syncCompoundParents] part_of edges:", childToParent.size, "expanded:", expandedProcessParents);
+
+  // 记录已展开父节点的当前位置，避免 move 子节点后父节点被 Cytoscape 拉回子节点旧位置
+  // 优先使用拖拽时记录的渲染位置转换后的模型位置，因为 Cytoscape 对空 compound parent 的 position() 可能不更新
+  const savedPositions = new Map<string, cytoscape.Position>();
+  expandedProcessParents.forEach((parentId) => {
+    const parent = cy.getElementById(parentId);
+    if (parent.length === 0) return;
+    const dragPos = dragPositions?.get(parentId);
+    const chosen = dragPos ? { ...dragPos } : { ...parent.position() };
+    savedPositions.set(parentId, chosen);
+    // eslint-disable-next-line no-console
+    console.log("[syncCompoundParents] parentId:", parentId, "dragPos:", dragPos, "parent.position():", parent.position(), "chosen:", chosen);
+  });
 
   cy.batch(() => {
     cy.nodes().forEach((node) => {
@@ -352,6 +378,18 @@ function syncCompoundParents(
           parent.removeClass("compound-parent");
         }
       }
+    });
+
+    // 恢复父节点位置，确保用户拖拽后的位置不变
+    savedPositions.forEach((pos, parentId) => {
+      cy.getElementById(parentId).position(pos);
+      // eslint-disable-next-line no-console
+      console.log("[syncCompoundParents] restored parentId:", parentId, "to:", pos, "after position():", cy.getElementById(parentId).position());
+    });
+
+    // 立刻用保存的位置对子节点做径向布局，避免 Cytoscape 在 batch 后把父节点拉回子节点旧位置
+    savedPositions.forEach((_, parentId) => {
+      layoutExpandedCompound(cy, parentId, savedPositions);
     });
 
     // 给所有拥有 part_of 子工艺的父节点打上“可展开”标记（即使当前收起）
@@ -405,6 +443,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   const connectSourceNodeIdRef = useRef(connectSourceNodeId);
   const expandedProcessParentsRef = useRef(expandedProcessParents);
   const onToggleProcessExpansionRef = useRef(onToggleProcessExpansion);
+  const processGroupDragPositionsRef = useRef<Map<string, cytoscape.Position>>(new Map());
 
   useEffect(() => {
     onNodeClickRef.current = onNodeClick;
@@ -917,6 +956,21 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
           }
         });
 
+        // 记录 process-group 节点被拖拽后的实际渲染位置，因为空 compound parent 的 position() 可能不更新
+        cy.on("dragfree", "node.process-group", (evt) => {
+          const node = evt.target;
+          const rendered = node.renderedPosition();
+          const pan = cy.pan();
+          const zoom = cy.zoom();
+          const modelPos = {
+            x: (rendered.x - pan.x) / zoom,
+            y: (rendered.y - pan.y) / zoom,
+          };
+          processGroupDragPositionsRef.current.set(node.id(), modelPos);
+          // eslint-disable-next-line no-console
+          console.log("[dragfree] node:", node.id(), "rendered:", rendered, "pan:", pan, "zoom:", zoom, "modelPos:", modelPos);
+        });
+
         // ==========================================
         // 4. 节点双击事件：展开、完全固化与重排
         // ==========================================
@@ -930,6 +984,17 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
               .edges('[edge_namespace = "ontology"][edge_type = "part_of"]')
               .filter((edge) => edge.target().id() === nodeId).length > 0;
           if (hasPartOfChildren) {
+            // 双击展开/收起前，记录当前实际渲染位置；空 compound parent 的 position() 不可信
+            const rendered = node.renderedPosition();
+            const pan = cy.pan();
+            const zoom = cy.zoom();
+            const modelPos = {
+              x: (rendered.x - pan.x) / zoom,
+              y: (rendered.y - pan.y) / zoom,
+            };
+            processGroupDragPositionsRef.current.set(nodeId, modelPos);
+            // eslint-disable-next-line no-console
+            console.log("[dbltap expand] nodeId:", nodeId, "rendered:", rendered, "pan:", pan, "zoom:", zoom, "modelPos:", modelPos, "current position():", node.position());
             onToggleProcessExpansionRef.current?.(nodeId);
             return;
           }
@@ -986,7 +1051,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
             // 【设计理由: 重整骨架】
             // 双击代表一次完整的子图合并操作，此时重新应用过滤器，并触发 dagre 全局重排，
             // 把之前由于“顺藤摸瓜”可能拉扯乱的局部拓扑结构重新梳理平整。
-            syncCompoundParents(cy, expandedProcessParentsRef.current);
+            syncCompoundParents(cy, expandedProcessParentsRef.current, processGroupDragPositionsRef.current);
             applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current);
             runHybridLayout(cy, false);
 
@@ -1017,7 +1082,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
 
         cyRef.current = cy;
         // 初始标记所有可展开工艺组，并应用过滤器隐藏 part_of 子节点
-        syncCompoundParents(cy, expandedProcessParentsRef.current);
+        syncCompoundParents(cy, expandedProcessParentsRef.current, processGroupDragPositionsRef.current);
         applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current);
         // 使用混合布局：产业流自上而下，is_a 关系环绕父节点
         runHybridLayout(cy, true);
@@ -1052,15 +1117,17 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   useEffect(() => {
     // eslint-disable-next-line no-console
     console.log("[GraphCanvas] expandedProcessParents changed:", expandedProcessParents);
+    // eslint-disable-next-line no-console
+    console.log("[GraphCanvas] dragPositions:", Object.fromEntries(processGroupDragPositionsRef.current.entries()));
     const cy = cyRef.current;
     if (!cy) return;
-    syncCompoundParents(cy, expandedProcessParents);
+    syncCompoundParents(cy, expandedProcessParents, processGroupDragPositionsRef.current);
     applyFilters(cy, filtersRef.current, expandedProcessParents);
     // 收起时（expandedProcessParents 为空）不再触发全局重排，避免视图乱跳；
-    // 展开时再做局部径向布局并平滑动画 fit 到复合节点。
+    // 展开时只做局部径向布局，不 fit，保证 group 原地展开。
     if (expandedProcessParents.length > 0) {
       requestAnimationFrame(() => {
-        runHybridLayout(cy, true, expandedProcessParents);
+        runHybridLayout(cy, false, expandedProcessParents, processGroupDragPositionsRef.current);
       });
     }
   }, [expandedProcessParents]);
