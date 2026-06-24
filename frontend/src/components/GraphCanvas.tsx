@@ -784,6 +784,142 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   useEffect(() => {
     let mounted = true;
     let keyHandler: ((e: KeyboardEvent) => void) | undefined;
+    let cleanupPanHandlers: (() => void) | null = null;
+
+    function setupPanHandlers(cy: cytoscape.Core, containerEl: HTMLElement) {
+      const isInputTarget = (target: EventTarget | null) => {
+        if (!(target instanceof HTMLElement)) return false;
+        return (
+          target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable
+        );
+      };
+
+      // 统一在此处控制平移方向和幅度；1 表示内容跟随鼠标移动，-1 表示视口跟随鼠标移动
+      const PAN_DIRECTION = 1;
+      const PAN_SENSITIVITY = 1.0;
+
+      let panModifierDown = false;
+      let middlePanActive = false;
+      let modifierPanActive = false;
+      let lastPointer: { x: number; y: number } | null = null;
+
+      const updatePanModifier = (down: boolean) => {
+        if (down === panModifierDown) return;
+        panModifierDown = down;
+        if (down) {
+          cy.autoungrabify(true);
+          cy.boxSelectionEnabled(false);
+          containerEl.classList.add("canvas-pan-modifier");
+        } else {
+          cy.autoungrabify(false);
+          cy.boxSelectionEnabled(true);
+          containerEl.classList.remove("canvas-pan-modifier");
+        }
+      };
+
+      const startPan = (e: PointerEvent) => {
+        lastPointer = { x: e.clientX, y: e.clientY };
+        try {
+          containerEl.setPointerCapture(e.pointerId);
+        } catch {
+          // ignore
+        }
+      };
+
+      const doPan = (e: PointerEvent) => {
+        if (!lastPointer) return;
+        e.preventDefault();
+        const dx = e.clientX - lastPointer.x;
+        const dy = e.clientY - lastPointer.y;
+        const panX = dx * PAN_DIRECTION * PAN_SENSITIVITY;
+        const panY = dy * PAN_DIRECTION * PAN_SENSITIVITY;
+        cy.panBy({ x: panX, y: panY });
+        lastPointer = { x: e.clientX, y: e.clientY };
+      };
+
+      const endPan = (e: PointerEvent) => {
+        lastPointer = null;
+        try {
+          containerEl.releasePointerCapture(e.pointerId);
+        } catch {
+          // ignore
+        }
+      };
+
+      const handlePanKeyDown = (e: KeyboardEvent) => {
+        if (isInputTarget(e.target)) return;
+        if (e.ctrlKey || e.metaKey) updatePanModifier(true);
+      };
+      const handlePanKeyUp = (e: KeyboardEvent) => {
+        if (!(e.ctrlKey || e.metaKey) && !modifierPanActive) updatePanModifier(false);
+      };
+      const handleWindowBlur = () => {
+        modifierPanActive = false;
+        middlePanActive = false;
+        updatePanModifier(false);
+        containerEl.classList.remove("canvas-middle-panning");
+      };
+
+      const handlePointerDown = (e: PointerEvent) => {
+        if (e.button === 1) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          middlePanActive = true;
+          containerEl.classList.add("canvas-middle-panning");
+          startPan(e);
+          return;
+        }
+        if (e.button === 0 && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          modifierPanActive = true;
+          updatePanModifier(true);
+          startPan(e);
+          return;
+        }
+      };
+      const handlePointerMove = (e: PointerEvent) => {
+        if (!lastPointer) return;
+        if (!middlePanActive && !modifierPanActive) return;
+        doPan(e);
+      };
+      const handlePointerUp = (e: PointerEvent) => {
+        if (middlePanActive) {
+          middlePanActive = false;
+          containerEl.classList.remove("canvas-middle-panning");
+          endPan(e);
+        }
+        if (modifierPanActive) {
+          modifierPanActive = false;
+          endPan(e);
+          if (!(e.ctrlKey || e.metaKey)) {
+            updatePanModifier(false);
+          }
+        }
+      };
+
+      window.addEventListener("keydown", handlePanKeyDown);
+      window.addEventListener("keyup", handlePanKeyUp);
+      window.addEventListener("blur", handleWindowBlur);
+      containerEl.addEventListener("pointerdown", handlePointerDown, true);
+      containerEl.addEventListener("pointermove", handlePointerMove);
+      containerEl.addEventListener("pointerup", handlePointerUp);
+      containerEl.addEventListener("pointercancel", handlePointerUp);
+
+      return () => {
+        window.removeEventListener("keydown", handlePanKeyDown);
+        window.removeEventListener("keyup", handlePanKeyUp);
+        window.removeEventListener("blur", handleWindowBlur);
+        containerEl.removeEventListener("pointerdown", handlePointerDown, true);
+        containerEl.removeEventListener("pointermove", handlePointerMove);
+        containerEl.removeEventListener("pointerup", handlePointerUp);
+        containerEl.removeEventListener("pointercancel", handlePointerUp);
+        containerEl.classList.remove("canvas-pan-modifier", "canvas-middle-panning");
+      };
+    }
+
     async function init() {
       try {
         setLoading(true);
@@ -1310,6 +1446,11 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         // 使用混合布局：产业流自上而下，is_a 关系环绕父节点
         runHybridLayout(cy, true, expandedProcessParentsRef.current, processGroupDragPositionsRef.current, () => applyPendingViewState(cy));
         setLoading(false);
+
+        // Cytoscape 准备就绪后再注册画布拖拽处理器，避免初始异步加载时注册失败
+        if (containerRef.current) {
+          cleanupPanHandlers = setupPanHandlers(cy, containerRef.current);
+        }
       } catch (err) {
         if (mounted) {
           setError(err instanceof Error ? err.message : "加载失败");
@@ -1319,110 +1460,10 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     }
     init();
 
-    // ==========================================
-    // 5. 独占式画布拖拽：Ctrl/Cmd 或鼠标中键
-    // ==========================================
-    let handlePanKeyDown: (e: KeyboardEvent) => void = () => {};
-    let handlePanKeyUp: (e: KeyboardEvent) => void = () => {};
-    let handleWindowBlur: () => void = () => {};
-    let handlePointerDown: (e: PointerEvent) => void = () => {};
-    let handlePointerMove: (e: PointerEvent) => void = () => {};
-    let handlePointerUp: (e: PointerEvent) => void = () => {};
-
-    const cy = cyRef.current;
-    const containerEl = containerRef.current;
-    if (cy && containerEl) {
-      const isInputTarget = (target: EventTarget | null) => {
-        if (!(target instanceof HTMLElement)) return false;
-        return (
-          target.tagName === "INPUT" ||
-          target.tagName === "TEXTAREA" ||
-          target.isContentEditable
-        );
-      };
-
-      let panModifierDown = false;
-      let middlePanActive = false;
-      let lastPointer: { x: number; y: number } | null = null;
-
-      const updatePanModifier = (down: boolean) => {
-        if (down === panModifierDown) return;
-        panModifierDown = down;
-        if (down) {
-          cy.autoungrabify(true);
-          cy.boxSelectionEnabled(false);
-          containerEl.classList.add("canvas-pan-modifier");
-        } else {
-          cy.autoungrabify(false);
-          cy.boxSelectionEnabled(true);
-          containerEl.classList.remove("canvas-pan-modifier");
-        }
-      };
-
-      handlePanKeyDown = (e: KeyboardEvent) => {
-        if (isInputTarget(e.target)) return;
-        if (e.ctrlKey || e.metaKey) updatePanModifier(true);
-      };
-      handlePanKeyUp = (e: KeyboardEvent) => {
-        if (!(e.ctrlKey || e.metaKey)) updatePanModifier(false);
-      };
-      handleWindowBlur = () => updatePanModifier(false);
-
-      handlePointerDown = (e: PointerEvent) => {
-        if (e.button !== 1) return;
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        middlePanActive = true;
-        lastPointer = { x: e.clientX, y: e.clientY };
-        containerEl.classList.add("canvas-middle-panning");
-        try {
-          containerEl.setPointerCapture(e.pointerId);
-        } catch {
-          // ignore
-        }
-      };
-      handlePointerMove = (e: PointerEvent) => {
-        if (!middlePanActive || !lastPointer) return;
-        e.preventDefault();
-        const dx = e.clientX - lastPointer.x;
-        const dy = e.clientY - lastPointer.y;
-        cy.panBy({ x: dx, y: dy });
-        lastPointer = { x: e.clientX, y: e.clientY };
-      };
-      handlePointerUp = (e: PointerEvent) => {
-        if (!middlePanActive) return;
-        middlePanActive = false;
-        lastPointer = null;
-        containerEl.classList.remove("canvas-middle-panning");
-        try {
-          containerEl.releasePointerCapture(e.pointerId);
-        } catch {
-          // ignore
-        }
-      };
-
-      window.addEventListener("keydown", handlePanKeyDown);
-      window.addEventListener("keyup", handlePanKeyUp);
-      window.addEventListener("blur", handleWindowBlur);
-      containerEl.addEventListener("pointerdown", handlePointerDown);
-      containerEl.addEventListener("pointermove", handlePointerMove);
-      containerEl.addEventListener("pointerup", handlePointerUp);
-      containerEl.addEventListener("pointercancel", handlePointerUp);
-    }
-
     return () => {
       mounted = false;
       if (keyHandler) window.removeEventListener("keydown", keyHandler);
-      window.removeEventListener("keydown", handlePanKeyDown);
-      window.removeEventListener("keyup", handlePanKeyUp);
-      window.removeEventListener("blur", handleWindowBlur);
-      if (containerEl) {
-        containerEl.removeEventListener("pointerdown", handlePointerDown);
-        containerEl.removeEventListener("pointermove", handlePointerMove);
-        containerEl.removeEventListener("pointerup", handlePointerUp);
-        containerEl.removeEventListener("pointercancel", handlePointerUp);
-        containerEl.classList.remove("canvas-pan-modifier", "canvas-middle-panning");
-      }
+      cleanupPanHandlers?.();
       if (cyRef.current) {
         cyRef.current.autoungrabify(false);
         cyRef.current.destroy();
