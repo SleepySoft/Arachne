@@ -161,6 +161,8 @@ export interface GraphCanvasRef {
   addEdge: (edge: GraphEdge) => void;
   removeEdge: (edgeId: string) => void;
   removeNode: (nodeId: string) => void;
+  updateNode: (node: IndustrialNode) => void;
+  updateEdge: (edge: GraphEdge) => void;
   getCamera: () => { pan: { x: number; y: number }; zoom: number } | null;
   setCamera: (camera: { pan: { x: number; y: number }; zoom: number }) => void;
   getNodePositions: () => Record<string, { x: number; y: number }>;
@@ -617,6 +619,35 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
       if (!cy) return;
       const el = cy.getElementById(nodeId);
       if (el.length > 0) cy.remove(el);
+      applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current);
+    },
+    updateNode: (node) => {
+      const cy = cyRef.current;
+      if (!cy) return;
+      const el = cy.getElementById(node.node_id);
+      if (el.length === 0) return;
+      el.data({
+        label: node.canonical_name_zh,
+        entity_type: node.entity_type,
+        status: node.status,
+        confidence: node.confidence,
+        raw: node,
+      });
+      applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current);
+    },
+    updateEdge: (edge) => {
+      const cy = cyRef.current;
+      if (!cy) return;
+      const el = cy.getElementById(edge.edge_id);
+      if (el.length === 0) return;
+      el.data({
+        source: edge.from_node,
+        target: edge.to_node,
+        edge_namespace: edge.edge_namespace,
+        edge_type: edge.edge_type,
+        label: edge.edge_type_label || edge.edge_type,
+        raw: edge,
+      });
       applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current);
     },
     getCamera: () => {

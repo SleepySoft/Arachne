@@ -273,6 +273,12 @@ backend/
 - `test_industry_storage.py`: removed stale `IndustryCreate` import
 - `StatsBar.tsx` / `App.tsx`: fixed pre-existing TypeScript errors that blocked the production build (dead `MainView` type, unused setters)
 
+### Commit 14 — 节点/关系增删改保持视图不变
+- `frontend/src/components/GraphCanvas.tsx`: 新增 `updateNode(node)` / `updateEdge(edge)` ref 方法，就地更新 Cytoscape 元素数据而不触发重新布局
+- `frontend/src/App.tsx`: 新增 `onNodeUpdated`、`onNodeDeleted`、`onEdgeCreated`、`onEdgeUpdated`、`onEdgeDeleted` 回调，直接操作 `GraphCanvasRef` 增删改元素，不再调用 `refreshGraph()`
+- `frontend/src/components/panels/RightPanel.tsx` / `NodeDetail.tsx` / `NodeAssociations.tsx` / `NodeEdgeList.tsx` / `EdgeDetail.tsx`: 把节点/关系变更事件透传到 canvas，删除关系后仅移除对应边，删除节点后仅移除对应节点，编辑/创建后仅更新/新增元素
+- 修复了删除一条边导致整个画布重新布局、当前视角和节点位置全部丢失的问题
+
 ### Commit 13 — 节点拉近 (Edge Pull)
 - `frontend/src/components/EdgeContextMenu.tsx`: added "拉近节点" menu item (only shown when an `onPull` handler is provided)
 - `frontend/src/components/GraphCanvas.tsx`: exposed `pullEdgeEndpointsIntoView(edgeId)` via ref; moves off-screen endpoint(s) of the selected edge into the current viewport while keeping the camera and other node positions unchanged

@@ -17,6 +17,9 @@ import {
   Industry,
   PanelType,
 } from "@/types";
+
+export type OnNodeDeleted = (nodeId: string) => void;
+export type OnEdgeDeleted = (edgeId: string) => void;
 import { PanelState } from "@/hooks/usePanelStack";
 
 interface RightPanelProps {
@@ -29,6 +32,11 @@ interface RightPanelProps {
   contextMenuNode: IndustrialNode | null;
   refreshGraph: () => void;
   onNodeCreated?: (node: IndustrialNode, position?: { x: number; y: number }) => void;
+  onNodeUpdated?: (node: IndustrialNode) => void;
+  onNodeDeleted?: OnNodeDeleted;
+  onEdgeCreated?: (edge: GraphEdge) => void;
+  onEdgeUpdated?: (edge: GraphEdge) => void;
+  onEdgeDeleted?: OnEdgeDeleted;
   pendingNodePosition?: { x: number; y: number } | null;
   edgePrefillData?: {
     from_node?: string;
@@ -67,6 +75,11 @@ export function RightPanel({
   contextMenuNode,
   refreshGraph,
   onNodeCreated,
+  onNodeUpdated,
+  onNodeDeleted,
+  onEdgeCreated,
+  onEdgeUpdated,
+  onEdgeDeleted,
   pendingNodePosition,
   edgePrefillData,
   clearPendingEdgePrefill,
@@ -94,7 +107,10 @@ export function RightPanel({
         node={selectedNode}
         onEdit={() => onPushPanel({ panel: "node-edit", selectedNode })}
         onClose={onBackPanel}
-        onRefresh={refreshGraph}
+        onNodeDeleted={onNodeDeleted}
+        onEdgeCreated={onEdgeCreated}
+        onEdgeUpdated={onEdgeUpdated}
+        onEdgeDeleted={onEdgeDeleted}
         onSelectNode={onSelectNode}
         onSelectCompany={onSelectCompany}
         onSelectIndustry={onSelectIndustry}
@@ -110,7 +126,7 @@ export function RightPanel({
         edge={selectedEdge}
         onEdit={() => onPushPanel({ panel: "edge-edit", selectedEdge })}
         onClose={onBackPanel}
-        onRefresh={refreshGraph}
+        onEdgeDeleted={onEdgeDeleted}
       />
     );
   }
@@ -123,11 +139,7 @@ export function RightPanel({
         onSuccess={(node) => {
           setSelectedNode(node);
           setPanel("node-detail");
-          if (pendingNodePosition) {
-            onNodeCreated?.(node, pendingNodePosition);
-          } else {
-            refreshGraph();
-          }
+          onNodeCreated?.(node, pendingNodePosition ?? undefined);
         }}
       />
     );
@@ -142,7 +154,7 @@ export function RightPanel({
         onSuccess={(node) => {
           setSelectedNode(node);
           setPanel("node-detail");
-          refreshGraph();
+          onNodeUpdated?.(node);
         }}
       />
     );
@@ -161,7 +173,7 @@ export function RightPanel({
           setSelectedEdge(edge);
           setPanel("edge-detail");
           clearPendingEdgePrefill?.();
-          refreshGraph();
+          onEdgeCreated?.(edge);
         }}
       />
     );
@@ -176,7 +188,7 @@ export function RightPanel({
         onSuccess={(edge) => {
           setSelectedEdge(edge);
           setPanel("edge-detail");
-          refreshGraph();
+          onEdgeUpdated?.(edge);
         }}
       />
     );

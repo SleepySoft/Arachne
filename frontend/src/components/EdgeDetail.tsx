@@ -30,10 +30,10 @@ interface EdgeDetailProps {
   edge: GraphEdge;
   onEdit: () => void;
   onClose: () => void;
-  onRefresh: () => void;
+  onEdgeDeleted?: (edgeId: string) => void;
 }
 
-export function EdgeDetail({ edge, onEdit, onClose, onRefresh }: EdgeDetailProps) {
+export function EdgeDetail({ edge, onEdit, onClose, onEdgeDeleted }: EdgeDetailProps) {
   const { data: fromNode } = useQuery({
     queryKey: ["node", edge.from_node],
     queryFn: () => getNode(edge.from_node),
@@ -55,7 +55,7 @@ export function EdgeDetail({ edge, onEdit, onClose, onRefresh }: EdgeDetailProps
   const deleteMutation = useMutation({
     mutationFn: () => deleteEdge(edge.edge_id),
     onSuccess: () => {
-      onRefresh();
+      onEdgeDeleted?.(edge.edge_id);
       onClose();
     },
   });

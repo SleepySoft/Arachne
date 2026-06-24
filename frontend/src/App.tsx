@@ -200,9 +200,28 @@ export default function App() {
         contextMenuNode={industrial.contextMenuNode}
         refreshGraph={industrial.refreshGraph}
         onNodeCreated={(node, position) => {
-          if (position) {
-            graphCanvasRef.current?.addNode(node, position);
-            industrial.setPendingNodePosition(null);
+          graphCanvasRef.current?.addNode(node, position);
+          industrial.setPendingNodePosition(null);
+        }}
+        onNodeUpdated={(node) => {
+          graphCanvasRef.current?.updateNode(node);
+        }}
+        onNodeDeleted={(nodeId) => {
+          graphCanvasRef.current?.removeNode(nodeId);
+          if (industrial.selectedNode?.node_id === nodeId) {
+            industrial.closePanel();
+          }
+        }}
+        onEdgeCreated={(edge) => {
+          graphCanvasRef.current?.addEdge(edge);
+        }}
+        onEdgeUpdated={(edge) => {
+          graphCanvasRef.current?.updateEdge(edge);
+        }}
+        onEdgeDeleted={(edgeId) => {
+          graphCanvasRef.current?.removeEdge(edgeId);
+          if (industrial.selectedEdge?.edge_id === edgeId) {
+            industrial.closePanel();
           }
         }}
         pendingNodePosition={industrial.pendingNodePosition}
@@ -577,7 +596,6 @@ export default function App() {
                   if (industrial.selectedEdge?.edge_id === edge.edge_id) {
                     industrial.closePanel();
                   }
-                  industrial.refreshGraph();
                 });
               }
               industrial.handleCloseEdgeMenu();

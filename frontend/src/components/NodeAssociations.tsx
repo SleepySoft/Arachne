@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, ChevronRight, Loader2, Building2, Factory, X } from "lucide-react";
-import { IndustrialNode, Company, Industry } from "@/types";
+import { IndustrialNode, Company, Industry, GraphEdge } from "@/types";
 import { deleteIndustryMapping, getCompaniesByNode, getIndustriesByNode } from "@/services/api";
 import { NodeEdgeList } from "./NodeEdgeList";
 
 interface NodeAssociationsProps {
   node: IndustrialNode;
-  onRefreshGraph: () => void;
+  onEdgeCreated?: (edge: GraphEdge) => void;
+  onEdgeUpdated?: (edge: GraphEdge) => void;
+  onEdgeDeleted?: (edgeId: string) => void;
   onSelectNode?: (node: IndustrialNode) => void;
   onSelectCompany?: (company: Company) => void;
   onSelectIndustry?: (industry: Industry) => void;
@@ -53,7 +55,9 @@ function CollapsibleSection({
 
 export function NodeAssociations({
   node,
-  onRefreshGraph,
+  onEdgeCreated,
+  onEdgeUpdated,
+  onEdgeDeleted,
   onSelectNode,
   onSelectCompany,
   onSelectIndustry,
@@ -105,7 +109,9 @@ export function NodeAssociations({
       >
         <NodeEdgeList
           nodeId={node.node_id}
-          onRefreshGraph={onRefreshGraph}
+          onEdgeCreated={onEdgeCreated}
+          onEdgeUpdated={onEdgeUpdated}
+          onEdgeDeleted={onEdgeDeleted}
           onSelectNode={onSelectNode}
         />
       </CollapsibleSection>

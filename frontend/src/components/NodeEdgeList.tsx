@@ -8,11 +8,19 @@ import { QuickEdgeForm } from "./QuickEdgeForm";
 
 interface NodeEdgeListProps {
   nodeId: string;
-  onRefreshGraph: () => void;
+  onEdgeCreated?: (edge: GraphEdge) => void;
+  onEdgeUpdated?: (edge: GraphEdge) => void;
+  onEdgeDeleted?: (edgeId: string) => void;
   onSelectNode?: (node: IndustrialNode) => void;
 }
 
-export function NodeEdgeList({ nodeId, onRefreshGraph, onSelectNode }: NodeEdgeListProps) {
+export function NodeEdgeList({
+  nodeId,
+  onEdgeCreated,
+  onEdgeUpdated,
+  onEdgeDeleted,
+  onSelectNode,
+}: NodeEdgeListProps) {
   const queryClient = useQueryClient();
   const [editingEdge, setEditingEdge] = useState<GraphEdge | null>(null);
   const [creatingDirection, setCreatingDirection] = useState<"outgoing" | "incoming" | null>(null);
@@ -50,25 +58,29 @@ export function NodeEdgeList({ nodeId, onRefreshGraph, onSelectNode }: NodeEdgeL
 
     const deleteMutation = useMutation({
       mutationFn: deleteEdge,
-      onSuccess: () => {
+      onSuccess: (_, edgeId) => {
         queryClient.invalidateQueries({ queryKey: ["edges-outgoing", nodeId] });
         queryClient.invalidateQueries({ queryKey: ["edges-incoming", nodeId] });
         queryClient.invalidateQueries({ queryKey: ["stats"] });
-        onRefreshGraph();
+        onEdgeDeleted?.(edgeId);
       },
     });
 
     const outgoingEdges = outgoingData?.items || [];
     const incomingEdges = incomingData?.items || [];
 
-    const handleSuccess = () => {
+    const handleSuccess = (edge: GraphEdge, mode: "create" | "update") => {
       queryClient.invalidateQueries({ queryKey: ["edges-outgoing", nodeId] });
       queryClient.invalidateQueries({ queryKey: ["edges-incoming", nodeId] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
       setEditingEdge(null);
       setCreatingDirection(null);
       setQuickDraft(null);
-      onRefreshGraph();
+      if (mode === "create") {
+        onEdgeCreated?.(edge);
+      } else {
+        onEdgeUpdated?.(edge);
+      }
     };
 
     const handleNodeClick = async (otherNodeId: string) => {
@@ -194,7 +206,7 @@ export function NodeEdgeList({ nodeId, onRefreshGraph, onSelectNode }: NodeEdgeL
           <QuickEdgeForm
             anchorNodeId={nodeId}
             direction={creatingDirection === "outgoing" ? "downstream" : "upstream"}
-            onSuccess={handleSuccess}
+            onSuccess={(edge) => handleSuccess(edge, "create")}
             onCancel={() => {
               setCreatingDirection(null);
               setQuickDraft(null);
@@ -237,7 +249,7 @@ export function NodeEdgeList({ nodeId, onRefreshGraph, onSelectNode }: NodeEdgeL
                 mode="edit"
                 edge={editingEdge}
                 onClose={() => setEditingEdge(null)}
-                onSuccess={handleSuccess}
+                onSuccess={(edge) => handleSuccess(edge, "update")}
               />
             </div>
           </div>
@@ -253,7 +265,7 @@ export function NodeEdgeList({ nodeId, onRefreshGraph, onSelectNode }: NodeEdgeL
                 defaultToNode={quickDraft.to_node}
                 prefillData={quickDraft}
                 onClose={() => setQuickDraft(null)}
-                onSuccess={handleSuccess}
+                onSuccess={(edge) => handleSuccess(edge, "create")}
               />
             </div>
           </div>

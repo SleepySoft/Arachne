@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Edit2, Layers, Trash2, X } from "lucide-react";
-import { IndustrialNode, Company, Industry } from "@/types";
+import { IndustrialNode, Company, Industry, GraphEdge } from "@/types";
 import { deleteNode, listEdges } from "@/services/api";
 import { NodeAssociations } from "./NodeAssociations";
 
@@ -8,7 +8,10 @@ interface NodeDetailProps {
   node: IndustrialNode;
   onEdit: () => void;
   onClose: () => void;
-  onRefresh: () => void;
+  onNodeDeleted?: (nodeId: string) => void;
+  onEdgeCreated?: (edge: GraphEdge) => void;
+  onEdgeUpdated?: (edge: GraphEdge) => void;
+  onEdgeDeleted?: (edgeId: string) => void;
   onSelectNode?: (node: IndustrialNode) => void;
   onSelectCompany?: (company: Company) => void;
   onSelectIndustry?: (industry: Industry) => void;
@@ -20,7 +23,10 @@ export function NodeDetail({
   node,
   onEdit,
   onClose,
-  onRefresh,
+  onNodeDeleted,
+  onEdgeCreated,
+  onEdgeUpdated,
+  onEdgeDeleted,
   onSelectNode,
   onSelectCompany,
   onSelectIndustry,
@@ -30,7 +36,7 @@ export function NodeDetail({
   const deleteMutation = useMutation({
     mutationFn: deleteNode,
     onSuccess: () => {
-      onRefresh();
+      onNodeDeleted?.(node.node_id);
       onClose();
     },
   });
@@ -162,7 +168,9 @@ export function NodeDetail({
         <div className="border-t border-slate-800 pt-3">
           <NodeAssociations
             node={node}
-            onRefreshGraph={onRefresh}
+            onEdgeCreated={onEdgeCreated}
+            onEdgeUpdated={onEdgeUpdated}
+            onEdgeDeleted={onEdgeDeleted}
             onSelectNode={onSelectNode}
             onSelectCompany={onSelectCompany}
             onSelectIndustry={onSelectIndustry}
