@@ -273,6 +273,12 @@ backend/
 - `test_industry_storage.py`: removed stale `IndustryCreate` import
 - `StatsBar.tsx` / `App.tsx`: fixed pre-existing TypeScript errors that blocked the production build (dead `MainView` type, unused setters)
 
+### Commit 15 — 独占式画布拖拽（Ctrl/Cmd / 鼠标中键）
+- `frontend/src/components/GraphCanvas.tsx`: 新增两种不依赖空白区域的画布拖拽方式
+  - 按住 `Ctrl` / `Cmd` 时，节点变为不可抓取，拖动任意位置均可平移画布
+  - 按住鼠标中键拖动，直接平移画布（阻止 Cytoscape 默认的节点抓取/选择）
+- `frontend/src/styles/index.css`: 增加 `.canvas-pan-modifier` / `.canvas-middle-panning` 光标样式（grab / grabbing）
+
 ### Commit 14 — 节点/关系增删改保持视图不变
 - `frontend/src/components/GraphCanvas.tsx`: 新增 `updateNode(node)` / `updateEdge(edge)` ref 方法，就地更新 Cytoscape 元素数据而不触发重新布局
 - `frontend/src/App.tsx`: 新增 `onNodeUpdated`、`onNodeDeleted`、`onEdgeCreated`、`onEdgeUpdated`、`onEdgeDeleted` 回调，直接操作 `GraphCanvasRef` 增删改元素，不再调用 `refreshGraph()`

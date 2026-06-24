@@ -1294,6 +1294,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         window.addEventListener("keydown", keyHandler);
 
         cyRef.current = cy;
+
         // 如果正在恢复已保存视图，把展开工艺组的父节点位置预置到拖拽记录中，
         // 这样 syncCompoundParents / layoutExpandedCompound 会以该位置为中心，
         // 而不是让 Cytoscape 根据子节点重新计算父节点位置。
@@ -1317,10 +1318,113 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
       }
     }
     init();
+
+    // ==========================================
+    // 5. 独占式画布拖拽：Ctrl/Cmd 或鼠标中键
+    // ==========================================
+    let handlePanKeyDown: (e: KeyboardEvent) => void = () => {};
+    let handlePanKeyUp: (e: KeyboardEvent) => void = () => {};
+    let handleWindowBlur: () => void = () => {};
+    let handlePointerDown: (e: PointerEvent) => void = () => {};
+    let handlePointerMove: (e: PointerEvent) => void = () => {};
+    let handlePointerUp: (e: PointerEvent) => void = () => {};
+
+    const cy = cyRef.current;
+    const containerEl = containerRef.current;
+    if (cy && containerEl) {
+      const isInputTarget = (target: EventTarget | null) => {
+        if (!(target instanceof HTMLElement)) return false;
+        return (
+          target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable
+        );
+      };
+
+      let panModifierDown = false;
+      let middlePanActive = false;
+      let lastPointer: { x: number; y: number } | null = null;
+
+      const updatePanModifier = (down: boolean) => {
+        if (down === panModifierDown) return;
+        panModifierDown = down;
+        if (down) {
+          cy.autoungrabify(true);
+          cy.boxSelectionEnabled(false);
+          containerEl.classList.add("canvas-pan-modifier");
+        } else {
+          cy.autoungrabify(false);
+          cy.boxSelectionEnabled(true);
+          containerEl.classList.remove("canvas-pan-modifier");
+        }
+      };
+
+      handlePanKeyDown = (e: KeyboardEvent) => {
+        if (isInputTarget(e.target)) return;
+        if (e.ctrlKey || e.metaKey) updatePanModifier(true);
+      };
+      handlePanKeyUp = (e: KeyboardEvent) => {
+        if (!(e.ctrlKey || e.metaKey)) updatePanModifier(false);
+      };
+      handleWindowBlur = () => updatePanModifier(false);
+
+      handlePointerDown = (e: PointerEvent) => {
+        if (e.button !== 1) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        middlePanActive = true;
+        lastPointer = { x: e.clientX, y: e.clientY };
+        containerEl.classList.add("canvas-middle-panning");
+        try {
+          containerEl.setPointerCapture(e.pointerId);
+        } catch {
+          // ignore
+        }
+      };
+      handlePointerMove = (e: PointerEvent) => {
+        if (!middlePanActive || !lastPointer) return;
+        e.preventDefault();
+        const dx = e.clientX - lastPointer.x;
+        const dy = e.clientY - lastPointer.y;
+        cy.panBy({ x: dx, y: dy });
+        lastPointer = { x: e.clientX, y: e.clientY };
+      };
+      handlePointerUp = (e: PointerEvent) => {
+        if (!middlePanActive) return;
+        middlePanActive = false;
+        lastPointer = null;
+        containerEl.classList.remove("canvas-middle-panning");
+        try {
+          containerEl.releasePointerCapture(e.pointerId);
+        } catch {
+          // ignore
+        }
+      };
+
+      window.addEventListener("keydown", handlePanKeyDown);
+      window.addEventListener("keyup", handlePanKeyUp);
+      window.addEventListener("blur", handleWindowBlur);
+      containerEl.addEventListener("pointerdown", handlePointerDown);
+      containerEl.addEventListener("pointermove", handlePointerMove);
+      containerEl.addEventListener("pointerup", handlePointerUp);
+      containerEl.addEventListener("pointercancel", handlePointerUp);
+    }
+
     return () => {
       mounted = false;
       if (keyHandler) window.removeEventListener("keydown", keyHandler);
+      window.removeEventListener("keydown", handlePanKeyDown);
+      window.removeEventListener("keyup", handlePanKeyUp);
+      window.removeEventListener("blur", handleWindowBlur);
+      if (containerEl) {
+        containerEl.removeEventListener("pointerdown", handlePointerDown);
+        containerEl.removeEventListener("pointermove", handlePointerMove);
+        containerEl.removeEventListener("pointerup", handlePointerUp);
+        containerEl.removeEventListener("pointercancel", handlePointerUp);
+        containerEl.classList.remove("canvas-pan-modifier", "canvas-middle-panning");
+      }
       if (cyRef.current) {
+        cyRef.current.autoungrabify(false);
         cyRef.current.destroy();
         cyRef.current = null;
       }

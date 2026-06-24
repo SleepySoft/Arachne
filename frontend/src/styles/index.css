@@ -30,6 +30,17 @@ body {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 
+/* Canvas pan cursors */
+.canvas-pan-modifier,
+.canvas-pan-modifier canvas {
+  cursor: grab !important;
+}
+
+.canvas-middle-panning,
+.canvas-middle-panning canvas {
+  cursor: grabbing !important;
+}
+
 /* Scrollbar style */
 ::-webkit-scrollbar {
   width: 6px;
