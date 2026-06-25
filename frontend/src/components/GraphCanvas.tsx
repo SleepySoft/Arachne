@@ -13,6 +13,57 @@ import { getNeighbors, getNode, listEdges, listNodes } from "@/services/api";
 cytoscape.use(dagre);
 
 /**
+ * =============================================================================
+ * 节点/边视觉状态层级说明
+ * =============================================================================
+ * 下面这套 class/state 优先级从高到低排列。Cytoscape 的样式是“后定义覆盖先
+ * 定义”，因此代码里按优先级升序书写，让高优先级样式出现在后面。
+ *
+ * 1. .hidden
+ *    触发：过滤器（entity/status/confidence/edge type）或工艺组折叠。
+ *    效果：display: none，彻底不渲染。会覆盖所有其他视觉状态。
+ *
+ * 2. .connect-source
+ *    触发：连线模式（connect mode）第一次点击选中的源节点。
+ *    效果：蓝色填充 + 青色粗边框，最醒目的临时态。
+ *
+ * 3. .highlighted
+ *    触发：右键菜单 → 高亮上游/下游/两者。
+ *    效果：黄色粗边框 + 黄色阴影（glow）。优先级高于 :selected，保证当前
+ *    关注的邻居最显眼。
+ *
+ * 4. :selected
+ *    触发：Cytoscape 原生，单击或框选节点/边。
+ *    效果：青色边框。与高亮同时存在时会被高亮的黄色覆盖，但仍然保留选中
+ *    逻辑（可 Delete、可作为连线起点等）。
+ *
+ * 5. .process-group / :parent / .compound-parent
+ *    触发：节点有 part_of 子工艺。收起态为 .process-group，展开态成为
+ *    compound parent（:parent / .compound-parent）。
+ *    效果：琥珀色文件夹样式，展开后变成半透明容器。
+ *
+ * 6. .external
+ *    触发：“顺藤摸瓜”从外部子图拉进来的节点/边。
+ *    效果：灰色、半透明，提示用户这不是当前主视图的固有节点。
+ *
+ * 7. 数据状态
+ *    触发：节点自身数据。
+ *    效果：entity_type 决定背景色，confidence 决定基础透明度，status 决定
+ *    是否被过滤器排除。
+ *
+ * opacity 统一策略：
+ * - 不在 .dimmed / .external 的 class 样式里直接写 opacity，避免与 confidence
+ *   的透明度叠加。
+ * - 在 base node/edge style 的 opacity 函数中统一计算：
+ *   dimmed > external > confidence。
+ * - .dimmed 只在“高亮邻居”时使用，表示当前不关注的元素。
+ *
+ * 注意：.dimmed 与 .highlighted 是互斥的。highlightNeighbors 给目标邻居加
+ * .highlighted，其余元素加 .dimmed。
+ * =============================================================================
+ */
+
+/**
  * 混合布局：
  * 1. 先用 Dagre 对产业流（industrial_flow）做自上而下分层布局；
  * 2. 再对 ontology/is_a 关系做“环绕”修正，把子节点以同心圆方式排在父节点周围。
@@ -209,6 +260,7 @@ interface GraphCanvasProps {
   onEdgeContextMenu?: (edge: GraphEdge, x: number, y: number) => void;
   onCanvasContextMenu?: (x: number, y: number) => void;
   onEdgeDelete?: (edge: GraphEdge) => void;
+  onClearSelection?: () => void;
   onConnectSourceSelect?: (node: IndustrialNode | null, position?: { x: number; y: number }) => void;
   onConnectTargetSelect?: (node: IndustrialNode, position?: { x: number; y: number }) => void;
   filters: {
@@ -461,6 +513,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     onEdgeContextMenu,
     onCanvasContextMenu,
     onEdgeDelete,
+    onClearSelection,
     onConnectSourceSelect,
     onConnectTargetSelect,
     filters,
@@ -487,6 +540,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   const onEdgeContextMenuRef = useRef(onEdgeContextMenu);
   const onCanvasContextMenuRef = useRef(onCanvasContextMenu);
   const onEdgeDeleteRef = useRef(onEdgeDelete);
+  const onClearSelectionRef = useRef(onClearSelection);
   const onConnectSourceSelectRef = useRef(onConnectSourceSelect);
   const onConnectTargetSelectRef = useRef(onConnectTargetSelect);
   const filtersRef = useRef(filters);
@@ -530,6 +584,10 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   useEffect(() => {
     onEdgeDeleteRef.current = onEdgeDelete;
   }, [onEdgeDelete]);
+
+  useEffect(() => {
+    onClearSelectionRef.current = onClearSelection;
+  }, [onClearSelection]);
 
   useEffect(() => {
     onConnectSourceSelectRef.current = onConnectSourceSelect;
@@ -1220,6 +1278,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
             })),
           ],
           style: [
+            // 7. 数据状态：entity_type / confidence / edge_namespace
             {
               selector: "node",
               style: {
@@ -1239,8 +1298,11 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
                 "text-background-opacity": 0.85,
                 "text-background-padding": "2px 4px",
                 "text-background-shape": "roundrectangle",
-                opacity: (ele: cytoscape.NodeSingular) =>
-                  CONFIDENCE_OPACITY[ele.data("confidence") as keyof typeof CONFIDENCE_OPACITY] || 0.5,
+                opacity: (ele: cytoscape.NodeSingular) => {
+                  if (ele.hasClass("dimmed")) return 0.15;
+                  if (ele.hasClass("external")) return 0.35;
+                  return CONFIDENCE_OPACITY[ele.data("confidence") as keyof typeof CONFIDENCE_OPACITY] || 0.5;
+                },
               },
             },
             {
@@ -1264,47 +1326,18 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
                 "text-background-padding": "1px 3px",
                 "text-rotation": "autorotate",
                 "text-margin-y": -6,
+                opacity: (ele: cytoscape.EdgeSingular) => {
+                  if (ele.hasClass("dimmed")) return 0.15;
+                  if (ele.hasClass("external")) return 0.35;
+                  if (ele.hasClass("aggregated-edge")) return 0.65;
+                  return 1;
+                },
               },
             },
-            {
-              selector: ".hidden",
-              style: {
-                display: "none",
-              },
-            },
-            {
-              selector: "node.highlighted",
-              style: {
-                "border-color": "#facc15",
-                "border-width": 5,
-                width: 38,
-                height: 38,
-                color: "#facc15",
-                "text-background-color": "#422006",
-                "text-background-opacity": 0.95,
-                "text-background-padding": "3px 6px",
-              },
-            },
-            {
-              selector: "edge.highlighted",
-              style: {
-                "line-color": "#facc15",
-                "target-arrow-color": "#facc15",
-                color: "#facc15",
-                width: 3,
-                "text-background-color": "#422006",
-                "text-background-opacity": 0.95,
-                "text-background-padding": "2px 4px",
-              },
-            },
-            {
-              selector: ".dimmed",
-              style: { opacity: 0.15 },
-            },
+            // 6. external（顺藤摸瓜拉入的外部节点/边）
             {
               selector: ".external",
               style: {
-                opacity: 0.35,
                 "background-color": "#475569",
                 "line-color": "#475569",
                 "target-arrow-color": "#475569",
@@ -1312,20 +1345,20 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
                 "text-background-color": "#0f172a",
               },
             },
+            // 5. aggregated-edge（工艺组折叠时的代理边）
             {
               selector: ".aggregated-edge",
               style: {
                 "line-style": "dashed",
                 width: 1,
-                opacity: 0.65,
                 "target-arrow-shape": "triangle",
                 "arrow-scale": 0.6,
               },
             },
+            // 5. process-group（可展开工艺组，收起态）
             {
               selector: ".process-group",
               style: {
-                // 收起态的“可展开”组标识：实心琥珀色填充 + 深色实线边框，明显区别于普通节点
                 shape: "round-rectangle",
                 width: 46,
                 height: 46,
@@ -1344,10 +1377,10 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
                 "text-background-shape": "roundrectangle",
               },
             },
+            // 5. compound-parent（工艺组展开态）
             {
               selector: ":parent, .compound-parent",
               style: {
-                // 展开态在 .process-group 基础上扩大并加 Padding
                 "background-opacity": 0.22,
                 "border-width": 3,
                 "border-opacity": 0.95,
@@ -1364,6 +1397,52 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
                 label: (ele: cytoscape.NodeSingular) => `📁 ${ele.data("label") || ele.id()}`,
               },
             },
+            // 4. selected（Cytoscape 原生选中）
+            {
+              selector: ":selected",
+              style: {
+                "border-color": "#22d3ee",
+                "border-width": 3,
+                "line-color": "#22d3ee",
+                "target-arrow-color": "#22d3ee",
+              },
+            },
+            // 3. highlighted（高亮上游/下游）
+            {
+              selector: "node.highlighted",
+              style: {
+                "border-color": "#facc15",
+                "border-width": 5,
+                width: 38,
+                height: 38,
+                color: "#facc15",
+                "text-background-color": "#422006",
+                "text-background-opacity": 0.95,
+                "text-background-padding": "3px 6px",
+                opacity: 1,
+                // Cytoscape 运行支持 shadow-*，但 @types/cytoscape 未包含这些属性
+                "shadow-blur": 12,
+                "shadow-color": "#facc15",
+                "shadow-opacity": 0.8,
+              } as any,
+            },
+            {
+              selector: "edge.highlighted",
+              style: {
+                "line-color": "#facc15",
+                "target-arrow-color": "#facc15",
+                color: "#facc15",
+                width: 3,
+                "text-background-color": "#422006",
+                "text-background-opacity": 0.95,
+                "text-background-padding": "2px 4px",
+                opacity: 1,
+                "shadow-blur": 8,
+                "shadow-color": "#facc15",
+                "shadow-opacity": 0.6,
+              } as any,
+            },
+            // 2. connect-source（连线模式源节点）
             {
               selector: ".connect-source",
               style: {
@@ -1374,11 +1453,11 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
                 "text-background-color": "#0c4a6e",
               },
             },
+            // 1. hidden（最高优先级：彻底不显示）
             {
-              selector: ":selected",
+              selector: ".hidden",
               style: {
-                "border-color": "#22d3ee",
-                "border-width": 3,
+                display: "none",
               },
             },
           ],
@@ -1525,9 +1604,11 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
               onConnectSourceSelectRef.current?.(null);
             }
             // 【设计理由: 提供安全的撤退路径】
-            // 点空白处取消所有高亮，并清理掉所有临时的半透明预览节点
+            // 点空白处取消所有选择、高亮，并清理掉所有临时的半透明预览节点
+            cy.elements().unselect();
             cy.elements().removeClass("highlighted dimmed");
             cy.elements(".external").remove();
+            onClearSelectionRef.current?.();
           }
         });
 
@@ -1640,7 +1721,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
           }
         });
 
-        // 键盘删除：选中边时按 Delete/Backspace 删除
+        // 键盘事件：ESC 取消选择并关闭详情面板；Delete/Backspace 删除选中边
         keyHandler = (e: KeyboardEvent) => {
           const target = e.target as HTMLElement;
           if (
@@ -1649,6 +1730,13 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
               target.tagName === "TEXTAREA" ||
               target.isContentEditable)
           ) {
+            return;
+          }
+          if (e.key === "Escape") {
+            cy.elements().unselect();
+            cy.elements().removeClass("highlighted dimmed");
+            cy.elements(".external").remove();
+            onClearSelectionRef.current?.();
             return;
           }
           if (e.key !== "Delete" && e.key !== "Backspace") return;

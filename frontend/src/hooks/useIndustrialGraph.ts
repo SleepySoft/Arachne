@@ -127,6 +127,13 @@ export function useIndustrialGraph() {
     [nav, openNodeDetail]
   );
 
+  const handleClearSelection = useCallback(() => {
+    closePanel();
+    setContextMenu((prev) => ({ ...prev, visible: false }));
+    setCanvasMenu((prev) => ({ ...prev, visible: false }));
+    setEdgeMenu((prev) => ({ ...prev, visible: false }));
+  }, [closePanel]);
+
   const handleNavBack = useCallback(() => {
     const node = nav.back();
     if (node) {
@@ -408,6 +415,7 @@ export function useIndustrialGraph() {
     openNodeDetail,
     openEdgeDetail,
     handleNodeClick,
+    handleClearSelection,
     handleNavBack,
     handleNavForward,
     handleNavGoto,

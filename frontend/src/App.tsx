@@ -287,9 +287,9 @@ export default function App() {
                 if (industrial.selectedEdge?.edge_id === edge.edge_id) {
                   industrial.closePanel();
                 }
-                industrial.refreshGraph();
               });
             }}
+            onClearSelection={industrial.handleClearSelection}
             onConnectSourceSelect={industrial.handleConnectSourceSelect}
             onConnectTargetSelect={industrial.handleConnectTargetSelect}
             filters={industrial.activeFilters}
