@@ -154,6 +154,8 @@ export function useIndustrialGraph() {
   const handleNodeContextMenu = useCallback(
     (node: IndustrialNode, x: number, y: number) => {
       setContextMenu({ visible: true, x, y, node });
+      setCanvasMenu((prev) => ({ ...prev, visible: false }));
+      setEdgeMenu({ visible: false, x: 0, y: 0, edge: null });
     },
     []
   );
@@ -292,6 +294,8 @@ export function useIndustrialGraph() {
   const handleCanvasContextMenu = useCallback((x: number, y: number) => {
     setCanvasMenu({ visible: true, x, y });
     setPendingNodePosition({ x, y });
+    setContextMenu((prev) => ({ ...prev, visible: false }));
+    setEdgeMenu({ visible: false, x: 0, y: 0, edge: null });
   }, []);
 
   const handleCloseCanvasMenu = useCallback(() => {
@@ -302,6 +306,8 @@ export function useIndustrialGraph() {
   const handleEdgeContextMenu = useCallback(
     (edge: GraphEdge, x: number, y: number) => {
       setEdgeMenu({ visible: true, x, y, edge });
+      setContextMenu((prev) => ({ ...prev, visible: false }));
+      setCanvasMenu((prev) => ({ ...prev, visible: false }));
     },
     []
   );

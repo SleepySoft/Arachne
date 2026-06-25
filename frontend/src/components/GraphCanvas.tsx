@@ -22,6 +22,7 @@ function layoutExpandedCompound(
   parentId: string,
   dragPositions?: Map<string, cytoscape.Position>
 ) {
+  if (!cy || (cy as unknown as { _private?: { destroyed?: boolean } })._private?.destroyed) return;
   const parent = cy.getElementById(parentId);
   if (parent.length === 0) return;
   const dragPos = dragPositions?.get(parentId);
@@ -53,6 +54,10 @@ function runHybridLayout(
   dragPositions?: Map<string, cytoscape.Position>,
   onComplete?: () => void
 ) {
+  if (!cy || (cy as unknown as { _private?: { destroyed?: boolean } })._private?.destroyed) {
+    onComplete?.();
+    return;
+  }
   // 如果存在 compound parent（part_of 展开），用简单的径向布局把子工艺排在父节点周围
   // 不依赖 :parent 选择器（隐藏子节点时可能无法命中），直接用 expandedProcessParents 选择父节点
   const expandedParents =
@@ -72,7 +77,12 @@ function runHybridLayout(
         { fit: { eles: fitCollection, padding: 40 } },
         { duration: 250, easing: "ease-in-out-cubic" }
       );
-      if (onComplete) setTimeout(onComplete, 300);
+      if (onComplete) {
+        setTimeout(() => {
+          if (!cy || (cy as unknown as { _private?: { destroyed?: boolean } })._private?.destroyed) return;
+          onComplete();
+        }, 300);
+      }
     } else {
       onComplete?.();
     }
@@ -95,6 +105,10 @@ function runHybridLayout(
   } as cytoscape.LayoutOptions);
 
   dagreLayout.one("layoutstop", () => {
+    if (!cy || (cy as unknown as { _private?: { destroyed?: boolean } })._private?.destroyed) {
+      onComplete?.();
+      return;
+    }
     // Dagre 完成后，对 is_a 关系做环绕修正（source 是子类，target 是父类）
     const isAEdges = cy.edges(
       '[edge_namespace = "ontology"][edge_type = "is_a"]'
@@ -142,12 +156,19 @@ function runHybridLayout(
       });
     });
 
+    if (!cy || (cy as unknown as { _private?: { destroyed?: boolean } })._private?.destroyed) {
+      onComplete?.();
+      return;
+    }
     if (fit) {
       cy.fit(cy.elements(), 40);
     }
     if (onComplete) {
       // Allow fit animation to settle before notifying completion
-      setTimeout(onComplete, fit ? 300 : 0);
+      setTimeout(() => {
+        if (!cy || (cy as unknown as { _private?: { destroyed?: boolean } })._private?.destroyed) return;
+        onComplete();
+      }, fit ? 300 : 0);
     }
   });
 
@@ -168,6 +189,15 @@ export interface GraphCanvasRef {
   getNodePositions: () => Record<string, { x: number; y: number }>;
   setNodePositions: (positions: Record<string, { x: number; y: number }>) => void;
   pullEdgeEndpointsIntoView: (edgeId: string) => void;
+  highlightNeighbors: (
+    nodeId: string,
+    direction: "upstream" | "downstream" | "both"
+  ) => void;
+  showNeighbors: (nodeId: string, direction: "upstream" | "downstream") => Promise<void>;
+  pullNeighborsIntoView: (
+    nodeId: string,
+    direction: "upstream" | "downstream" | "both"
+  ) => void;
 }
 
 interface GraphCanvasProps {
@@ -203,6 +233,7 @@ function suppressInternalPartOfEdges(
   cy: cytoscape.Core,
   expandedProcessParents: string[] = []
 ) {
+  if (!cy || (cy as unknown as { _private?: { destroyed?: boolean } })._private?.destroyed) return;
   const expandedSet = new Set(expandedProcessParents);
   cy.batch(() => {
     cy.edges('[edge_namespace = "ontology"][edge_type = "part_of"]').forEach((edge) => {
@@ -218,6 +249,7 @@ function applyFilters(
   filters: GraphCanvasProps["filters"],
   expandedProcessParents: string[] = []
 ) {
+  if (!cy || (cy as unknown as { _private?: { destroyed?: boolean } })._private?.destroyed) return;
   const entityTypeSet = new Set(filters.entityTypes);
   const statusSet = new Set(filters.status);
   const confidenceSet = new Set(filters.confidence);
@@ -351,6 +383,7 @@ function syncCompoundParents(
   expandedProcessParents: string[],
   dragPositions?: Map<string, cytoscape.Position>
 ) {
+  if (!cy || (cy as unknown as { _private?: { destroyed?: boolean } })._private?.destroyed) return;
   const expandedSet = new Set(expandedProcessParents);
   const childToParent = new Map<string, string>();
   cy.edges('[edge_namespace = "ontology"][edge_type = "part_of"]').forEach(
@@ -522,8 +555,9 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     onToggleProcessExpansionRef.current = onToggleProcessExpansion;
   }, [onToggleProcessExpansion]);
 
-  const applyPendingViewState = useCallback((cy: cytoscape.Core) => {
-    if (!cy) return;
+  const applyPendingViewState = useCallback(() => {
+    const cy = cyRef.current;
+    if (!cy || (cy as unknown as { _private?: { destroyed?: boolean } })._private?.destroyed) return;
     const positions = pendingPositionsRef.current;
     const camera = pendingCameraRef.current;
 
@@ -675,7 +709,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     setNodePositions: (positions) => {
       const cy = cyRef.current;
       if (cy) {
-        applyPendingViewState(cy);
+        applyPendingViewState();
       } else {
         pendingPositionsRef.current = positions;
       }
@@ -777,6 +811,177 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
           { duration: 200, easing: "ease-out" }
         );
       }
+    },
+    highlightNeighbors: (nodeId, direction) => {
+      const cy = cyRef.current;
+      if (!cy) return;
+      const node = cy.getElementById(nodeId);
+      if (node.length === 0) return;
+
+      cy.elements().removeClass("highlighted dimmed");
+
+      let edges = cy.collection();
+      if (direction === "upstream" || direction === "both") {
+        edges = edges.union(node.incomers("edge"));
+      }
+      if (direction === "downstream" || direction === "both") {
+        edges = edges.union(node.outgoers("edge"));
+      }
+      edges = edges.filter((e: cytoscape.EdgeSingular) => !e.hasClass("aggregated-edge") && !e.hasClass("hidden"));
+
+      const nodes = edges.connectedNodes().filter((n: cytoscape.NodeSingular) => n.id() !== nodeId && !n.hasClass("hidden"));
+
+      node.addClass("highlighted");
+      nodes.addClass("highlighted");
+      edges.addClass("highlighted");
+      cy.elements().not(node).not(nodes).not(edges).addClass("dimmed");
+    },
+    showNeighbors: async (nodeId, direction) => {
+      const cy = cyRef.current;
+      if (!cy) return;
+      const node = cy.getElementById(nodeId);
+      if (node.length === 0) return;
+
+      try {
+        const { nodes, edges } = await getNeighbors(nodeId);
+        if (!cyRef.current || cyRef.current !== cy) {
+          return;
+        }
+        const nodeIdSet = new Set(cy.nodes().map((n) => n.id()));
+
+        const upstreamNodeIds = new Set<string>();
+        const downstreamNodeIds = new Set<string>();
+        edges.forEach((e) => {
+          if (e.from_node === nodeId) downstreamNodeIds.add(e.to_node);
+          if (e.to_node === nodeId) upstreamNodeIds.add(e.from_node);
+        });
+
+        const targetNodeIds = new Set<string>();
+        if (direction === "upstream") upstreamNodeIds.forEach((id) => targetNodeIds.add(id));
+        if (direction === "downstream") downstreamNodeIds.forEach((id) => targetNodeIds.add(id));
+
+        const centerPos = node.position();
+        const candidates = nodes.filter((n) => targetNodeIds.has(n.node_id));
+        const radius = Math.max(120, candidates.length * 15);
+        const angleStep = candidates.length > 0 ? (2 * Math.PI) / candidates.length : 0;
+        let angle = 0;
+
+        cy.batch(() => {
+          candidates.forEach((n) => {
+            if (!nodeIdSet.has(n.node_id)) {
+              cy.add({
+                data: {
+                  id: n.node_id,
+                  label: n.canonical_name_zh,
+                  entity_type: n.entity_type,
+                  status: n.status,
+                  confidence: n.confidence,
+                  raw: n,
+                },
+                classes: "external",
+                position: {
+                  x: centerPos.x + radius * Math.cos(angle),
+                  y: centerPos.y + radius * Math.sin(angle),
+                },
+              });
+              angle += angleStep;
+            }
+          });
+
+          edges.forEach((e) => {
+            if (!cy.getElementById(e.edge_id).length) {
+              const sourceInGraph = cy.getElementById(e.from_node).length > 0;
+              const targetInGraph = cy.getElementById(e.to_node).length > 0;
+              if (sourceInGraph && targetInGraph) {
+                const isMatch =
+                  (direction === "upstream" && e.to_node === nodeId) ||
+                  (direction === "downstream" && e.from_node === nodeId);
+                if (isMatch) {
+                  cy.add({
+                    data: {
+                      id: e.edge_id,
+                      source: e.from_node,
+                      target: e.to_node,
+                      edge_namespace: e.edge_namespace,
+                      edge_type: e.edge_type,
+                      label: e.edge_type_label || e.edge_type,
+                      raw: e,
+                    },
+                    classes: "external",
+                  });
+                }
+              }
+            }
+          });
+        });
+
+        suppressInternalPartOfEdges(cy, expandedProcessParentsRef.current);
+
+        // 高亮刚显示的邻居
+        const addedNodes = cy.collection();
+        candidates.forEach((n) => {
+          const el = cy.getElementById(n.node_id);
+          if (el.length) addedNodes.merge(el);
+        });
+        const addedEdges = node.connectedEdges().filter((e: cytoscape.EdgeSingular) => {
+          const other = e.source().id() === nodeId ? e.target() : e.source();
+          return addedNodes.has(other);
+        });
+
+        cy.elements().removeClass("highlighted dimmed");
+        node.addClass("highlighted");
+        addedNodes.addClass("highlighted");
+        addedEdges.addClass("highlighted");
+        cy.elements().not(node).not(addedNodes).not(addedEdges).addClass("dimmed");
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error("showNeighbors failed:", err);
+      }
+    },
+    pullNeighborsIntoView: (nodeId, direction) => {
+      const cy = cyRef.current;
+      if (!cy) return;
+      const node = cy.getElementById(nodeId);
+      if (node.length === 0) return;
+
+      let edges = cy.collection();
+      if (direction === "upstream" || direction === "both") {
+        edges = edges.union(node.incomers("edge"));
+      }
+      if (direction === "downstream" || direction === "both") {
+        edges = edges.union(node.outgoers("edge"));
+      }
+      edges = edges.filter((e: cytoscape.EdgeSingular) => !e.hasClass("aggregated-edge") && !e.hasClass("hidden"));
+
+      const neighbors = edges.connectedNodes().filter((n: cytoscape.NodeSingular) => n.id() !== nodeId && !n.hasClass("hidden"));
+      if (neighbors.length === 0) return;
+
+      const extent = cy.extent();
+      const zoom = cy.zoom();
+      const marginScreen = 80;
+      const marginModel = marginScreen / zoom;
+      const minX = extent.x1 + marginModel;
+      const maxX = extent.x2 - marginModel;
+      const minY = extent.y1 + marginModel;
+      const maxY = extent.y2 - marginModel;
+
+      const isVisible = (p: cytoscape.Position) =>
+        p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY;
+
+      const clampToViewport = (p: cytoscape.Position) => ({
+        x: Math.max(minX, Math.min(maxX, p.x)),
+        y: Math.max(minY, Math.min(maxY, p.y)),
+      });
+
+      neighbors.forEach((neighbor) => {
+        const p = neighbor.position();
+        if (!isVisible(p)) {
+          neighbor.animate(
+            { position: clampToViewport(p) },
+            { duration: 200, easing: "ease-out" }
+          );
+        }
+      });
     },
   }));
 
@@ -900,6 +1105,37 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         }
       };
 
+      const handleContextMenu = (e: MouseEvent) => {
+        // 只在画布容器内拦截右键菜单
+        if (!containerEl.contains(e.target as Node)) return;
+        if (isInputTarget(e.target)) return;
+        e.preventDefault();
+        e.stopPropagation();
+
+        try {
+          const renderer = (cy as unknown as { renderer?: () => { projectIntoViewport: (x: number, y: number) => [number, number]; findNearestElement: (x: number, y: number, interactiveOnly?: boolean, isTouch?: boolean) => cytoscape.SingularElementReturnValue | null } }).renderer?.();
+          if (!renderer) return;
+
+          const pos = renderer.projectIntoViewport(e.clientX, e.clientY);
+          const near = renderer.findNearestElement(pos[0], pos[1], true, false) as any;
+
+          if (near && near.isNode()) {
+            const rawData = near.data("raw") as IndustrialNode;
+            onNodeContextMenuRef.current?.(rawData, e.clientX, e.clientY);
+          } else if (near && near.isEdge()) {
+            if (!near.hasClass("aggregated-edge")) {
+              const rawData = near.data("raw") as GraphEdge;
+              onEdgeContextMenuRef.current?.(rawData, e.clientX, e.clientY);
+            }
+          } else {
+            onCanvasContextMenuRef.current?.(e.clientX, e.clientY);
+          }
+        } catch (err) {
+          // eslint-disable-next-line no-console
+          console.error("[GraphCanvas] contextmenu hit-test failed", err);
+        }
+      };
+
       window.addEventListener("keydown", handlePanKeyDown);
       window.addEventListener("keyup", handlePanKeyUp);
       window.addEventListener("blur", handleWindowBlur);
@@ -907,6 +1143,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
       containerEl.addEventListener("pointermove", handlePointerMove);
       containerEl.addEventListener("pointerup", handlePointerUp);
       containerEl.addEventListener("pointercancel", handlePointerUp);
+      document.addEventListener("contextmenu", handleContextMenu, true);
 
       return () => {
         window.removeEventListener("keydown", handlePanKeyDown);
@@ -916,6 +1153,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         containerEl.removeEventListener("pointermove", handlePointerMove);
         containerEl.removeEventListener("pointerup", handlePointerUp);
         containerEl.removeEventListener("pointercancel", handlePointerUp);
+        document.removeEventListener("contextmenu", handleContextMenu, true);
         containerEl.classList.remove("canvas-pan-modifier", "canvas-middle-panning");
       };
     }
@@ -935,6 +1173,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
           ]);
         }
         if (!mounted) return;
+        if (!containerRef.current) return;
 
         const nodeIdSet = new Set(nodesData.items.map((n) => n.node_id));
         const validEdges = edgesData.items.filter((e) => {
@@ -1034,7 +1273,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
               },
             },
             {
-              selector: ".highlighted",
+              selector: "node.highlighted",
               style: {
                 "border-color": "#facc15",
                 "border-width": 5,
@@ -1044,6 +1283,18 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
                 "text-background-color": "#422006",
                 "text-background-opacity": 0.95,
                 "text-background-padding": "3px 6px",
+              },
+            },
+            {
+              selector: "edge.highlighted",
+              style: {
+                "line-color": "#facc15",
+                "target-arrow-color": "#facc15",
+                color: "#facc15",
+                width: 3,
+                "text-background-color": "#422006",
+                "text-background-opacity": 0.95,
+                "text-background-padding": "2px 4px",
               },
             },
             {
@@ -1283,27 +1534,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         // ==========================================
         // 3.5 右键菜单事件：节点 / 边 / 空白画布
         // ==========================================
-        cy.on("cxttap", "node", (evt) => {
-          const node = evt.target;
-          const rawData = node.data("raw") as IndustrialNode;
-          const e = evt.originalEvent as MouseEvent;
-          onNodeContextMenuRef.current?.(rawData, e.clientX, e.clientY);
-        });
-
-        cy.on("cxttap", "edge", (evt) => {
-          const edge = evt.target;
-          if (edge.hasClass("aggregated-edge")) return;
-          const rawData = edge.data("raw") as GraphEdge;
-          const e = evt.originalEvent as MouseEvent;
-          onEdgeContextMenuRef.current?.(rawData, e.clientX, e.clientY);
-        });
-
-        cy.on("cxttap", (evt) => {
-          if (evt.target === cy) {
-            const e = evt.originalEvent as MouseEvent;
-            onCanvasContextMenuRef.current?.(e.clientX, e.clientY);
-          }
-        });
+        // 右键菜单统一由原生 document contextmenu 事件处理，不再依赖 Cytoscape cxttap
 
         // 记录 process-group 节点被拖拽后的实际渲染位置，因为空 compound parent 的 position() 可能不更新
         cy.on("dragfree", "node.process-group", (evt) => {
@@ -1431,6 +1662,17 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
 
         cyRef.current = cy;
 
+        // 在 layout 动画前就注册平移/右键处理器，避免右击等待 layout 时无响应
+        if (containerRef.current) {
+          cleanupPanHandlers = setupPanHandlers(cy, containerRef.current);
+        }
+
+        // 防止组件在初始化期间卸载后继续操作已销毁的 Cytoscape 实例
+        if (!cyRef.current || cyRef.current !== cy) {
+          cy.destroy();
+          return;
+        }
+
         // 如果正在恢复已保存视图，把展开工艺组的父节点位置预置到拖拽记录中，
         // 这样 syncCompoundParents / layoutExpandedCompound 会以该位置为中心，
         // 而不是让 Cytoscape 根据子节点重新计算父节点位置。
@@ -1442,15 +1684,19 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         }
         // 初始标记所有可展开工艺组，并应用过滤器隐藏 part_of 子节点
         syncCompoundParents(cy, expandedProcessParentsRef.current, processGroupDragPositionsRef.current);
+
+        if (!cyRef.current || cyRef.current !== cy) {
+          cy.destroy();
+          return;
+        }
+
         applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current);
         // 使用混合布局：产业流自上而下，is_a 关系环绕父节点
-        runHybridLayout(cy, true, expandedProcessParentsRef.current, processGroupDragPositionsRef.current, () => applyPendingViewState(cy));
+        runHybridLayout(cy, true, expandedProcessParentsRef.current, processGroupDragPositionsRef.current, () => {
+          if (!cyRef.current || cyRef.current !== cy || (cy as unknown as { _private?: { destroyed?: boolean } })._private?.destroyed) return;
+          applyPendingViewState();
+        });
         setLoading(false);
-
-        // Cytoscape 准备就绪后再注册画布拖拽处理器，避免初始异步加载时注册失败
-        if (containerRef.current) {
-          cleanupPanHandlers = setupPanHandlers(cy, containerRef.current);
-        }
       } catch (err) {
         if (mounted) {
           setError(err instanceof Error ? err.message : "加载失败");
@@ -1464,10 +1710,11 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
       mounted = false;
       if (keyHandler) window.removeEventListener("keydown", keyHandler);
       cleanupPanHandlers?.();
-      if (cyRef.current) {
-        cyRef.current.autoungrabify(false);
-        cyRef.current.destroy();
-        cyRef.current = null;
+      const cyToDestroy = cyRef.current;
+      cyRef.current = null;
+      if (cyToDestroy && !(cyToDestroy as unknown as { _private?: { destroyed?: boolean } })._private?.destroyed) {
+        cyToDestroy.autoungrabify(false);
+        cyToDestroy.destroy();
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1492,14 +1739,21 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     applyFilters(cy, filtersRef.current, expandedProcessParents);
     // 收起时（expandedProcessParents 为空）不再触发全局重排，避免视图乱跳；
     // 展开时只做局部径向布局，不 fit，保证 group 原地展开。
+    let rafId: number | null = null;
     if (expandedProcessParents.length > 0) {
-      requestAnimationFrame(() => {
-        runHybridLayout(cy, false, expandedProcessParents, processGroupDragPositionsRef.current, () => applyPendingViewState(cy));
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        const currentCy = cyRef.current;
+        if (!currentCy) return;
+        runHybridLayout(currentCy, false, expandedProcessParents, processGroupDragPositionsRef.current, () => applyPendingViewState());
       });
     } else {
       // Collapse: still try to apply any queued view state (camera is independent of layout)
-      applyPendingViewState(cy);
+      applyPendingViewState();
     }
+    return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
   }, [expandedProcessParents]);
 
   // Connect mode source highlight
@@ -1522,7 +1776,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     // otherwise the pending state will be picked up by the layout completion callback.
     const cy = cyRef.current;
     if (cy && !cy.animated()) {
-      applyPendingViewState(cy);
+      applyPendingViewState();
     }
   }, [restoredPositions, restoredCamera]);
 
@@ -1542,8 +1796,10 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
             edge.removeClass("hidden");
           }
         });
+        const neighborhood = target.neighborhood();
         target.addClass("highlighted");
-        cy.elements().not(target).not(target.neighborhood()).addClass("dimmed");
+        neighborhood.edges().addClass("highlighted");
+        cy.elements().not(target).not(neighborhood).addClass("dimmed");
         // 平移到视野中心，不改变缩放级别
         cy.animate({
           center: { eles: target },

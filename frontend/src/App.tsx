@@ -555,6 +555,36 @@ export default function App() {
               });
               industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
             }}
+            onShowUpstream={() => {
+              const node = industrial.contextMenu.node;
+              if (node) graphCanvasRef.current?.showNeighbors(node.node_id, "upstream");
+              industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
+            }}
+            onShowDownstream={() => {
+              const node = industrial.contextMenu.node;
+              if (node) graphCanvasRef.current?.showNeighbors(node.node_id, "downstream");
+              industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
+            }}
+            onHighlightUpstream={() => {
+              const node = industrial.contextMenu.node;
+              if (node) graphCanvasRef.current?.highlightNeighbors(node.node_id, "upstream");
+              industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
+            }}
+            onHighlightDownstream={() => {
+              const node = industrial.contextMenu.node;
+              if (node) graphCanvasRef.current?.highlightNeighbors(node.node_id, "downstream");
+              industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
+            }}
+            onPullUpstream={() => {
+              const node = industrial.contextMenu.node;
+              if (node) graphCanvasRef.current?.pullNeighborsIntoView(node.node_id, "upstream");
+              industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
+            }}
+            onPullDownstream={() => {
+              const node = industrial.contextMenu.node;
+              if (node) graphCanvasRef.current?.pullNeighborsIntoView(node.node_id, "downstream");
+              industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
+            }}
             onClose={() =>
               industrial.setContextMenu((prev) => ({ ...prev, visible: false }))
             }

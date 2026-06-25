@@ -1,8 +1,16 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, ChevronRight, Loader2, Building2, Factory, X } from "lucide-react";
-import { IndustrialNode, Company, Industry, GraphEdge } from "@/types";
-import { deleteIndustryMapping, getCompaniesByNode, getIndustriesByNode } from "@/services/api";
+import { ChevronDown, ChevronRight, Loader2, Building2, Factory, X, Plus, Search } from "lucide-react";
+import { IndustrialNode, Company, Industry, GraphEdge, CompanyActivityType } from "@/types";
+import {
+  createCompanyExposure,
+  createIndustryMapping,
+  deleteIndustryMapping,
+  getCompaniesByNode,
+  getIndustriesByNode,
+  listCompanies,
+  listIndustries,
+} from "@/services/api";
 import { NodeEdgeList } from "./NodeEdgeList";
 
 interface NodeAssociationsProps {
@@ -67,6 +75,21 @@ export function NodeAssociations({
   const [companiesOpen, setCompaniesOpen] = useState(false);
   const [industriesOpen, setIndustriesOpen] = useState(false);
 
+  // Quick-add industry mapping state
+  const [showAddIndustry, setShowAddIndustry] = useState(false);
+  const [industryQuery, setIndustryQuery] = useState("");
+  const [selectedIndustry, setSelectedIndustry] = useState<Industry | null>(null);
+  const [industryMappingId, setIndustryMappingId] = useState("");
+  const [industryRole, setIndustryRole] = useState("");
+
+  // Quick-add company exposure state
+  const [showAddCompany, setShowAddCompany] = useState(false);
+  const [companyQuery, setCompanyQuery] = useState("");
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [exposureId, setExposureId] = useState("");
+  const [activityType, setActivityType] = useState<CompanyActivityType>("manufacture");
+  const [companyRole, setCompanyRole] = useState("");
+
   const removeMappingMutation = useMutation({
     mutationFn: ({ industryId, mappingId }: { industryId: string; mappingId: string }) =>
       deleteIndustryMapping(industryId, mappingId),
@@ -99,6 +122,81 @@ export function NodeAssociations({
   const exposures = companiesData?.exposures || [];
   const industries = industriesData?.industries || [];
   const mappings = industriesData?.mappings || [];
+
+  const { data: industrySearchData } = useQuery({
+    queryKey: ["industries", 1, 10, undefined, undefined, industryQuery],
+    queryFn: () => listIndustries(1, 10, undefined, undefined, industryQuery),
+    enabled: industryQuery.length >= 1 && showAddIndustry,
+  });
+
+  const { data: companySearchData } = useQuery({
+    queryKey: ["companies", 1, 10, undefined, undefined, undefined, companyQuery],
+    queryFn: () => listCompanies(1, 10, undefined, undefined, undefined, companyQuery),
+    enabled: companyQuery.length >= 1 && showAddCompany,
+  });
+
+  const createIndustryMappingMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedIndustry) throw new Error("请选择行业");
+      if (!industryMappingId) throw new Error("请填写映射 ID");
+      return createIndustryMapping(selectedIndustry.industry_id, {
+        mapping_id: industryMappingId,
+        industry_id: selectedIndustry.industry_id,
+        node_id: node.node_id,
+        role: industryRole || undefined,
+        weight: 1.0,
+        confidence: "MEDIUM",
+        evidence: [],
+        status: "ACTIVE",
+      });
+    },
+    onSuccess: () => {
+      setShowAddIndustry(false);
+      setSelectedIndustry(null);
+      setIndustryQuery("");
+      setIndustryMappingId("");
+      setIndustryRole("");
+      queryClient.invalidateQueries({ queryKey: ["industries-by-node", node.node_id] });
+    },
+  });
+
+  const createCompanyExposureMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedCompany) throw new Error("请选择公司");
+      if (!exposureId) throw new Error("请填写暴露 ID");
+      return createCompanyExposure(selectedCompany.company_id, {
+        exposure_id: exposureId,
+        company_id: selectedCompany.company_id,
+        node_id: node.node_id,
+        activity_type: activityType,
+        role: companyRole || undefined,
+        weight: 1.0,
+        confidence: "MEDIUM",
+        evidence: [],
+        status: "ACTIVE",
+      });
+    },
+    onSuccess: () => {
+      setShowAddCompany(false);
+      setSelectedCompany(null);
+      setCompanyQuery("");
+      setExposureId("");
+      setCompanyRole("");
+      queryClient.invalidateQueries({ queryKey: ["companies-by-node", node.node_id] });
+    },
+  });
+
+  const handleSelectIndustry = (industry: Industry) => {
+    setSelectedIndustry(industry);
+    setIndustryMappingId(`${industry.industry_id}_contains_${node.node_id}`);
+    setIndustryQuery("");
+  };
+
+  const handleSelectCompany = (company: Company) => {
+    setSelectedCompany(company);
+    setExposureId(`${company.company_id}_exposes_${node.node_id}`);
+    setCompanyQuery("");
+  };
 
   return (
     <div className="space-y-2">
@@ -171,6 +269,161 @@ export function NodeAssociations({
             })}
           </div>
         )}
+        {!companiesLoading && !showAddCompany && (
+          <button
+            onClick={() => setShowAddCompany(true)}
+            className="mt-2 flex w-full items-center justify-center gap-1 rounded border border-dashed border-slate-700 py-2 text-xs text-cyan-400 hover:border-cyan-600 hover:bg-cyan-900/10"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            关联到公司
+          </button>
+        )}
+        {showAddCompany && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              createCompanyExposureMutation.mutate();
+            }}
+            className="mt-3 space-y-3 rounded border border-slate-700 bg-slate-800/30 p-3"
+          >
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-medium text-cyan-400">关联到公司</h4>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddCompany(false);
+                  setSelectedCompany(null);
+                  setCompanyQuery("");
+                  setExposureId("");
+                  setCompanyRole("");
+                  createCompanyExposureMutation.reset();
+                }}
+                className="rounded p-1 text-slate-500 hover:bg-slate-700"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+
+            {createCompanyExposureMutation.error && (
+              <div className="rounded bg-red-900/30 px-2 py-1.5 text-[11px] text-red-300">
+                {createCompanyExposureMutation.error.message}
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                选择公司
+              </label>
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-slate-500" />
+                <input
+                  type="text"
+                  value={selectedCompany ? selectedCompany.name_zh : companyQuery}
+                  onChange={(e) => {
+                    setCompanyQuery(e.target.value);
+                    if (selectedCompany) setSelectedCompany(null);
+                  }}
+                  placeholder="搜索公司..."
+                  className="w-full rounded border border-slate-700 bg-slate-800 py-1.5 pl-6 pr-2 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+                />
+                {companySearchData && companyQuery && !selectedCompany && (
+                  <div className="absolute z-10 mt-1 max-h-32 w-full overflow-auto rounded border border-slate-700 bg-slate-800 shadow-lg">
+                    {companySearchData.items.length === 0 ? (
+                      <div className="px-2 py-1.5 text-xs text-slate-500">无结果</div>
+                    ) : (
+                      companySearchData.items.map((c) => (
+                        <button
+                          key={c.company_id}
+                          type="button"
+                          onClick={() => handleSelectCompany(c)}
+                          className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs hover:bg-slate-700"
+                        >
+                          <span className="font-medium text-slate-200">{c.name_zh}</span>
+                          <span className="text-[10px] text-slate-500">{c.company_id}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                暴露 ID *
+              </label>
+              <input
+                type="text"
+                value={exposureId}
+                onChange={(e) => setExposureId(e.target.value)}
+                placeholder="例如 company_exposes_node"
+                pattern="^[a-z][a-z0-9_]*$"
+                minLength={3}
+                maxLength={64}
+                required
+                className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                活动类型
+              </label>
+              <select
+                value={activityType}
+                onChange={(e) => setActivityType(e.target.value as CompanyActivityType)}
+                className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
+              >
+                <option value="rnd">研发 (rnd)</option>
+                <option value="design">设计 (design)</option>
+                <option value="manufacture">制造 (manufacture)</option>
+                <option value="produce">生产 (produce)</option>
+                <option value="supply">供应 (supply)</option>
+                <option value="distribute">分销 (distribute)</option>
+                <option value="consume">消费 (consume)</option>
+                <option value="service">服务 (service)</option>
+                <option value="unknown">未知 (unknown)</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                角色
+              </label>
+              <input
+                type="text"
+                value={companyRole}
+                onChange={(e) => setCompanyRole(e.target.value)}
+                placeholder="例如 主要供应商"
+                className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                disabled={createCompanyExposureMutation.isPending}
+                className="flex-1 rounded bg-cyan-600 py-1.5 text-xs font-medium text-white hover:bg-cyan-500 disabled:opacity-50"
+              >
+                {createCompanyExposureMutation.isPending ? "保存中..." : "关联"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddCompany(false);
+                  setSelectedCompany(null);
+                  setCompanyQuery("");
+                  setExposureId("");
+                  setCompanyRole("");
+                  createCompanyExposureMutation.reset();
+                }}
+                className="rounded border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-700"
+              >
+                取消
+              </button>
+            </div>
+          </form>
+        )}
       </CollapsibleSection>
 
       <CollapsibleSection
@@ -235,6 +488,140 @@ export function NodeAssociations({
               </div>
             ))}
           </div>
+        )}
+        {!industriesLoading && !showAddIndustry && (
+          <button
+            onClick={() => setShowAddIndustry(true)}
+            className="mt-2 flex w-full items-center justify-center gap-1 rounded border border-dashed border-slate-700 py-2 text-xs text-cyan-400 hover:border-cyan-600 hover:bg-cyan-900/10"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            关联到新行业
+          </button>
+        )}
+        {showAddIndustry && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              createIndustryMappingMutation.mutate();
+            }}
+            className="mt-3 space-y-3 rounded border border-slate-700 bg-slate-800/30 p-3"
+          >
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-medium text-cyan-400">关联到新行业</h4>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddIndustry(false);
+                  setSelectedIndustry(null);
+                  setIndustryQuery("");
+                  setIndustryMappingId("");
+                  setIndustryRole("");
+                  createIndustryMappingMutation.reset();
+                }}
+                className="rounded p-1 text-slate-500 hover:bg-slate-700"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+
+            {createIndustryMappingMutation.error && (
+              <div className="rounded bg-red-900/30 px-2 py-1.5 text-[11px] text-red-300">
+                {createIndustryMappingMutation.error.message}
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                选择行业
+              </label>
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-slate-500" />
+                <input
+                  type="text"
+                  value={selectedIndustry ? selectedIndustry.name_zh : industryQuery}
+                  onChange={(e) => {
+                    setIndustryQuery(e.target.value);
+                    if (selectedIndustry) setSelectedIndustry(null);
+                  }}
+                  placeholder="搜索行业..."
+                  className="w-full rounded border border-slate-700 bg-slate-800 py-1.5 pl-6 pr-2 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+                />
+                {industrySearchData && industryQuery && !selectedIndustry && (
+                  <div className="absolute z-10 mt-1 max-h-32 w-full overflow-auto rounded border border-slate-700 bg-slate-800 shadow-lg">
+                    {industrySearchData.items.length === 0 ? (
+                      <div className="px-2 py-1.5 text-xs text-slate-500">无结果</div>
+                    ) : (
+                      industrySearchData.items.map((ind) => (
+                        <button
+                          key={ind.industry_id}
+                          type="button"
+                          onClick={() => handleSelectIndustry(ind)}
+                          className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs hover:bg-slate-700"
+                        >
+                          <span className="font-medium text-slate-200">{ind.name_zh}</span>
+                          <span className="text-[10px] text-slate-500">{ind.industry_id}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                映射 ID *
+              </label>
+              <input
+                type="text"
+                value={industryMappingId}
+                onChange={(e) => setIndustryMappingId(e.target.value)}
+                placeholder="例如 industry_contains_node"
+                pattern="^[a-z][a-z0-9_]*$"
+                minLength={3}
+                maxLength={64}
+                required
+                className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                角色
+              </label>
+              <input
+                type="text"
+                value={industryRole}
+                onChange={(e) => setIndustryRole(e.target.value)}
+                placeholder="例如 核心产品、上游部件"
+                className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                disabled={createIndustryMappingMutation.isPending}
+                className="flex-1 rounded bg-cyan-600 py-1.5 text-xs font-medium text-white hover:bg-cyan-500 disabled:opacity-50"
+              >
+                {createIndustryMappingMutation.isPending ? "保存中..." : "关联"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddIndustry(false);
+                  setSelectedIndustry(null);
+                  setIndustryQuery("");
+                  setIndustryMappingId("");
+                  setIndustryRole("");
+                  createIndustryMappingMutation.reset();
+                }}
+                className="rounded border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-700"
+              >
+                取消
+              </button>
+            </div>
+          </form>
         )}
       </CollapsibleSection>
     </div>

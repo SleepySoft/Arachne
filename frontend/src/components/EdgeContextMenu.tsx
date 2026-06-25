@@ -1,4 +1,5 @@
 import { Move, Trash2 } from "lucide-react";
+import { useLayoutEffect, useRef } from "react";
 
 interface EdgeContextMenuProps {
   x: number;
@@ -9,8 +10,27 @@ interface EdgeContextMenuProps {
 }
 
 export function EdgeContextMenu({ x, y, onDelete, onPull, onClose }: EdgeContextMenuProps) {
+  const menuRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = menuRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const padding = 8;
+    let left = x;
+    let top = y;
+    if (left + rect.width > vw - padding) left = vw - rect.width - padding;
+    if (left < padding) left = padding;
+    if (top + rect.height > vh - padding) top = vh - rect.height - padding;
+    if (top < padding) top = padding;
+    el.style.left = `${left}px`;
+    el.style.top = `${top}px`;
+  }, [x, y]);
+
   return (
     <div
+      ref={menuRef}
       className="fixed z-50 min-w-[120px] rounded-lg border border-slate-700 bg-slate-900/95 py-1 shadow-xl backdrop-blur"
       style={{ left: x, top: y }}
       onMouseLeave={onClose}

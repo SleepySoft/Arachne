@@ -1,4 +1,13 @@
-import { Building2, Factory, X } from "lucide-react";
+import {
+  Building2,
+  Factory,
+  X,
+  ArrowUp,
+  ArrowDown,
+  Eye,
+  Highlighter,
+} from "lucide-react";
+import { useLayoutEffect, useRef } from "react";
 
 interface NodeContextMenuProps {
   x: number;
@@ -6,6 +15,12 @@ interface NodeContextMenuProps {
   nodeName: string;
   onShowCompanies: () => void;
   onShowIndustries: () => void;
+  onShowUpstream: () => void;
+  onShowDownstream: () => void;
+  onHighlightUpstream: () => void;
+  onHighlightDownstream: () => void;
+  onPullUpstream: () => void;
+  onPullDownstream: () => void;
   onClose: () => void;
 }
 
@@ -15,20 +30,44 @@ export function NodeContextMenu({
   nodeName,
   onShowCompanies,
   onShowIndustries,
+  onShowUpstream,
+  onShowDownstream,
+  onHighlightUpstream,
+  onHighlightDownstream,
+  onPullUpstream,
+  onPullDownstream,
   onClose,
 }: NodeContextMenuProps) {
+  const menuRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = menuRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const padding = 8;
+    let left = x;
+    let top = y;
+    if (left + rect.width > vw - padding) left = vw - rect.width - padding;
+    if (left < padding) left = padding;
+    if (top + rect.height > vh - padding) top = vh - rect.height - padding;
+    if (top < padding) top = padding;
+    el.style.left = `${left}px`;
+    el.style.top = `${top}px`;
+  }, [x, y]);
+
   return (
     <>
       {/* Backdrop to capture clicks outside */}
       <div
         className="fixed inset-0 z-40"
         onClick={onClose}
-        onContextMenu={(e) => {
-          e.preventDefault();
+        onContextMenu={() => {
           onClose();
         }}
       />
       <div
+        ref={menuRef}
         className="fixed z-50 w-56 rounded-lg border border-slate-700 bg-slate-900 shadow-xl"
         style={{ left: x, top: y }}
       >
@@ -44,6 +83,67 @@ export function NodeContextMenu({
           </button>
         </div>
         <div className="py-1">
+          <button
+            onClick={() => {
+              onShowUpstream();
+              onClose();
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+          >
+            <ArrowUp size={14} className="text-emerald-400" />
+            显示上游节点
+          </button>
+          <button
+            onClick={() => {
+              onShowDownstream();
+              onClose();
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+          >
+            <ArrowDown size={14} className="text-emerald-400" />
+            显示下游节点
+          </button>
+          <button
+            onClick={() => {
+              onHighlightUpstream();
+              onClose();
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+          >
+            <Highlighter size={14} className="text-yellow-400" />
+            高亮上游节点
+          </button>
+          <button
+            onClick={() => {
+              onHighlightDownstream();
+              onClose();
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+          >
+            <Highlighter size={14} className="text-yellow-400" />
+            高亮下游节点
+          </button>
+          <button
+            onClick={() => {
+              onPullUpstream();
+              onClose();
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+          >
+            <Eye size={14} className="text-purple-400" />
+            拉近上游节点
+          </button>
+          <button
+            onClick={() => {
+              onPullDownstream();
+              onClose();
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+          >
+            <Eye size={14} className="text-purple-400" />
+            拉近下游节点
+          </button>
+          <div className="my-1 border-t border-slate-700" />
           <button
             onClick={() => {
               onShowCompanies();
