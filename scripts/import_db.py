@@ -7,10 +7,11 @@ Import Neo4j and PostgreSQL data from JSON files produced by export_db.py.
 Usage:
     python scripts/import_db.py --input-dir data/backup/20240115_120000
     python scripts/import_db.py --input-dir data/backup/20240115_120000 --clear
-    python scripts/import_db.py --input-dir data/backup/20240115_120000
+    python scripts/import_db.py --input-dir data/backup/20240115_120000 --clear --yes
 
 Options:
     --clear             Drop existing data before import (DESTRUCTIVE)
+    --yes               Skip the --clear confirmation prompt
 """
 
 from __future__ import annotations
@@ -23,7 +24,7 @@ import sys
 from pathlib import Path
 from datetime import datetime
 
-# Add parent dir to path so we can import app.*
+# Add backend dir to path so we can import app.*
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 
 from app.config import get_settings
@@ -185,12 +186,8 @@ async def clear_neo4j(driver) -> None:
     print("  Clearing Neo4j ...")
 
     async with driver.session() as session:
-        # Delete all edges first
-        await session.run("MATCH ()-[r:INDUSTRIAL_FLOW]->() DELETE r")
-        await session.run("MATCH ()-[r:ONTOLOGY]->() DELETE r")
-
-        # Delete all nodes
-        await session.run("MATCH (n:IndustrialNode) DELETE n")
+        # DETACH DELETE removes every node and every relationship in the graph
+        await session.run("MATCH (n) DETACH DELETE n")
 
 
 async def import_neo4j(input_dir: Path, clear: bool) -> None:
@@ -239,19 +236,23 @@ async def import_neo4j(input_dir: Path, clear: bool) -> None:
 # PostgreSQL import
 # ---------------------------------------------------------------------------
 
-# Tables in dependency order (foreign keys first)
+# Tables in dependency order (referenced tables first)
 POSTGRES_IMPORT_ORDER = [
     "industries",
     "companies",
+    "persons",
     "industry_node_mappings",
     "company_node_exposures",
+    "factual_relations",
     "computation_jobs",
 ]
 
 POSTGRES_TRUNCATE_ORDER = [
     "computation_jobs",
+    "factual_relations",
     "company_node_exposures",
     "industry_node_mappings",
+    "persons",
     "companies",
     "industries",
 ]
@@ -346,6 +347,11 @@ def main():
         action="store_true",
         help="Drop existing data before import (DESTRUCTIVE!)",
     )
+    parser.add_argument(
+        "--yes",
+        action="store_true",
+        help="Skip the --clear confirmation prompt",
+    )
     args = parser.parse_args()
 
     input_dir = Path(args.input_dir)
@@ -355,10 +361,11 @@ def main():
 
     if args.clear:
         print("WARNING: --clear is set. All existing data will be DESTROYED.")
-        confirm = input("Type 'yes' to confirm: ")
-        if confirm.strip().lower() != "yes":
-            print("Aborted.")
-            sys.exit(0)
+        if not args.yes:
+            confirm = input("Type 'yes' to confirm: ")
+            if confirm.strip().lower() != "yes":
+                print("Aborted.")
+                sys.exit(0)
 
     print(f"Importing from: {input_dir}")
     print()
