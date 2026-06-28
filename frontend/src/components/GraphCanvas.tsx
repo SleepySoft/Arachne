@@ -249,7 +249,7 @@ export interface GraphCanvasRef {
     nodeId: string,
     direction: "upstream" | "downstream" | "both"
   ) => void;
-  isProcessGroupNode: (nodeId: string) => boolean;
+  isCompoundGroupNode: (nodeId: string) => boolean;
 }
 
 interface GraphCanvasProps {
@@ -997,7 +997,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         console.error("showNeighbors failed:", err);
       }
     },
-    isProcessGroupNode: (nodeId) => {
+    isCompoundGroupNode: (nodeId) => {
       const cy = cyRef.current;
       if (!cy) return false;
       return (

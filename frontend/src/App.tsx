@@ -585,9 +585,9 @@ export default function App() {
               if (node) graphCanvasRef.current?.pullNeighborsIntoView(node.node_id, "downstream");
               industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
             }}
-            isProcessGroup={
+            isGroup={
               industrial.contextMenu.node
-                ? graphCanvasRef.current?.isProcessGroupNode(
+                ? graphCanvasRef.current?.isCompoundGroupNode(
                     industrial.contextMenu.node.node_id
                   ) ?? false
                 : false
@@ -599,7 +599,7 @@ export default function App() {
                   )
                 : false
             }
-            onToggleProcessGroup={() => {
+            onToggleGroup={() => {
               const node = industrial.contextMenu.node;
               if (node) {
                 industrial.toggleProcessParent(node.node_id);
