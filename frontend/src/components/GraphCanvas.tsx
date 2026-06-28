@@ -249,6 +249,7 @@ export interface GraphCanvasRef {
     nodeId: string,
     direction: "upstream" | "downstream" | "both"
   ) => void;
+  isProcessGroupNode: (nodeId: string) => boolean;
 }
 
 interface GraphCanvasProps {
@@ -995,6 +996,15 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         // eslint-disable-next-line no-console
         console.error("showNeighbors failed:", err);
       }
+    },
+    isProcessGroupNode: (nodeId) => {
+      const cy = cyRef.current;
+      if (!cy) return false;
+      return (
+        cy
+          .edges('[edge_namespace = "ontology"][edge_type = "part_of"]')
+          .filter((edge) => edge.target().id() === nodeId).length > 0
+      );
     },
     pullNeighborsIntoView: (nodeId, direction) => {
       const cy = cyRef.current;

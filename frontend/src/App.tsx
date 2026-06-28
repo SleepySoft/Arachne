@@ -585,6 +585,27 @@ export default function App() {
               if (node) graphCanvasRef.current?.pullNeighborsIntoView(node.node_id, "downstream");
               industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
             }}
+            isProcessGroup={
+              industrial.contextMenu.node
+                ? graphCanvasRef.current?.isProcessGroupNode(
+                    industrial.contextMenu.node.node_id
+                  ) ?? false
+                : false
+            }
+            isExpanded={
+              industrial.contextMenu.node
+                ? industrial.isProcessParentExpanded(
+                    industrial.contextMenu.node.node_id
+                  )
+                : false
+            }
+            onToggleProcessGroup={() => {
+              const node = industrial.contextMenu.node;
+              if (node) {
+                industrial.toggleProcessParent(node.node_id);
+              }
+              industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
+            }}
             onClose={() =>
               industrial.setContextMenu((prev) => ({ ...prev, visible: false }))
             }

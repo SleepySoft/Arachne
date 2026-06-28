@@ -314,6 +314,7 @@ backend/
 - **Compound node experiment**: Implemented Cytoscape compound nodes for `wafer_manufacturing` and its `part_of` subprocesses. Materials are now connected to specific subprocesses (e.g., `silicon_wafer -> lithography_process`, `tungsten_film -> thin_film_deposition_process`); expanding the parent forms a visual container, while collapsing falls back to the flat dagre layout.
 - **Semiconductor wafer manufacturing flow refactor**: Replaced direct material flows into specific cleaning subprocesses with a single `cleaning_process` node in the main flow. Derived specific cleaning steps (`initial_wafer_cleaning`, `pre_lithography_wafer_cleaning`, `post_etch_residue_cleaning`, `post_cmp_cleaning`, `pre_diffusion_cleaning`, `pre_deposition_cleaning`) are linked to `cleaning_process` via `is_a` ontology edges. Removed intermediate `diffusion_ready_wafer`/`deposition_ready_wafer` states; cleaned up the main silicon_wafer → wafer flow.
 - **Frontend nested compound expansion fix**: Updated `GraphCanvas.tsx` double-click handler to resolve the innermost expandable `process-group` under the cursor using rendered bounding-box hit testing, instead of always toggling the outermost compound parent.
+- **Process-group context-menu toggle**: Added "展开工艺组 / 收起工艺组" menu item to `NodeContextMenu.tsx` for selected process-group nodes; exposed `GraphCanvasRef.isProcessGroupNode()` to determine process-group membership from current `part_of` edges, and wired the toggle to `useIndustrialGraph.toggleProcessParent()` in `App.tsx`. This avoids relying solely on double-click and reduces accidental toggles.
 
 ---
 
@@ -405,4 +406,4 @@ Historical batch construction logs list these as future work; none are implement
 
 ---
 
-*Last updated: 2026-06-18*
+*Last updated: 2026-06-28*

@@ -6,6 +6,8 @@ import {
   ArrowDown,
   Eye,
   Highlighter,
+  FolderOpen,
+  Folder,
 } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
 
@@ -22,6 +24,9 @@ interface NodeContextMenuProps {
   onPullUpstream: () => void;
   onPullDownstream: () => void;
   onClose: () => void;
+  isProcessGroup?: boolean;
+  isExpanded?: boolean;
+  onToggleProcessGroup?: () => void;
 }
 
 export function NodeContextMenu({
@@ -37,6 +42,9 @@ export function NodeContextMenu({
   onPullUpstream,
   onPullDownstream,
   onClose,
+  isProcessGroup = false,
+  isExpanded = false,
+  onToggleProcessGroup,
 }: NodeContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -143,6 +151,22 @@ export function NodeContextMenu({
             <Eye size={14} className="text-purple-400" />
             拉近下游节点
           </button>
+          {isProcessGroup && (
+            <button
+              onClick={() => {
+                onToggleProcessGroup?.();
+                onClose();
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+            >
+              {isExpanded ? (
+                <FolderOpen size={14} className="text-amber-400" />
+              ) : (
+                <Folder size={14} className="text-amber-400" />
+              )}
+              {isExpanded ? "收起工艺组" : "展开工艺组"}
+            </button>
+          )}
           <div className="my-1 border-t border-slate-700" />
           <button
             onClick={() => {
