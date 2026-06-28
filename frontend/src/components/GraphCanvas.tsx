@@ -1635,8 +1635,39 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         // ==========================================
         // 4. 节点双击事件：展开、完全固化与重排
         // ==========================================
+        // 在嵌套 compound 组中，双击应命中光标下最内层的可展开工艺组，
+        // 而不是最外层。这里用渲染坐标下的 bounding box 做精确命中测试。
+        const resolveInnermostProcessParentAt = (
+          clickRendered: cytoscape.Position
+        ): cytoscape.NodeSingular | null => {
+          const partOfEdges = cy.edges('[edge_namespace = "ontology"][edge_type = "part_of"]');
+          const expandable = cy.nodes().filter((n) => {
+            const nid = n.id();
+            return partOfEdges.toArray().some((edge) => (edge as cytoscape.EdgeSingular).target().id() === nid);
+          });
+          const containing = expandable.filter((n) => {
+            const bb = n.renderedBoundingBox({ includeLabels: false, includeOverlays: false });
+            return (
+              clickRendered.x >= bb.x1 &&
+              clickRendered.x <= bb.x2 &&
+              clickRendered.y >= bb.y1 &&
+              clickRendered.y <= bb.y2
+            );
+          });
+          if (containing.length === 0) return null;
+          // 面积越小越内层
+          const area = (n: cytoscape.NodeSingular) => {
+            const bb = n.renderedBoundingBox({ includeLabels: false, includeOverlays: false });
+            return (bb.x2 - bb.x1) * (bb.y2 - bb.y1);
+          };
+          const sorted = containing.sort((a: cytoscape.NodeSingular, b: cytoscape.NodeSingular) => area(a) - area(b));
+          return sorted[0];
+        };
+
         cy.on("dbltap", "node", async (evt) => {
-          const node = evt.target;
+          const clickRendered = evt.renderedPosition;
+          const innermost = resolveInnermostProcessParentAt(clickRendered);
+          const node = innermost ?? evt.target;
           const nodeId = node.id();
 
           // 如果该节点有 part_of 子工艺，双击用来展开/收起，不再走邻居展开
