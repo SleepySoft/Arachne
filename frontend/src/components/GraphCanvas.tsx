@@ -250,6 +250,9 @@ export interface GraphCanvasRef {
     direction: "upstream" | "downstream" | "both"
   ) => void;
   isCompoundGroupNode: (nodeId: string) => boolean;
+  getSelectedNodeIds: () => string[];
+  clearNodeSelection: () => void;
+  autoArrangeSelectedNodes: () => void;
 }
 
 interface GraphCanvasProps {
@@ -259,6 +262,7 @@ interface GraphCanvasProps {
   onEdgeClick: (edge: GraphEdge) => void;
   onNodeContextMenu?: (node: IndustrialNode, x: number, y: number) => void;
   onEdgeContextMenu?: (edge: GraphEdge, x: number, y: number) => void;
+  onMultiNodeContextMenu?: (nodes: IndustrialNode[], x: number, y: number) => void;
   onCanvasContextMenu?: (x: number, y: number) => void;
   onEdgeDelete?: (edge: GraphEdge) => void;
   onClearSelection?: () => void;
@@ -280,6 +284,7 @@ interface GraphCanvasProps {
   connectSourceNodeId?: string | null;
   expandedProcessParents?: string[];
   onToggleProcessExpansion?: (nodeId: string) => void;
+  wheelSensitivity?: number;
 }
 
 function suppressInternalPartOfEdges(
@@ -512,6 +517,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     onEdgeClick,
     onNodeContextMenu,
     onEdgeContextMenu,
+    onMultiNodeContextMenu,
     onCanvasContextMenu,
     onEdgeDelete,
     onClearSelection,
@@ -527,6 +533,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     connectSourceNodeId = null,
     expandedProcessParents = [],
     onToggleProcessExpansion,
+    wheelSensitivity = 1.0,
   },
   ref
 ) {
@@ -539,7 +546,9 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   const onEdgeClickRef = useRef(onEdgeClick);
   const onNodeContextMenuRef = useRef(onNodeContextMenu);
   const onEdgeContextMenuRef = useRef(onEdgeContextMenu);
+  const onMultiNodeContextMenuRef = useRef(onMultiNodeContextMenu);
   const onCanvasContextMenuRef = useRef(onCanvasContextMenu);
+  const selectedNodeIdsRef = useRef<string[]>([]);
   const onEdgeDeleteRef = useRef(onEdgeDelete);
   const onClearSelectionRef = useRef(onClearSelection);
   const onConnectSourceSelectRef = useRef(onConnectSourceSelect);
@@ -550,6 +559,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   const connectSourceNodeIdRef = useRef(connectSourceNodeId);
   const expandedProcessParentsRef = useRef(expandedProcessParents);
   const onToggleProcessExpansionRef = useRef(onToggleProcessExpansion);
+  const wheelSensitivityRef = useRef(wheelSensitivity);
   const processGroupDragPositionsRef = useRef<Map<string, cytoscape.Position>>(new Map());
   const pendingPositionsRef = useRef<Record<string, { x: number; y: number }> | null>(null);
   const pendingCameraRef = useRef<{ pan: { x: number; y: number }; zoom: number } | null>(null);
@@ -565,6 +575,10 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   useEffect(() => {
     onNodeContextMenuRef.current = onNodeContextMenu;
   }, [onNodeContextMenu]);
+
+  useEffect(() => {
+    onMultiNodeContextMenuRef.current = onMultiNodeContextMenu;
+  }, [onMultiNodeContextMenu]);
 
   useEffect(() => {
     filtersRef.current = filters;
@@ -613,6 +627,10 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   useEffect(() => {
     onToggleProcessExpansionRef.current = onToggleProcessExpansion;
   }, [onToggleProcessExpansion]);
+
+  useEffect(() => {
+    wheelSensitivityRef.current = wheelSensitivity;
+  }, [wheelSensitivity]);
 
   const applyPendingViewState = useCallback(() => {
     const cy = cyRef.current;
@@ -1006,6 +1024,92 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
           .filter((edge) => edge.target().id() === nodeId).length > 0
       );
     },
+    getSelectedNodeIds: () => {
+      const cy = cyRef.current;
+      if (!cy) return [];
+      return cy.nodes(":selected").map((n) => n.id());
+    },
+    clearNodeSelection: () => {
+      const cy = cyRef.current;
+      if (!cy) return;
+      cy.elements().unselect();
+    },
+    autoArrangeSelectedNodes: () => {
+      const cy = cyRef.current;
+      if (!cy) return;
+      const selectedIds = cy.nodes(":selected").map((n) => n.id());
+      if (selectedIds.length < 2) return;
+
+      const selectedSet = new Set(selectedIds);
+      const nodes = selectedIds
+        .map((id) => cy.getElementById(id))
+        .filter((n) => n.length > 0 && !n.hasClass("hidden") && !selectedSet.has(n.data("parent")));
+      if (nodes.length < 2) return;
+
+      const iterations = 60;
+      const repulsion = 6000;
+      const springK = 0.03;
+      const damping = 0.8;
+
+      const originalPos = new Map<string, { x: number; y: number }>();
+      const pos = new Map<string, { x: number; y: number }>();
+      const vel = new Map<string, { x: number; y: number }>();
+      nodes.forEach((n) => {
+        const p = { ...n.position() };
+        originalPos.set(n.id(), p);
+        pos.set(n.id(), p);
+        vel.set(n.id(), { x: 0, y: 0 });
+      });
+
+      for (let i = 0; i < iterations; i++) {
+        // 节点间斥力
+        for (let a = 0; a < nodes.length; a++) {
+          for (let b = a + 1; b < nodes.length; b++) {
+            const na = nodes[a];
+            const nb = nodes[b];
+            const pa = pos.get(na.id())!;
+            const pb = pos.get(nb.id())!;
+            const dx = pa.x - pb.x;
+            const dy = pa.y - pb.y;
+            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            const force = repulsion / (dist * dist);
+            const fx = (dx / dist) * force;
+            const fy = (dy / dist) * force;
+            const va = vel.get(na.id())!;
+            const vb = vel.get(nb.id())!;
+            va.x += fx;
+            va.y += fy;
+            vb.x -= fx;
+            vb.y -= fy;
+          }
+        }
+
+        // 弱弹簧拉回原始位置，防止整体漂移
+        nodes.forEach((n) => {
+          const p = pos.get(n.id())!;
+          const orig = originalPos.get(n.id())!;
+          const v = vel.get(n.id())!;
+          v.x += (orig.x - p.x) * springK;
+          v.y += (orig.y - p.y) * springK;
+        });
+
+        // 应用速度
+        nodes.forEach((n) => {
+          const v = vel.get(n.id())!;
+          v.x *= damping;
+          v.y *= damping;
+          const p = pos.get(n.id())!;
+          p.x += v.x;
+          p.y += v.y;
+        });
+      }
+
+      // 动画移动到最终位置，不改变相机
+      nodes.forEach((n) => {
+        const target = pos.get(n.id())!;
+        n.animate({ position: target }, { duration: 250, easing: "ease-out" });
+      });
+    },
     pullNeighborsIntoView: (nodeId, direction) => {
       const cy = cyRef.current;
       if (!cy) return;
@@ -1173,6 +1277,39 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         }
       };
 
+      const handleWheel = (e: WheelEvent) => {
+        if (isInputTarget(e.target)) return;
+        // 阻止页面滚动，并阻止 Cytoscape 内置 wheel handler（它要求 userPanningEnabled 才缩放）
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!cy.zoomingEnabled() || !cy.userZoomingEnabled()) return;
+        if (e.deltaY === 0) return;
+
+        try {
+          const renderer = (cy as unknown as { renderer?: () => { projectIntoViewport: (x: number, y: number) => [number, number] } }).renderer?.();
+          if (!renderer) return;
+
+          const zoom = cy.zoom();
+          const pan = cy.pan();
+          const pos = renderer.projectIntoViewport(e.clientX, e.clientY);
+          const rpos = {
+            x: pos[0] * zoom + pan.x,
+            y: pos[1] * zoom + pan.y,
+          };
+
+          const sensitivity = wheelSensitivityRef.current;
+          const diff = (e.deltaY / -250) * sensitivity;
+          let newZoom = zoom * Math.pow(10, diff);
+          newZoom = Math.max(cy.minZoom(), Math.min(cy.maxZoom(), newZoom));
+
+          cy.zoom({ level: newZoom, renderedPosition: rpos });
+        } catch (err) {
+          // eslint-disable-next-line no-console
+          console.error("[GraphCanvas] wheel zoom failed", err);
+        }
+      };
+
       const handleContextMenu = (e: MouseEvent) => {
         // 只在画布容器内拦截右键菜单
         if (!containerEl.contains(e.target as Node)) return;
@@ -1187,7 +1324,13 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
           const pos = renderer.projectIntoViewport(e.clientX, e.clientY);
           const near = renderer.findNearestElement(pos[0], pos[1], true, false) as any;
 
-          if (near && near.isNode()) {
+          const selectedNodeIds = selectedNodeIdsRef.current;
+          if (selectedNodeIds.length >= 2) {
+            const selectedNodes = selectedNodeIds
+              .map((id) => cy.getElementById(id).data("raw") as IndustrialNode | undefined)
+              .filter((n): n is IndustrialNode => !!n);
+            onMultiNodeContextMenuRef.current?.(selectedNodes, e.clientX, e.clientY);
+          } else if (near && near.isNode()) {
             const rawData = near.data("raw") as IndustrialNode;
             onNodeContextMenuRef.current?.(rawData, e.clientX, e.clientY);
           } else if (near && near.isEdge()) {
@@ -1211,6 +1354,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
       containerEl.addEventListener("pointermove", handlePointerMove);
       containerEl.addEventListener("pointerup", handlePointerUp);
       containerEl.addEventListener("pointercancel", handlePointerUp);
+      containerEl.addEventListener("wheel", handleWheel, { passive: false, capture: true });
       document.addEventListener("contextmenu", handleContextMenu, true);
 
       return () => {
@@ -1221,6 +1365,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         containerEl.removeEventListener("pointermove", handlePointerMove);
         containerEl.removeEventListener("pointerup", handlePointerUp);
         containerEl.removeEventListener("pointercancel", handlePointerUp);
+        containerEl.removeEventListener("wheel", handleWheel, { capture: true });
         document.removeEventListener("contextmenu", handleContextMenu, true);
         containerEl.classList.remove("canvas-pan-modifier", "canvas-middle-panning");
       };
@@ -1318,6 +1463,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
             {
               selector: "edge",
               style: {
+                selectable: false,
                 "line-color": (ele: cytoscape.EdgeSingular) =>
                   EDGE_NAMESPACE_STYLES[ele.data("edge_namespace") as keyof typeof EDGE_NAMESPACE_STYLES]?.color || "#94a3b8",
                 "target-arrow-color": (ele: cytoscape.EdgeSingular) =>
@@ -1473,9 +1619,12 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
           ],
           // 初始不启用默认 dagre，改为在数据加载后执行混合布局
           layout: { name: "preset" } as cytoscape.LayoutOptions,
-          wheelSensitivity: 1.0,
+          wheelSensitivity: 0.1,
           minZoom: 0.2,
           maxZoom: 3,
+          userPanningEnabled: false,
+          boxSelectionEnabled: true,
+          selectionType: "additive",
         });
 
         // ==========================================
@@ -1484,6 +1633,14 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         cy.on("tap", "node", async (evt) => {
           const node = evt.target;
           const rawData = node.data("raw") as IndustrialNode;
+
+          // 非修饰键单击时，只保留当前节点为单选，保持单选体验
+          const originalEvent = evt.originalEvent as MouseEvent;
+          const modifier = originalEvent.ctrlKey || originalEvent.metaKey || originalEvent.shiftKey;
+          if (!modifier) {
+            cy.elements().unselect();
+            node.select();
+          }
 
           // 连线模式：第一次点击选起点，第二次点击选终点
           if (editModeRef.current === "connect") {
@@ -1623,7 +1780,18 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         });
 
         // ==========================================
-        // 3.5 右键菜单事件：节点 / 边 / 空白画布
+        // 3.5 框选与多选状态跟踪
+        // ==========================================
+        // 框选只选节点、不选边（edge style 已设 selectable: false）
+        const updateSelectedNodeIds = () => {
+          selectedNodeIdsRef.current = cy.nodes(":selected").map((n) => n.id());
+        };
+        cy.on("select", "node", updateSelectedNodeIds);
+        cy.on("unselect", "node", updateSelectedNodeIds);
+        cy.on("boxend", updateSelectedNodeIds);
+
+        // ==========================================
+        // 3.6 右键菜单事件：节点 / 边 / 空白画布
         // ==========================================
         // 右键菜单统一由原生 document contextmenu 事件处理，不再依赖 Cytoscape cxttap
 

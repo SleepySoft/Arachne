@@ -3,12 +3,12 @@ import { StatsBar, MainView } from "@/components/StatsBar";
 import { DbChecksPage } from "@/pages/DbChecksPage";
 import { Layout } from "@/components/Layout";
 import { GraphCanvas, GraphCanvasRef } from "@/components/GraphCanvas";
-import { GraphToolbar } from "@/components/GraphToolbar";
-import { ViewToolbar } from "@/components/ViewToolbar";
+import { CanvasToolbar } from "@/components/toolbar/CanvasToolbar";
 import { ViewManagerModal } from "@/components/ViewManagerModal";
 import { CompanyNetworkCanvas, CompanyNetworkCanvasRef } from "@/components/CompanyNetworkCanvas";
 import { ExplorationCanvas, ExplorationCanvasRef } from "@/components/ExplorationCanvas";
 import { NodeContextMenu } from "@/components/NodeContextMenu";
+import { MultiNodeContextMenu } from "@/components/MultiNodeContextMenu";
 import { CompanyGraphEmptyState } from "@/components/CompanyGraphEmptyState";
 import { CompanyMaterialModal } from "@/components/CompanyMaterialModal";
 import { MaterialConnectionPanel } from "@/components/MaterialConnectionPanel";
@@ -280,6 +280,7 @@ export default function App() {
             onEdgeClick={industrial.handleEdgeClick}
             onNodeContextMenu={industrial.handleNodeContextMenu}
             onEdgeContextMenu={industrial.handleEdgeContextMenu}
+            onMultiNodeContextMenu={industrial.handleMultiNodeContextMenu}
             onCanvasContextMenu={industrial.handleCanvasContextMenu}
             onEdgeDelete={(edge) => {
               deleteEdge(edge.edge_id).then(() => {
@@ -300,55 +301,51 @@ export default function App() {
             connectSourceNodeId={industrial.connectSource?.node_id || null}
             expandedProcessParents={industrial.expandedProcessParents}
             onToggleProcessExpansion={industrial.toggleProcessParent}
+            wheelSensitivity={industrial.wheelSensitivity}
             restoredPositions={industrialViewToRestore?.nodePositions}
             restoredCamera={industrialViewToRestore?.camera}
           />
-          <GraphToolbar
-            onRelayout={() => industrial.setGraphKey((k) => k + 1)}
-            editMode={industrial.editMode}
-            onToggleEditMode={industrial.toggleEditMode}
-          />
-          <div className="absolute left-3 top-14 z-10">
-            <ViewToolbar
-              workspace="industrial"
-              savedViews={savedViews}
-              onSave={(name) =>
-                buildIndustrialSnapshot(
-                  {
-                    selectedIndustries: industrial.selectedIndustries,
-                    selectedCompanies: industrial.selectedCompanies,
-                    activeFilters: industrial.activeFilters,
-                    expandedProcessParents: industrial.expandedProcessParents,
-                    canvasRef: graphCanvasRef,
-                  },
-                  name
-                )
+          <CanvasToolbar
+            workspace="industrial"
+            savedViews={savedViews}
+            onSaveView={(name) =>
+              buildIndustrialSnapshot(
+                {
+                  selectedIndustries: industrial.selectedIndustries,
+                  selectedCompanies: industrial.selectedCompanies,
+                  activeFilters: industrial.activeFilters,
+                  expandedProcessParents: industrial.expandedProcessParents,
+                  canvasRef: graphCanvasRef,
+                },
+                name
+              )
+            }
+            onLoadView={(view) => {
+              const result = applyIndustrialSnapshot(view, {
+                setSelectedIndustries: industrial.setSelectedIndustries,
+                setSelectedCompanies: industrial.setSelectedCompanies,
+                setActiveFilters: industrial.setActiveFilters,
+                setExpandedProcessParents: industrial.setExpandedProcessParents,
+                setGraphKey: industrial.setGraphKey,
+                setSubgraphData: industrial.setSubgraphData,
+                setHighlightNodeIds: industrial.setHighlightNodeIds,
+                allIndustries,
+                allCompanies,
+                onSetRestored: setIndustrialViewToRestore,
+              });
+              if (result.missingIndustryIds.length > 0 || result.missingCompanyIds.length > 0) {
+                setImportMessage(
+                  `已恢复视图。缺失 ${result.missingIndustryIds.length} 个行业、${result.missingCompanyIds.length} 个公司。`
+                );
               }
-              onLoad={(view) => {
-                const result = applyIndustrialSnapshot(view, {
-                  setSelectedIndustries: industrial.setSelectedIndustries,
-                  setSelectedCompanies: industrial.setSelectedCompanies,
-                  setActiveFilters: industrial.setActiveFilters,
-                  setExpandedProcessParents: industrial.setExpandedProcessParents,
-                  setGraphKey: industrial.setGraphKey,
-                  setSubgraphData: industrial.setSubgraphData,
-                  setHighlightNodeIds: industrial.setHighlightNodeIds,
-                  allIndustries,
-                  allCompanies,
-                  onSetRestored: setIndustrialViewToRestore,
-                });
-                if (result.missingIndustryIds.length > 0 || result.missingCompanyIds.length > 0) {
-                  setImportMessage(
-                    `已恢复视图。缺失 ${result.missingIndustryIds.length} 个行业、${result.missingCompanyIds.length} 个公司。`
-                  );
-                }
-              }}
-              onManage={() => {
-                setViewManagerWorkspace("industrial");
-                setViewManagerOpen(true);
-              }}
-            />
-          </div>
+            }}
+            onManageViews={() => {
+              setViewManagerWorkspace("industrial");
+              setViewManagerOpen(true);
+            }}
+            zoomSensitivity={industrial.wheelSensitivity}
+            onZoomSensitivityChange={industrial.setWheelSensitivity}
+          />
         </div>
       }
       searchPanel={
@@ -474,42 +471,40 @@ export default function App() {
       centerCanvas={
         <div className="relative h-full w-full">
           {companyCenterCanvas}
-          <div className="absolute left-3 top-3 z-10">
-            <ViewToolbar
-              workspace="company"
-              savedViews={savedViews}
-              onSave={(name) =>
-                buildCompanySnapshot(
-                  {
-                    companyDisplayMode: company.companyDisplayMode,
-                    companyExploreMode: company.companyExploreMode,
-                    orderedChain: company.orderedChain,
-                    fixedIds: company.fixedIds,
-                    currentFocusId: company.currentFocusId,
-                    explorationData: company.explorationData,
-                    canvasRef: activeCompanyCanvasRef,
-                  },
-                  name
-                )
-              }
-              onLoad={(view) => {
-                applyCompanySnapshot(view, {
-                  setCompanyDisplayMode: company.setCompanyDisplayMode,
-                  setCompanyExploreMode: company.setCompanyExploreMode,
-                  setOrderedChain: company.setOrderedChain,
-                  setFixedIds: company.setFixedIds,
-                  setCurrentFocusId: company.setCurrentFocusId,
-                  setExplorationData: company.setExplorationData,
-                  setPreviewData: company.setPreviewData,
-                  onSetRestored: setCompanyViewToRestore,
-                });
-              }}
-              onManage={() => {
-                setViewManagerWorkspace("company");
-                setViewManagerOpen(true);
-              }}
-            />
-          </div>
+          <CanvasToolbar
+            workspace="company"
+            savedViews={savedViews}
+            onSaveView={(name) =>
+              buildCompanySnapshot(
+                {
+                  companyDisplayMode: company.companyDisplayMode,
+                  companyExploreMode: company.companyExploreMode,
+                  orderedChain: company.orderedChain,
+                  fixedIds: company.fixedIds,
+                  currentFocusId: company.currentFocusId,
+                  explorationData: company.explorationData,
+                  canvasRef: activeCompanyCanvasRef,
+                },
+                name
+              )
+            }
+            onLoadView={(view) => {
+              applyCompanySnapshot(view, {
+                setCompanyDisplayMode: company.setCompanyDisplayMode,
+                setCompanyExploreMode: company.setCompanyExploreMode,
+                setOrderedChain: company.setOrderedChain,
+                setFixedIds: company.setFixedIds,
+                setCurrentFocusId: company.setCurrentFocusId,
+                setExplorationData: company.setExplorationData,
+                setPreviewData: company.setPreviewData,
+                onSetRestored: setCompanyViewToRestore,
+              });
+            }}
+            onManageViews={() => {
+              setViewManagerWorkspace("company");
+              setViewManagerOpen(true);
+            }}
+          />
         </div>
       }
       searchPanel={
@@ -609,6 +604,24 @@ export default function App() {
             onClose={() =>
               industrial.setContextMenu((prev) => ({ ...prev, visible: false }))
             }
+          />
+        )}
+
+      {mainView === "industrial_graph" &&
+        industrial.multiNodeContextMenu.visible &&
+        industrial.multiNodeContextMenu.nodes.length > 0 && (
+          <MultiNodeContextMenu
+            x={industrial.multiNodeContextMenu.x}
+            y={industrial.multiNodeContextMenu.y}
+            selectedCount={industrial.multiNodeContextMenu.nodes.length}
+            onAutoArrange={() => {
+              graphCanvasRef.current?.autoArrangeSelectedNodes();
+              industrial.handleCloseMultiNodeContextMenu();
+            }}
+            onClearSelection={() => {
+              graphCanvasRef.current?.clearNodeSelection();
+            }}
+            onClose={industrial.handleCloseMultiNodeContextMenu}
           />
         )}
 

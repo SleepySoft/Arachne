@@ -1,0 +1,143 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, GripVertical } from "lucide-react";
+import { ViewToolbar } from "@/components/ViewToolbar";
+import { GraphToolbar } from "@/components/GraphToolbar";
+import { ZoomSensitivitySlider } from "./ZoomSensitivitySlider";
+import { SavedView, WorkspaceType } from "@/types/view";
+
+interface CanvasToolbarProps {
+  workspace: WorkspaceType;
+  savedViews: {
+    viewsForWorkspace: (workspace: WorkspaceType) => SavedView[];
+    saveView: (
+      name: string,
+      workspace: WorkspaceType,
+      payload: Omit<SavedView, "id" | "created_at" | "updated_at">
+    ) => SavedView;
+    importViews: (file: File) => Promise<{ imported: number; skipped: number; errors: string[] }>;
+    exportViews: (views?: SavedView[]) => void;
+  };
+  onSaveView: (name: string) => Omit<SavedView, "id" | "created_at" | "updated_at"> | null;
+  onLoadView: (view: SavedView) => void;
+  onManageViews?: () => void;
+  zoomSensitivity?: number;
+  onZoomSensitivityChange?: (value: number) => void;
+}
+
+export function CanvasToolbar({
+  workspace,
+  savedViews,
+  onSaveView,
+  onLoadView,
+  onManageViews,
+  zoomSensitivity,
+  onZoomSensitivityChange,
+}: CanvasToolbarProps) {
+  const [collapsed, setCollapsed] = useState(false);
+  const [position, setPosition] = useState({ x: 12, y: 12 });
+  const [dragging, setDragging] = useState(false);
+  const dragOffsetRef = useRef({ x: 0, y: 0 });
+  const toolbarRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    // 只有左键能拖动
+    if (e.button !== 0) return;
+    // 避免点击按钮时触发拖动（事件从 drag handle 冒泡过来时已经过滤 target）
+    if (!(e.target as HTMLElement).closest("[data-drag-handle]")) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const rect = toolbarRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    dragOffsetRef.current = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
+    setDragging(true);
+  }, []);
+
+  useEffect(() => {
+    if (!dragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      setPosition({
+        x: e.clientX - dragOffsetRef.current.x,
+        y: e.clientY - dragOffsetRef.current.y,
+      });
+    };
+
+    const handleMouseUp = () => {
+      setDragging(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [dragging]);
+
+  return (
+    <div
+      ref={toolbarRef}
+      className={`absolute z-20 flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-900/90 p-1 shadow-lg backdrop-blur ${
+        dragging ? "cursor-grabbing" : "cursor-default"
+      }`}
+      style={{
+        left: position.x,
+        top: position.y,
+        userSelect: "none",
+      }}
+    >
+      <button
+        data-drag-handle
+        onMouseDown={handleMouseDown}
+        title="拖动工具栏"
+        className="flex cursor-grab items-center rounded-md p-1 text-slate-500 hover:bg-slate-800 hover:text-slate-300"
+      >
+        <GripVertical className="h-3.5 w-3.5" />
+      </button>
+
+      {!collapsed && (
+        <>
+          <div className="h-4 w-px bg-slate-700" />
+
+          <ViewToolbar
+            workspace={workspace}
+            variant="inline"
+            savedViews={savedViews}
+            onSave={onSaveView}
+            onLoad={onLoadView}
+            onManage={onManageViews}
+          />
+
+          <GraphToolbar variant="inline" />
+
+          {zoomSensitivity !== undefined && onZoomSensitivityChange && (
+            <>
+              <div className="h-4 w-px bg-slate-700" />
+              <ZoomSensitivitySlider
+                value={zoomSensitivity}
+                onChange={onZoomSensitivityChange}
+              />
+            </>
+          )}
+        </>
+      )}
+
+      <button
+        onClick={() => setCollapsed((v) => !v)}
+        title={collapsed ? "展开工具栏" : "收起工具栏"}
+        className="flex items-center rounded-md p-1 text-slate-500 hover:bg-slate-800 hover:text-slate-300"
+      >
+        {collapsed ? (
+          <ChevronRight className="h-3.5 w-3.5" />
+        ) : (
+          <ChevronLeft className="h-3.5 w-3.5" />
+        )}
+      </button>
+    </div>
+  );
+}

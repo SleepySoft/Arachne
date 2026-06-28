@@ -1,52 +1,47 @@
-import { Link2, MousePointer2, RefreshCw } from "lucide-react";
-import { EditMode } from "./GraphCanvas";
+import type { ReactNode } from "react";
 
 interface GraphToolbarProps {
-  onRelayout?: () => void;
-  editMode?: EditMode;
-  onToggleEditMode?: () => void;
+  // 重排/连线功能暂不启用：
+  // - 重排会强制全局重新布局，破坏用户已调整好的节点位置与视角
+  // - 连线模式在复杂图上容易误触，后续再考虑更稳妥的入口
+  // onRelayout?: () => void;
+  // editMode?: "default" | "connect";
+  // onToggleEditMode?: () => void;
+  variant?: "boxed" | "inline";
 }
 
 export function GraphToolbar({
-  onRelayout,
-  editMode = "default",
-  onToggleEditMode,
+  // onRelayout,
+  // editMode = "default",
+  // onToggleEditMode,
+  variant = "boxed",
 }: GraphToolbarProps) {
+  // 当前所有工具按钮均已注释掉，保留组件作为未来扩展的插槽。
+  // 如需恢复，取消下面 JSX 中的注释，并恢复对应 props / imports。
+  const buttons: ReactNode[] = [];
+  /*
+  if (onRelayout) {
+    buttons.push(
+      <button key="relayout" onClick={onRelayout} title="重新布局" ...>
+        <RefreshCw className="h-3.5 w-3.5" />
+        <span>重排</span>
+      </button>
+    );
+  }
+  if (onToggleEditMode) {
+    buttons.push(...);
+  }
+  */
+
+  if (buttons.length === 0) return null;
+
+  if (variant === "inline") {
+    return <>{buttons}</>;
+  }
+
   return (
     <div className="absolute left-3 top-3 z-10 flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900/90 p-1.5 shadow-lg backdrop-blur">
-      {onRelayout && (
-        <button
-          onClick={onRelayout}
-          title="重新布局"
-          className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
-        >
-          <RefreshCw className="h-3.5 w-3.5" />
-          <span>重排</span>
-        </button>
-      )}
-      {onToggleEditMode && (
-        <button
-          onClick={onToggleEditMode}
-          title={editMode === "connect" ? "退出连线模式" : "进入连线模式"}
-          className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
-            editMode === "connect"
-              ? "bg-cyan-600/20 text-cyan-400 hover:bg-cyan-600/30"
-              : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
-          }`}
-        >
-          {editMode === "connect" ? (
-            <>
-              <Link2 className="h-3.5 w-3.5" />
-              <span>连线中…</span>
-            </>
-          ) : (
-            <>
-              <MousePointer2 className="h-3.5 w-3.5" />
-              <span>连线</span>
-            </>
-          )}
-        </button>
-      )}
+      {buttons}
     </div>
   );
 }

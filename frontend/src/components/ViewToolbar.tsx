@@ -4,6 +4,7 @@ import { SavedView, WorkspaceType } from "@/types/view";
 
 interface ViewToolbarProps {
   workspace: WorkspaceType;
+  variant?: "boxed" | "inline";
   savedViews: {
     viewsForWorkspace: (workspace: WorkspaceType) => SavedView[];
     saveView: (
@@ -19,7 +20,14 @@ interface ViewToolbarProps {
   onManage?: () => void;
 }
 
-export function ViewToolbar({ workspace, savedViews, onSave, onLoad, onManage }: ViewToolbarProps) {
+export function ViewToolbar({
+  workspace,
+  variant = "boxed",
+  savedViews,
+  onSave,
+  onLoad,
+  onManage,
+}: ViewToolbarProps) {
   const { viewsForWorkspace, saveView, importViews, exportViews } = savedViews;
   const views = viewsForWorkspace(workspace);
   const [open, setOpen] = useState(false);
@@ -48,71 +56,75 @@ export function ViewToolbar({ workspace, savedViews, onSave, onLoad, onManage }:
     [importViews]
   );
 
-  return (
-    <div className="relative">
-      <div className="flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-900/90 p-1 shadow-lg backdrop-blur">
-        <button
-          onClick={() => setSavePromptOpen(true)}
-          title="保存当前视图"
-          className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
-        >
-          <Save className="h-3.5 w-3.5" />
-          <span>保存</span>
-        </button>
+  const buttons = (
+    <>
+      <button
+        onClick={() => setSavePromptOpen(true)}
+        title="保存当前视图"
+        className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
+      >
+        <Save className="h-3.5 w-3.5" />
+        <span>保存</span>
+      </button>
 
-        <button
-          onClick={() => setOpen((v) => !v)}
-          title="载入视图"
-          className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
-        >
-          <FolderOpen className="h-3.5 w-3.5" />
-          <span>载入</span>
-          {views.length > 0 && (
-            <span className="ml-0.5 rounded-full bg-slate-700 px-1.5 py-0 text-[10px] text-slate-300">
-              {views.length}
-            </span>
-          )}
-        </button>
-
-        <button
-          onClick={() => exportViews(views)}
-          title="导出视图"
-          className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
-        >
-          <Download className="h-3.5 w-3.5" />
-          <span>导出</span>
-        </button>
-
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          title="导入视图"
-          className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
-        >
-          <Upload className="h-3.5 w-3.5" />
-          <span>导入</span>
-        </button>
-        {onManage && (
-          <button
-            onClick={() => {
-              setOpen(false);
-              onManage();
-            }}
-            title="管理视图"
-            className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
-          >
-            <Settings2 className="h-3.5 w-3.5" />
-            <span>管理</span>
-          </button>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        title="载入视图"
+        className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
+      >
+        <FolderOpen className="h-3.5 w-3.5" />
+        <span>载入</span>
+        {views.length > 0 && (
+          <span className="ml-0.5 rounded-full bg-slate-700 px-1.5 py-0 text-[10px] text-slate-300">
+            {views.length}
+          </span>
         )}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="application/json"
-          className="hidden"
-          onChange={handleImport}
-        />
-      </div>
+      </button>
 
+      <button
+        onClick={() => exportViews(views)}
+        title="导出视图"
+        className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
+      >
+        <Download className="h-3.5 w-3.5" />
+        <span>导出</span>
+      </button>
+
+      <button
+        onClick={() => fileInputRef.current?.click()}
+        title="导入视图"
+        className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
+      >
+        <Upload className="h-3.5 w-3.5" />
+        <span>导入</span>
+      </button>
+
+      {onManage && (
+        <button
+          onClick={() => {
+            setOpen(false);
+            onManage();
+          }}
+          title="管理视图"
+          className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200"
+        >
+          <Settings2 className="h-3.5 w-3.5" />
+          <span>管理</span>
+        </button>
+      )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/json"
+        className="hidden"
+        onChange={handleImport}
+      />
+    </>
+  );
+
+  const dropdowns = (
+    <>
       {open && (
         <div className="absolute left-0 top-full z-50 mt-2 w-64 rounded-lg border border-slate-700 bg-slate-900/95 p-2 shadow-xl backdrop-blur">
           <div className="mb-1 px-1 text-xs font-medium text-slate-400">已保存视图</div>
@@ -180,7 +192,24 @@ export function ViewToolbar({ workspace, savedViews, onSave, onLoad, onManage }:
           </div>
         </div>
       )}
+    </>
+  );
 
+  if (variant === "inline") {
+    return (
+      <div className="relative flex items-center gap-1">
+        {buttons}
+        {dropdowns}
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <div className="flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-900/90 p-1 shadow-lg backdrop-blur">
+        {buttons}
+      </div>
+      {dropdowns}
     </div>
   );
 }

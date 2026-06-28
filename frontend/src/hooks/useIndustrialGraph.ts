@@ -69,6 +69,12 @@ export function useIndustrialGraph() {
     y: number;
     edge: GraphEdge | null;
   }>({ visible: false, x: 0, y: 0, edge: null });
+  const [multiNodeContextMenu, setMultiNodeContextMenu] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    nodes: IndustrialNode[];
+  }>({ visible: false, x: 0, y: 0, nodes: [] });
   const [pendingNodePosition, setPendingNodePosition] = useState<{
     x: number;
     y: number;
@@ -87,6 +93,7 @@ export function useIndustrialGraph() {
     string[] | undefined
   >(undefined);
   const [expandedProcessParents, setExpandedProcessParents] = useState<string[]>([]);
+  const [wheelSensitivity, setWheelSensitivity] = useState<number>(0.1);
 
   const nav = useNodeNavigation();
 
@@ -132,6 +139,7 @@ export function useIndustrialGraph() {
     setContextMenu((prev) => ({ ...prev, visible: false }));
     setCanvasMenu((prev) => ({ ...prev, visible: false }));
     setEdgeMenu((prev) => ({ ...prev, visible: false }));
+    setMultiNodeContextMenu((prev) => ({ ...prev, visible: false }));
   }, [closePanel]);
 
   const handleNavBack = useCallback(() => {
@@ -323,6 +331,20 @@ export function useIndustrialGraph() {
     setEdgeMenu({ visible: false, x: 0, y: 0, edge: null });
   }, []);
 
+  const handleMultiNodeContextMenu = useCallback(
+    (nodes: IndustrialNode[], x: number, y: number) => {
+      setMultiNodeContextMenu({ visible: true, x, y, nodes });
+      setContextMenu((prev) => ({ ...prev, visible: false }));
+      setCanvasMenu((prev) => ({ ...prev, visible: false }));
+      setEdgeMenu({ visible: false, x: 0, y: 0, edge: null });
+    },
+    []
+  );
+
+  const handleCloseMultiNodeContextMenu = useCallback(() => {
+    setMultiNodeContextMenu((prev) => ({ ...prev, visible: false }));
+  }, []);
+
   const handleConnectSourceSelect = useCallback(
     (node: IndustrialNode | null, position?: { x: number; y: number }) => {
       setConnectSource(node);
@@ -444,6 +466,8 @@ export function useIndustrialGraph() {
     expandedProcessParents,
     setExpandedProcessParents,
     toggleProcessParent,
+    wheelSensitivity,
+    setWheelSensitivity,
     isProcessParentExpanded,
     canvasMenu,
     setCanvasMenu,
@@ -453,6 +477,10 @@ export function useIndustrialGraph() {
     setEdgeMenu,
     handleEdgeContextMenu,
     handleCloseEdgeMenu,
+    multiNodeContextMenu,
+    setMultiNodeContextMenu,
+    handleMultiNodeContextMenu,
+    handleCloseMultiNodeContextMenu,
     pendingNodePosition,
     setPendingNodePosition,
     pendingEdgePrefill,
