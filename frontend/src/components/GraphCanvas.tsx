@@ -1046,68 +1046,102 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         .filter((n) => n.length > 0 && !n.hasClass("hidden") && !selectedSet.has(n.data("parent")));
       if (nodes.length < 2) return;
 
-      const iterations = 60;
-      const repulsion = 6000;
-      const springK = 0.03;
-      const damping = 0.8;
+      // 软斥力参数：目标间距、刚度、最大单步速度
+      const iterations = 120;
+      const targetDist = 100;
+      const repulsionK = 0.08;
+      const centerAttraction = 0.015;
+      const anchorK = 0.025;
+      const damping = 0.88;
+      const maxSpeed = 18;
 
       const originalPos = new Map<string, { x: number; y: number }>();
       const pos = new Map<string, { x: number; y: number }>();
       const vel = new Map<string, { x: number; y: number }>();
+      let centroid = { x: 0, y: 0 };
       nodes.forEach((n) => {
         const p = { ...n.position() };
         originalPos.set(n.id(), p);
         pos.set(n.id(), p);
         vel.set(n.id(), { x: 0, y: 0 });
+        centroid.x += p.x;
+        centroid.y += p.y;
       });
+      centroid.x /= nodes.length;
+      centroid.y /= nodes.length;
+
+      // 限制在视口内，留出边距
+      const extent = cy.extent();
+      const margin = 60;
+      const boundMinX = extent.x1 + margin;
+      const boundMaxX = extent.x2 - margin;
+      const boundMinY = extent.y1 + margin;
+      const boundMaxY = extent.y2 - margin;
 
       for (let i = 0; i < iterations; i++) {
-        // 节点间斥力
+        // 节点间软斥力：只在距离小于目标间距时推开，力度与重叠量成正比
         for (let a = 0; a < nodes.length; a++) {
           for (let b = a + 1; b < nodes.length; b++) {
             const na = nodes[a];
             const nb = nodes[b];
             const pa = pos.get(na.id())!;
             const pb = pos.get(nb.id())!;
-            const dx = pa.x - pb.x;
-            const dy = pa.y - pb.y;
-            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-            const force = repulsion / (dist * dist);
-            const fx = (dx / dist) * force;
-            const fy = (dy / dist) * force;
-            const va = vel.get(na.id())!;
-            const vb = vel.get(nb.id())!;
-            va.x += fx;
-            va.y += fy;
-            vb.x -= fx;
-            vb.y -= fy;
+            let dx = pa.x - pb.x;
+            let dy = pa.y - pb.y;
+            let dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 0.001) {
+              const angle = Math.random() * 2 * Math.PI;
+              dx = Math.cos(angle);
+              dy = Math.sin(angle);
+              dist = 0.001;
+            }
+            if (dist < targetDist) {
+              const force = (targetDist - dist) * repulsionK;
+              const fx = (dx / dist) * force;
+              const fy = (dy / dist) * force;
+              const va = vel.get(na.id())!;
+              const vb = vel.get(nb.id())!;
+              va.x += fx;
+              va.y += fy;
+              vb.x -= fx;
+              vb.y -= fy;
+            }
           }
         }
 
-        // 弱弹簧拉回原始位置，防止整体漂移
+        // 弱中心吸引力 + 锚点弹簧，防止整体漂移并温柔地保持原位置
         nodes.forEach((n) => {
           const p = pos.get(n.id())!;
           const orig = originalPos.get(n.id())!;
           const v = vel.get(n.id())!;
-          v.x += (orig.x - p.x) * springK;
-          v.y += (orig.y - p.y) * springK;
+          v.x += (centroid.x - p.x) * centerAttraction;
+          v.y += (centroid.y - p.y) * centerAttraction;
+          v.x += (orig.x - p.x) * anchorK;
+          v.y += (orig.y - p.y) * anchorK;
         });
 
-        // 应用速度
+        // 应用速度并限制最大速度，最后 clamp 到视口
         nodes.forEach((n) => {
           const v = vel.get(n.id())!;
           v.x *= damping;
           v.y *= damping;
+          const speed = Math.sqrt(v.x * v.x + v.y * v.y) || 1;
+          if (speed > maxSpeed) {
+            v.x = (v.x / speed) * maxSpeed;
+            v.y = (v.y / speed) * maxSpeed;
+          }
           const p = pos.get(n.id())!;
           p.x += v.x;
           p.y += v.y;
+          p.x = Math.max(boundMinX, Math.min(boundMaxX, p.x));
+          p.y = Math.max(boundMinY, Math.min(boundMaxY, p.y));
         });
       }
 
       // 动画移动到最终位置，不改变相机
       nodes.forEach((n) => {
         const target = pos.get(n.id())!;
-        n.animate({ position: target }, { duration: 250, easing: "ease-out" });
+        n.animate({ position: target }, { duration: 300, easing: "ease-out" });
       });
     },
     pullNeighborsIntoView: (nodeId, direction) => {
