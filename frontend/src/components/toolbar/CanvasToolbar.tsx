@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, GripVertical } from "lucide-react";
 import { ViewToolbar } from "@/components/ViewToolbar";
 import { GraphToolbar } from "@/components/GraphToolbar";
@@ -24,6 +24,10 @@ interface CanvasToolbarProps {
   onZoomSensitivityChange?: (value: number) => void;
 }
 
+// 收起/展开后始终保留可见的最小区域（像素），确保能被拖回来
+const MIN_VISIBLE_W = 60;
+const MIN_VISIBLE_H = 28;
+
 export function CanvasToolbar({
   workspace,
   savedViews,
@@ -38,6 +42,33 @@ export function CanvasToolbar({
   const [dragging, setDragging] = useState(false);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
   const toolbarRef = useRef<HTMLDivElement>(null);
+
+  const clampPosition = useCallback((pos: { x: number; y: number }): { x: number; y: number } => {
+    const toolbar = toolbarRef.current;
+    const container = toolbar?.parentElement;
+    if (!toolbar || !container) return pos;
+
+    const containerW = container.clientWidth;
+    const containerH = container.clientHeight;
+    const toolbarW = toolbar.offsetWidth;
+    const toolbarH = toolbar.offsetHeight;
+
+    // 容器很小时，允许工具栏部分移出，但要保留最小可见区域
+    const minX = Math.min(0, containerW - MIN_VISIBLE_W);
+    const minY = Math.min(0, containerH - MIN_VISIBLE_H);
+    const maxX = containerW - toolbarW;
+    const maxY = containerH - toolbarH;
+
+    return {
+      x: Math.max(minX, Math.min(maxX, pos.x)),
+      y: Math.max(minY, Math.min(maxY, pos.y)),
+    };
+  }, []);
+
+  // 收起/展开或窗口大小变化时，确保工具栏仍在可见区域
+  useLayoutEffect(() => {
+    setPosition((prev) => clampPosition(prev));
+  }, [collapsed, clampPosition]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     // 只有左键能拖动
@@ -61,10 +92,14 @@ export function CanvasToolbar({
     if (!dragging) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      setPosition({
-        x: e.clientX - dragOffsetRef.current.x,
-        y: e.clientY - dragOffsetRef.current.y,
-      });
+      const container = toolbarRef.current?.parentElement;
+      if (!container) return;
+      const containerRect = container.getBoundingClientRect();
+      const raw = {
+        x: e.clientX - containerRect.left - dragOffsetRef.current.x,
+        y: e.clientY - containerRect.top - dragOffsetRef.current.y,
+      };
+      setPosition(clampPosition(raw));
     };
 
     const handleMouseUp = () => {
@@ -77,7 +112,7 @@ export function CanvasToolbar({
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [dragging]);
+  }, [dragging, clampPosition]);
 
   return (
     <div
