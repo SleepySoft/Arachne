@@ -80,18 +80,29 @@ function layoutExpandedCompound(
   const dragPos = dragPositions?.get(parentId);
   const center = dragPos ? { ...dragPos } : { ...parent.position() };
   const children = parent.children();
+  // In focus/hide mode most children may be hidden. Laying them out at the
+  // parent center keeps the compound container tight and avoids a giant group
+  // box when only one or two children are actually visible.
+  const visibleChildren = children.filter((c) => !c.hasClass("hidden"));
+  const hiddenChildren = children.filter((c) => c.hasClass("hidden"));
   // eslint-disable-next-line no-console
-  console.log("[layoutExpandedCompound] parentId:", parentId, "dragPos:", dragPos, "center:", center, "children:", children.length);
-  const count = children.length;
-  if (count === 0) return;
-  const radius = Math.max(160, count * 38);
-  const angleStep = (2 * Math.PI) / count;
-  children.forEach((child, index) => {
-    const angle = index * angleStep;
-    child.position({
-      x: center.x + radius * Math.cos(angle),
-      y: center.y + radius * Math.sin(angle),
+  console.log("[layoutExpandedCompound] parentId:", parentId, "dragPos:", dragPos, "center:", center, "visible:", visibleChildren.length, "hidden:", hiddenChildren.length);
+  const count = visibleChildren.length;
+  if (count > 0) {
+    const radius = Math.max(160, count * 38);
+    const angleStep = (2 * Math.PI) / count;
+    visibleChildren.forEach((child, index) => {
+      const angle = index * angleStep;
+      child.position({
+        x: center.x + radius * Math.cos(angle),
+        y: center.y + radius * Math.sin(angle),
+      });
     });
+  }
+  // Keep hidden children stacked at the parent center so they don't inflate the
+  // compound parent's bounding box or pull the camera during focus reveal.
+  hiddenChildren.forEach((child) => {
+    child.position({ x: center.x, y: center.y });
   });
   // 把父节点固定到布局中心，防止 Cytoscape 自动把它拉到子节点旧位置
   parent.position(center);
