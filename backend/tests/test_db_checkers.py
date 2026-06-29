@@ -26,6 +26,7 @@ def test_registered_checkers():
         "alias_of_description",
         "unknown_entity_type",
         "missing_industrial_flow_description",
+        "edge_namespace_consistency",
     }
     assert expected.issubset(ids)
 
@@ -34,6 +35,15 @@ def test_registered_checkers():
 async def test_duplicate_edges_checker_runs():
     """DuplicateEdgesChecker 应能运行且不抛异常（结果取决于数据库内容）。"""
     checker = db_checkers.get_checker("duplicate_edges")
+    assert checker is not None
+    issues = await checker.run()
+    assert isinstance(issues, list)
+
+
+@pytest.mark.asyncio
+async def test_edge_namespace_consistency_checker_runs():
+    """EdgeNamespaceConsistencyChecker 应能运行且不抛异常（结果取决于数据库内容）。"""
+    checker = db_checkers.get_checker("edge_namespace_consistency")
     assert checker is not None
     issues = await checker.run()
     assert isinstance(issues, list)

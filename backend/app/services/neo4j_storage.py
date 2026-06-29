@@ -112,7 +112,17 @@ def _edge_from_record(record) -> GraphEdge:
     rel = dict(record["r"])
     start = record["start_node"]
     end = record["end_node"]
-    ns = rel.get("edge_namespace", "industrial_flow")
+    # Use the canonical Neo4j relationship type as the source of truth for the
+    # namespace. The `edge_namespace` property is kept for compatibility and
+    # query convenience, but a missing or mismatched property must not cause
+    # the parser to misclassify an ontology edge as an industrial-flow edge.
+    rel_type = record["r"].type
+    ns = "industrial_flow" if rel_type == "INDUSTRIAL_FLOW" else "ontology"
+    prop_ns = rel.get("edge_namespace")
+    if prop_ns and prop_ns != ns:
+        # Mismatched property: trust the relationship type and surface the
+        # inconsistency via the description so it can be detected/cleaned.
+        rel["description"] = f"[ns-mismatch: edge_namespace={prop_ns} vs type={rel_type}] {rel.get('description') or ''}".strip()
     evidence = _evidence_from_db(rel.get("evidence", []))
     confidence = rel.get("confidence", "LOW")
     # Downgrade HIGH confidence if no evidence for backward compatibility with old data

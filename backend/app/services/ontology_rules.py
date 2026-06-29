@@ -347,6 +347,18 @@ ONTOLOGY_RULES: List[OntologyRule] = [
         examples=["某公司的核心产品暴露指向 status=PENDING 的节点"],
         checker_id="company_exposure_inactive_node",
     ),
+    OntologyRule(
+        rule_id="R25",
+        title="边 edge_namespace 必须与 Neo4j 关系类型一致",
+        description=":INDUSTRIAL_FLOW 与 :ONTOLOGY 关系必须携带 edge_namespace 属性，且该属性必须与实际关系类型一致（INDUSTRIAL_FLOW → industrial_flow，ONTOLOGY → ontology）。",
+        severity=Severity.ERROR,
+        category=RuleCategory.EDGE,
+        group=RuleGroup.TOPOLOGY,
+        fixable=True,
+        rationale="_edge_from_record 依赖 edge_namespace 选择 Pydantic 子类；缺失或错误会导致 ontology 边被误解析为 IndustrialFlowEdge，触发 ValidationError 和 500。",
+        examples=["ONTOLOGY 关系缺少 edge_namespace，被默认解析为 industrial_flow"],
+        checker_id="edge_namespace_consistency",
+    ),
 ]
 
 

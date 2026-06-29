@@ -1155,5 +1155,126 @@ class EntityDomainBoundaryChecker(Checker):
         )
 
 
+@register_checker
+class EdgeNamespaceConsistencyChecker(Checker):
+    """边 edge_namespace 属性必须与 Neo4j 关系类型一致。"""
+
+    check_id = "edge_namespace_consistency"
+    name = "边 namespace 一致性"
+    description = (
+        "检测 :INDUSTRIAL_FLOW / :ONTOLOGY 关系是否缺失 edge_namespace 属性，"
+        "或 edge_namespace 与实际关系类型不一致。"
+    )
+    severity = Severity.ERROR
+    fixable = True
+
+    def __init__(self):
+        rule = get_rule_by_checker(self.check_id)
+        if rule:
+            self.name = rule.title
+            self.description = rule.description
+            self.severity = Severity(rule.severity.value)
+            self.fixable = rule.fixable
+
+    async def run(self) -> List[CheckIssue]:
+        driver = get_async_driver()
+        issues: List[CheckIssue] = []
+        async with driver.session() as s:
+            result = await s.run(
+                """
+                MATCH ()-[r:INDUSTRIAL_FLOW|ONTOLOGY]->()
+                WITH r,
+                     type(r) AS rel_type,
+                     r.edge_namespace AS prop_ns,
+                     CASE type(r)
+                         WHEN 'INDUSTRIAL_FLOW' THEN 'industrial_flow'
+                         WHEN 'ONTOLOGY' THEN 'ontology'
+                     END AS expected_ns
+                WHERE prop_ns IS NULL OR prop_ns <> expected_ns
+                RETURN elementId(r) AS rel_id,
+                       r.edge_id AS edge_id,
+                       startNode(r).node_id AS from_node,
+                       endNode(r).node_id AS to_node,
+                       rel_type,
+                       prop_ns,
+                       expected_ns,
+                       r.edge_type AS edge_type
+                ORDER BY edge_id
+                """
+            )
+            async for rec in result:
+                if rec["prop_ns"] is None:
+                    title = "边缺少 edge_namespace 属性"
+                    summary = (
+                        f"关系 `{rec['edge_id']}` ({rec['from_node']} -> {rec['to_node']}) "
+                        f"类型为 `{rec['rel_type']}`，但缺少 edge_namespace 属性，"
+                        f"解析时可能误分类为 industrial_flow 导致 500。"
+                    )
+                else:
+                    title = "边 edge_namespace 与关系类型不一致"
+                    summary = (
+                        f"关系 `{rec['edge_id']}` ({rec['from_node']} -> {rec['to_node']}) "
+                        f"类型为 `{rec['rel_type']}`，但 edge_namespace='{rec['prop_ns']}'，"
+                        f"应为 '{rec['expected_ns']}'。"
+                    )
+                issues.append(
+                    CheckIssue(
+                        issue_id=f"{self.check_id}:{rec['rel_id']}",
+                        check_id=self.check_id,
+                        severity=self.severity,
+                        title=title,
+                        summary=summary,
+                        details={
+                            "rel_id": rec["rel_id"],
+                            "edge_id": rec["edge_id"],
+                            "from_node": rec["from_node"],
+                            "to_node": rec["to_node"],
+                            "rel_type": rec["rel_type"],
+                            "edge_namespace": rec["prop_ns"],
+                            "expected_namespace": rec["expected_ns"],
+                            "edge_type": rec["edge_type"],
+                        },
+                        affected_ids=[rec["edge_id"], rec["from_node"], rec["to_node"]],
+                        fixable=True,
+                    )
+                )
+        return issues
+
+    async def fix(self, issues: List[CheckIssue]) -> FixResult:
+        fixed = 0
+        skipped = 0
+        messages = []
+        driver = get_async_driver()
+        async with driver.session() as s:
+            for issue in issues:
+                rel_id = issue.details.get("rel_id")
+                expected = issue.details.get("expected_namespace")
+                if not rel_id or not expected:
+                    skipped += 1
+                    continue
+                result = await s.run(
+                    """
+                    MATCH ()-[r:INDUSTRIAL_FLOW|ONTOLOGY]->()
+                    WHERE elementId(r) = $rel_id
+                    SET r.edge_namespace = $expected
+                    RETURN count(r) AS cnt
+                    """,
+                    {"rel_id": rel_id, "expected": expected},
+                )
+                rec = await result.single()
+                cnt = rec["cnt"] if rec else 0
+                if cnt:
+                    fixed += 1
+                else:
+                    skipped += 1
+        messages.append(f"已修复 {fixed} 条边，跳过 {skipped} 条边")
+        return FixResult(
+            check_id=self.check_id,
+            fixed_count=fixed,
+            skipped_count=skipped,
+            messages=messages,
+        )
+
+
 # Note: device-to-product direct edge checking is now covered by input_to_product_direct_edge
 # (R17) which includes material/device/technology_capability -> product flows.
