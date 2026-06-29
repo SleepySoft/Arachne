@@ -94,6 +94,25 @@ export function useIndustrialGraph() {
   >(undefined);
   const [expandedProcessParents, setExpandedProcessParents] = useState<string[]>([]);
   const [wheelSensitivity, setWheelSensitivity] = useState<number>(0.1);
+  const [focusState, setFocusState] = useState<import("@/types/view").FocusState>({
+    active: false,
+    seedNodeIds: [],
+    visibleNodeIds: [],
+    history: [],
+  });
+
+  const setFocusActive = useCallback((active: boolean) => {
+    setFocusState((prev) => ({ ...prev, active }));
+  }, []);
+
+  const clearFocusState = useCallback(() => {
+    setFocusState({
+      active: false,
+      seedNodeIds: [],
+      visibleNodeIds: [],
+      history: [],
+    });
+  }, []);
 
   const nav = useNodeNavigation();
 
@@ -469,6 +488,10 @@ export function useIndustrialGraph() {
     wheelSensitivity,
     setWheelSensitivity,
     isProcessParentExpanded,
+    focusState,
+    setFocusState,
+    setFocusActive,
+    clearFocusState,
     canvasMenu,
     setCanvasMenu,
     handleCanvasContextMenu,

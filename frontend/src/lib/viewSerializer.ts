@@ -10,6 +10,7 @@ import {
   CompanyViewState,
   CameraState,
   NodePositions,
+  FocusState,
 } from "@/types/view";
 
 export interface GraphCameraController {
@@ -24,6 +25,7 @@ export interface IndustrialSnapshotDeps {
   selectedCompanies: Company[];
   activeFilters: IndustrialViewState["activeFilters"];
   expandedProcessParents: string[];
+  focusState: FocusState;
   canvasRef: React.RefObject<GraphCameraController | null>;
 }
 
@@ -35,6 +37,7 @@ export interface IndustrialRestoreDeps {
   setGraphKey: (fn: (k: number) => number) => void;
   setSubgraphData: (data: { nodes: IndustrialNode[]; edges: GraphEdge[] } | undefined) => void;
   setHighlightNodeIds: (ids: string[] | undefined) => void;
+  setFocusState: (state: FocusState) => void;
   allIndustries: Industry[];
   allCompanies: Company[];
   onSetRestored: (state: IndustrialViewState) => void;
@@ -83,6 +86,14 @@ export function buildIndustrialSnapshot(
       expandedProcessParentIds: [...deps.expandedProcessParents],
       camera: camera ?? { pan: { x: 0, y: 0 }, zoom: 1 },
       nodePositions: nodePositions && Object.keys(nodePositions).length > 0 ? nodePositions : undefined,
+      focus: deps.focusState.active
+        ? {
+            active: deps.focusState.active,
+            seedNodeIds: [...deps.focusState.seedNodeIds],
+            visibleNodeIds: [...deps.focusState.visibleNodeIds],
+            history: deps.focusState.history.map((h) => ({ ...h, addedNodeIds: [...h.addedNodeIds] })),
+          }
+        : undefined,
     },
   };
 }
@@ -123,6 +134,28 @@ export function applyIndustrialSnapshot(
   deps.setExpandedProcessParents([...state.expandedProcessParentIds]);
   deps.setSelectedIndustries(foundIndustries);
   deps.setSelectedCompanies(foundCompanies);
+
+  // Restore focus state, filtering out missing node IDs
+  if (state.focus?.active) {
+    // We don't have direct access to current graph nodes here; the canvas will
+    // trim missing IDs on its own when applying focus. We just restore the state.
+    deps.setFocusState({
+      active: true,
+      seedNodeIds: state.focus.seedNodeIds,
+      visibleNodeIds: state.focus.visibleNodeIds,
+      history: state.focus.history.map((h) => ({
+        ...h,
+        addedNodeIds: [...h.addedNodeIds],
+      })),
+    });
+  } else {
+    deps.setFocusState({
+      active: false,
+      seedNodeIds: [],
+      visibleNodeIds: [],
+      history: [],
+    });
+  }
 
   // Bump graph key to force canvas re-init with the new merged subgraph / full graph.
   deps.setGraphKey((k) => k + 1);

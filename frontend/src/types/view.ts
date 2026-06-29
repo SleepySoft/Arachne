@@ -21,6 +21,20 @@ export interface IndustrialFiltersState {
   showWeakOntology: boolean;
 }
 
+export interface FocusStep {
+  nodeId: string;
+  direction: "upstream" | "downstream" | "both";
+  depthAdded: number;
+  addedNodeIds: string[];
+}
+
+export interface FocusState {
+  active: boolean;
+  seedNodeIds: string[];
+  visibleNodeIds: string[];
+  history: FocusStep[];
+}
+
 export interface IndustrialViewState {
   selectedIndustryIds: string[];
   selectedCompanyIds: string[];
@@ -28,6 +42,7 @@ export interface IndustrialViewState {
   expandedProcessParentIds: string[];
   camera: CameraState;
   nodePositions?: NodePositions;
+  focus?: FocusState;
 }
 
 export interface CompanyViewState {

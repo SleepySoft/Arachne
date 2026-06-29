@@ -4,6 +4,7 @@ import { DbChecksPage } from "@/pages/DbChecksPage";
 import { Layout } from "@/components/Layout";
 import { GraphCanvas, GraphCanvasRef } from "@/components/GraphCanvas";
 import { CanvasToolbar } from "@/components/toolbar/CanvasToolbar";
+import { FocusControlPanel } from "@/components/FocusControlPanel";
 import { ViewManagerModal } from "@/components/ViewManagerModal";
 import { CompanyNetworkCanvas, CompanyNetworkCanvasRef } from "@/components/CompanyNetworkCanvas";
 import { ExplorationCanvas, ExplorationCanvasRef } from "@/components/ExplorationCanvas";
@@ -102,6 +103,12 @@ export default function App() {
           selectedCompanies: industrial.selectedCompanies,
           activeFilters: industrial.activeFilters,
           expandedProcessParents: industrial.expandedProcessParents,
+          focusState: graphCanvasRef.current?.getFocusState() ?? {
+            active: false,
+            seedNodeIds: [],
+            visibleNodeIds: [],
+            history: [],
+          },
           canvasRef: graphCanvasRef,
         },
         name.trim()
@@ -304,6 +311,12 @@ export default function App() {
             wheelSensitivity={industrial.wheelSensitivity}
             restoredPositions={industrialViewToRestore?.nodePositions}
             restoredCamera={industrialViewToRestore?.camera}
+            focusState={industrial.focusState}
+            onFocusChange={industrial.setFocusState}
+          />
+          <FocusControlPanel
+            graphCanvasRef={graphCanvasRef}
+            focusState={industrial.focusState}
           />
           <CanvasToolbar
             workspace="industrial"
@@ -315,6 +328,12 @@ export default function App() {
                   selectedCompanies: industrial.selectedCompanies,
                   activeFilters: industrial.activeFilters,
                   expandedProcessParents: industrial.expandedProcessParents,
+                  focusState: graphCanvasRef.current?.getFocusState() ?? {
+                    active: false,
+                    seedNodeIds: [],
+                    visibleNodeIds: [],
+                    history: [],
+                  },
                   canvasRef: graphCanvasRef,
                 },
                 name
@@ -326,6 +345,7 @@ export default function App() {
                 setSelectedCompanies: industrial.setSelectedCompanies,
                 setActiveFilters: industrial.setActiveFilters,
                 setExpandedProcessParents: industrial.setExpandedProcessParents,
+                setFocusState: industrial.setFocusState,
                 setGraphKey: industrial.setGraphKey,
                 setSubgraphData: industrial.setSubgraphData,
                 setHighlightNodeIds: industrial.setHighlightNodeIds,
@@ -552,12 +572,22 @@ export default function App() {
             }}
             onShowUpstream={() => {
               const node = industrial.contextMenu.node;
-              if (node) graphCanvasRef.current?.showNeighbors(node.node_id, "upstream");
+              if (!node) return;
+              if (industrial.focusState.active) {
+                graphCanvasRef.current?.revealNeighbors(node.node_id, "upstream", 1);
+              } else {
+                graphCanvasRef.current?.showNeighbors(node.node_id, "upstream");
+              }
               industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
             }}
             onShowDownstream={() => {
               const node = industrial.contextMenu.node;
-              if (node) graphCanvasRef.current?.showNeighbors(node.node_id, "downstream");
+              if (!node) return;
+              if (industrial.focusState.active) {
+                graphCanvasRef.current?.revealNeighbors(node.node_id, "downstream", 1);
+              } else {
+                graphCanvasRef.current?.showNeighbors(node.node_id, "downstream");
+              }
               industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
             }}
             onHighlightUpstream={() => {
@@ -601,6 +631,12 @@ export default function App() {
               }
               industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
             }}
+            inFocusMode={industrial.focusState.active}
+            onFocusNode={() => {
+              const node = industrial.contextMenu.node;
+              if (node) graphCanvasRef.current?.enterFocus([node.node_id]);
+            }}
+            onExitFocus={() => graphCanvasRef.current?.exitFocus()}
             onClose={() =>
               industrial.setContextMenu((prev) => ({ ...prev, visible: false }))
             }
@@ -620,6 +656,12 @@ export default function App() {
             }}
             onClearSelection={() => {
               graphCanvasRef.current?.clearNodeSelection();
+            }}
+            onFocusSelected={() => {
+              const nodes = industrial.multiNodeContextMenu.nodes;
+              if (nodes.length > 0) {
+                graphCanvasRef.current?.enterFocus(nodes.map((n) => n.node_id));
+              }
             }}
             onClose={industrial.handleCloseMultiNodeContextMenu}
           />
@@ -767,6 +809,7 @@ export default function App() {
                 setSelectedCompanies: industrial.setSelectedCompanies,
                 setActiveFilters: industrial.setActiveFilters,
                 setExpandedProcessParents: industrial.setExpandedProcessParents,
+                setFocusState: industrial.setFocusState,
                 setGraphKey: industrial.setGraphKey,
                 setSubgraphData: industrial.setSubgraphData,
                 setHighlightNodeIds: industrial.setHighlightNodeIds,

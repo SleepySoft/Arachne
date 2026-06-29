@@ -27,6 +27,11 @@ interface NodeContextMenuProps {
   isGroup?: boolean;
   isExpanded?: boolean;
   onToggleGroup?: () => void;
+  inFocusMode?: boolean;
+  onFocusNode?: () => void;
+  onRevealUpstream?: () => void;
+  onRevealDownstream?: () => void;
+  onExitFocus?: () => void;
 }
 
 export function NodeContextMenu({
@@ -45,6 +50,11 @@ export function NodeContextMenu({
   isGroup = false,
   isExpanded = false,
   onToggleGroup,
+  inFocusMode = false,
+  onFocusNode,
+  onRevealUpstream,
+  onRevealDownstream,
+  onExitFocus,
 }: NodeContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -108,6 +118,59 @@ export function NodeContextMenu({
             </button>
           )}
           {isGroup && <div className="my-1 border-t border-slate-700" />}
+          {!inFocusMode && onFocusNode && (
+            <button
+              onClick={() => {
+                onFocusNode();
+                onClose();
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+            >
+              <Eye size={14} className="text-cyan-400" />
+              聚焦此节点
+            </button>
+          )}
+          {inFocusMode && (
+            <>
+              {onRevealUpstream && (
+                <button
+                  onClick={() => {
+                    onRevealUpstream();
+                    onClose();
+                  }}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+                >
+                  <ArrowUp size={14} className="text-emerald-400" />
+                  展开上游一层
+                </button>
+              )}
+              {onRevealDownstream && (
+                <button
+                  onClick={() => {
+                    onRevealDownstream();
+                    onClose();
+                  }}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+                >
+                  <ArrowDown size={14} className="text-emerald-400" />
+                  展开下游一层
+                </button>
+              )}
+              {onExitFocus && (
+                <button
+                  onClick={() => {
+                    onExitFocus();
+                    onClose();
+                  }}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+                >
+                  <X size={14} className="text-red-400" />
+                  退出聚焦
+                </button>
+              )}
+            </>
+          )}
+          <div className="my-1 border-t border-slate-700" />
           <button
             onClick={() => {
               onShowUpstream();
@@ -116,7 +179,7 @@ export function NodeContextMenu({
             className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
           >
             <ArrowUp size={14} className="text-emerald-400" />
-            显示上游节点
+            {inFocusMode ? "展开上游一层" : "显示上游节点"}
           </button>
           <button
             onClick={() => {
@@ -126,7 +189,7 @@ export function NodeContextMenu({
             className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
           >
             <ArrowDown size={14} className="text-emerald-400" />
-            显示下游节点
+            {inFocusMode ? "展开下游一层" : "显示下游节点"}
           </button>
           <button
             onClick={() => {
