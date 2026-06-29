@@ -65,49 +65,82 @@ cytoscape.use(dagre);
  */
 
 /**
+ * 计算一组节点的包围盒中心
+ */
+function getBoundingBoxCenter(nodes: cytoscape.NodeCollection): cytoscape.Position | null {
+  if (nodes.length === 0) return null;
+  const bb = nodes.boundingBox({ includeLabels: false, includeOverlays: false });
+  return { x: (bb.x1 + bb.x2) / 2, y: (bb.y1 + bb.y2) / 2 };
+}
+
+/**
  * 混合布局：
  * 1. 先用 Dagre 对产业流（industrial_flow）做自上而下分层布局；
  * 2. 再对 ontology/is_a 关系做“环绕”修正，把子节点以同心圆方式排在父节点周围。
+ *
+ * 对已经展开过的复合组（子节点已有分散位置），只把父节点重新居中到子节点
+ * 包围盒，不强制把子节点拉成圆。只有首次展开或子节点还堆在一起时，才使用
+ * 径向布局。
  */
 function layoutExpandedCompound(
   cy: cytoscape.Core,
   parentId: string,
-  dragPositions?: Map<string, cytoscape.Position>
+  dragPositions?: Map<string, cytoscape.Position>,
+  forceRadial = false
 ) {
   if (!cy || (cy as unknown as { _private?: { destroyed?: boolean } })._private?.destroyed) return;
   const parent = cy.getElementById(parentId);
   if (parent.length === 0) return;
   const dragPos = dragPositions?.get(parentId);
-  const center = dragPos ? { ...dragPos } : { ...parent.position() };
+  const currentCenter = dragPos ? { ...dragPos } : { ...parent.position() };
   const children = parent.children();
   // In focus/hide mode most children may be hidden. Laying them out at the
   // parent center keeps the compound container tight and avoids a giant group
   // box when only one or two children are actually visible.
   const visibleChildren = children.filter((c) => !c.hasClass("hidden"));
   const hiddenChildren = children.filter((c) => c.hasClass("hidden"));
-  // eslint-disable-next-line no-console
-  console.log("[layoutExpandedCompound] parentId:", parentId, "dragPos:", dragPos, "center:", center, "visible:", visibleChildren.length, "hidden:", hiddenChildren.length);
   const count = visibleChildren.length;
+
+  // 判断子节点是否已经有分散的位置：计算可见子节点的包围盒跨度。
+  // 如果跨度很小（说明还堆在一起），则使用径向布局；否则保留现有位置。
+  let shouldPreserve = false;
+  if (count > 0 && !forceRadial) {
+    const bb = visibleChildren.boundingBox({ includeLabels: false, includeOverlays: false });
+    const spread = Math.max(bb.w, bb.h);
+    shouldPreserve = spread > 20;
+  }
+
   if (count > 0) {
-    const radius = Math.max(160, count * 38);
-    const angleStep = (2 * Math.PI) / count;
-    visibleChildren.forEach((child, index) => {
-      const angle = index * angleStep;
-      child.position({
-        x: center.x + radius * Math.cos(angle),
-        y: center.y + radius * Math.sin(angle),
+    if (shouldPreserve) {
+      // 子节点已有布局：保留它们的位置，把父节点移到包围盒中心
+      const childCenter = getBoundingBoxCenter(visibleChildren);
+      if (childCenter) {
+        parent.position(childCenter);
+      }
+    } else {
+      // 首次展开或子节点还堆在一起：使用径向布局
+      const radius = Math.max(160, count * 38);
+      const angleStep = (2 * Math.PI) / count;
+      visibleChildren.forEach((child, index) => {
+        const angle = index * angleStep;
+        child.position({
+          x: currentCenter.x + radius * Math.cos(angle),
+          y: currentCenter.y + radius * Math.sin(angle),
+        });
       });
-    });
+      parent.position(currentCenter);
+    }
   }
   // Keep hidden children stacked at the parent center so they don't inflate the
   // compound parent's bounding box or pull the camera during focus reveal.
+  const finalCenter = parent.position();
   hiddenChildren.forEach((child) => {
-    child.position({ x: center.x, y: center.y });
+    child.position({ x: finalCenter.x, y: finalCenter.y });
   });
   // 把父节点固定到布局中心，防止 Cytoscape 自动把它拉到子节点旧位置
-  parent.position(center);
-  // eslint-disable-next-line no-console
-  console.log("[layoutExpandedCompound] set parent position to:", center, "after:", parent.position());
+  if (count === 0) {
+    parent.position(currentCenter);
+  }
 }
 
 function runHybridLayout(
@@ -115,7 +148,8 @@ function runHybridLayout(
   fit = true,
   expandedProcessParents: string[] = [],
   dragPositions?: Map<string, cytoscape.Position>,
-  onComplete?: () => void
+  onComplete?: () => void,
+  parentsToLayout?: string[]
 ) {
   if (!cy || (cy as unknown as { _private?: { destroyed?: boolean } })._private?.destroyed) {
     onComplete?.();
@@ -132,7 +166,16 @@ function runHybridLayout(
         )
       : cy.nodes(":parent");
   if (expandedParents.length > 0) {
-    expandedParents.forEach((parent) => layoutExpandedCompound(cy, parent.id(), dragPositions));
+    // 默认只布局当前发生变化的组；如果调用方没有指定，则回退到所有已展开组（兼容旧行为）
+    const layoutParentIds = parentsToLayout ?? expandedProcessParents;
+    const targets =
+      layoutParentIds.length > 0
+        ? layoutParentIds
+            .map((id) => cy.getElementById(id))
+            .filter((ele) => ele.length > 0)
+            .map((ele) => ele.id())
+        : expandedParents.map((p) => p.id());
+    targets.forEach((parentId) => layoutExpandedCompound(cy, parentId, dragPositions));
     if (fit) {
       // 只 fit 到父节点及其子节点，不要把整个邻域拉进来导致缩放过小
       const fitCollection = expandedParents.union(expandedParents.descendants());
@@ -575,7 +618,8 @@ function applyFilters(
 function syncCompoundParents(
   cy: cytoscape.Core,
   expandedProcessParents: string[],
-  dragPositions?: Map<string, cytoscape.Position>
+  dragPositions?: Map<string, cytoscape.Position>,
+  parentsToLayout?: string[]
 ) {
   if (!cy || (cy as unknown as { _private?: { destroyed?: boolean } })._private?.destroyed) return;
   const expandedSet = new Set(expandedProcessParents);
@@ -586,8 +630,6 @@ function syncCompoundParents(
     }
   );
   const parentIds = new Set(childToParent.values());
-  // eslint-disable-next-line no-console
-  console.log("[syncCompoundParents] part_of edges:", childToParent.size, "expanded:", expandedProcessParents);
 
   // 记录已展开父节点的当前位置，避免 move 子节点后父节点被 Cytoscape 拉回子节点旧位置
   // 优先使用拖拽时记录的渲染位置转换后的模型位置，因为 Cytoscape 对空 compound parent 的 position() 可能不更新
@@ -598,8 +640,6 @@ function syncCompoundParents(
     const dragPos = dragPositions?.get(parentId);
     const chosen = dragPos ? { ...dragPos } : { ...parent.position() };
     savedPositions.set(parentId, chosen);
-    // eslint-disable-next-line no-console
-    console.log("[syncCompoundParents] parentId:", parentId, "dragPos:", dragPos, "parent.position():", parent.position(), "chosen:", chosen);
   });
 
   cy.batch(() => {
@@ -627,12 +667,14 @@ function syncCompoundParents(
     // 恢复父节点位置，确保用户拖拽后的位置不变
     savedPositions.forEach((pos, parentId) => {
       cy.getElementById(parentId).position(pos);
-      // eslint-disable-next-line no-console
-      console.log("[syncCompoundParents] restored parentId:", parentId, "to:", pos, "after position():", cy.getElementById(parentId).position());
     });
 
-    // 立刻用保存的位置对子节点做径向布局，避免 Cytoscape 在 batch 后把父节点拉回子节点旧位置
-    savedPositions.forEach((_, parentId) => {
+    // 只对真正发生变化的组（或调用方明确指定的组）做局部布局。
+    // 已经展开的外层组不再被重新径向布局，避免“展开光刻工艺”时把晶圆制造也撑开变乱。
+    const layoutTargets = parentsToLayout
+      ? parentsToLayout.filter((id) => expandedSet.has(id))
+      : Array.from(savedPositions.keys());
+    layoutTargets.forEach((parentId) => {
       layoutExpandedCompound(cy, parentId, savedPositions);
     });
 
@@ -697,6 +739,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   const editModeRef = useRef(editMode);
   const connectSourceNodeIdRef = useRef(connectSourceNodeId);
   const expandedProcessParentsRef = useRef(expandedProcessParents);
+  const prevExpandedProcessParentsRef = useRef<string[]>([]);
   const onToggleProcessExpansionRef = useRef(onToggleProcessExpansion);
   const wheelSensitivityRef = useRef(wheelSensitivity);
   const focusStateRef = useRef(focusState);
@@ -2412,23 +2455,39 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
 
   // Sync compound parents and re-layout when process expansion changes
   useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.log("[GraphCanvas] expandedProcessParents changed:", expandedProcessParents);
-    // eslint-disable-next-line no-console
-    console.log("[GraphCanvas] dragPositions:", Object.fromEntries(processGroupDragPositionsRef.current.entries()));
     const cy = cyRef.current;
     if (!cy) return;
-    syncCompoundParents(cy, expandedProcessParents, processGroupDragPositionsRef.current);
+
+    // 计算本次真正发生状态变化的组：只对新展开的组做局部布局，已经展开的外层组
+    // （如晶圆制造）保持原状，避免展开内层组时把整个图撑乱。
+    const prev = prevExpandedProcessParentsRef.current;
+    const newlyExpanded = expandedProcessParents.filter((id) => !prev.includes(id));
+    prevExpandedProcessParentsRef.current = [...expandedProcessParents];
+
+    syncCompoundParents(
+      cy,
+      expandedProcessParents,
+      processGroupDragPositionsRef.current,
+      newlyExpanded.length > 0 ? newlyExpanded : undefined
+    );
     applyFilters(cy, filtersRef.current, expandedProcessParents, focusStateRef.current, hideStateRef.current);
+
     // 收起时（expandedProcessParents 为空）不再触发全局重排，避免视图乱跳；
-    // 展开时只做局部径向布局，不 fit，保证 group 原地展开。
+    // 展开时只对真正新展开的组做局部布局，不 fit，保证 group 原地展开。
     let rafId: number | null = null;
     if (expandedProcessParents.length > 0) {
       rafId = requestAnimationFrame(() => {
         rafId = null;
         const currentCy = cyRef.current;
         if (!currentCy) return;
-        runHybridLayout(currentCy, false, expandedProcessParents, processGroupDragPositionsRef.current, () => applyPendingViewState());
+        runHybridLayout(
+          currentCy,
+          false,
+          expandedProcessParents,
+          processGroupDragPositionsRef.current,
+          () => applyPendingViewState(),
+          newlyExpanded.length > 0 ? newlyExpanded : undefined
+        );
       });
     } else {
       // Collapse: still try to apply any queued view state (camera is independent of layout)
