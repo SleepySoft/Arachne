@@ -7,6 +7,7 @@ import {
   PanelType,
 } from "@/types";
 import { EditMode } from "@/components/GraphCanvas";
+import { HideState } from "@/types/view";
 import { getCompanySubgraph, getIndustrySubgraph } from "@/services/api";
 import { useNodeNavigation } from "./useNodeNavigation";
 import { PanelState, usePanelStack } from "./usePanelStack";
@@ -112,6 +113,30 @@ export function useIndustrialGraph() {
       visibleNodeIds: [],
       history: [],
     });
+  }, []);
+
+  const [hideState, setHideState] = useState<HideState>({
+    active: false,
+    hiddenNodeIds: [],
+  });
+
+  const hideNodes = useCallback((nodeIds: string[]) => {
+    setHideState((prev) => {
+      const hidden = new Set([...prev.hiddenNodeIds, ...nodeIds]);
+      return { active: hidden.size > 0, hiddenNodeIds: Array.from(hidden) };
+    });
+  }, []);
+
+  const unhideNodes = useCallback((nodeIds: string[]) => {
+    setHideState((prev) => {
+      const hidden = new Set(prev.hiddenNodeIds);
+      nodeIds.forEach((id) => hidden.delete(id));
+      return { active: hidden.size > 0, hiddenNodeIds: Array.from(hidden) };
+    });
+  }, []);
+
+  const clearHideState = useCallback(() => {
+    setHideState({ active: false, hiddenNodeIds: [] });
   }, []);
 
   const nav = useNodeNavigation();
@@ -492,6 +517,11 @@ export function useIndustrialGraph() {
     setFocusState,
     setFocusActive,
     clearFocusState,
+    hideState,
+    setHideState,
+    hideNodes,
+    unhideNodes,
+    clearHideState,
     canvasMenu,
     setCanvasMenu,
     handleCanvasContextMenu,

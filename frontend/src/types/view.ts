@@ -35,6 +35,11 @@ export interface FocusState {
   history: FocusStep[];
 }
 
+export interface HideState {
+  active: boolean;
+  hiddenNodeIds: string[];
+}
+
 export interface IndustrialViewState {
   selectedIndustryIds: string[];
   selectedCompanyIds: string[];
@@ -43,6 +48,7 @@ export interface IndustrialViewState {
   camera: CameraState;
   nodePositions?: NodePositions;
   focus?: FocusState;
+  hide?: HideState;
 }
 
 export interface CompanyViewState {

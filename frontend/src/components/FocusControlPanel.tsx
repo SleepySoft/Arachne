@@ -35,7 +35,7 @@ export function FocusControlPanel({ graphCanvasRef, focusState }: FocusControlPa
         className="flex items-center gap-1 rounded px-2 py-1 text-xs text-slate-300 hover:bg-slate-800 hover:text-slate-100"
       >
         <ArrowUp size={12} className="text-emerald-400" />
-        上游 +1
+        显示上游
       </button>
       <button
         onClick={() => graphCanvasRef.current?.revealMore("downstream", 1)}
@@ -43,7 +43,7 @@ export function FocusControlPanel({ graphCanvasRef, focusState }: FocusControlPa
         className="flex items-center gap-1 rounded px-2 py-1 text-xs text-slate-300 hover:bg-slate-800 hover:text-slate-100"
       >
         <ArrowDown size={12} className="text-emerald-400" />
-        下游 +1
+        显示下游
       </button>
       <button
         onClick={() => graphCanvasRef.current?.revealMore("both", 1)}
@@ -51,7 +51,7 @@ export function FocusControlPanel({ graphCanvasRef, focusState }: FocusControlPa
         className="flex items-center gap-1 rounded px-2 py-1 text-xs text-slate-300 hover:bg-slate-800 hover:text-slate-100"
       >
         <ArrowLeftRight size={12} className="text-emerald-400" />
-        双向 +1
+        显示双向
       </button>
       <div className="mx-1 h-4 w-px bg-slate-700" />
       <button

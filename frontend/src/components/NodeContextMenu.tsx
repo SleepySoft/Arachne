@@ -5,9 +5,11 @@ import {
   ArrowUp,
   ArrowDown,
   Eye,
+  EyeOff,
   Highlighter,
   FolderOpen,
   Folder,
+  FolderTree,
 } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
 
@@ -29,8 +31,8 @@ interface NodeContextMenuProps {
   onToggleGroup?: () => void;
   inFocusMode?: boolean;
   onFocusNode?: () => void;
-  onRevealUpstream?: () => void;
-  onRevealDownstream?: () => void;
+  onHideNode?: () => void;
+  onRevealInternal?: () => void;
   onExitFocus?: () => void;
 }
 
@@ -52,8 +54,8 @@ export function NodeContextMenu({
   onToggleGroup,
   inFocusMode = false,
   onFocusNode,
-  onRevealUpstream,
-  onRevealDownstream,
+  onHideNode,
+  onRevealInternal,
   onExitFocus,
 }: NodeContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
@@ -130,30 +132,30 @@ export function NodeContextMenu({
               聚焦此节点
             </button>
           )}
+          {onHideNode && (
+            <button
+              onClick={() => {
+                onHideNode();
+                onClose();
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+            >
+              <EyeOff size={14} className="text-rose-400" />
+              隐藏此节点
+            </button>
+          )}
           {inFocusMode && (
             <>
-              {onRevealUpstream && (
+              {isGroup && onRevealInternal && (
                 <button
                   onClick={() => {
-                    onRevealUpstream();
+                    onRevealInternal();
                     onClose();
                   }}
                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
                 >
-                  <ArrowUp size={14} className="text-emerald-400" />
-                  展开上游一层
-                </button>
-              )}
-              {onRevealDownstream && (
-                <button
-                  onClick={() => {
-                    onRevealDownstream();
-                    onClose();
-                  }}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
-                >
-                  <ArrowDown size={14} className="text-emerald-400" />
-                  展开下游一层
+                  <FolderTree size={14} className="text-amber-400" />
+                  显示内部节点
                 </button>
               )}
               {onExitFocus && (
@@ -179,7 +181,7 @@ export function NodeContextMenu({
             className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
           >
             <ArrowUp size={14} className="text-emerald-400" />
-            {inFocusMode ? "展开上游一层" : "显示上游节点"}
+            显示上游节点
           </button>
           <button
             onClick={() => {
@@ -189,7 +191,7 @@ export function NodeContextMenu({
             className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
           >
             <ArrowDown size={14} className="text-emerald-400" />
-            {inFocusMode ? "展开下游一层" : "显示下游节点"}
+            显示下游节点
           </button>
           <button
             onClick={() => {

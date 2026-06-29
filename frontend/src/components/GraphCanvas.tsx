@@ -8,7 +8,7 @@ import {
   GraphEdge,
   IndustrialNode,
 } from "@/types";
-import { FocusState, FocusStep } from "@/types/view";
+import { FocusState, FocusStep, HideState } from "@/types/view";
 import { getNeighbors, getNode, listEdges, listNodes } from "@/services/api";
 
 cytoscape.use(dagre);
@@ -262,6 +262,7 @@ export interface GraphCanvasRef {
     depth?: number
   ) => void;
   revealMore: (direction: "upstream" | "downstream" | "both", depth?: number) => void;
+  revealInternal: (nodeId: string) => void;
   undoFocus: () => void;
   exitFocus: () => void;
   getFocusState: () => FocusState;
@@ -299,6 +300,7 @@ interface GraphCanvasProps {
   wheelSensitivity?: number;
   focusState?: FocusState;
   onFocusChange?: (state: FocusState) => void;
+  hideState?: HideState;
 }
 
 function suppressInternalPartOfEdges(
@@ -337,12 +339,29 @@ function ensureParentsVisible(
   return result;
 }
 
+function expandParentsForVisibleNodes(
+  visibleNodeIds: string[],
+  childToParent: Map<string, string>,
+  expandedProcessParents: string[]
+): string[] {
+  const expandedSet = new Set(expandedProcessParents);
+  const parentsToExpand = new Set<string>();
+  visibleNodeIds.forEach((id) => {
+    const parentId = childToParent.get(id);
+    if (parentId && !expandedSet.has(parentId)) {
+      parentsToExpand.add(parentId);
+    }
+  });
+  return Array.from(parentsToExpand);
+}
+
 function bfsReveal(
   cy: cytoscape.Core,
   currentVisible: Set<string>,
   startIds: string[],
   direction: "upstream" | "downstream" | "both",
-  depth: number
+  depth: number,
+  traverseHiddenEdges = false
 ): string[] {
   if (!cy || (cy as unknown as { _private?: { destroyed?: boolean } })._private?.destroyed) return [];
   const discovered = new Set<string>();
@@ -354,16 +373,17 @@ function bfsReveal(
       const node = cy.getElementById(id);
       if (node.length === 0) return;
 
+      const connected = node.connectedEdges('[edge_namespace = "industrial_flow"]');
       let edges = cy.collection();
       if (direction === "upstream" || direction === "both") {
-        edges = edges.union(node.incomers('edge[edge_namespace = "industrial_flow"]'));
+        edges = edges.union(connected.filter((e: cytoscape.EdgeSingular) => e.target().id() === id));
       }
       if (direction === "downstream" || direction === "both") {
-        edges = edges.union(node.outgoers('edge[edge_namespace = "industrial_flow"]'));
+        edges = edges.union(connected.filter((e: cytoscape.EdgeSingular) => e.source().id() === id));
       }
 
       edges.forEach((edge: cytoscape.EdgeSingular) => {
-        if (edge.hasClass("hidden") || edge.hasClass("aggregated-edge")) return;
+        if (!traverseHiddenEdges && (edge.hasClass("hidden") || edge.hasClass("aggregated-edge"))) return;
         const neighborId = edge.source().id() === id ? edge.target().id() : edge.source().id();
         if (!currentVisible.has(neighborId) && !discovered.has(neighborId)) {
           discovered.add(neighborId);
@@ -382,11 +402,14 @@ function applyFilters(
   cy: cytoscape.Core,
   filters: GraphCanvasProps["filters"],
   expandedProcessParents: string[] = [],
-  focusState?: FocusState
+  focusState?: FocusState,
+  hideState?: HideState
 ) {
   if (!cy || (cy as unknown as { _private?: { destroyed?: boolean } })._private?.destroyed) return;
   const focusActive = focusState?.active ?? false;
   const focusVisibleSet = focusActive && focusState ? new Set(focusState.visibleNodeIds) : null;
+  const hideActive = hideState?.active ?? false;
+  const hiddenSet = hideActive && hideState ? new Set(hideState.hiddenNodeIds) : null;
   const entityTypeSet = new Set(filters.entityTypes);
   const statusSet = new Set(filters.status);
   const confidenceSet = new Set(filters.confidence);
@@ -423,6 +446,10 @@ function applyFilters(
       // Focus mode: only show nodes in the visible set
       if (show && focusVisibleSet) {
         show = focusVisibleSet.has(node.id());
+      }
+      // Hide mode: hide explicitly hidden nodes
+      if (show && hiddenSet) {
+        show = !hiddenSet.has(node.id());
       }
       // 如果节点是某个未展开父节点的子工艺，则隐藏
       if (show) {
@@ -516,8 +543,10 @@ function applyFilters(
 
     // 当边被过滤后，把因此变得孤立的节点也隐藏起来
     // 但展开后的复合父节点（process group）即使没有可见边，也要保留，因为子节点在里面
+    // 聚焦模式下，所有显式标记为可见的节点也要保留（即使它们暂时没有可见边）
     cy.nodes().forEach((node) => {
       if (node.hasClass("hidden")) return;
+      if (focusActive && focusVisibleSet?.has(node.id())) return;
       const isCompoundParent = node.isParent() || node.hasClass("compound-parent");
       if (isCompoundParent) {
         const hasVisibleChild = node.children().filter((n) => !n.hasClass("hidden")).length > 0;
@@ -632,6 +661,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     wheelSensitivity = 1.0,
     focusState,
     onFocusChange,
+    hideState,
   },
   ref
 ) {
@@ -660,6 +690,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   const wheelSensitivityRef = useRef(wheelSensitivity);
   const focusStateRef = useRef(focusState);
   const onFocusChangeRef = useRef(onFocusChange);
+  const hideStateRef = useRef(hideState);
   const processGroupDragPositionsRef = useRef<Map<string, cytoscape.Position>>(new Map());
   const pendingPositionsRef = useRef<Record<string, { x: number; y: number }> | null>(null);
   const pendingCameraRef = useRef<{ pan: { x: number; y: number }; zoom: number } | null>(null);
@@ -740,6 +771,10 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     onFocusChangeRef.current = onFocusChange;
   }, [onFocusChange]);
 
+  useEffect(() => {
+    hideStateRef.current = hideState;
+  }, [hideState]);
+
   const applyPendingViewState = useCallback(() => {
     const cy = cyRef.current;
     if (!cy || (cy as unknown as { _private?: { destroyed?: boolean } })._private?.destroyed) return;
@@ -801,7 +836,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         },
         position: pos,
       });
-      applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current, focusStateRef.current);
+      applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current, focusStateRef.current, hideStateRef.current);
       // 新创建的节点即使暂时没有边也要显示出来，避免被过滤器隐藏
       const added = cy.getElementById(node.node_id);
       if (added.length > 0) added.removeClass("hidden");
@@ -824,21 +859,21 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
           raw: edge,
         },
       });
-      applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current, focusStateRef.current);
+      applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current, focusStateRef.current, hideStateRef.current);
     },
     removeEdge: (edgeId) => {
       const cy = cyRef.current;
       if (!cy) return;
       const el = cy.getElementById(edgeId);
       if (el.length > 0) cy.remove(el);
-      applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current, focusStateRef.current);
+      applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current, focusStateRef.current, hideStateRef.current);
     },
     removeNode: (nodeId) => {
       const cy = cyRef.current;
       if (!cy) return;
       const el = cy.getElementById(nodeId);
       if (el.length > 0) cy.remove(el);
-      applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current, focusStateRef.current);
+      applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current, focusStateRef.current, hideStateRef.current);
     },
     updateNode: (node) => {
       const cy = cyRef.current;
@@ -852,7 +887,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         confidence: node.confidence,
         raw: node,
       });
-      applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current, focusStateRef.current);
+      applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current, focusStateRef.current, hideStateRef.current);
     },
     updateEdge: (edge) => {
       const cy = cyRef.current;
@@ -867,7 +902,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         label: edge.edge_type_label || edge.edge_type,
         raw: edge,
       });
-      applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current, focusStateRef.current);
+      applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current, focusStateRef.current, hideStateRef.current);
     },
     getCamera: () => {
       const cy = cyRef.current;
@@ -1310,6 +1345,12 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         history: [],
       };
       onFocusChangeRef.current?.(newState);
+      // Auto-expand any process group whose child is now visible so the child can be seen
+      expandParentsForVisibleNodes(
+        newState.visibleNodeIds,
+        childToParent,
+        expandedProcessParentsRef.current
+      ).forEach((parentId) => onToggleProcessExpansionRef.current?.(parentId));
     },
     revealNeighbors: (nodeId, direction, depth = 1) => {
       const cy = cyRef.current;
@@ -1317,7 +1358,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
       const current = focusStateRef.current;
       if (!current?.active) return;
       const visibleSet = new Set<string>(current.visibleNodeIds);
-      const discovered = bfsReveal(cy, visibleSet, [nodeId], direction, depth);
+      const discovered = bfsReveal(cy, visibleSet, [nodeId], direction, depth, true);
       if (discovered.length === 0) return;
       const childToParent = getChildToParentMap(cy);
       const newVisibleSet = ensureParentsVisible(
@@ -1337,6 +1378,11 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         history: [...current.history, step],
       };
       onFocusChangeRef.current?.(newState);
+      expandParentsForVisibleNodes(
+        newState.visibleNodeIds,
+        childToParent,
+        expandedProcessParentsRef.current
+      ).forEach((parentId) => onToggleProcessExpansionRef.current?.(parentId));
     },
     revealMore: (direction, depth = 1) => {
       const cy = cyRef.current;
@@ -1352,7 +1398,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
       } else {
         frontier = current.seedNodeIds;
       }
-      const discovered = bfsReveal(cy, visibleSet, frontier, direction, depth);
+      const discovered = bfsReveal(cy, visibleSet, frontier, direction, depth, true);
       if (discovered.length === 0) return;
       const childToParent = getChildToParentMap(cy);
       const newVisibleSet = ensureParentsVisible(
@@ -1372,6 +1418,51 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         history: [...current.history, step],
       };
       onFocusChangeRef.current?.(newState);
+      expandParentsForVisibleNodes(
+        newState.visibleNodeIds,
+        childToParent,
+        expandedProcessParentsRef.current
+      ).forEach((parentId) => onToggleProcessExpansionRef.current?.(parentId));
+    },
+    revealInternal: (nodeId) => {
+      const cy = cyRef.current;
+      if (!cy) return;
+      const current = focusStateRef.current;
+      if (!current?.active) return;
+      const node = cy.getElementById(nodeId);
+      if (node.length === 0) return;
+      const visibleSet = new Set<string>(current.visibleNodeIds);
+      const discovered: string[] = [];
+      node.connectedEdges('[edge_namespace = "ontology"][edge_type = "part_of"]').forEach((edge) => {
+        if (edge.target().id() === nodeId) {
+          const childId = edge.source().id();
+          if (!visibleSet.has(childId)) discovered.push(childId);
+        }
+      });
+      if (discovered.length === 0) return;
+      const childToParent = getChildToParentMap(cy);
+      const newVisibleSet = ensureParentsVisible(
+        new Set<string>([...visibleSet, ...discovered]),
+        childToParent
+      );
+      const step: FocusStep = {
+        nodeId,
+        direction: "both",
+        depthAdded: 1,
+        addedNodeIds: discovered,
+      };
+      const newState: FocusState = {
+        active: true,
+        seedNodeIds: current.seedNodeIds,
+        visibleNodeIds: Array.from(newVisibleSet),
+        history: [...current.history, step],
+      };
+      onFocusChangeRef.current?.(newState);
+      expandParentsForVisibleNodes(
+        newState.visibleNodeIds,
+        childToParent,
+        expandedProcessParentsRef.current
+      ).forEach((parentId) => onToggleProcessExpansionRef.current?.(parentId));
     },
     undoFocus: () => {
       const current = focusStateRef.current;
@@ -2199,7 +2290,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
             // 双击代表一次完整的子图合并操作，此时重新应用过滤器，并触发 dagre 全局重排，
             // 把之前由于“顺藤摸瓜”可能拉扯乱的局部拓扑结构重新梳理平整。
             syncCompoundParents(cy, expandedProcessParentsRef.current, processGroupDragPositionsRef.current);
-            applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current, focusStateRef.current);
+            applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current, focusStateRef.current, hideStateRef.current);
             runHybridLayout(cy, false);
 
           } catch (err) {
@@ -2264,7 +2355,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
           return;
         }
 
-        applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current, focusStateRef.current);
+        applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current, focusStateRef.current, hideStateRef.current);
         // 使用混合布局：产业流自上而下，is_a 关系环绕父节点
         runHybridLayout(cy, true, expandedProcessParentsRef.current, processGroupDragPositionsRef.current, () => {
           if (!cyRef.current || cyRef.current !== cy || (cy as unknown as { _private?: { destroyed?: boolean } })._private?.destroyed) return;
@@ -2298,15 +2389,15 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   useEffect(() => {
     const cy = cyRef.current;
     if (!cy) return;
-    applyFilters(cy, filters, expandedProcessParentsRef.current, focusState);
-  }, [filters, focusState]);
+    applyFilters(cy, filters, expandedProcessParentsRef.current, focusState, hideState);
+  }, [filters, focusState, hideState]);
 
-  // Apply filters when focus state changes (from imperative focus API)
+  // Apply filters when focus/hide state changes (from imperative API)
   useEffect(() => {
     const cy = cyRef.current;
     if (!cy) return;
-    applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current, focusState);
-  }, [focusState]);
+    applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current, focusState, hideState);
+  }, [focusState, hideState]);
 
   // Sync compound parents and re-layout when process expansion changes
   useEffect(() => {
@@ -2317,7 +2408,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     const cy = cyRef.current;
     if (!cy) return;
     syncCompoundParents(cy, expandedProcessParents, processGroupDragPositionsRef.current);
-    applyFilters(cy, filtersRef.current, expandedProcessParents, focusStateRef.current);
+    applyFilters(cy, filtersRef.current, expandedProcessParents, focusStateRef.current, hideStateRef.current);
     // 收起时（expandedProcessParents 为空）不再触发全局重排，避免视图乱跳；
     // 展开时只做局部径向布局，不 fit，保证 group 原地展开。
     let rafId: number | null = null;

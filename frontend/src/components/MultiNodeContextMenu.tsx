@@ -1,4 +1,4 @@
-import { LayoutGrid, X, MousePointerClick, Eye } from "lucide-react";
+import { LayoutGrid, X, MousePointerClick, Eye, EyeOff } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
 
 interface MultiNodeContextMenuProps {
@@ -8,6 +8,7 @@ interface MultiNodeContextMenuProps {
   onAutoArrange: () => void;
   onClearSelection?: () => void;
   onFocusSelected?: () => void;
+  onHideSelected?: () => void;
   onClose: () => void;
 }
 
@@ -18,6 +19,7 @@ export function MultiNodeContextMenu({
   onAutoArrange,
   onClearSelection,
   onFocusSelected,
+  onHideSelected,
   onClose,
 }: MultiNodeContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
@@ -75,6 +77,18 @@ export function MultiNodeContextMenu({
             >
               <Eye size={14} className="text-cyan-400" />
               聚焦选中节点 ({selectedCount})
+            </button>
+          )}
+          {onHideSelected && (
+            <button
+              onClick={() => {
+                onHideSelected();
+                onClose();
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+            >
+              <EyeOff size={14} className="text-rose-400" />
+              隐藏选中节点 ({selectedCount})
             </button>
           )}
           <button

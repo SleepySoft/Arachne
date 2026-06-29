@@ -11,6 +11,7 @@ import {
   CameraState,
   NodePositions,
   FocusState,
+  HideState,
 } from "@/types/view";
 
 export interface GraphCameraController {
@@ -26,6 +27,7 @@ export interface IndustrialSnapshotDeps {
   activeFilters: IndustrialViewState["activeFilters"];
   expandedProcessParents: string[];
   focusState: FocusState;
+  hideState: HideState;
   canvasRef: React.RefObject<GraphCameraController | null>;
 }
 
@@ -38,6 +40,7 @@ export interface IndustrialRestoreDeps {
   setSubgraphData: (data: { nodes: IndustrialNode[]; edges: GraphEdge[] } | undefined) => void;
   setHighlightNodeIds: (ids: string[] | undefined) => void;
   setFocusState: (state: FocusState) => void;
+  setHideState: (state: HideState) => void;
   allIndustries: Industry[];
   allCompanies: Company[];
   onSetRestored: (state: IndustrialViewState) => void;
@@ -92,6 +95,12 @@ export function buildIndustrialSnapshot(
             seedNodeIds: [...deps.focusState.seedNodeIds],
             visibleNodeIds: [...deps.focusState.visibleNodeIds],
             history: deps.focusState.history.map((h) => ({ ...h, addedNodeIds: [...h.addedNodeIds] })),
+          }
+        : undefined,
+      hide: deps.hideState.active
+        ? {
+            active: deps.hideState.active,
+            hiddenNodeIds: [...deps.hideState.hiddenNodeIds],
           }
         : undefined,
     },
@@ -154,6 +163,19 @@ export function applyIndustrialSnapshot(
       seedNodeIds: [],
       visibleNodeIds: [],
       history: [],
+    });
+  }
+
+  // Restore hide state
+  if (state.hide?.active) {
+    deps.setHideState({
+      active: true,
+      hiddenNodeIds: [...state.hide.hiddenNodeIds],
+    });
+  } else {
+    deps.setHideState({
+      active: false,
+      hiddenNodeIds: [],
     });
   }
 

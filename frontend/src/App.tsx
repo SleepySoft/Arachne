@@ -5,6 +5,7 @@ import { Layout } from "@/components/Layout";
 import { GraphCanvas, GraphCanvasRef } from "@/components/GraphCanvas";
 import { CanvasToolbar } from "@/components/toolbar/CanvasToolbar";
 import { FocusControlPanel } from "@/components/FocusControlPanel";
+import { HideControlPanel } from "@/components/HideControlPanel";
 import { ViewManagerModal } from "@/components/ViewManagerModal";
 import { CompanyNetworkCanvas, CompanyNetworkCanvasRef } from "@/components/CompanyNetworkCanvas";
 import { ExplorationCanvas, ExplorationCanvasRef } from "@/components/ExplorationCanvas";
@@ -109,6 +110,7 @@ export default function App() {
             visibleNodeIds: [],
             history: [],
           },
+          hideState: industrial.hideState,
           canvasRef: graphCanvasRef,
         },
         name.trim()
@@ -313,10 +315,15 @@ export default function App() {
             restoredCamera={industrialViewToRestore?.camera}
             focusState={industrial.focusState}
             onFocusChange={industrial.setFocusState}
+            hideState={industrial.hideState}
           />
           <FocusControlPanel
             graphCanvasRef={graphCanvasRef}
             focusState={industrial.focusState}
+          />
+          <HideControlPanel
+            hideState={industrial.hideState}
+            onClearHide={industrial.clearHideState}
           />
           <CanvasToolbar
             workspace="industrial"
@@ -334,6 +341,7 @@ export default function App() {
                     visibleNodeIds: [],
                     history: [],
                   },
+                  hideState: industrial.hideState,
                   canvasRef: graphCanvasRef,
                 },
                 name
@@ -346,6 +354,7 @@ export default function App() {
                 setActiveFilters: industrial.setActiveFilters,
                 setExpandedProcessParents: industrial.setExpandedProcessParents,
                 setFocusState: industrial.setFocusState,
+                setHideState: industrial.setHideState,
                 setGraphKey: industrial.setGraphKey,
                 setSubgraphData: industrial.setSubgraphData,
                 setHighlightNodeIds: industrial.setHighlightNodeIds,
@@ -636,6 +645,14 @@ export default function App() {
               const node = industrial.contextMenu.node;
               if (node) graphCanvasRef.current?.enterFocus([node.node_id]);
             }}
+            onHideNode={() => {
+              const node = industrial.contextMenu.node;
+              if (node) industrial.hideNodes([node.node_id]);
+            }}
+            onRevealInternal={() => {
+              const node = industrial.contextMenu.node;
+              if (node) graphCanvasRef.current?.revealInternal(node.node_id);
+            }}
             onExitFocus={() => graphCanvasRef.current?.exitFocus()}
             onClose={() =>
               industrial.setContextMenu((prev) => ({ ...prev, visible: false }))
@@ -661,6 +678,12 @@ export default function App() {
               const nodes = industrial.multiNodeContextMenu.nodes;
               if (nodes.length > 0) {
                 graphCanvasRef.current?.enterFocus(nodes.map((n) => n.node_id));
+              }
+            }}
+            onHideSelected={() => {
+              const nodes = industrial.multiNodeContextMenu.nodes;
+              if (nodes.length > 0) {
+                industrial.hideNodes(nodes.map((n) => n.node_id));
               }
             }}
             onClose={industrial.handleCloseMultiNodeContextMenu}
@@ -810,6 +833,7 @@ export default function App() {
                 setActiveFilters: industrial.setActiveFilters,
                 setExpandedProcessParents: industrial.setExpandedProcessParents,
                 setFocusState: industrial.setFocusState,
+                setHideState: industrial.setHideState,
                 setGraphKey: industrial.setGraphKey,
                 setSubgraphData: industrial.setSubgraphData,
                 setHighlightNodeIds: industrial.setHighlightNodeIds,
