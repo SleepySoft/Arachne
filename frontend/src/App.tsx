@@ -27,19 +27,18 @@ import { RightPanel } from "@/components/panels/RightPanel";
 import { useIndustrialGraph } from "@/hooks/useIndustrialGraph";
 import { useCompanyGraph } from "@/hooks/useCompanyGraph";
 import { useSavedViews } from "@/hooks/useSavedViews";
+import { useViewStateHistory } from "@/hooks/useViewStateHistory";
 import {
   buildIndustrialSnapshot,
   applyIndustrialSnapshot,
   buildCompanySnapshot,
   applyCompanySnapshot,
+  GraphCameraController,
 } from "@/lib/viewSerializer";
+import { IndustrialViewState, CompanyViewState, SavedView } from "@/types/view";
 
 export default function App() {
   const [mainView, setMainView] = useState<MainView>("industrial_graph");
-
-  const handleChangeMainView = (view: MainView) => {
-    setMainView(view);
-  };
 
   const industrial = useIndustrialGraph();
   const company = useCompanyGraph();
@@ -61,6 +60,12 @@ export default function App() {
   const [loadedIndustrialView, setLoadedIndustrialView] = useState<import("@/types/view").SavedView | null>(null);
   const [loadedCompanyView, setLoadedCompanyView] = useState<import("@/types/view").SavedView | null>(null);
   const savedViews = useSavedViews();
+  const viewHistory = useViewStateHistory();
+
+  const handleChangeMainView = useCallback((view: MainView) => {
+    setMainView(view);
+    viewHistory.reset(view === "company_graph" ? "company" : "industrial");
+  }, [viewHistory.reset]);
 
   useEffect(() => {
     let cancelled = false;
@@ -156,6 +161,164 @@ export default function App() {
     loadedCompanyView,
   ]);
 
+  const getActiveCompanyCanvasRef = useCallback((): React.RefObject<GraphCameraController | null> | undefined => {
+    if (mainView !== "company_graph") return undefined;
+    return company.companyDisplayMode === "local" && company.companyExploreMode === "manual"
+      ? explorationCanvasRef
+      : companyNetworkCanvasRef;
+  }, [mainView, company.companyDisplayMode, company.companyExploreMode]);
+
+  const captureIndustrialState = useCallback((): IndustrialViewState | undefined => {
+    const payload = buildIndustrialSnapshot(
+      {
+        selectedIndustries: industrial.selectedIndustries,
+        selectedCompanies: industrial.selectedCompanies,
+        activeFilters: industrial.activeFilters,
+        expandedProcessParents: industrial.expandedProcessParents,
+        focusState: graphCanvasRef.current?.getFocusState() ?? {
+          active: false,
+          seedNodeIds: [],
+          visibleNodeIds: [],
+          history: [],
+        },
+        hideState: industrial.hideState,
+        canvasRef: graphCanvasRef,
+      },
+      "history"
+    );
+    return payload.industrial;
+  }, [
+    industrial.selectedIndustries,
+    industrial.selectedCompanies,
+    industrial.activeFilters,
+    industrial.expandedProcessParents,
+    industrial.hideState,
+  ]);
+
+  const captureCompanyState = useCallback((): CompanyViewState | undefined => {
+    const activeRef = getActiveCompanyCanvasRef();
+    const payload = buildCompanySnapshot(
+      {
+        companyDisplayMode: company.companyDisplayMode,
+        companyExploreMode: company.companyExploreMode,
+        orderedChain: company.orderedChain,
+        fixedIds: company.fixedIds,
+        currentFocusId: company.currentFocusId,
+        explorationData: company.explorationData,
+        canvasRef: activeRef,
+      },
+      "history"
+    );
+    return payload.company;
+  }, [
+    company.companyDisplayMode,
+    company.companyExploreMode,
+    company.orderedChain,
+    company.fixedIds,
+    company.currentFocusId,
+    company.explorationData,
+    getActiveCompanyCanvasRef,
+  ]);
+
+  const handleUndo = useCallback(() => {
+    if (mainView === "company_graph") {
+      const previous = viewHistory.undo("company");
+      if (!previous) return;
+      const state = previous as CompanyViewState;
+      const activeRef = getActiveCompanyCanvasRef();
+      const containerSize = activeRef?.current?.getContainerSize();
+      applyCompanySnapshot(
+        {
+          version: 1,
+          id: "undo",
+          base: "undo",
+          viewVersion: 1,
+          name: "undo",
+          workspace: "company",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          company: state,
+        } as SavedView,
+        {
+          setCompanyDisplayMode: company.setCompanyDisplayMode,
+          setCompanyExploreMode: company.setCompanyExploreMode,
+          setOrderedChain: company.setOrderedChain,
+          setFixedIds: company.setFixedIds,
+          setCurrentFocusId: company.setCurrentFocusId,
+          setExplorationData: company.setExplorationData,
+          setPreviewData: company.setPreviewData,
+          onSetRestored: setCompanyViewToRestore,
+        },
+        containerSize ?? undefined
+      );
+    } else {
+      const previous = viewHistory.undo("industrial");
+      if (!previous) return;
+      const state = previous as IndustrialViewState;
+      const containerSize = graphCanvasRef.current?.getContainerSize();
+      applyIndustrialSnapshot(
+        {
+          version: 1,
+          id: "undo",
+          base: "undo",
+          viewVersion: 1,
+          name: "undo",
+          workspace: "industrial",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          industrial: state,
+        } as SavedView,
+        {
+          setSelectedIndustries: industrial.setSelectedIndustries,
+          setSelectedCompanies: industrial.setSelectedCompanies,
+          setActiveFilters: industrial.setActiveFilters,
+          setExpandedProcessParents: industrial.setExpandedProcessParents,
+          setFocusState: industrial.setFocusState,
+          setHideState: industrial.setHideState,
+          setGraphKey: industrial.setGraphKey,
+          setSubgraphData: industrial.setSubgraphData,
+          setHighlightNodeIds: industrial.setHighlightNodeIds,
+          allIndustries,
+          allCompanies,
+          onSetRestored: setIndustrialViewToRestore,
+        },
+        containerSize ?? undefined
+      );
+    }
+  }, [
+    mainView,
+    viewHistory,
+    industrial.setSelectedIndustries,
+    industrial.setSelectedCompanies,
+    industrial.setActiveFilters,
+    industrial.setExpandedProcessParents,
+    industrial.setFocusState,
+    industrial.setHideState,
+    industrial.setGraphKey,
+    industrial.setSubgraphData,
+    industrial.setHighlightNodeIds,
+    allIndustries,
+    allCompanies,
+    company.setCompanyDisplayMode,
+    company.setCompanyExploreMode,
+    company.setOrderedChain,
+    company.setFixedIds,
+    company.setCurrentFocusId,
+    company.setExplorationData,
+    company.setPreviewData,
+    getActiveCompanyCanvasRef,
+  ]);
+
+  const pushIndustrialHistory = useCallback(() => {
+    const state = captureIndustrialState();
+    if (state) viewHistory.push("industrial", state);
+  }, [captureIndustrialState, viewHistory]);
+
+  const pushCompanyHistory = useCallback(() => {
+    const state = captureCompanyState();
+    if (state) viewHistory.push("company", state);
+  }, [captureCompanyState, viewHistory]);
+
   const handleOpenViewManager = useCallback(() => {
     setViewManagerWorkspace(mainView === "company_graph" ? "company" : "industrial");
     setViewManagerOpen(true);
@@ -179,11 +342,15 @@ export default function App() {
           e.preventDefault();
           handleOpenViewManager();
         }
+        if (e.key === "z" || e.key === "Z") {
+          e.preventDefault();
+          handleUndo();
+        }
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [handleSaveCurrentView, handleOpenViewManager]);
+  }, [handleSaveCurrentView, handleOpenViewManager, handleUndo]);
 
   const [quickNodeAt, setQuickNodeAt] = useState<{
     node: { x: number; y: number };
@@ -277,13 +444,22 @@ export default function App() {
           selectedIndustries={industrial.selectedIndustries}
           selectedCompanies={industrial.selectedCompanies}
           activeFilters={industrial.activeFilters}
-          onToggleIndustry={industrial.handleToggleIndustry}
+          onToggleIndustry={(industry) => {
+            viewHistory.reset("industrial");
+            industrial.handleToggleIndustry(industry);
+          }}
           onSelectIndustry={industrial.handleSelectIndustryDetail}
-          onToggleCompany={industrial.handleToggleCompany}
+          onToggleCompany={(company) => {
+            viewHistory.reset("industrial");
+            industrial.handleToggleCompany(company);
+          }}
           onSelectCompany={industrial.handleSelectCompanyDetail}
           onCreateIndustry={() => industrial.pushPanel({ panel: "industry-create" })}
           onCreateCompany={() => industrial.pushPanel({ panel: "company-create" })}
-          onChangeFilters={industrial.setActiveFilters}
+          onChangeFilters={(filters) => {
+            viewHistory.reset("industrial");
+            industrial.setActiveFilters(filters);
+          }}
         />
       }
       centerCanvas={
@@ -315,13 +491,19 @@ export default function App() {
             editMode={industrial.editMode}
             connectSourceNodeId={industrial.connectSource?.node_id || null}
             expandedProcessParents={industrial.expandedProcessParents}
-            onToggleProcessExpansion={industrial.toggleProcessParent}
+            onToggleProcessExpansion={(nodeId) => {
+              pushIndustrialHistory();
+              industrial.toggleProcessParent(nodeId);
+            }}
             wheelSensitivity={industrial.wheelSensitivity}
             restoredPositions={industrialViewToRestore?.nodePositions}
             restoredCamera={industrialViewToRestore?.camera}
             focusState={industrial.focusState}
             onFocusChange={industrial.setFocusState}
             hideState={industrial.hideState}
+            onBeforeDragStart={pushIndustrialHistory}
+            onBeforeManualLayout={pushIndustrialHistory}
+            onBeforeCameraChange={pushIndustrialHistory}
           />
           <FocusControlPanel
             graphCanvasRef={graphCanvasRef}
@@ -354,6 +536,7 @@ export default function App() {
               )
             }
             onLoadView={(view) => {
+              viewHistory.reset("industrial");
               setLoadedIndustrialView(view);
               const containerSize = graphCanvasRef.current?.getContainerSize();
               const result = applyIndustrialSnapshot(
@@ -388,6 +571,8 @@ export default function App() {
             onZoomSensitivityChange={industrial.setWheelSensitivity}
             parentView={loadedIndustrialView ?? undefined}
             onViewSaved={(view) => setLoadedIndustrialView(view)}
+            canUndo={viewHistory.canUndo("industrial")}
+            onUndo={handleUndo}
           />
         </div>
       }
@@ -405,7 +590,10 @@ export default function App() {
             industrial.selectedIndustries.length > 0 ||
             industrial.selectedCompanies.length > 0
           }
-          onResetSelection={industrial.resetSelections}
+          onResetSelection={() => {
+            viewHistory.reset("industrial");
+            industrial.resetSelections();
+          }}
         />
       }
       rightPanel={industrialRightPanel}
@@ -432,6 +620,8 @@ export default function App() {
           onEdgeClick={(edge) => company.setSelectedExplorationEdge(edge)}
           highlightNodeId={company.currentFocusId}
           restoredCamera={companyViewToRestore?.camera}
+          onBeforeDragStart={pushCompanyHistory}
+          onBeforeCameraChange={pushCompanyHistory}
         />
       ) : (
         <CompanyNetworkCanvas
@@ -444,6 +634,8 @@ export default function App() {
           onNodeDblClick={company.handleCompanyNodeDblClick}
           onEdgeClick={company.handleCompanyEdgeClick}
           restoredCamera={companyViewToRestore?.camera}
+          onBeforeDragStart={pushCompanyHistory}
+          onBeforeCameraChange={pushCompanyHistory}
         />
       )
     ) : company.companyDisplayMode === "global" && company.companyNetworkData ? (
@@ -532,6 +724,7 @@ export default function App() {
               )
             }
             onLoadView={(view) => {
+              viewHistory.reset("company");
               setLoadedCompanyView(view);
               const containerSize = activeCompanyCanvasRef.current?.getContainerSize();
               applyCompanySnapshot(
@@ -555,13 +748,18 @@ export default function App() {
             }}
             parentView={loadedCompanyView ?? undefined}
             onViewSaved={(view) => setLoadedCompanyView(view)}
+            canUndo={viewHistory.canUndo("company")}
+            onUndo={handleUndo}
           />
         </div>
       }
       searchPanel={
         <CompanySearchPanel
           companyExploreMode={company.companyExploreMode}
-          setCompanyExploreMode={company.setCompanyExploreMode}
+          setCompanyExploreMode={(mode) => {
+            viewHistory.reset("company");
+            company.setCompanyExploreMode(mode);
+          }}
           companyDisplayMode={company.companyDisplayMode}
           orderedChain={company.orderedChain}
           fixedIds={company.fixedIds}
@@ -569,7 +767,10 @@ export default function App() {
           currentFocusId={company.currentFocusId}
           previewData={company.previewData}
           selectedExplorationEdge={company.selectedExplorationEdge}
-          onClear={company.clearView}
+          onClear={() => {
+            viewHistory.reset("company");
+            company.clearView();
+          }}
         />
       }
       rightPanel={companyRightPanel}

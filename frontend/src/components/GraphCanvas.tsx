@@ -358,6 +358,9 @@ interface GraphCanvasProps {
   focusState?: FocusState;
   onFocusChange?: (state: FocusState) => void;
   hideState?: HideState;
+  onBeforeDragStart?: () => void;
+  onBeforeManualLayout?: () => void;
+  onBeforeCameraChange?: () => void;
 }
 
 function suppressInternalPartOfEdges(
@@ -718,6 +721,9 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     focusState,
     onFocusChange,
     hideState,
+    onBeforeDragStart,
+    onBeforeManualLayout,
+    onBeforeCameraChange,
   },
   ref
 ) {
@@ -751,6 +757,10 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   const focusStateRef = useRef(focusState);
   const onFocusChangeRef = useRef(onFocusChange);
   const hideStateRef = useRef(hideState);
+  const onBeforeDragStartRef = useRef(onBeforeDragStart);
+  const onBeforeManualLayoutRef = useRef(onBeforeManualLayout);
+  const onBeforeCameraChangeRef = useRef(onBeforeCameraChange);
+  const preDragNodePositionsRef = useRef<Record<string, { x: number; y: number }> | null>(null);
   const processGroupDragPositionsRef = useRef<Map<string, cytoscape.Position>>(new Map());
   const pendingPositionsRef = useRef<Record<string, { x: number; y: number }> | null>(null);
   const pendingCameraRef = useRef<{ pan: { x: number; y: number }; zoom: number } | null>(null);
@@ -834,6 +844,18 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   useEffect(() => {
     hideStateRef.current = hideState;
   }, [hideState]);
+
+  useEffect(() => {
+    onBeforeDragStartRef.current = onBeforeDragStart;
+  }, [onBeforeDragStart]);
+
+  useEffect(() => {
+    onBeforeManualLayoutRef.current = onBeforeManualLayout;
+  }, [onBeforeManualLayout]);
+
+  useEffect(() => {
+    onBeforeCameraChangeRef.current = onBeforeCameraChange;
+  }, [onBeforeCameraChange]);
 
   const applyPendingViewState = useCallback(() => {
     const cy = cyRef.current;
@@ -1261,6 +1283,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
       cy.elements().unselect();
     },
     autoArrangeSelectedNodes: () => {
+      onBeforeManualLayoutRef.current?.();
       const cy = cyRef.current;
       if (!cy) return;
       const selectedIds = cy.nodes(":selected").map((n) => n.id());
@@ -1371,6 +1394,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
       });
     },
     alignSelectedNodes: (axis) => {
+      onBeforeManualLayoutRef.current?.();
       const cy = cyRef.current;
       if (!cy) return;
       const selectedIds = cy.nodes(":selected").map((n) => n.id());
@@ -1393,6 +1417,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
       }
     },
     distributeSelectedNodes: (axis) => {
+      onBeforeManualLayoutRef.current?.();
       const cy = cyRef.current;
       if (!cy) return;
       const selectedIds = cy.nodes(":selected").map((n) => n.id());
@@ -1701,12 +1726,28 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
       };
 
       const startPan = (e: PointerEvent) => {
+        markCameraChangeStart();
         lastPointer = { x: e.clientX, y: e.clientY };
         try {
           containerEl.setPointerCapture(e.pointerId);
         } catch {
           // ignore
         }
+      };
+
+      // 视图历史：标记当前是否已在本次相机手势中 push 过
+      let cameraPushedForGesture = false;
+      let wheelGestureTimer: number | null = null;
+      const markCameraChangeStart = () => {
+        if (!cameraPushedForGesture) {
+          onBeforeCameraChangeRef.current?.();
+          cameraPushedForGesture = true;
+        }
+        if (wheelGestureTimer) window.clearTimeout(wheelGestureTimer);
+        wheelGestureTimer = window.setTimeout(() => {
+          wheelGestureTimer = null;
+          cameraPushedForGesture = false;
+        }, 300);
       };
 
       const doPan = (e: PointerEvent) => {
@@ -1722,6 +1763,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
 
       const endPan = (e: PointerEvent) => {
         lastPointer = null;
+        cameraPushedForGesture = false;
         try {
           containerEl.releasePointerCapture(e.pointerId);
         } catch {
@@ -1807,6 +1849,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
           let newZoom = zoom * Math.pow(10, diff);
           newZoom = Math.max(cy.minZoom(), Math.min(cy.maxZoom(), newZoom));
 
+          markCameraChangeStart();
           cy.zoom({ level: newZoom, renderedPosition: rpos });
         } catch (err) {
           // eslint-disable-next-line no-console
@@ -1872,6 +1915,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         containerEl.removeEventListener("wheel", handleWheel, { capture: true });
         document.removeEventListener("contextmenu", handleContextMenu, true);
         containerEl.classList.remove("canvas-pan-modifier", "canvas-middle-panning");
+        if (wheelGestureTimer) window.clearTimeout(wheelGestureTimer);
       };
     }
 
@@ -2312,6 +2356,31 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
           processGroupDragPositionsRef.current.set(node.id(), modelPos);
           // eslint-disable-next-line no-console
           console.log("[dragfree] node:", node.id(), "rendered:", rendered, "pan:", pan, "zoom:", zoom, "modelPos:", modelPos);
+        });
+
+        // 视图历史：节点真正发生位移后再保存上一状态，避免单纯点击也入栈
+        cy.on("grab", "node", () => {
+          const positions: Record<string, { x: number; y: number }> = {};
+          cy.nodes().forEach((n) => {
+            positions[n.id()] = { ...n.position() };
+          });
+          preDragNodePositionsRef.current = positions;
+        });
+        cy.on("dragfree", "node", () => {
+          const previous = preDragNodePositionsRef.current;
+          preDragNodePositionsRef.current = null;
+          if (!previous || !cyRef.current) return;
+          let changed = false;
+          cyRef.current.nodes().forEach((n) => {
+            const prev = previous[n.id()];
+            const curr = n.position();
+            if (!prev || prev.x !== curr.x || prev.y !== curr.y) {
+              changed = true;
+            }
+          });
+          if (changed) {
+            onBeforeDragStartRef.current?.();
+          }
         });
 
         // ==========================================

@@ -29,6 +29,8 @@ interface ExplorationCanvasProps {
   onNodeClick?: (node: ExplorationNode) => void;
   onEdgeClick?: (edge: ExplorationEdge) => void;
   highlightNodeId?: string | null;
+  onBeforeDragStart?: () => void;
+  onBeforeCameraChange?: () => void;
 }
 
 const COMPANY_TYPE_COLORS: Record<string, string> = {
@@ -58,12 +60,16 @@ export const ExplorationCanvas = forwardRef<ExplorationCanvasRef, ExplorationCan
   onEdgeClick,
   highlightNodeId,
   restoredCamera,
+  onBeforeDragStart,
+  onBeforeCameraChange,
 }, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
   const onNodeClickRef = useRef(onNodeClick);
   const onEdgeClickRef = useRef(onEdgeClick);
   const highlightRef = useRef(highlightNodeId);
+  const onBeforeDragStartRef = useRef(onBeforeDragStart);
+  const onBeforeCameraChangeRef = useRef(onBeforeCameraChange);
   const pendingPositionsRef = useRef<Record<string, { x: number; y: number }> | null>(null);
   const pendingCameraRef = useRef<{ pan: { x: number; y: number }; zoom: number } | null>(null);
 
@@ -136,6 +142,14 @@ export const ExplorationCanvas = forwardRef<ExplorationCanvasRef, ExplorationCan
   useEffect(() => {
     highlightRef.current = highlightNodeId;
   }, [highlightNodeId]);
+
+  useEffect(() => {
+    onBeforeDragStartRef.current = onBeforeDragStart;
+  }, [onBeforeDragStart]);
+
+  useEffect(() => {
+    onBeforeCameraChangeRef.current = onBeforeCameraChange;
+  }, [onBeforeCameraChange]);
 
   // Initialize Cytoscape
   useEffect(() => {
@@ -277,10 +291,30 @@ export const ExplorationCanvas = forwardRef<ExplorationCanvasRef, ExplorationCan
       }
     });
 
+    cy.on("grab", "node", () => {
+      onBeforeDragStartRef.current?.();
+    });
+
+    let cameraTimer: number | null = null;
+    let cameraPushed = false;
+    const notifyCameraChange = () => {
+      if (!cameraPushed) {
+        onBeforeCameraChangeRef.current?.();
+        cameraPushed = true;
+      }
+      if (cameraTimer) window.clearTimeout(cameraTimer);
+      cameraTimer = window.setTimeout(() => {
+        cameraTimer = null;
+        cameraPushed = false;
+      }, 300);
+    };
+    cy.on("pan zoom", notifyCameraChange);
+
     cyRef.current = cy;
 
     return () => {
       cy.destroy();
+      if (cameraTimer) window.clearTimeout(cameraTimer);
       cyRef.current = null;
     };
   }, []);

@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { Download, FolderOpen, Save, Settings2, Upload } from "lucide-react";
+import { Download, FolderOpen, Save, Settings2, Undo2, Upload } from "lucide-react";
 import { SavedView, WorkspaceType } from "@/types/view";
 
 interface ViewToolbarProps {
@@ -21,6 +21,8 @@ interface ViewToolbarProps {
   onManage?: () => void;
   parentView?: SavedView;
   onViewSaved?: (view: SavedView) => void;
+  canUndo?: boolean;
+  onUndo?: () => void;
 }
 
 export function ViewToolbar({
@@ -32,6 +34,8 @@ export function ViewToolbar({
   onManage,
   parentView,
   onViewSaved,
+  canUndo,
+  onUndo,
 }: ViewToolbarProps) {
   const { viewsForWorkspace, saveView, importViews, exportViews } = savedViews;
   const views = viewsForWorkspace(workspace);
@@ -71,6 +75,16 @@ export function ViewToolbar({
       >
         <Save className="h-3.5 w-3.5" />
         <span>保存</span>
+      </button>
+
+      <button
+        onClick={onUndo}
+        disabled={!canUndo}
+        title={canUndo ? "撤销上一步布局 (Ctrl+Z)" : "无可撤销操作"}
+        className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+      >
+        <Undo2 className="h-3.5 w-3.5" />
+        <span>撤销</span>
       </button>
 
       <button

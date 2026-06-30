@@ -333,6 +333,7 @@ backend/
 - **Edge namespace fix**: The newly created `part_of` edges were missing the `edge_namespace='ontology'` property, causing `_edge_from_record` to default them to `industrial_flow` and fail Pydantic validation when `get_neighbors` was called on `lithography_process` (HTTP 500). Fixed by setting `edge_namespace='ontology'` on all ontology edges and `edge_namespace='industrial_flow'` on all industrial-flow edges that lacked the property. Verified `/api/v1/query/neighbors/lithography_process` now returns 200.
 - **Edge namespace robustness**: Hardened `backend/app/services/neo4j_storage.py` `_edge_from_record` to derive the Pydantic edge subclass from the canonical Neo4j relationship type (`:INDUSTRIAL_FLOW` vs `:ONTOLOGY`) instead of the redundant `edge_namespace` property. Added new ontology rule `R25` and a registered db checker `EdgeNamespaceConsistencyChecker` in `backend/app/services/db_checkers.py` to detect missing or mismatched `edge_namespace` properties with auto-fix support. Updated `backend/tests/test_db_checkers.py` to include the new checker.
 - **Compound-group expansion layout stability**: Fixed `frontend/src/components/GraphCanvas.tsx` so expanding a process group only lays out the *newly* expanded group, not all currently expanded groups. Added diff tracking via `prevExpandedProcessParentsRef` and propagated `parentsToLayout` through `syncCompoundParents` / `runHybridLayout`. Updated `layoutExpandedCompound` to preserve existing child positions when children are already spread out (spread > 20px), centering the parent on the children's bounding box instead of forcing a radial layout. This prevents expanding `lithography_process` inside `wafer_manufacturing` from re-arranging the outer group or disturbing the global graph. Frontend production build passes.
+- **Canvas view-state undo**: Added an undo stack for industrial/company canvas view state. `frontend/src/hooks/useViewStateHistory.ts` tracks snapshots of node positions, camera, expanded process groups, focus/hide state, and node/edge filters. View-changing actions (node drag, auto-arrange, zoom/pan, reset view, process-group expand/collapse, focus/hide, filter resets) push the previous snapshot before applying the change; the toolbar's "撤销" button or `Ctrl+Z` pops the snapshot and restores it via the existing `loadView` path. To avoid polluting the stack, node drags are only recorded when the node actually moves, and camera changes are debounced. The stack is capped at 20 entries and cleared on explicit view load/save or workspace switch.
 
 ---
 
@@ -424,4 +425,4 @@ Historical batch construction logs list these as future work; none are implement
 
 ---
 
-*Last updated: 2026-06-29 21:17 CST*
+*Last updated: 2026-06-29 21:50 CST*
