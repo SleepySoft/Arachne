@@ -1177,6 +1177,8 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         const upstreamNodeIds = new Set<string>();
         const downstreamNodeIds = new Set<string>();
         edges.forEach((e) => {
+          // “显示上/下游”只展示产业流关系，避免把工艺组的 part_of 子工序也当作上下游拉出来
+          if (e.edge_namespace !== "industrial_flow") return;
           if (e.from_node === nodeId) downstreamNodeIds.add(e.to_node);
           if (e.to_node === nodeId) upstreamNodeIds.add(e.from_node);
         });
@@ -1258,6 +1260,20 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         addedNodes.addClass("highlighted");
         addedEdges.addClass("highlighted");
         cy.elements().not(node).not(addedNodes).not(addedEdges).addClass("dimmed");
+
+        // 把相机 fit 到新拉进来的节点，确保用户能看到效果
+        if (addedNodes.length > 0) {
+          const fitNodes = addedNodes.union(node);
+          cy.animate(
+            {
+              fit: {
+                eles: fitNodes,
+                padding: 80,
+              },
+            },
+            { duration: 250, easing: "ease-out" }
+          );
+        }
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error("showNeighbors failed:", err);
