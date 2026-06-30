@@ -2471,11 +2471,16 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         }
 
         applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current, focusStateRef.current, hideStateRef.current);
-        // 使用混合布局：产业流自上而下，is_a 关系环绕父节点
-        runHybridLayout(cy, true, expandedProcessParentsRef.current, processGroupDragPositionsRef.current, () => {
-          if (!cyRef.current || cyRef.current !== cy || (cy as unknown as { _private?: { destroyed?: boolean } })._private?.destroyed) return;
+        if (restoredPositions) {
+          // 如果正在恢复已保存视图，直接使用保存的节点位置，避免重新布局破坏用户布局。
           applyPendingViewState();
-        });
+        } else {
+          // 使用混合布局：产业流自上而下，is_a 关系环绕父节点
+          runHybridLayout(cy, true, expandedProcessParentsRef.current, processGroupDragPositionsRef.current, () => {
+            if (!cyRef.current || cyRef.current !== cy || (cy as unknown as { _private?: { destroyed?: boolean } })._private?.destroyed) return;
+            applyPendingViewState();
+          });
+        }
         setLoading(false);
       } catch (err) {
         if (mounted) {
