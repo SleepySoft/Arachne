@@ -23,6 +23,8 @@ interface CanvasToolbarProps {
   onManageViews?: () => void;
   zoomSensitivity?: number;
   onZoomSensitivityChange?: (value: number) => void;
+  parentView?: SavedView;
+  onViewSaved?: (view: SavedView) => void;
 }
 
 // 收起/展开后始终保留可见的最小区域（像素），确保能被拖回来
@@ -37,6 +39,8 @@ export function CanvasToolbar({
   onManageViews,
   zoomSensitivity,
   onZoomSensitivityChange,
+  parentView,
+  onViewSaved,
 }: CanvasToolbarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [position, setPosition] = useState({ x: 12, y: 12 });
@@ -147,6 +151,8 @@ export function CanvasToolbar({
             onSave={onSaveView}
             onLoad={onLoadView}
             onManage={onManageViews}
+            parentView={parentView}
+            onViewSaved={onViewSaved}
           />
 
           <GraphToolbar variant="inline" />

@@ -117,7 +117,8 @@ export default function App() {
         },
         name.trim()
       );
-      savedViews.saveView(name.trim(), "industrial", payload, loadedIndustrialView ?? undefined);
+      const view = savedViews.saveView(name.trim(), "industrial", payload, loadedIndustrialView ?? undefined);
+      setLoadedIndustrialView(view);
     } else if (mainView === "company_graph") {
       const activeRef =
         company.companyDisplayMode === "local" && company.companyExploreMode === "manual"
@@ -135,7 +136,8 @@ export default function App() {
         },
         name.trim()
       );
-      savedViews.saveView(name.trim(), "company", payload, loadedCompanyView ?? undefined);
+      const view = savedViews.saveView(name.trim(), "company", payload, loadedCompanyView ?? undefined);
+      setLoadedCompanyView(view);
     }
   }, [
     mainView,
@@ -384,6 +386,8 @@ export default function App() {
             }}
             zoomSensitivity={industrial.wheelSensitivity}
             onZoomSensitivityChange={industrial.setWheelSensitivity}
+            parentView={loadedIndustrialView ?? undefined}
+            onViewSaved={(view) => setLoadedIndustrialView(view)}
           />
         </div>
       }
@@ -549,6 +553,8 @@ export default function App() {
               setViewManagerWorkspace("company");
               setViewManagerOpen(true);
             }}
+            parentView={loadedCompanyView ?? undefined}
+            onViewSaved={(view) => setLoadedCompanyView(view)}
           />
         </div>
       }

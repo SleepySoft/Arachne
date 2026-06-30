@@ -19,6 +19,8 @@ interface ViewToolbarProps {
   onSave: (name: string) => Omit<SavedView, "id" | "base" | "viewVersion" | "created_at" | "updated_at" | "version"> | null;
   onLoad: (view: SavedView) => void;
   onManage?: () => void;
+  parentView?: SavedView;
+  onViewSaved?: (view: SavedView) => void;
 }
 
 export function ViewToolbar({
@@ -28,6 +30,8 @@ export function ViewToolbar({
   onSave,
   onLoad,
   onManage,
+  parentView,
+  onViewSaved,
 }: ViewToolbarProps) {
   const { viewsForWorkspace, saveView, importViews, exportViews } = savedViews;
   const views = viewsForWorkspace(workspace);
@@ -39,11 +43,12 @@ export function ViewToolbar({
   const handleSave = useCallback(() => {
     const payload = onSave(name);
     if (payload) {
-      saveView(name, workspace, payload);
+      const view = saveView(name, workspace, payload, parentView);
+      onViewSaved?.(view);
     }
     setName("");
     setSavePromptOpen(false);
-  }, [name, onSave, saveView, workspace]);
+  }, [name, onSave, saveView, workspace, parentView, onViewSaved]);
 
   const handleImport = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
