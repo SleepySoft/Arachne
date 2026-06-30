@@ -296,16 +296,22 @@ export function useIndustrialGraph() {
     setSubgraphData(undefined);
   }, []);
 
-  const resetSelections = useCallback(() => {
-    setSelectedIndustries([]);
-    setSelectedCompanies([]);
-    setSubgraphData(undefined);
-    setHighlightNodeIds(undefined);
-    setGraphKey((k) => k + 1);
-  }, []);
+  const resetSelections = useCallback(
+    (options?: { remount?: boolean }) => {
+      setSelectedIndustries([]);
+      setSelectedCompanies([]);
+      setSubgraphData(undefined);
+      setHighlightNodeIds(undefined);
+      if (options?.remount !== false) {
+        setGraphKey((k) => k + 1);
+      }
+    },
+    []
+  );
 
   // 将后端最新全图数据合并到当前画布，不重建、不重排已有节点。
   // 新增的节点放在其已有邻居的重心附近；孤立新节点放在当前视野中心。
+  // 同时会把旧视图加载后仍堆在 (0,0) 的节点重新定位到邻居重心，避免展开工艺组时乱跳。
   const mergeFullGraphData = useCallback(
     async (canvasRef: React.RefObject<GraphCanvasRef | null>) => {
       const canvas = canvasRef.current;
@@ -316,7 +322,7 @@ export function useIndustrialGraph() {
         listEdges(1, 1000),
       ]);
 
-      let currentPositions = canvas.getNodePositions();
+      const currentPositions = canvas.getNodePositions();
       const currentNodeIds = new Set(Object.keys(currentPositions));
 
       // 先添加缺失的节点
@@ -349,15 +355,30 @@ export function useIndustrialGraph() {
           ? (containerSize.height / 2 - camera.pan.y) / camera.zoom
           : 0;
 
-      // 按拓扑顺序添加：优先添加与已有图相连的新节点，这样后续节点能利用已添加节点的位置
-      const positionedNodeIds = new Set(Object.keys(currentPositions));
-      const placedPositions: Record<string, { x: number; y: number }> = {};
+      // 旧视图加载后，后端新增的节点可能已经被 GraphCanvas init 以默认位置 (0,0) 加进来。
+      // 这些节点不应被视为“已定位”，否则新节点/其它 orphan 节点会参考 (0,0) 互相拉扯。
+      const orphanNodeIds = Array.from(currentNodeIds).filter((id) => {
+        const pos = currentPositions[id];
+        if (!pos || pos.x !== 0 || pos.y !== 0) return false;
+        const edges = edgesByNode.get(id) || [];
+        return edges.some((e) => {
+          const otherId = e.from_node === id ? e.to_node : e.from_node;
+          const otherPos = currentPositions[otherId];
+          return otherPos && (otherPos.x !== 0 || otherPos.y !== 0);
+        });
+      });
+      const orphanIdSet = new Set(orphanNodeIds);
 
-      nodesToAdd.forEach((node, index) => {
-        const connectedEdges = edgesByNode.get(node.node_id) || [];
+      // 给节点在视野中心或邻居重心附近分配位置
+      let placementIndex = 0;
+      const placeNode = (
+        nodeId: string,
+        add?: (pos: { x: number; y: number }) => void
+      ): { x: number; y: number } => {
+        const connectedEdges = edgesByNode.get(nodeId) || [];
         const neighborIds = connectedEdges
           .map((e) =>
-            e.from_node === node.node_id ? e.to_node : e.from_node
+            e.from_node === nodeId ? e.to_node : e.from_node
           )
           .filter((id) => positionedNodeIds.has(id));
 
@@ -365,28 +386,46 @@ export function useIndustrialGraph() {
         let y = centerY;
         if (neighborIds.length > 0) {
           const positions = neighborIds
-            .map((id) => currentPositions[id] ?? placedPositions[id])
+            .map((id) => placedPositions[id])
             .filter((p): p is { x: number; y: number } => !!p);
           if (positions.length > 0) {
             x = positions.reduce((sum, p) => sum + p.x, 0) / positions.length;
             y = positions.reduce((sum, p) => sum + p.y, 0) / positions.length;
           }
         }
-        // 给每个新节点加一点偏移，避免完全重叠
         const offset = 60;
-        const angle = (index * 137.5 * Math.PI) / 180;
+        const angle = (placementIndex * 137.5 * Math.PI) / 180;
+        placementIndex += 1;
         const pos = {
           x: x + offset * Math.cos(angle),
           y: y + offset * Math.sin(angle),
         };
-        canvas.addNode(node, pos);
-        placedPositions[node.node_id] = pos;
-        positionedNodeIds.add(node.node_id);
+        if (add) add(pos);
+        placedPositions[nodeId] = pos;
+        positionedNodeIds.add(nodeId);
+        return pos;
+      };
+
+      // 按拓扑顺序添加：优先添加与已有图相连的新节点，这样后续节点能利用已添加节点的位置
+      const positionedNodeIds = new Set(
+        Object.keys(currentPositions).filter((id) => !orphanIdSet.has(id))
+      );
+      const placedPositions: Record<string, { x: number; y: number }> = {
+        ...currentPositions,
+      };
+
+      nodesToAdd.forEach((node) => {
+        placeNode(node.node_id, (pos) => canvas.addNode(node, pos));
       });
 
       // 再添加缺失的边（addEdge 内部会检查端点是否存在并跳过已存在边）
       allEdges.forEach((edge) => {
         canvas.addEdge(edge);
+      });
+
+      // 把堆在 (0,0) 的 orphan 节点重新定位到已有邻居的重心，避免展开工艺组时乱跳。
+      orphanNodeIds.forEach((nodeId) => {
+        placeNode(nodeId, (pos) => canvas.setNodePosition(nodeId, pos));
       });
 
       // 同步工艺组：把 part_of 子节点移入 compound parent

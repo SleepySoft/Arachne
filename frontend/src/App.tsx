@@ -594,7 +594,7 @@ export default function App() {
             // 返回全图：不清空已有节点，只把后端最新的节点/边合并进来，
             // 并在原地显示。已有节点位置和相机保持不变。
             viewHistory.reset("industrial");
-            industrial.resetSelections();
+            industrial.resetSelections({ remount: false });
             industrial.mergeFullGraphData(graphCanvasRef);
           }}
         />

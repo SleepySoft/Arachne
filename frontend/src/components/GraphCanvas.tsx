@@ -294,6 +294,7 @@ export interface GraphCanvasRef {
   setCamera: (camera: { pan: { x: number; y: number }; zoom: number }) => void;
   getNodePositions: () => Record<string, { x: number; y: number }>;
   setNodePositions: (positions: Record<string, { x: number; y: number }>) => void;
+  setNodePosition: (nodeId: string, position: { x: number; y: number }) => void;
   getContainerSize: () => { width: number; height: number } | null;
   syncProcessGroups: () => void;
   pullEdgeEndpointsIntoView: (edgeId: string) => void;
@@ -1035,10 +1036,17 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     setNodePositions: (positions) => {
       const cy = cyRef.current;
       if (cy) {
+        pendingPositionsRef.current = positions;
         applyPendingViewState();
       } else {
         pendingPositionsRef.current = positions;
       }
+    },
+    setNodePosition: (nodeId, position) => {
+      const cy = cyRef.current;
+      if (!cy) return;
+      const node = cy.getElementById(nodeId);
+      if (node.length > 0) node.position(position);
     },
     syncProcessGroups: () => {
       const cy = cyRef.current;
