@@ -353,20 +353,25 @@ export default function App() {
             }
             onLoadView={(view) => {
               setLoadedIndustrialView(view);
-              const result = applyIndustrialSnapshot(view, {
-                setSelectedIndustries: industrial.setSelectedIndustries,
-                setSelectedCompanies: industrial.setSelectedCompanies,
-                setActiveFilters: industrial.setActiveFilters,
-                setExpandedProcessParents: industrial.setExpandedProcessParents,
-                setFocusState: industrial.setFocusState,
-                setHideState: industrial.setHideState,
-                setGraphKey: industrial.setGraphKey,
-                setSubgraphData: industrial.setSubgraphData,
-                setHighlightNodeIds: industrial.setHighlightNodeIds,
-                allIndustries,
-                allCompanies,
-                onSetRestored: setIndustrialViewToRestore,
-              });
+              const containerSize = graphCanvasRef.current?.getContainerSize();
+              const result = applyIndustrialSnapshot(
+                view,
+                {
+                  setSelectedIndustries: industrial.setSelectedIndustries,
+                  setSelectedCompanies: industrial.setSelectedCompanies,
+                  setActiveFilters: industrial.setActiveFilters,
+                  setExpandedProcessParents: industrial.setExpandedProcessParents,
+                  setFocusState: industrial.setFocusState,
+                  setHideState: industrial.setHideState,
+                  setGraphKey: industrial.setGraphKey,
+                  setSubgraphData: industrial.setSubgraphData,
+                  setHighlightNodeIds: industrial.setHighlightNodeIds,
+                  allIndustries,
+                  allCompanies,
+                  onSetRestored: setIndustrialViewToRestore,
+                },
+                containerSize ?? undefined
+              );
               if (result.missingIndustryIds.length > 0 || result.missingCompanyIds.length > 0) {
                 setImportMessage(
                   `已恢复视图。缺失 ${result.missingIndustryIds.length} 个行业、${result.missingCompanyIds.length} 个公司。`
@@ -524,16 +529,21 @@ export default function App() {
             }
             onLoadView={(view) => {
               setLoadedCompanyView(view);
-              applyCompanySnapshot(view, {
-                setCompanyDisplayMode: company.setCompanyDisplayMode,
-                setCompanyExploreMode: company.setCompanyExploreMode,
-                setOrderedChain: company.setOrderedChain,
-                setFixedIds: company.setFixedIds,
-                setCurrentFocusId: company.setCurrentFocusId,
-                setExplorationData: company.setExplorationData,
-                setPreviewData: company.setPreviewData,
-                onSetRestored: setCompanyViewToRestore,
-              });
+              const containerSize = activeCompanyCanvasRef.current?.getContainerSize();
+              applyCompanySnapshot(
+                view,
+                {
+                  setCompanyDisplayMode: company.setCompanyDisplayMode,
+                  setCompanyExploreMode: company.setCompanyExploreMode,
+                  setOrderedChain: company.setOrderedChain,
+                  setFixedIds: company.setFixedIds,
+                  setCurrentFocusId: company.setCurrentFocusId,
+                  setExplorationData: company.setExplorationData,
+                  setPreviewData: company.setPreviewData,
+                  onSetRestored: setCompanyViewToRestore,
+                },
+                containerSize ?? undefined
+              );
             }}
             onManageViews={() => {
               setViewManagerWorkspace("company");
@@ -834,20 +844,25 @@ export default function App() {
           onLoad={(view) => {
             if (viewManagerWorkspace === "industrial") {
               setLoadedIndustrialView(view);
-              const result = applyIndustrialSnapshot(view, {
-                setSelectedIndustries: industrial.setSelectedIndustries,
-                setSelectedCompanies: industrial.setSelectedCompanies,
-                setActiveFilters: industrial.setActiveFilters,
-                setExpandedProcessParents: industrial.setExpandedProcessParents,
-                setFocusState: industrial.setFocusState,
-                setHideState: industrial.setHideState,
-                setGraphKey: industrial.setGraphKey,
-                setSubgraphData: industrial.setSubgraphData,
-                setHighlightNodeIds: industrial.setHighlightNodeIds,
-                allIndustries,
-                allCompanies,
-                onSetRestored: setIndustrialViewToRestore,
-              });
+              const containerSize = graphCanvasRef.current?.getContainerSize();
+              const result = applyIndustrialSnapshot(
+                view,
+                {
+                  setSelectedIndustries: industrial.setSelectedIndustries,
+                  setSelectedCompanies: industrial.setSelectedCompanies,
+                  setActiveFilters: industrial.setActiveFilters,
+                  setExpandedProcessParents: industrial.setExpandedProcessParents,
+                  setFocusState: industrial.setFocusState,
+                  setHideState: industrial.setHideState,
+                  setGraphKey: industrial.setGraphKey,
+                  setSubgraphData: industrial.setSubgraphData,
+                  setHighlightNodeIds: industrial.setHighlightNodeIds,
+                  allIndustries,
+                  allCompanies,
+                  onSetRestored: setIndustrialViewToRestore,
+                },
+                containerSize ?? undefined
+              );
               if (result.missingIndustryIds.length > 0 || result.missingCompanyIds.length > 0) {
                 setImportMessage(
                   `已恢复视图。缺失 ${result.missingIndustryIds.length} 个行业、${result.missingCompanyIds.length} 个公司。`
@@ -855,16 +870,21 @@ export default function App() {
               }
             } else {
               setLoadedCompanyView(view);
-              applyCompanySnapshot(view, {
-                setCompanyDisplayMode: company.setCompanyDisplayMode,
-                setCompanyExploreMode: company.setCompanyExploreMode,
-                setOrderedChain: company.setOrderedChain,
-                setFixedIds: company.setFixedIds,
-                setCurrentFocusId: company.setCurrentFocusId,
-                setExplorationData: company.setExplorationData,
-                setPreviewData: company.setPreviewData,
-                onSetRestored: setCompanyViewToRestore,
-              });
+              const containerSize = activeCompanyCanvasRef.current?.getContainerSize();
+              applyCompanySnapshot(
+                view,
+                {
+                  setCompanyDisplayMode: company.setCompanyDisplayMode,
+                  setCompanyExploreMode: company.setCompanyExploreMode,
+                  setOrderedChain: company.setOrderedChain,
+                  setFixedIds: company.setFixedIds,
+                  setCurrentFocusId: company.setCurrentFocusId,
+                  setExplorationData: company.setExplorationData,
+                  setPreviewData: company.setPreviewData,
+                  onSetRestored: setCompanyViewToRestore,
+                },
+                containerSize ?? undefined
+              );
             }
             setViewManagerOpen(false);
           }}

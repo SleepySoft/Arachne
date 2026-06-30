@@ -19,6 +19,32 @@ export interface GraphCameraController {
   setCamera: (camera: CameraState) => void;
   getNodePositions: () => NodePositions;
   setNodePositions: (positions: NodePositions) => void;
+  getContainerSize: () => { width: number; height: number } | null;
+}
+
+function scaleStateToContainer(
+  state: IndustrialViewState | CompanyViewState,
+  toSize?: { width: number; height: number }
+) {
+  const fromSize = state.containerSize;
+  if (!fromSize || !toSize || fromSize.width <= 0 || fromSize.height <= 0) return;
+
+  const scaleX = toSize.width / fromSize.width;
+  const scaleY = toSize.height / fromSize.height;
+  // Use the smaller scale to preserve aspect ratio and avoid distorting the layout.
+  const scale = Math.min(scaleX, scaleY);
+  if (!isFinite(scale) || scale <= 0) return;
+
+  if (state.nodePositions) {
+    const scaled: NodePositions = {};
+    Object.entries(state.nodePositions).forEach(([id, pos]) => {
+      scaled[id] = { x: pos.x * scale, y: pos.y * scale };
+    });
+    state.nodePositions = scaled;
+  }
+
+  state.camera.pan.x *= scale;
+  state.camera.pan.y *= scale;
 }
 
 export interface IndustrialSnapshotDeps {
@@ -77,6 +103,7 @@ export function buildIndustrialSnapshot(
   const canvas = deps.canvasRef.current;
   const nodePositions = canvas?.getNodePositions();
   const camera = canvas?.getCamera();
+  const containerSize = canvas?.getContainerSize();
 
   return {
     name,
@@ -88,6 +115,7 @@ export function buildIndustrialSnapshot(
       expandedProcessParentIds: [...deps.expandedProcessParents],
       camera: camera ?? { pan: { x: 0, y: 0 }, zoom: 1 },
       nodePositions: nodePositions && Object.keys(nodePositions).length > 0 ? nodePositions : undefined,
+      containerSize: containerSize ?? undefined,
       focus: deps.focusState.active
         ? {
             active: deps.focusState.active,
@@ -108,7 +136,8 @@ export function buildIndustrialSnapshot(
 
 export function applyIndustrialSnapshot(
   view: SavedView,
-  deps: IndustrialRestoreDeps
+  deps: IndustrialRestoreDeps,
+  toContainerSize?: { width: number; height: number }
 ): { restored: boolean; missingIndustryIds: string[]; missingCompanyIds: string[] } {
   if (view.workspace !== "industrial" || !view.industrial) {
     return { restored: false, missingIndustryIds: [], missingCompanyIds: [] };
@@ -181,6 +210,10 @@ export function applyIndustrialSnapshot(
   // Bump graph key to force canvas re-init with the new merged subgraph / full graph.
   deps.setGraphKey((k) => k + 1);
 
+  // Scale camera/positions to the current container so the view looks similar
+  // across different screen sizes and zoom levels.
+  scaleStateToContainer(state, toContainerSize);
+
   // Hand the saved camera/positions up to the parent so the canvas can apply them
   // after it has re-initialized and finished its layout.
   deps.onSetRestored(state);
@@ -198,6 +231,7 @@ export function buildCompanySnapshot(
 ): Omit<SavedView, "id" | "base" | "viewVersion" | "created_at" | "updated_at" | "version"> {
   const canvas = deps.canvasRef?.current;
   const camera = canvas?.getCamera();
+  const containerSize = canvas?.getContainerSize();
 
   return {
     name,
@@ -215,13 +249,15 @@ export function buildCompanySnapshot(
           }
         : undefined,
       camera: camera ?? { pan: { x: 0, y: 0 }, zoom: 1 },
+      containerSize: containerSize ?? undefined,
     },
   };
 }
 
 export function applyCompanySnapshot(
   view: SavedView,
-  deps: CompanyRestoreDeps
+  deps: CompanyRestoreDeps,
+  toContainerSize?: { width: number; height: number }
 ): { restored: boolean } {
   if (view.workspace !== "company" || !view.company) {
     return { restored: false };
@@ -246,6 +282,10 @@ export function applyCompanySnapshot(
 
   // Preview data is derived; clear it so it can be recomputed if needed.
   deps.setPreviewData(null);
+
+  // Scale camera/positions to the current container so the view looks similar
+  // across different screen sizes and zoom levels.
+  scaleStateToContainer(state, toContainerSize);
 
   // Hand camera/positions up to the parent to apply after the canvas is ready.
   deps.onSetRestored(state);

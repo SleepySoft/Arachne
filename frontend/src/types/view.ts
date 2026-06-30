@@ -49,6 +49,7 @@ export interface IndustrialViewState {
   nodePositions?: NodePositions;
   focus?: FocusState;
   hide?: HideState;
+  containerSize?: { width: number; height: number };
 }
 
 export interface CompanyViewState {
@@ -64,6 +65,7 @@ export interface CompanyViewState {
   camera: CameraState;
   // Company canvas currently uses deterministic layouts; positions are optional.
   nodePositions?: NodePositions;
+  containerSize?: { width: number; height: number };
 }
 
 export interface SavedView {

@@ -48,6 +48,7 @@ export interface ExplorationCanvasRef {
   setCamera: (camera: { pan: { x: number; y: number }; zoom: number }) => void;
   getNodePositions: () => Record<string, { x: number; y: number }>;
   setNodePositions: (positions: Record<string, { x: number; y: number }>) => void;
+  getContainerSize: () => { width: number; height: number } | null;
 }
 
 export const ExplorationCanvas = forwardRef<ExplorationCanvasRef, ExplorationCanvasProps>(function ExplorationCanvas({
@@ -109,6 +110,11 @@ export const ExplorationCanvas = forwardRef<ExplorationCanvasRef, ExplorationCan
         positions[n.id()] = { ...n.position() };
       });
       return positions;
+    },
+    getContainerSize: () => {
+      const el = containerRef.current;
+      if (!el) return null;
+      return { width: el.clientWidth, height: el.clientHeight };
     },
     setNodePositions: (positions) => {
       const cy = cyRef.current;
