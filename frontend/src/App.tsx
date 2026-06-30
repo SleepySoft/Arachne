@@ -591,6 +591,23 @@ export default function App() {
             industrial.selectedCompanies.length > 0
           }
           onResetSelection={() => {
+            // 返回全图时保留当前布局：把现有节点位置和相机暂存到 restored state，
+            // 再清空子图选择并重新加载全图数据。
+            const canvas = graphCanvasRef.current;
+            const positions = canvas?.getNodePositions();
+            const camera = canvas?.getCamera();
+            const containerSize = canvas?.getContainerSize();
+            if (positions && Object.keys(positions).length > 0 && camera) {
+              setIndustrialViewToRestore({
+                selectedIndustryIds: [],
+                selectedCompanyIds: [],
+                activeFilters: industrial.activeFilters,
+                expandedProcessParentIds: industrial.expandedProcessParents,
+                camera,
+                nodePositions: positions,
+                containerSize: containerSize ?? undefined,
+              });
+            }
             viewHistory.reset("industrial");
             industrial.resetSelections();
           }}
