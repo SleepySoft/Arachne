@@ -10,12 +10,13 @@ interface ViewToolbarProps {
     saveView: (
       name: string,
       workspace: WorkspaceType,
-      payload: Omit<SavedView, "id" | "created_at" | "updated_at">
+      payload: Omit<SavedView, "id" | "base" | "viewVersion" | "created_at" | "updated_at" | "version">,
+      parentView?: SavedView
     ) => SavedView;
     importViews: (file: File) => Promise<{ imported: number; skipped: number; errors: string[] }>;
     exportViews: (views?: SavedView[]) => void;
   };
-  onSave: (name: string) => Omit<SavedView, "id" | "created_at" | "updated_at"> | null;
+  onSave: (name: string) => Omit<SavedView, "id" | "base" | "viewVersion" | "created_at" | "updated_at" | "version"> | null;
   onLoad: (view: SavedView) => void;
   onManage?: () => void;
 }

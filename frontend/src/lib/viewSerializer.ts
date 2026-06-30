@@ -73,13 +73,12 @@ export interface CompanyRestoreDeps {
 export function buildIndustrialSnapshot(
   deps: IndustrialSnapshotDeps,
   name: string
-): Omit<SavedView, "id" | "created_at" | "updated_at"> {
+): Omit<SavedView, "id" | "base" | "viewVersion" | "created_at" | "updated_at" | "version"> {
   const canvas = deps.canvasRef.current;
   const nodePositions = canvas?.getNodePositions();
   const camera = canvas?.getCamera();
 
   return {
-    version: 1,
     name,
     workspace: "industrial",
     industrial: {
@@ -196,12 +195,11 @@ export function applyIndustrialSnapshot(
 export function buildCompanySnapshot(
   deps: CompanySnapshotDeps,
   name: string
-): Omit<SavedView, "id" | "created_at" | "updated_at"> {
+): Omit<SavedView, "id" | "base" | "viewVersion" | "created_at" | "updated_at" | "version"> {
   const canvas = deps.canvasRef?.current;
   const camera = canvas?.getCamera();
 
   return {
-    version: 1,
     name,
     workspace: "company",
     company: {

@@ -2,7 +2,23 @@ import { useCallback, useState } from "react";
 import { SavedView, SavedViewFile, WorkspaceType } from "@/types/view";
 
 const STORAGE_KEY = "arachne-saved-views";
-const CURRENT_VERSION = 1;
+const CURRENT_VERSION = 2;
+
+function migrateView(v: Partial<SavedView> & { id: string; workspace: WorkspaceType }): SavedView {
+  const now = new Date().toISOString();
+  return {
+    version: v.version ?? 1,
+    id: v.id,
+    base: v.base ?? v.id,
+    viewVersion: v.viewVersion ?? 1,
+    name: v.name ?? "未命名视图",
+    workspace: v.workspace,
+    created_at: v.created_at ?? now,
+    updated_at: v.updated_at ?? now,
+    industrial: v.industrial,
+    company: v.company,
+  };
+}
 
 function loadViews(): SavedView[] {
   if (typeof window === "undefined") return [];
@@ -11,7 +27,9 @@ function loadViews(): SavedView[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as SavedView[];
     return Array.isArray(parsed)
-      ? parsed.filter((v) => v && v.id && v.workspace)
+      ? parsed
+          .filter((v) => v && v.id && v.workspace)
+          .map((v) => migrateView(v))
       : [];
   } catch {
     return [];
@@ -39,18 +57,23 @@ export function useSavedViews() {
       workspace: WorkspaceType,
       payload: Omit<
         SavedView,
-        "id" | "name" | "workspace" | "created_at" | "updated_at" | "version"
-      >
+        "id" | "base" | "viewVersion" | "created_at" | "updated_at" | "version"
+      >,
+      parentView?: SavedView
     ): SavedView => {
       const now = new Date().toISOString();
+      const base = parentView?.base ?? generateId();
+      const viewVersion = parentView ? parentView.viewVersion + 1 : 1;
       const view: SavedView = {
         version: CURRENT_VERSION,
         id: generateId(),
-        name: name.trim() || `未命名视图 ${new Date().toLocaleString()}`,
-        workspace,
+        base,
+        viewVersion,
         created_at: now,
         updated_at: now,
         ...payload,
+        name: name.trim() || payload.name || `未命名视图 ${new Date().toLocaleString()}`,
+        workspace,
       };
       setViews((prev) => {
         const next = [view, ...prev];
@@ -128,10 +151,8 @@ export function useSavedViews() {
                 return;
               }
               valid.push({
-                ...v,
-                version: v.version ?? 1,
+                ...migrateView(v),
                 id: generateId(),
-                created_at: v.created_at || new Date().toISOString(),
                 updated_at: v.updated_at || new Date().toISOString(),
               });
             });

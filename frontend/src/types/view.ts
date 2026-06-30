@@ -69,6 +69,8 @@ export interface CompanyViewState {
 export interface SavedView {
   version: number;
   id: string;
+  base: string;
+  viewVersion: number;
   name: string;
   workspace: WorkspaceType;
   created_at: string;

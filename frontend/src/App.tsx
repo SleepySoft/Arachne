@@ -58,6 +58,8 @@ export default function App() {
   const [importMessage, setImportMessage] = useState<string | null>(null);
   const [viewManagerOpen, setViewManagerOpen] = useState(false);
   const [viewManagerWorkspace, setViewManagerWorkspace] = useState<import("@/types/view").WorkspaceType>("industrial");
+  const [loadedIndustrialView, setLoadedIndustrialView] = useState<import("@/types/view").SavedView | null>(null);
+  const [loadedCompanyView, setLoadedCompanyView] = useState<import("@/types/view").SavedView | null>(null);
   const savedViews = useSavedViews();
 
   useEffect(() => {
@@ -115,7 +117,7 @@ export default function App() {
         },
         name.trim()
       );
-      savedViews.saveView(name.trim(), "industrial", payload);
+      savedViews.saveView(name.trim(), "industrial", payload, loadedIndustrialView ?? undefined);
     } else if (mainView === "company_graph") {
       const activeRef =
         company.companyDisplayMode === "local" && company.companyExploreMode === "manual"
@@ -133,7 +135,7 @@ export default function App() {
         },
         name.trim()
       );
-      savedViews.saveView(name.trim(), "company", payload);
+      savedViews.saveView(name.trim(), "company", payload, loadedCompanyView ?? undefined);
     }
   }, [
     mainView,
@@ -148,6 +150,8 @@ export default function App() {
     company.currentFocusId,
     company.explorationData,
     savedViews,
+    loadedIndustrialView,
+    loadedCompanyView,
   ]);
 
   const handleOpenViewManager = useCallback(() => {
@@ -348,6 +352,7 @@ export default function App() {
               )
             }
             onLoadView={(view) => {
+              setLoadedIndustrialView(view);
               const result = applyIndustrialSnapshot(view, {
                 setSelectedIndustries: industrial.setSelectedIndustries,
                 setSelectedCompanies: industrial.setSelectedCompanies,
@@ -518,6 +523,7 @@ export default function App() {
               )
             }
             onLoadView={(view) => {
+              setLoadedCompanyView(view);
               applyCompanySnapshot(view, {
                 setCompanyDisplayMode: company.setCompanyDisplayMode,
                 setCompanyExploreMode: company.setCompanyExploreMode,
@@ -827,6 +833,7 @@ export default function App() {
           savedViews={savedViews}
           onLoad={(view) => {
             if (viewManagerWorkspace === "industrial") {
+              setLoadedIndustrialView(view);
               const result = applyIndustrialSnapshot(view, {
                 setSelectedIndustries: industrial.setSelectedIndustries,
                 setSelectedCompanies: industrial.setSelectedCompanies,
@@ -847,6 +854,7 @@ export default function App() {
                 );
               }
             } else {
+              setLoadedCompanyView(view);
               applyCompanySnapshot(view, {
                 setCompanyDisplayMode: company.setCompanyDisplayMode,
                 setCompanyExploreMode: company.setCompanyExploreMode,
