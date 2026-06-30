@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Edit2, Trash2, X } from "lucide-react";
-import { GraphEdge } from "@/types";
+import { ArrowRight, Edit2, Trash2, X } from "lucide-react";
+import { GraphEdge, IndustrialNode } from "@/types";
 import { deleteEdge, getNode } from "@/services/api";
 
 const FIELD_LABELS: Record<string, string> = {
@@ -31,9 +31,10 @@ interface EdgeDetailProps {
   onEdit: () => void;
   onClose: () => void;
   onEdgeDeleted?: (edgeId: string) => void;
+  onSelectNode?: (node: IndustrialNode) => void;
 }
 
-export function EdgeDetail({ edge, onEdit, onClose, onEdgeDeleted }: EdgeDetailProps) {
+export function EdgeDetail({ edge, onEdit, onClose, onEdgeDeleted, onSelectNode }: EdgeDetailProps) {
   const { data: fromNode } = useQuery({
     queryKey: ["node", edge.from_node],
     queryFn: () => getNode(edge.from_node),
@@ -44,13 +45,6 @@ export function EdgeDetail({ edge, onEdit, onClose, onEdgeDeleted }: EdgeDetailP
     queryFn: () => getNode(edge.to_node),
     enabled: !!edge.to_node,
   });
-
-  const fromLabel = fromNode
-    ? `${fromNode.canonical_name_zh} (${edge.from_node})`
-    : edge.from_node;
-  const toLabel = toNode
-    ? `${toNode.canonical_name_zh} (${edge.to_node})`
-    : edge.to_node;
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteEdge(edge.edge_id),
@@ -98,8 +92,21 @@ export function EdgeDetail({ edge, onEdit, onClose, onEdgeDeleted }: EdgeDetailP
           badge
         />
         <Field label={FIELD_LABELS.type} value={`${edge.edge_type_label || edge.edge_type} (${edge.edge_type})`} badge />
-        <Field label={FIELD_LABELS.from_node} value={fromLabel} />
-        <Field label={FIELD_LABELS.to_node} value={toLabel} />
+
+        <div>
+          <div className="text-[10px] font-semibold uppercase text-slate-500">{FIELD_LABELS.from_node}</div>
+          <NodeEndpointCard node={fromNode} nodeId={edge.from_node} onClick={onSelectNode} />
+        </div>
+
+        <div className="flex items-center justify-center">
+          <ArrowRight className="h-5 w-5 text-cyan-500" />
+        </div>
+
+        <div>
+          <div className="text-[10px] font-semibold uppercase text-slate-500">{FIELD_LABELS.to_node}</div>
+          <NodeEndpointCard node={toNode} nodeId={edge.to_node} onClick={onSelectNode} />
+        </div>
+
         <Field
           label={FIELD_LABELS.confidence}
           value={`${CONFIDENCE_LABELS[edge.confidence] || edge.confidence} (${edge.confidence})`}
@@ -145,6 +152,37 @@ export function EdgeDetail({ edge, onEdit, onClose, onEdgeDeleted }: EdgeDetailP
         )}
       </div>
     </div>
+  );
+}
+
+function NodeEndpointCard({
+  node,
+  nodeId,
+  onClick,
+}: {
+  node?: IndustrialNode;
+  nodeId: string;
+  onClick?: (node: IndustrialNode) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => node && onClick?.(node)}
+      disabled={!node || !onClick}
+      className="mt-1 flex w-full items-center justify-between rounded border border-cyan-900/40 bg-cyan-950/20 px-3 py-2 text-left transition-colors hover:border-cyan-700/60 hover:bg-cyan-900/20 disabled:cursor-default disabled:opacity-60"
+    >
+      <div className="min-w-0">
+        <div className="truncate text-sm font-medium text-cyan-100">
+          {node ? node.canonical_name_zh : nodeId}
+        </div>
+        <div className="mt-0.5 truncate text-xs font-mono text-cyan-400/80">{nodeId}</div>
+      </div>
+      {node && (
+        <span className="ml-2 shrink-0 rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-300">
+          {node.entity_type}
+        </span>
+      )}
+    </button>
   );
 }
 

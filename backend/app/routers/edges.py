@@ -71,7 +71,10 @@ async def update_edge(edge_id: str, data: dict = Body(...)):
     else:
         update_data = OntologyEdgeUpdate(**data)
 
-    edge = await graph_service.update_edge(edge_id, update_data, ns)
+    try:
+        edge = await graph_service.update_edge(edge_id, update_data, ns)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     if not edge:
         raise HTTPException(status_code=404, detail="Edge not found")
     return edge

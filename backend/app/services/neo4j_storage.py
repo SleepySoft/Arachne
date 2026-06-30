@@ -433,14 +433,98 @@ async def update_edge(edge_id: str, data: dict, namespace: str) -> Optional[Grap
     now = datetime.utcnow()
     rel_type = "INDUSTRIAL_FLOW" if namespace == "industrial_flow" else "ONTOLOGY"
 
+    existing = await get_edge(edge_id)
+    if not existing:
+        return None
+
+    new_from = data.get("from_node", existing.from_node)
+    new_to = data.get("to_node", existing.to_node)
+
+    # Build the merged property set, preserving fields that are not being updated.
+    merged_props = {
+        "edge_id": existing.edge_id,
+        "edge_namespace": existing.edge_namespace,
+        "edge_type": existing.edge_type,
+        "description": existing.description,
+        "evidence": _evidence_to_db(existing.evidence),
+        "confidence": existing.confidence.value if hasattr(existing.confidence, "value") else existing.confidence,
+        "notes": existing.notes,
+        "created_at": existing.created_at,
+    }
+    if getattr(existing, "edge_uuid", None):
+        merged_props["edge_uuid"] = str(existing.edge_uuid)
+
+    for key, value in data.items():
+        if value is None or key in ("from_node", "to_node"):
+            continue
+        if key == "evidence":
+            merged_props[key] = _evidence_to_db(value)
+        elif key == "confidence":
+            merged_props[key] = value.value if hasattr(value, "value") else value
+        else:
+            merged_props[key] = value
+    merged_props["updated_at"] = now
+
+    # If the endpoints change, recreate the relationship so it connects to the new nodes.
+    if new_from != existing.from_node or new_to != existing.to_node:
+        # Avoid creating a duplicate edge (same namespace/type between the same pair).
+        async with driver.session() as session:
+            dup = await session.run(
+                f"""
+                MATCH (a:IndustrialNode {{node_id: $from_node}})-[r:{rel_type} {{edge_namespace: $ns, edge_type: $et}}]->(b:IndustrialNode {{node_id: $to_node}})
+                WHERE r.edge_id <> $edge_id
+                RETURN count(r) AS cnt
+                """,
+                from_node=new_from,
+                to_node=new_to,
+                ns=existing.edge_namespace,
+                et=existing.edge_type,
+                edge_id=edge_id,
+            )
+            dup_record = await dup.single()
+            if dup_record and dup_record["cnt"] > 0:
+                et = existing.edge_type.value if hasattr(existing.edge_type, "value") else existing.edge_type
+                raise ValueError(
+                    f"已存在同类型关系：{new_from} -> {new_to} ({existing.edge_namespace}/{et})"
+                )
+
+            # Build Cypher property map using explicit identifiers.
+            prop_items = []
+            params: dict = {
+                "old_from": existing.from_node,
+                "old_to": existing.to_node,
+                "new_from": new_from,
+                "new_to": new_to,
+            }
+            for k, v in merged_props.items():
+                param_key = f"p_{k}"
+                params[param_key] = v
+                prop_items.append(f"{k}: ${param_key}")
+            props_clause = "{" + ", ".join(prop_items) + "}"
+
+            cypher = f"""
+                MATCH (old_a:IndustrialNode {{node_id: $old_from}})-[old_r:{rel_type} {{edge_id: $p_edge_id}}]->(old_b:IndustrialNode {{node_id: $old_to}})
+                WITH old_r
+                MATCH (new_a:IndustrialNode {{node_id: $new_from}}), (new_b:IndustrialNode {{node_id: $new_to}})
+                DELETE old_r
+                CREATE (new_a)-[r:{rel_type} {props_clause}]->(new_b)
+                RETURN r, new_a AS start_node, new_b AS end_node
+            """
+            result = await session.run(cypher, **params)
+            record = await result.single()
+            if record is None:
+                return None
+            return _edge_from_record(record)
+
+    # Endpoints unchanged: just update properties on the existing relationship.
     set_clauses = ["r.updated_at = $now"]
     params = {"edge_id": edge_id, "now": now}
     for key, value in data.items():
-        if value is None:
+        if value is None or key in ("from_node", "to_node"):
             continue
         if key == "evidence":
             params[key] = _evidence_to_db(value)
-        elif key in ("confidence",):
+        elif key == "confidence":
             params[key] = value.value if hasattr(value, "value") else value
         else:
             params[key] = value

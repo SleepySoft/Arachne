@@ -127,6 +127,7 @@ export function RightPanel({
         onEdit={() => onPushPanel({ panel: "edge-edit", selectedEdge })}
         onClose={onBackPanel}
         onEdgeDeleted={onEdgeDeleted}
+        onSelectNode={onSelectNode}
       />
     );
   }

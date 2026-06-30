@@ -65,6 +65,9 @@ export function EdgeForm({ mode, edge, defaultFromNode, defaultToNode, prefillDa
 
   const nodeOptions = nodesData?.items || [];
 
+  // Preserve existing evidence when editing; the form does not yet have an evidence editor.
+  const evidence = mode === "edit" && edge ? edge.evidence : [];
+
   const mutation = useMutation({
     mutationFn: async () => {
       if (namespace === "industrial_flow") {
@@ -75,7 +78,7 @@ export function EdgeForm({ mode, edge, defaultFromNode, defaultToNode, prefillDa
           to_node: form.to_node,
           edge_type: form.edge_type as IndustrialFlowEdgeCreate["edge_type"],
           description: form.description,
-          evidence: [],
+          evidence,
           confidence: form.confidence as Confidence,
           notes: form.notes || undefined,
         };
@@ -89,7 +92,7 @@ export function EdgeForm({ mode, edge, defaultFromNode, defaultToNode, prefillDa
           to_node: form.to_node,
           edge_type: form.edge_type as OntologyEdgeCreate["edge_type"],
           description: form.description,
-          evidence: [],
+          evidence,
           confidence: form.confidence as Confidence,
           notes: form.notes || undefined,
         };
@@ -165,10 +168,9 @@ export function EdgeForm({ mode, edge, defaultFromNode, defaultToNode, prefillDa
         <FormField label="起点节点 *">
           <select
             required
-            disabled={mode === "edit"}
             value={form.from_node}
             onChange={(e) => setForm({ ...form, from_node: e.target.value })}
-            className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none disabled:opacity-50"
+            className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none"
           >
             <option value="">选择节点</option>
             {nodeOptions.map((n) => (
@@ -182,10 +184,9 @@ export function EdgeForm({ mode, edge, defaultFromNode, defaultToNode, prefillDa
         <FormField label="终点节点 *">
           <select
             required
-            disabled={mode === "edit"}
             value={form.to_node}
             onChange={(e) => setForm({ ...form, to_node: e.target.value })}
-            className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none disabled:opacity-50"
+            className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none"
           >
             <option value="">选择节点</option>
             {nodeOptions.map((n) => (

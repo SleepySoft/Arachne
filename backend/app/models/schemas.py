@@ -747,6 +747,8 @@ class IndustrialFlowEdgeUpdate(BaseModel):
     evidence: Optional[List[Evidence]] = None
     confidence: Optional[Confidence] = None
     notes: Optional[str] = None
+    from_node: Optional[str] = Field(default=None, pattern=r"^[a-z][a-z0-9_]*$")
+    to_node: Optional[str] = Field(default=None, pattern=r"^[a-z][a-z0-9_]*$")
 
 
 # ============================================================
@@ -812,6 +814,8 @@ class OntologyEdgeUpdate(BaseModel):
     evidence: Optional[List[Evidence]] = None
     confidence: Optional[Confidence] = None
     notes: Optional[str] = None
+    from_node: Optional[str] = Field(default=None, pattern=r"^[a-z][a-z0-9_]*$")
+    to_node: Optional[str] = Field(default=None, pattern=r"^[a-z][a-z0-9_]*$")
 
 
 # 使用 discriminator，确保根据 edge_namespace 自动解析为正确 Edge 类型
