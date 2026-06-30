@@ -159,7 +159,8 @@ export const CompanyNetworkCanvas = forwardRef<CompanyNetworkCanvasRef, CompanyN
     }
 
     if (camera) {
-      cy.animate({ pan: camera.pan, zoom: camera.zoom }, { duration: 0 });
+      cy.pan(camera.pan);
+      cy.zoom(camera.zoom);
     }
 
     pendingPositionsRef.current = null;
@@ -175,7 +176,8 @@ export const CompanyNetworkCanvas = forwardRef<CompanyNetworkCanvasRef, CompanyN
     setCamera: (camera) => {
       const cy = cyRef.current;
       if (cy) {
-        cy.animate({ pan: camera.pan, zoom: camera.zoom }, { duration: 0 });
+        cy.pan(camera.pan);
+        cy.zoom(camera.zoom);
       } else {
         pendingCameraRef.current = camera;
       }

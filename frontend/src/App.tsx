@@ -86,13 +86,13 @@ export default function App() {
 
   useEffect(() => {
     if (!industrialViewToRestore) return;
-    const timer = setTimeout(() => setIndustrialViewToRestore(null), 3000);
+    const timer = setTimeout(() => setIndustrialViewToRestore(null), 15000);
     return () => clearTimeout(timer);
   }, [industrialViewToRestore]);
 
   useEffect(() => {
     if (!companyViewToRestore) return;
-    const timer = setTimeout(() => setCompanyViewToRestore(null), 3000);
+    const timer = setTimeout(() => setCompanyViewToRestore(null), 15000);
     return () => clearTimeout(timer);
   }, [companyViewToRestore]);
 

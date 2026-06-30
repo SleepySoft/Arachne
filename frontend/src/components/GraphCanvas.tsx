@@ -743,6 +743,9 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   const connectSourceNodeIdRef = useRef(connectSourceNodeId);
   const expandedProcessParentsRef = useRef(expandedProcessParents);
   const prevExpandedProcessParentsRef = useRef<string[]>([]);
+  // 恢复已保存视图时，需要跳过 expandedProcessParents effect 触发的自动布局，
+  // 否则在初始化完成后该 effect 会立即重新计算 compound group 位置，破坏用户保存的布局。
+  const skipLayoutOnExpandForRestoreRef = useRef(false);
   const onToggleProcessExpansionRef = useRef(onToggleProcessExpansion);
   const wheelSensitivityRef = useRef(wheelSensitivity);
   const focusStateRef = useRef(focusState);
@@ -841,14 +844,30 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     if (positions && Object.keys(positions).length > 0) {
       const visibleIds = new Set(cy.nodes().map((n) => n.id()));
       const matched = new Set<string>();
+      // 1. 先定位非 compound-parent 节点，让 compound parent 自动根据子节点包围盒居中。
+      //    如果直接设置 parent 位置，Cytoscape 会连带平移所有子节点，破坏已保存的子节点布局。
       cy.batch(() => {
-        cy.nodes().forEach((n) => {
-          const pos = positions[n.id()];
-          if (pos) {
-            n.position(pos);
-            matched.add(n.id());
-          }
-        });
+        cy.nodes()
+          .filter((n) => !n.isParent())
+          .forEach((n) => {
+            const pos = positions[n.id()];
+            if (pos) {
+              n.position(pos);
+              matched.add(n.id());
+            }
+          });
+      });
+      // 2. 对没有可见子节点的 orphan parent，直接应用保存的位置。
+      cy.batch(() => {
+        cy.nodes()
+          .filter((n) => n.isParent() && n.children().length === 0)
+          .forEach((n) => {
+            const pos = positions[n.id()];
+            if (pos) {
+              n.position(pos);
+              matched.add(n.id());
+            }
+          });
       });
       const missingRatio = visibleIds.size > 0 ? (visibleIds.size - matched.size) / visibleIds.size : 0;
       // If too many saved positions are missing, fall back to a full relayout.
@@ -858,10 +877,9 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     }
 
     if (camera) {
-      cy.animate(
-        { pan: camera.pan, zoom: camera.zoom },
-        { duration: 0 }
-      );
+      // Apply camera synchronously; cy.animate with duration 0 does not take effect immediately.
+      cy.pan(camera.pan);
+      cy.zoom(camera.zoom);
     }
 
     pendingPositionsRef.current = null;
@@ -969,7 +987,10 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     setCamera: (camera) => {
       const cy = cyRef.current;
       if (cy) {
-        cy.animate({ pan: camera.pan, zoom: camera.zoom }, { duration: 0 });
+        // Use direct pan/zoom instead of animate({ duration: 0 }) because Cytoscape
+        // does not apply the animation synchronously, causing the camera to be lost.
+        cy.pan(camera.pan);
+        cy.zoom(camera.zoom);
       } else {
         pendingCameraRef.current = camera;
       }
@@ -2454,16 +2475,23 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         }
 
         // 如果正在恢复已保存视图，把展开工艺组的父节点位置预置到拖拽记录中，
-        // 这样 syncCompoundParents / layoutExpandedCompound 会以该位置为中心，
+        // 这样 syncCompoundParents 会以该位置为中心创建 compound parent，
         // 而不是让 Cytoscape 根据子节点重新计算父节点位置。
         if (restoredPositions) {
+          skipLayoutOnExpandForRestoreRef.current = true;
           expandedProcessParentsRef.current.forEach((parentId) => {
             const pos = restoredPositions[parentId];
             if (pos) processGroupDragPositionsRef.current.set(parentId, pos);
           });
         }
-        // 初始标记所有可展开工艺组，并应用过滤器隐藏 part_of 子节点
-        syncCompoundParents(cy, expandedProcessParentsRef.current, processGroupDragPositionsRef.current);
+        // 初始标记所有可展开工艺组，并应用过滤器隐藏 part_of 子节点。
+        // 恢复视图时跳过局部布局（parentsToLayout 传空数组），因为保存的节点位置随后会由 applyPendingViewState 应用。
+        syncCompoundParents(
+          cy,
+          expandedProcessParentsRef.current,
+          processGroupDragPositionsRef.current,
+          restoredPositions ? [] : undefined
+        );
 
         if (!cyRef.current || cyRef.current !== cy) {
           cy.destroy();
@@ -2523,6 +2551,17 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   useEffect(() => {
     const cy = cyRef.current;
     if (!cy) return;
+
+    // 如果是从已保存视图恢复后的第一次 expandedProcessParents effect，直接应用保存的状态，
+    // 不要重新布局，避免破坏用户保存的节点位置。
+    if (skipLayoutOnExpandForRestoreRef.current) {
+      skipLayoutOnExpandForRestoreRef.current = false;
+      prevExpandedProcessParentsRef.current = [...expandedProcessParents];
+      syncCompoundParents(cy, expandedProcessParents, processGroupDragPositionsRef.current, []);
+      applyFilters(cy, filtersRef.current, expandedProcessParents, focusStateRef.current, hideStateRef.current);
+      applyPendingViewState();
+      return;
+    }
 
     // 计算本次真正发生状态变化的组：只对新展开的组做局部布局，已经展开的外层组
     // （如晶圆制造）保持原状，避免展开内层组时把整个图撑乱。
