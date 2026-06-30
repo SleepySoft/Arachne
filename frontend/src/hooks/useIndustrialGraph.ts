@@ -7,8 +7,15 @@ import {
   PanelType,
 } from "@/types";
 import { EditMode } from "@/components/GraphCanvas";
+
 import { HideState } from "@/types/view";
-import { getCompanySubgraph, getIndustrySubgraph } from "@/services/api";
+import {
+  getCompanySubgraph,
+  getIndustrySubgraph,
+  listNodes,
+  listEdges,
+} from "@/services/api";
+import type { GraphCanvasRef } from "@/components/GraphCanvas";
 import { useNodeNavigation } from "./useNodeNavigation";
 import { PanelState, usePanelStack } from "./usePanelStack";
 
@@ -297,6 +304,97 @@ export function useIndustrialGraph() {
     setGraphKey((k) => k + 1);
   }, []);
 
+  // 将后端最新全图数据合并到当前画布，不重建、不重排已有节点。
+  // 新增的节点放在其已有邻居的重心附近；孤立新节点放在当前视野中心。
+  const mergeFullGraphData = useCallback(
+    async (canvasRef: React.RefObject<GraphCanvasRef | null>) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const [{ items: allNodes }, { items: allEdges }] = await Promise.all([
+        listNodes(1, 1000),
+        listEdges(1, 1000),
+      ]);
+
+      let currentPositions = canvas.getNodePositions();
+      const currentNodeIds = new Set(Object.keys(currentPositions));
+
+      // 先添加缺失的节点
+      const nodesToAdd: IndustrialNode[] = [];
+      allNodes.forEach((node) => {
+        if (!currentNodeIds.has(node.node_id)) {
+          nodesToAdd.push(node);
+        }
+      });
+
+      // 建立节点id到邻接边的快速索引，用于定位
+      const edgesByNode = new Map<string, GraphEdge[]>();
+      allEdges.forEach((edge) => {
+        const list = edgesByNode.get(edge.from_node) || [];
+        list.push(edge);
+        edgesByNode.set(edge.from_node, list);
+        const list2 = edgesByNode.get(edge.to_node) || [];
+        list2.push(edge);
+        edgesByNode.set(edge.to_node, list2);
+      });
+
+      const camera = canvas.getCamera();
+      const containerSize = canvas.getContainerSize();
+      const centerX =
+        camera && containerSize
+          ? (containerSize.width / 2 - camera.pan.x) / camera.zoom
+          : 0;
+      const centerY =
+        camera && containerSize
+          ? (containerSize.height / 2 - camera.pan.y) / camera.zoom
+          : 0;
+
+      // 按拓扑顺序添加：优先添加与已有图相连的新节点，这样后续节点能利用已添加节点的位置
+      const positionedNodeIds = new Set(Object.keys(currentPositions));
+      const placedPositions: Record<string, { x: number; y: number }> = {};
+
+      nodesToAdd.forEach((node, index) => {
+        const connectedEdges = edgesByNode.get(node.node_id) || [];
+        const neighborIds = connectedEdges
+          .map((e) =>
+            e.from_node === node.node_id ? e.to_node : e.from_node
+          )
+          .filter((id) => positionedNodeIds.has(id));
+
+        let x = centerX;
+        let y = centerY;
+        if (neighborIds.length > 0) {
+          const positions = neighborIds
+            .map((id) => currentPositions[id] ?? placedPositions[id])
+            .filter((p): p is { x: number; y: number } => !!p);
+          if (positions.length > 0) {
+            x = positions.reduce((sum, p) => sum + p.x, 0) / positions.length;
+            y = positions.reduce((sum, p) => sum + p.y, 0) / positions.length;
+          }
+        }
+        // 给每个新节点加一点偏移，避免完全重叠
+        const offset = 60;
+        const angle = (index * 137.5 * Math.PI) / 180;
+        const pos = {
+          x: x + offset * Math.cos(angle),
+          y: y + offset * Math.sin(angle),
+        };
+        canvas.addNode(node, pos);
+        placedPositions[node.node_id] = pos;
+        positionedNodeIds.add(node.node_id);
+      });
+
+      // 再添加缺失的边（addEdge 内部会检查端点是否存在并跳过已存在边）
+      allEdges.forEach((edge) => {
+        canvas.addEdge(edge);
+      });
+
+      // 同步工艺组：把 part_of 子节点移入 compound parent
+      canvas.syncProcessGroups();
+    },
+    []
+  );
+
   // Load merged subgraph whenever selected industries/companies change
   useEffect(() => {
     async function loadMergedSubgraph() {
@@ -496,6 +594,7 @@ export function useIndustrialGraph() {
     handleLoadSubgraph,
     handleHighlightNodes,
     resetSelections,
+    mergeFullGraphData,
     // edit mode
     editMode,
     setEditMode,

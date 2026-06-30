@@ -591,25 +591,11 @@ export default function App() {
             industrial.selectedCompanies.length > 0
           }
           onResetSelection={() => {
-            // 返回全图时保留当前布局：把现有节点位置和相机暂存到 restored state，
-            // 再清空子图选择并重新加载全图数据。
-            const canvas = graphCanvasRef.current;
-            const positions = canvas?.getNodePositions();
-            const camera = canvas?.getCamera();
-            const containerSize = canvas?.getContainerSize();
-            if (positions && Object.keys(positions).length > 0 && camera) {
-              setIndustrialViewToRestore({
-                selectedIndustryIds: [],
-                selectedCompanyIds: [],
-                activeFilters: industrial.activeFilters,
-                expandedProcessParentIds: industrial.expandedProcessParents,
-                camera,
-                nodePositions: positions,
-                containerSize: containerSize ?? undefined,
-              });
-            }
+            // 返回全图：不清空已有节点，只把后端最新的节点/边合并进来，
+            // 并在原地显示。已有节点位置和相机保持不变。
             viewHistory.reset("industrial");
             industrial.resetSelections();
+            industrial.mergeFullGraphData(graphCanvasRef);
           }}
         />
       }

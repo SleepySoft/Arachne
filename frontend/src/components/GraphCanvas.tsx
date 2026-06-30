@@ -295,6 +295,7 @@ export interface GraphCanvasRef {
   getNodePositions: () => Record<string, { x: number; y: number }>;
   setNodePositions: (positions: Record<string, { x: number; y: number }>) => void;
   getContainerSize: () => { width: number; height: number } | null;
+  syncProcessGroups: () => void;
   pullEdgeEndpointsIntoView: (edgeId: string) => void;
   highlightNeighbors: (
     nodeId: string,
@@ -1038,6 +1039,12 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
       } else {
         pendingPositionsRef.current = positions;
       }
+    },
+    syncProcessGroups: () => {
+      const cy = cyRef.current;
+      if (!cy) return;
+      syncCompoundParents(cy, expandedProcessParentsRef.current, processGroupDragPositionsRef.current, []);
+      applyFilters(cy, filtersRef.current, expandedProcessParentsRef.current, focusStateRef.current, hideStateRef.current);
     },
     pullEdgeEndpointsIntoView: (edgeId) => {
       const cy = cyRef.current;
@@ -2587,39 +2594,6 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         if (restoredPositions) {
           // 如果正在恢复已保存视图，直接使用保存的节点位置，避免重新布局破坏用户布局。
           applyPendingViewState();
-
-          // 把恢复视图之前不存在的节点（例如从视图返回全图时数据库新增的节点）
-          // 放在已有节点包围盒中心周围的圆环上，避免全部堆叠在默认位置。
-          const restoredIds = new Set(Object.keys(restoredPositions));
-          const newNodes = cy.nodes().filter((n) => !restoredIds.has(n.id()));
-          if (newNodes.length > 0) {
-            const positionedNodes = cy.nodes().filter((n) => restoredIds.has(n.id()));
-            let centerX = 0;
-            let centerY = 0;
-            if (positionedNodes.length > 0) {
-              const bb = positionedNodes.boundingBox();
-              centerX = (bb.x1 + bb.x2) / 2;
-              centerY = (bb.y1 + bb.y2) / 2;
-            } else {
-              const pan = cy.pan();
-              const zoom = cy.zoom();
-              const container = cy.container();
-              centerX = ((container?.clientWidth ?? 800) / 2 - pan.x) / zoom;
-              centerY = ((container?.clientHeight ?? 600) / 2 - pan.y) / zoom;
-            }
-            const radius = Math.max(250, newNodes.length * 35);
-            const angleStep = (2 * Math.PI) / newNodes.length;
-            let angle = 0;
-            cy.batch(() => {
-              newNodes.forEach((n) => {
-                n.position({
-                  x: centerX + radius * Math.cos(angle),
-                  y: centerY + radius * Math.sin(angle),
-                });
-                angle += angleStep;
-              });
-            });
-          }
         } else {
           // 使用混合布局：产业流自上而下，is_a 关系环绕父节点
           runHybridLayout(cy, true, expandedProcessParentsRef.current, processGroupDragPositionsRef.current, () => {
