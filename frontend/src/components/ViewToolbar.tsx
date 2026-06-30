@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Download, FolderOpen, Save, Settings2, Undo2, Upload } from "lucide-react";
 import { SavedView, WorkspaceType } from "@/types/view";
 
@@ -43,6 +43,21 @@ export function ViewToolbar({
   const [savePromptOpen, setSavePromptOpen] = useState(false);
   const [name, setName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleMouseDown(e: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+        setSavePromptOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, []);
 
   const handleSave = useCallback(() => {
     const payload = onSave(name);
@@ -217,7 +232,7 @@ export function ViewToolbar({
 
   if (variant === "inline") {
     return (
-      <div className="relative flex items-center gap-1">
+      <div ref={containerRef} className="relative flex items-center gap-1">
         {buttons}
         {dropdowns}
       </div>
@@ -225,7 +240,7 @@ export function ViewToolbar({
   }
 
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative">
       <div className="flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-900/90 p-1 shadow-lg backdrop-blur">
         {buttons}
       </div>
