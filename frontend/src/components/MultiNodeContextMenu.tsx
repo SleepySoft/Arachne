@@ -1,4 +1,14 @@
-import { LayoutGrid, X, MousePointerClick, Eye, EyeOff } from "lucide-react";
+import {
+  LayoutGrid,
+  X,
+  MousePointerClick,
+  Eye,
+  EyeOff,
+  AlignVerticalJustifyCenter,
+  AlignHorizontalJustifyCenter,
+  AlignVerticalSpaceBetween,
+  AlignHorizontalSpaceBetween,
+} from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
 
 interface MultiNodeContextMenuProps {
@@ -6,6 +16,10 @@ interface MultiNodeContextMenuProps {
   y: number;
   selectedCount: number;
   onAutoArrange: () => void;
+  onAlignHorizontal?: () => void;
+  onAlignVertical?: () => void;
+  onDistributeHorizontal?: () => void;
+  onDistributeVertical?: () => void;
   onClearSelection?: () => void;
   onFocusSelected?: () => void;
   onHideSelected?: () => void;
@@ -17,6 +31,10 @@ export function MultiNodeContextMenu({
   y,
   selectedCount,
   onAutoArrange,
+  onAlignHorizontal,
+  onAlignVertical,
+  onDistributeHorizontal,
+  onDistributeVertical,
   onClearSelection,
   onFocusSelected,
   onHideSelected,
@@ -39,6 +57,9 @@ export function MultiNodeContextMenu({
     el.style.left = `${left}px`;
     el.style.top = `${top}px`;
   }, [x, y]);
+
+  const canAlign = selectedCount >= 2;
+  const canDistribute = selectedCount >= 3;
 
   return (
     <>
@@ -91,6 +112,9 @@ export function MultiNodeContextMenu({
               隐藏选中节点 ({selectedCount})
             </button>
           )}
+
+          <div className="my-1 border-t border-slate-800" />
+
           <button
             onClick={() => {
               onAutoArrange();
@@ -101,17 +125,73 @@ export function MultiNodeContextMenu({
             <LayoutGrid size={14} className="text-emerald-400" />
             自动排列
           </button>
+
+          <button
+            disabled={!canAlign}
+            onClick={() => {
+              onAlignHorizontal?.();
+              onClose();
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+            title={canAlign ? "沿水平线对齐" : "至少需要选择 2 个节点"}
+          >
+            <AlignVerticalJustifyCenter size={14} className="text-amber-400" />
+            水平对齐
+          </button>
+
+          <button
+            disabled={!canAlign}
+            onClick={() => {
+              onAlignVertical?.();
+              onClose();
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+            title={canAlign ? "沿垂直线对齐" : "至少需要选择 2 个节点"}
+          >
+            <AlignHorizontalJustifyCenter size={14} className="text-amber-400" />
+            垂直对齐
+          </button>
+
+          <button
+            disabled={!canDistribute}
+            onClick={() => {
+              onDistributeHorizontal?.();
+              onClose();
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+            title={canDistribute ? "在水平方向均匀分布" : "至少需要选择 3 个节点"}
+          >
+            <AlignVerticalSpaceBetween size={14} className="text-violet-400" />
+            水平均匀分布
+          </button>
+
+          <button
+            disabled={!canDistribute}
+            onClick={() => {
+              onDistributeVertical?.();
+              onClose();
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+            title={canDistribute ? "在垂直方向均匀分布" : "至少需要选择 3 个节点"}
+          >
+            <AlignHorizontalSpaceBetween size={14} className="text-violet-400" />
+            垂直均匀分布
+          </button>
+
           {onClearSelection && (
-            <button
-              onClick={() => {
-                onClearSelection();
-                onClose();
-              }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
-            >
-              <MousePointerClick size={14} className="text-slate-400" />
-              取消选择
-            </button>
+            <>
+              <div className="my-1 border-t border-slate-800" />
+              <button
+                onClick={() => {
+                  onClearSelection();
+                  onClose();
+                }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+              >
+                <MousePointerClick size={14} className="text-slate-400" />
+                取消选择
+              </button>
+            </>
           )}
         </div>
       </div>

@@ -309,6 +309,8 @@ export interface GraphCanvasRef {
   getSelectedNodeIds: () => string[];
   clearNodeSelection: () => void;
   autoArrangeSelectedNodes: () => void;
+  alignSelectedNodes: (axis: "x" | "y") => void;
+  distributeSelectedNodes: (axis: "x" | "y") => void;
   // Focus / reveal mode
   enterFocus: (nodeIds: string[]) => void;
   revealNeighbors: (
@@ -1346,6 +1348,59 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         const target = pos.get(n.id())!;
         n.animate({ position: target }, { duration: 300, easing: "ease-out" });
       });
+    },
+    alignSelectedNodes: (axis) => {
+      const cy = cyRef.current;
+      if (!cy) return;
+      const selectedIds = cy.nodes(":selected").map((n) => n.id());
+      const nodes = selectedIds
+        .map((id) => cy.getElementById(id))
+        .filter((n) => n.length > 0 && !n.hasClass("hidden"));
+      if (nodes.length < 2) return;
+
+      const positions = nodes.map((n) => n.position());
+      if (axis === "x") {
+        const avgX = positions.reduce((sum, p) => sum + p.x, 0) / positions.length;
+        nodes.forEach((n) => {
+          n.animate({ position: { x: avgX, y: n.position().y } }, { duration: 250, easing: "ease-out" });
+        });
+      } else {
+        const avgY = positions.reduce((sum, p) => sum + p.y, 0) / positions.length;
+        nodes.forEach((n) => {
+          n.animate({ position: { x: n.position().x, y: avgY } }, { duration: 250, easing: "ease-out" });
+        });
+      }
+    },
+    distributeSelectedNodes: (axis) => {
+      const cy = cyRef.current;
+      if (!cy) return;
+      const selectedIds = cy.nodes(":selected").map((n) => n.id());
+      const nodes = selectedIds
+        .map((id) => cy.getElementById(id))
+        .filter((n) => n.length > 0 && !n.hasClass("hidden"));
+      if (nodes.length < 3) return;
+
+      const sorted = nodes.sort((a, b) => {
+        return axis === "x" ? a.position().x - b.position().x : a.position().y - b.position().y;
+      });
+      const firstPos = sorted[0].position();
+      const lastPos = sorted[sorted.length - 1].position();
+
+      if (axis === "x") {
+        const minX = firstPos.x;
+        const maxX = lastPos.x;
+        const step = (maxX - minX) / (sorted.length - 1);
+        sorted.forEach((n, i) => {
+          n.animate({ position: { x: minX + step * i, y: n.position().y } }, { duration: 250, easing: "ease-out" });
+        });
+      } else {
+        const minY = firstPos.y;
+        const maxY = lastPos.y;
+        const step = (maxY - minY) / (sorted.length - 1);
+        sorted.forEach((n, i) => {
+          n.animate({ position: { x: n.position().x, y: minY + step * i } }, { duration: 250, easing: "ease-out" });
+        });
+      }
     },
     pullNeighborsIntoView: (nodeId, direction) => {
       const cy = cyRef.current;

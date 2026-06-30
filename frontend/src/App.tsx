@@ -687,6 +687,10 @@ export default function App() {
               graphCanvasRef.current?.autoArrangeSelectedNodes();
               industrial.handleCloseMultiNodeContextMenu();
             }}
+            onAlignHorizontal={() => graphCanvasRef.current?.alignSelectedNodes("y")}
+            onAlignVertical={() => graphCanvasRef.current?.alignSelectedNodes("x")}
+            onDistributeHorizontal={() => graphCanvasRef.current?.distributeSelectedNodes("x")}
+            onDistributeVertical={() => graphCanvasRef.current?.distributeSelectedNodes("y")}
             onClearSelection={() => {
               graphCanvasRef.current?.clearNodeSelection();
             }}
