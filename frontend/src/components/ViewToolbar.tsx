@@ -23,6 +23,7 @@ interface ViewToolbarProps {
   onViewSaved?: (view: SavedView) => void;
   canUndo?: boolean;
   onUndo?: () => void;
+  showUndo?: boolean;
 }
 
 export function ViewToolbar({
@@ -36,6 +37,7 @@ export function ViewToolbar({
   onViewSaved,
   canUndo,
   onUndo,
+  showUndo = true,
 }: ViewToolbarProps) {
   const { viewsForWorkspace, saveView, importViews, exportViews } = savedViews;
   const views = viewsForWorkspace(workspace);
@@ -92,15 +94,17 @@ export function ViewToolbar({
         <span>保存</span>
       </button>
 
-      <button
-        onClick={onUndo}
-        disabled={!canUndo}
-        title={canUndo ? "撤销上一步布局 (Ctrl+Z)" : "无可撤销操作"}
-        className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
-      >
-        <Undo2 className="h-3.5 w-3.5" />
-        <span>撤销</span>
-      </button>
+      {showUndo && (
+        <button
+          onClick={onUndo}
+          disabled={!canUndo}
+          title={canUndo ? "撤销上一步布局 (Ctrl+Z)" : "无可撤销操作"}
+          className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+        >
+          <Undo2 className="h-3.5 w-3.5" />
+          <span>撤销</span>
+        </button>
+      )}
 
       <button
         onClick={() => setOpen((v) => !v)}
