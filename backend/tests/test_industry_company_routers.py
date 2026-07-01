@@ -117,7 +117,7 @@ class TestCompanyRouter:
         uid = uuid4().hex[:6]
         payload = {
             "company_id": f"test_byd_{uid}",
-            "name_zh": "比亚迪",
+            "name_zh": f"比亚迪测试-{uid}",
             "country": "CN",
             "company_type": "public",
             "status": "ACTIVE",
@@ -129,7 +129,7 @@ class TestCompanyRouter:
 
         resp2 = client.get(f"/api/v1/companies/{payload['company_id']}")
         assert resp2.status_code == 200
-        assert resp2.json()["name_zh"] == "比亚迪"
+        assert resp2.json()["name_zh"] == payload["name_zh"]
 
     async def test_list_companies_with_filter(self, client):
         if not await _postgres_available():
@@ -148,7 +148,7 @@ class TestCompanyRouter:
         company_id = f"test_exp_{uid}"
         client.post("/api/v1/companies", json={
             "company_id": company_id,
-            "name_zh": " exposure 测试公司",
+            "name_zh": f"exposure测试公司-{uid}",
             "status": "ACTIVE",
         })
 

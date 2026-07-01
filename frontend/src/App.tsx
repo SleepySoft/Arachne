@@ -11,6 +11,7 @@ import { CompanyNetworkCanvas, CompanyNetworkCanvasRef } from "@/components/Comp
 import { ExplorationCanvas, ExplorationCanvasRef } from "@/components/ExplorationCanvas";
 import { NodeContextMenu } from "@/components/NodeContextMenu";
 import { MultiNodeContextMenu } from "@/components/MultiNodeContextMenu";
+import { CompanyFilterPanel } from "@/components/CompanyFilterPanel";
 import { CompanyGraphEmptyState } from "@/components/CompanyGraphEmptyState";
 import { CompanyMaterialModal } from "@/components/CompanyMaterialModal";
 import { MaterialConnectionPanel } from "@/components/MaterialConnectionPanel";
@@ -846,10 +847,9 @@ export default function App() {
             y={industrial.contextMenu.y}
             nodeName={industrial.contextMenu.node.canonical_name_zh}
             onShowCompanies={() => {
-              industrial.pushPanel({
-                panel: "node-companies",
-                contextMenuNode: industrial.contextMenu.node,
-              });
+              if (industrial.contextMenu.node) {
+                industrial.showCompanyFilter([industrial.contextMenu.node]);
+              }
               industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
             }}
             onShowIndustries={() => {
@@ -979,16 +979,33 @@ export default function App() {
             onShowCompanies={() => {
               const nodes = industrial.multiNodeContextMenu.nodes;
               if (nodes.length > 0) {
-                industrial.pushPanel({
-                  panel: "multi-node-companies",
-                  selectedNodes: nodes,
-                });
+                industrial.showCompanyFilter(nodes);
               }
               industrial.handleCloseMultiNodeContextMenu();
             }}
             onClose={industrial.handleCloseMultiNodeContextMenu}
           />
         )}
+
+      {mainView === "industrial_graph" && (
+        <CompanyFilterPanel
+          visible={industrial.companyFilter.visible}
+          nodes={industrial.companyFilter.nodes}
+          onClose={() => {
+            industrial.closeCompanyFilter();
+            industrial.handleHighlightNodes([]);
+          }}
+          onHighlightNodes={industrial.handleHighlightNodes}
+          onViewCompanyDetail={(company) =>
+            industrial.pushPanel({
+              panel: "company-detail",
+              selectedCompany: company,
+              selectedNode: null,
+              selectedIndustry: null,
+            })
+          }
+        />
+      )}
 
       {mainView === "industrial_graph" && industrial.canvasMenu.visible && (
         <CanvasContextMenu

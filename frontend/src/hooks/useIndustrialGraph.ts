@@ -84,6 +84,50 @@ export function useIndustrialGraph() {
     y: number;
     nodes: IndustrialNode[];
   }>({ visible: false, x: 0, y: 0, nodes: [] });
+
+  // Floating company filter: selected industrial nodes → exposed companies
+  const [companyFilter, setCompanyFilter] = useState<{
+    visible: boolean;
+    nodes: IndustrialNode[];
+    checkedNodeIds: string[];
+  }>({ visible: false, nodes: [], checkedNodeIds: [] });
+
+  const showCompanyFilter = useCallback((nodes: IndustrialNode[]) => {
+    setCompanyFilter({
+      visible: true,
+      nodes,
+      checkedNodeIds: nodes.map((n) => n.node_id),
+    });
+  }, []);
+
+  const toggleCompanyFilterNode = useCallback((nodeId: string) => {
+    setCompanyFilter((prev) => {
+      const checked = new Set(prev.checkedNodeIds);
+      if (checked.has(nodeId)) {
+        checked.delete(nodeId);
+      } else {
+        checked.add(nodeId);
+      }
+      return { ...prev, checkedNodeIds: Array.from(checked) };
+    });
+  }, []);
+
+  const removeCompanyFilterNode = useCallback((nodeId: string) => {
+    setCompanyFilter((prev) => ({
+      ...prev,
+      nodes: prev.nodes.filter((n) => n.node_id !== nodeId),
+      checkedNodeIds: prev.checkedNodeIds.filter((id) => id !== nodeId),
+    }));
+  }, []);
+
+  const closeCompanyFilter = useCallback(() => {
+    setCompanyFilter((prev) => ({ ...prev, visible: false }));
+  }, []);
+
+  const clearCompanyFilter = useCallback(() => {
+    setCompanyFilter({ visible: false, nodes: [], checkedNodeIds: [] });
+  }, []);
+
   const [pendingNodePosition, setPendingNodePosition] = useState<{
     x: number;
     y: number;
@@ -676,6 +720,12 @@ export function useIndustrialGraph() {
     setMultiNodeContextMenu,
     handleMultiNodeContextMenu,
     handleCloseMultiNodeContextMenu,
+    companyFilter,
+    showCompanyFilter,
+    toggleCompanyFilterNode,
+    removeCompanyFilterNode,
+    closeCompanyFilter,
+    clearCompanyFilter,
     pendingNodePosition,
     setPendingNodePosition,
     pendingEdgePrefill,

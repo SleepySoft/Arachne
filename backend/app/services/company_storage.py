@@ -75,6 +75,9 @@ async def create_company(data: Company) -> Company:
     if pool is None:
         raise RuntimeError("PostgreSQL not available")
 
+    if await get_company_by_name_zh(data.name_zh):
+        raise ValueError(f"Company with name_zh '{data.name_zh}' already exists")
+
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
             """
@@ -117,6 +120,22 @@ async def get_company(company_id: str) -> Optional[Company]:
         row = await conn.fetchrow(
             "SELECT * FROM companies WHERE company_id = $1",
             company_id,
+        )
+        if row is None:
+            return None
+        return _row_to_company(row)
+
+
+async def get_company_by_name_zh(name_zh: str) -> Optional[Company]:
+    """Look up a company by its Chinese name (case-insensitive, trimmed)."""
+    pool = await get_postgres_pool()
+    if pool is None:
+        return None
+
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT * FROM companies WHERE LOWER(TRIM(name_zh)) = LOWER(TRIM($1))",
+            name_zh,
         )
         if row is None:
             return None

@@ -49,7 +49,7 @@ def sample_company() -> Company:
     return Company(
         company_id=f"test_longi_{uid}",
         company_uuid=uuid4(),
-        name_zh="隆基绿能",
+        name_zh=f"隆基绿能测试-{uid}",
         name_en="LONGi Green Energy",
         aliases=["隆基", "隆基股份"],
         stock_codes=["601012.SH"],
@@ -73,7 +73,7 @@ class TestCompanyCRUD:
 
         created = await company_storage.create_company(sample_company)
         assert created.company_id == sample_company.company_id
-        assert created.name_zh == "隆基绿能"
+        assert created.name_zh == sample_company.name_zh
         assert created.stock_codes == ["601012.SH"]
         assert created.revenue_cny == 128998000000
 
@@ -82,17 +82,33 @@ class TestCompanyCRUD:
         assert fetched.province == "陕西"
         assert fetched.founded_year == 2000
 
+    async def test_create_duplicate_name_zh_raises(self, sample_company):
+        if not await _postgres_available():
+            pytest.skip("PostgreSQL not available")
+
+        await company_storage.create_company(sample_company)
+        duplicate = Company(
+            company_id=f"test_longi_dup_{uuid4().hex[:6]}",
+            name_zh=sample_company.name_zh,
+            country="CN",
+            company_type=CompanyType.PUBLIC,
+            status=RecordStatus.ACTIVE,
+        )
+        with pytest.raises(ValueError, match="already exists"):
+            await company_storage.create_company(duplicate)
+
     async def test_update(self, sample_company):
         if not await _postgres_available():
             pytest.skip("PostgreSQL not available")
 
         await company_storage.create_company(sample_company)
+        new_name = f"{sample_company.name_zh}-科技"
         updated = await company_storage.update_company(
             sample_company.company_id,
-            {"name_zh": "隆基绿能科技", "employee_count": 65000},
+            {"name_zh": new_name, "employee_count": 65000},
         )
         assert updated is not None
-        assert updated.name_zh == "隆基绿能科技"
+        assert updated.name_zh == new_name
         assert updated.employee_count == 65000
 
     async def test_delete(self, sample_company):
@@ -112,7 +128,7 @@ class TestCompanyCRUD:
         items, total = await company_storage.list_companies(
             country="CN",
             company_type="public",
-            search="隆基",
+            search="隆基绿能测试",
         )
         assert total >= 1
         assert any(c.company_id == sample_company.company_id for c in items)

@@ -18,6 +18,9 @@ async def create_company(data: Company):
         existing = await company_storage.get_company(data.company_id)
         if existing:
             raise HTTPException(409, "Company already exists")
+        existing_name = await company_storage.get_company_by_name_zh(data.name_zh)
+        if existing_name:
+            raise HTTPException(409, "公司名称已存在")
         return await company_storage.create_company(data)
     except ValueError as e:
         raise HTTPException(400, detail=str(e))

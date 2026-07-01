@@ -381,11 +381,17 @@ async def process_business_batch(batch: BusinessRegistrationBatch) -> dict:
                         list(company_ids_in_batch),
                     )
                 if exposure_ids_in_batch:
+                    # Only auto-activate exposures that carry evidence;
+                    # PENDING exposures without evidence must stay PENDING
+                    # to satisfy the model validator (ACTIVE requires evidence).
                     await conn.execute(
                         """
                         UPDATE company_node_exposures
                         SET status = 'ACTIVE', updated_at = NOW()
-                        WHERE exposure_id = ANY($1) AND status = 'PENDING'
+                        WHERE exposure_id = ANY($1)
+                          AND status = 'PENDING'
+                          AND evidence IS NOT NULL
+                          AND evidence::text != '[]'
                         """,
                         list(exposure_ids_in_batch),
                     )
