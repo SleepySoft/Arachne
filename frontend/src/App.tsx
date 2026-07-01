@@ -637,7 +637,11 @@ export default function App() {
           onUploadBatch={() => industrial.pushPanel({ panel: "batch-upload" })}
           hasActiveSelection={
             industrial.selectedIndustries.length > 0 ||
-            industrial.selectedCompanies.length > 0
+            industrial.selectedCompanies.length > 0 ||
+            industrial.focusState.active ||
+            industrial.hideState.active ||
+            !!industrial.subgraphData ||
+            !!industrial.highlightNodeIds
           }
           onResetSelection={() => {
             // 返回全图：不清空已有节点，只把后端最新的节点/边合并进来，

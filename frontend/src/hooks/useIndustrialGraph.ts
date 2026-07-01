@@ -302,11 +302,13 @@ export function useIndustrialGraph() {
       setSelectedCompanies([]);
       setSubgraphData(undefined);
       setHighlightNodeIds(undefined);
+      clearHideState();
+      clearFocusState();
       if (options?.remount !== false) {
         setGraphKey((k) => k + 1);
       }
     },
-    []
+    [clearHideState, clearFocusState]
   );
 
   // 将后端最新全图数据合并到当前画布，不重建、不重排已有节点。
