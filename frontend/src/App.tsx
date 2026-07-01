@@ -220,13 +220,76 @@ export default function App() {
     getActiveCompanyCanvasRef,
   ]);
 
+  function scaleCameraAndPositions(
+    state: IndustrialViewState | CompanyViewState,
+    toSize?: { width: number; height: number }
+  ) {
+    const fromSize = state.containerSize;
+    if (!fromSize || !toSize || fromSize.width <= 0 || fromSize.height <= 0) {
+      return { camera: state.camera, nodePositions: state.nodePositions };
+    }
+    const scaleX = toSize.width / fromSize.width;
+    const scaleY = toSize.height / fromSize.height;
+    const scale = Math.min(scaleX, scaleY);
+    if (!isFinite(scale) || scale <= 0) {
+      return { camera: state.camera, nodePositions: state.nodePositions };
+    }
+    const scaledPositions: import("@/types/view").NodePositions = {};
+    if (state.nodePositions) {
+      Object.entries(state.nodePositions).forEach(([id, pos]) => {
+        scaledPositions[id] = { x: pos.x * scale, y: pos.y * scale };
+      });
+    }
+    return {
+      camera: {
+        pan: { x: state.camera.pan.x * scale, y: state.camera.pan.y * scale },
+        zoom: state.camera.zoom,
+      },
+      nodePositions: state.nodePositions ? scaledPositions : undefined,
+    };
+  }
+
+  function industrialContentEqual(a: IndustrialViewState, b: IndustrialViewState): boolean {
+    return (
+      JSON.stringify(a.selectedIndustryIds) === JSON.stringify(b.selectedIndustryIds) &&
+      JSON.stringify(a.selectedCompanyIds) === JSON.stringify(b.selectedCompanyIds) &&
+      JSON.stringify(a.activeFilters) === JSON.stringify(b.activeFilters) &&
+      JSON.stringify(a.expandedProcessParentIds) === JSON.stringify(b.expandedProcessParentIds) &&
+      JSON.stringify(a.focus) === JSON.stringify(b.focus) &&
+      JSON.stringify(a.hide) === JSON.stringify(b.hide)
+    );
+  }
+
+  function companyContentEqual(a: CompanyViewState, b: CompanyViewState): boolean {
+    return (
+      a.displayMode === b.displayMode &&
+      a.exploreMode === b.exploreMode &&
+      JSON.stringify(a.orderedChain) === JSON.stringify(b.orderedChain) &&
+      JSON.stringify([...a.fixedIds].sort()) === JSON.stringify([...b.fixedIds].sort()) &&
+      JSON.stringify(a.currentFocusId) === JSON.stringify(b.currentFocusId) &&
+      JSON.stringify(a.exploration) === JSON.stringify(b.exploration)
+    );
+  }
+
   const handleUndo = useCallback(() => {
     if (mainView === "company_graph") {
       const previous = viewHistory.undo("company");
       if (!previous) return;
-      const state = previous as CompanyViewState;
+      const current = captureCompanyState();
       const activeRef = getActiveCompanyCanvasRef();
       const containerSize = activeRef?.current?.getContainerSize();
+      if (current && companyContentEqual(previous as CompanyViewState, current)) {
+        const { camera, nodePositions } = scaleCameraAndPositions(
+          previous as CompanyViewState,
+          containerSize ?? undefined
+        );
+        activeRef?.current?.setCamera(camera);
+        if (nodePositions) {
+          activeRef?.current?.setNodePositions(nodePositions);
+        }
+        return;
+      }
+      const state = previous as CompanyViewState;
       applyCompanySnapshot(
         {
           version: 1,
@@ -254,8 +317,20 @@ export default function App() {
     } else {
       const previous = viewHistory.undo("industrial");
       if (!previous) return;
-      const state = previous as IndustrialViewState;
+      const current = captureIndustrialState();
       const containerSize = graphCanvasRef.current?.getContainerSize();
+      if (current && industrialContentEqual(previous as IndustrialViewState, current)) {
+        const { camera, nodePositions } = scaleCameraAndPositions(
+          previous as IndustrialViewState,
+          containerSize ?? undefined
+        );
+        graphCanvasRef.current?.setCamera(camera);
+        if (nodePositions) {
+          graphCanvasRef.current?.setNodePositions(nodePositions);
+        }
+        return;
+      }
+      const state = previous as IndustrialViewState;
       applyIndustrialSnapshot(
         {
           version: 1,
@@ -288,6 +363,8 @@ export default function App() {
   }, [
     mainView,
     viewHistory,
+    captureIndustrialState,
+    captureCompanyState,
     industrial.setSelectedIndustries,
     industrial.setSelectedCompanies,
     industrial.setActiveFilters,
