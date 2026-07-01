@@ -888,12 +888,18 @@ export default function App() {
             }}
             onPullUpstream={() => {
               const node = industrial.contextMenu.node;
-              if (node) graphCanvasRef.current?.pullNeighborsIntoView(node.node_id, "upstream");
+              if (node) {
+                pushIndustrialHistory(true);
+                graphCanvasRef.current?.pullNeighborsIntoView(node.node_id, "upstream");
+              }
               industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
             }}
             onPullDownstream={() => {
               const node = industrial.contextMenu.node;
-              if (node) graphCanvasRef.current?.pullNeighborsIntoView(node.node_id, "downstream");
+              if (node) {
+                pushIndustrialHistory(true);
+                graphCanvasRef.current?.pullNeighborsIntoView(node.node_id, "downstream");
+              }
               industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
             }}
             isGroup={
@@ -1013,6 +1019,7 @@ export default function App() {
             onPull={() => {
               const edge = industrial.edgeMenu.edge;
               if (edge) {
+                pushIndustrialHistory(true);
                 graphCanvasRef.current?.pullEdgeEndpointsIntoView(edge.edge_id);
               }
               industrial.handleCloseEdgeMenu();
