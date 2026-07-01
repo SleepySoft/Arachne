@@ -192,6 +192,27 @@ export function ViewToolbar({
       {savePromptOpen && (
         <div className="absolute left-0 top-full z-50 mt-2 w-64 rounded-lg border border-slate-700 bg-slate-900/95 p-3 shadow-xl backdrop-blur">
           <div className="mb-2 text-xs font-medium text-slate-300">保存当前视图</div>
+          {parentView ? (
+            <div className="mb-2 text-[10px] text-slate-400">
+              当前已载入：
+              <span className="font-medium text-slate-300">{parentView.name}</span>
+              <span className="ml-1 rounded bg-slate-700 px-1 py-0.5 text-[10px] text-slate-300">
+                v{parentView.viewVersion}
+              </span>
+              <span className="ml-1 text-slate-500">→ 保存为 v{parentView.viewVersion + 1}</span>
+            </div>
+          ) : views.length > 0 ? (
+            <div className="mb-2 text-[10px] text-slate-400">
+              最近保存：
+              <span className="font-medium text-slate-300">{views[0].name}</span>
+              <span className="ml-1 rounded bg-slate-700 px-1 py-0.5 text-[10px] text-slate-300">
+                v{views[0].viewVersion}
+              </span>
+              <span className="ml-1 text-slate-500">（将创建新版本链）</span>
+            </div>
+          ) : (
+            <div className="mb-2 text-[10px] text-slate-500">将创建第一个视图</div>
+          )}
           <input
             autoFocus
             type="text"
