@@ -556,7 +556,6 @@ export default function App() {
             hideState={industrial.hideState}
             onBeforeDragStart={() => pushIndustrialHistory(true)}
             onBeforeManualLayout={() => pushIndustrialHistory(true)}
-            onBeforeCameraChange={() => pushIndustrialHistory(true)}
           />
           <FocusControlPanel
             graphCanvasRef={graphCanvasRef}
@@ -677,7 +676,6 @@ export default function App() {
           highlightNodeId={company.currentFocusId}
           restoredCamera={companyViewToRestore?.camera}
           onBeforeDragStart={() => pushCompanyHistory(true)}
-          onBeforeCameraChange={() => pushCompanyHistory(true)}
         />
       ) : (
         <CompanyNetworkCanvas
@@ -691,7 +689,6 @@ export default function App() {
           onEdgeClick={company.handleCompanyEdgeClick}
           restoredCamera={companyViewToRestore?.camera}
           onBeforeDragStart={() => pushCompanyHistory(true)}
-          onBeforeCameraChange={() => pushCompanyHistory(true)}
         />
       )
     ) : company.companyDisplayMode === "global" && company.companyNetworkData ? (
@@ -703,8 +700,7 @@ export default function App() {
         dimUnrelated={!!company.currentFocusId}
         onNodeClick={company.handleCompanyNodeClick}
         onBeforeDragStart={() => pushCompanyHistory(true)}
-        onBeforeCameraChange={() => pushCompanyHistory(true)}
-        onNodeDblClick={company.handleCompanyNodeDblClick}
+        onNodeDblClick={company.handleCompanyNodeClick}
         onEdgeClick={company.handleCompanyEdgeClick}
         restoredCamera={companyViewToRestore?.camera}
       />

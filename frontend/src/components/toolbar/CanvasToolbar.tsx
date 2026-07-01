@@ -170,11 +170,11 @@ export function CanvasToolbar({
               <button
                 onClick={onUndo}
                 disabled={!canUndo}
-                title={canUndo ? "恢复到上一个视图状态 (Ctrl+Z)" : "无可用视图状态"}
+                title={canUndo ? "恢复到上一个布局状态 (Ctrl+Z)" : "无可用布局状态"}
                 className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
               >
                 <Undo2 className="h-3.5 w-3.5" />
-                <span>恢复上个视图</span>
+                <span>恢复上一个布局</span>
               </button>
             </>
           )}
