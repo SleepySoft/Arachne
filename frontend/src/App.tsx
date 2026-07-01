@@ -249,69 +249,21 @@ export default function App() {
     };
   }
 
-  function normalizeFocus(state: IndustrialViewState) {
-    return (
-      state.focus ?? {
-        active: false,
-        seedNodeIds: [],
-        visibleNodeIds: [],
-        history: [],
-      }
-    );
-  }
-
-  function normalizeHide(state: IndustrialViewState) {
-    return state.hide ?? { active: false, hiddenNodeIds: [] };
-  }
-
-  function arraysEqual(a: string[], b: string[]): boolean {
-    if (a.length !== b.length) return false;
-    const sortedA = [...a].sort();
-    const sortedB = [...b].sort();
-    return sortedA.every((v, i) => v === sortedB[i]);
-  }
-
-  function industrialContentEqual(a: IndustrialViewState, b: IndustrialViewState): boolean {
-    return (
-      arraysEqual(a.selectedIndustryIds, b.selectedIndustryIds) &&
-      arraysEqual(a.selectedCompanyIds, b.selectedCompanyIds) &&
-      JSON.stringify(a.activeFilters) === JSON.stringify(b.activeFilters) &&
-      arraysEqual(a.expandedProcessParentIds, b.expandedProcessParentIds) &&
-      JSON.stringify(normalizeFocus(a)) === JSON.stringify(normalizeFocus(b)) &&
-      JSON.stringify(normalizeHide(a)) === JSON.stringify(normalizeHide(b))
-    );
-  }
-
-  function companyContentEqual(a: CompanyViewState, b: CompanyViewState): boolean {
-    return (
-      a.displayMode === b.displayMode &&
-      a.exploreMode === b.exploreMode &&
-      arraysEqual(a.orderedChain, b.orderedChain) &&
-      arraysEqual([...a.fixedIds], [...b.fixedIds]) &&
-      JSON.stringify(a.currentFocusId) === JSON.stringify(b.currentFocusId) &&
-      JSON.stringify(a.exploration) === JSON.stringify(b.exploration)
-    );
-  }
-
   const handleUndo = useCallback(() => {
     if (mainView === "company_graph") {
-      const previous = viewHistory.undo("company");
-      if (!previous) return;
-      const current = captureCompanyState();
+      const entry = viewHistory.undo("company");
+      if (!entry) return;
+      const state = entry.state;
       const activeRef = getActiveCompanyCanvasRef();
       const containerSize = activeRef?.current?.getContainerSize();
-      if (current && companyContentEqual(previous as CompanyViewState, current)) {
-        const { camera, nodePositions } = scaleCameraAndPositions(
-          previous as CompanyViewState,
-          containerSize ?? undefined
-        );
+      if (entry.layoutOnly) {
+        const { camera, nodePositions } = scaleCameraAndPositions(state, containerSize ?? undefined);
         activeRef?.current?.setCamera(camera);
         if (nodePositions) {
           activeRef?.current?.setNodePositions(nodePositions);
         }
         return;
       }
-      const state = previous as CompanyViewState;
       applyCompanySnapshot(
         {
           version: 1,
@@ -337,22 +289,18 @@ export default function App() {
         containerSize ?? undefined
       );
     } else {
-      const previous = viewHistory.undo("industrial");
-      if (!previous) return;
-      const current = captureIndustrialState();
+      const entry = viewHistory.undo("industrial");
+      if (!entry) return;
+      const state = entry.state;
       const containerSize = graphCanvasRef.current?.getContainerSize();
-      if (current && industrialContentEqual(previous as IndustrialViewState, current)) {
-        const { camera, nodePositions } = scaleCameraAndPositions(
-          previous as IndustrialViewState,
-          containerSize ?? undefined
-        );
+      if (entry.layoutOnly) {
+        const { camera, nodePositions } = scaleCameraAndPositions(state, containerSize ?? undefined);
         graphCanvasRef.current?.setCamera(camera);
         if (nodePositions) {
           graphCanvasRef.current?.setNodePositions(nodePositions);
         }
         return;
       }
-      const state = previous as IndustrialViewState;
       applyIndustrialSnapshot(
         {
           version: 1,
@@ -408,15 +356,21 @@ export default function App() {
     getActiveCompanyCanvasRef,
   ]);
 
-  const pushIndustrialHistory = useCallback(() => {
-    const state = captureIndustrialState();
-    if (state) viewHistory.push("industrial", state);
-  }, [captureIndustrialState, viewHistory]);
+  const pushIndustrialHistory = useCallback(
+    (layoutOnly = false) => {
+      const state = captureIndustrialState();
+      if (state) viewHistory.push("industrial", state, layoutOnly);
+    },
+    [captureIndustrialState, viewHistory]
+  );
 
-  const pushCompanyHistory = useCallback(() => {
-    const state = captureCompanyState();
-    if (state) viewHistory.push("company", state);
-  }, [captureCompanyState, viewHistory]);
+  const pushCompanyHistory = useCallback(
+    (layoutOnly = false) => {
+      const state = captureCompanyState();
+      if (state) viewHistory.push("company", state, layoutOnly);
+    },
+    [captureCompanyState, viewHistory]
+  );
 
   const handleOpenViewManager = useCallback(() => {
     setViewManagerWorkspace(mainView === "company_graph" ? "company" : "industrial");
@@ -591,7 +545,7 @@ export default function App() {
             connectSourceNodeId={industrial.connectSource?.node_id || null}
             expandedProcessParents={industrial.expandedProcessParents}
             onToggleProcessExpansion={(nodeId) => {
-              pushIndustrialHistory();
+              pushIndustrialHistory(false);
               industrial.toggleProcessParent(nodeId);
             }}
             wheelSensitivity={industrial.wheelSensitivity}
@@ -600,9 +554,9 @@ export default function App() {
             focusState={industrial.focusState}
             onFocusChange={industrial.setFocusState}
             hideState={industrial.hideState}
-            onBeforeDragStart={pushIndustrialHistory}
-            onBeforeManualLayout={pushIndustrialHistory}
-            onBeforeCameraChange={pushIndustrialHistory}
+            onBeforeDragStart={() => pushIndustrialHistory(true)}
+            onBeforeManualLayout={() => pushIndustrialHistory(true)}
+            onBeforeCameraChange={() => pushIndustrialHistory(true)}
           />
           <FocusControlPanel
             graphCanvasRef={graphCanvasRef}
@@ -722,8 +676,8 @@ export default function App() {
           onEdgeClick={(edge) => company.setSelectedExplorationEdge(edge)}
           highlightNodeId={company.currentFocusId}
           restoredCamera={companyViewToRestore?.camera}
-          onBeforeDragStart={pushCompanyHistory}
-          onBeforeCameraChange={pushCompanyHistory}
+          onBeforeDragStart={() => pushCompanyHistory(true)}
+          onBeforeCameraChange={() => pushCompanyHistory(true)}
         />
       ) : (
         <CompanyNetworkCanvas
@@ -736,8 +690,8 @@ export default function App() {
           onNodeDblClick={company.handleCompanyNodeDblClick}
           onEdgeClick={company.handleCompanyEdgeClick}
           restoredCamera={companyViewToRestore?.camera}
-          onBeforeDragStart={pushCompanyHistory}
-          onBeforeCameraChange={pushCompanyHistory}
+          onBeforeDragStart={() => pushCompanyHistory(true)}
+          onBeforeCameraChange={() => pushCompanyHistory(true)}
         />
       )
     ) : company.companyDisplayMode === "global" && company.companyNetworkData ? (
@@ -748,6 +702,8 @@ export default function App() {
         highlightCompanyId={company.currentFocusId}
         dimUnrelated={!!company.currentFocusId}
         onNodeClick={company.handleCompanyNodeClick}
+        onBeforeDragStart={() => pushCompanyHistory(true)}
+        onBeforeCameraChange={() => pushCompanyHistory(true)}
         onNodeDblClick={company.handleCompanyNodeDblClick}
         onEdgeClick={company.handleCompanyEdgeClick}
         restoredCamera={companyViewToRestore?.camera}

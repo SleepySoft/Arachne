@@ -2389,29 +2389,20 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
           console.log("[dragfree] node:", node.id(), "rendered:", rendered, "pan:", pan, "zoom:", zoom, "modelPos:", modelPos);
         });
 
-        // 视图历史：节点真正发生位移后再保存上一状态，避免单纯点击也入栈
+        // 视图历史：在节点被 grab 时保存当前状态（上一状态）。
+        // 多选拖拽时 grab 会对每个节点触发，只在第一个被抓取的节点入栈，避免冗余记录。
         cy.on("grab", "node", () => {
           const positions: Record<string, { x: number; y: number }> = {};
           cy.nodes().forEach((n) => {
             positions[n.id()] = { ...n.position() };
           });
           preDragNodePositionsRef.current = positions;
-        });
-        cy.on("dragfree", "node", () => {
-          const previous = preDragNodePositionsRef.current;
-          preDragNodePositionsRef.current = null;
-          if (!previous || !cyRef.current) return;
-          let changed = false;
-          cyRef.current.nodes().forEach((n) => {
-            const prev = previous[n.id()];
-            const curr = n.position();
-            if (!prev || prev.x !== curr.x || prev.y !== curr.y) {
-              changed = true;
-            }
-          });
-          if (changed) {
+          if (cy.nodes(":grabbed").length <= 1) {
             onBeforeDragStartRef.current?.();
           }
+        });
+        cy.on("dragfree", "node", () => {
+          preDragNodePositionsRef.current = null;
         });
 
         // ==========================================
