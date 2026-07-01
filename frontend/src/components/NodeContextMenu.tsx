@@ -10,6 +10,7 @@ import {
   FolderOpen,
   Folder,
   FolderTree,
+  Move,
 } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
 
@@ -175,6 +176,26 @@ export function NodeContextMenu({
           <div className="my-1 border-t border-slate-700" />
           <button
             onClick={() => {
+              onPullUpstream();
+              onClose();
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+          >
+            <Move size={14} className="text-purple-400" />
+            拉近上游节点
+          </button>
+          <button
+            onClick={() => {
+              onPullDownstream();
+              onClose();
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+          >
+            <Move size={14} className="text-purple-400" />
+            拉近下游节点
+          </button>
+          <button
+            onClick={() => {
               onShowUpstream();
               onClose();
             }}
@@ -212,26 +233,6 @@ export function NodeContextMenu({
           >
             <Highlighter size={14} className="text-yellow-400" />
             高亮下游节点
-          </button>
-          <button
-            onClick={() => {
-              onPullUpstream();
-              onClose();
-            }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
-          >
-            <Eye size={14} className="text-purple-400" />
-            拉近上游节点
-          </button>
-          <button
-            onClick={() => {
-              onPullDownstream();
-              onClose();
-            }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
-          >
-            <Eye size={14} className="text-purple-400" />
-            拉近下游节点
           </button>
           <div className="my-1 border-t border-slate-700" />
           <button
