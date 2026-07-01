@@ -763,6 +763,8 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   const onBeforeManualLayoutRef = useRef(onBeforeManualLayout);
   const onBeforeCameraChangeRef = useRef(onBeforeCameraChange);
   const preDragNodePositionsRef = useRef<Record<string, { x: number; y: number }> | null>(null);
+  const dragHistoryPushedRef = useRef(false);
+
   const processGroupDragPositionsRef = useRef<Map<string, cytoscape.Position>>(new Map());
   const pendingPositionsRef = useRef<Record<string, { x: number; y: number }> | null>(null);
   const pendingCameraRef = useRef<{ pan: { x: number; y: number }; zoom: number } | null>(null);
@@ -2390,19 +2392,23 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         });
 
         // 视图历史：在节点被 grab 时保存当前状态（上一状态）。
-        // 多选拖拽时 grab 会对每个节点触发，只在第一个被抓取的节点入栈，避免冗余记录。
+        // 多选拖拽时 grab 会对每个节点触发，用 dragHistoryPushedRef 保证同一个手势只入栈一次。
         cy.on("grab", "node", () => {
           const positions: Record<string, { x: number; y: number }> = {};
           cy.nodes().forEach((n) => {
             positions[n.id()] = { ...n.position() };
           });
           preDragNodePositionsRef.current = positions;
-          if (cy.nodes(":grabbed").length <= 1) {
+          if (!dragHistoryPushedRef.current) {
+            dragHistoryPushedRef.current = true;
             onBeforeDragStartRef.current?.();
           }
         });
         cy.on("dragfree", "node", () => {
           preDragNodePositionsRef.current = null;
+          if (cy.nodes(":grabbed").length === 0) {
+            dragHistoryPushedRef.current = false;
+          }
         });
 
         // ==========================================
