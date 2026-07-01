@@ -249,14 +249,36 @@ export default function App() {
     };
   }
 
+  function normalizeFocus(state: IndustrialViewState) {
+    return (
+      state.focus ?? {
+        active: false,
+        seedNodeIds: [],
+        visibleNodeIds: [],
+        history: [],
+      }
+    );
+  }
+
+  function normalizeHide(state: IndustrialViewState) {
+    return state.hide ?? { active: false, hiddenNodeIds: [] };
+  }
+
+  function arraysEqual(a: string[], b: string[]): boolean {
+    if (a.length !== b.length) return false;
+    const sortedA = [...a].sort();
+    const sortedB = [...b].sort();
+    return sortedA.every((v, i) => v === sortedB[i]);
+  }
+
   function industrialContentEqual(a: IndustrialViewState, b: IndustrialViewState): boolean {
     return (
-      JSON.stringify(a.selectedIndustryIds) === JSON.stringify(b.selectedIndustryIds) &&
-      JSON.stringify(a.selectedCompanyIds) === JSON.stringify(b.selectedCompanyIds) &&
+      arraysEqual(a.selectedIndustryIds, b.selectedIndustryIds) &&
+      arraysEqual(a.selectedCompanyIds, b.selectedCompanyIds) &&
       JSON.stringify(a.activeFilters) === JSON.stringify(b.activeFilters) &&
-      JSON.stringify(a.expandedProcessParentIds) === JSON.stringify(b.expandedProcessParentIds) &&
-      JSON.stringify(a.focus) === JSON.stringify(b.focus) &&
-      JSON.stringify(a.hide) === JSON.stringify(b.hide)
+      arraysEqual(a.expandedProcessParentIds, b.expandedProcessParentIds) &&
+      JSON.stringify(normalizeFocus(a)) === JSON.stringify(normalizeFocus(b)) &&
+      JSON.stringify(normalizeHide(a)) === JSON.stringify(normalizeHide(b))
     );
   }
 
@@ -264,8 +286,8 @@ export default function App() {
     return (
       a.displayMode === b.displayMode &&
       a.exploreMode === b.exploreMode &&
-      JSON.stringify(a.orderedChain) === JSON.stringify(b.orderedChain) &&
-      JSON.stringify([...a.fixedIds].sort()) === JSON.stringify([...b.fixedIds].sort()) &&
+      arraysEqual(a.orderedChain, b.orderedChain) &&
+      arraysEqual([...a.fixedIds], [...b.fixedIds]) &&
       JSON.stringify(a.currentFocusId) === JSON.stringify(b.currentFocusId) &&
       JSON.stringify(a.exploration) === JSON.stringify(b.exploration)
     );
