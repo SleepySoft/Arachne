@@ -2803,11 +2803,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         const targetEdges = targets.edgesWith(targets);
         targetEdges.addClass("highlighted");
         cy.elements().not(targets).not(targetEdges).addClass("dimmed");
-        cy.animate({
-          fit: { eles: targets, padding: 100 },
-          duration: 500,
-          easing: "ease-out",
-        });
+        // 仅高亮，不移动/缩放相机
       }
     }
   }, [highlightNodeIds]);

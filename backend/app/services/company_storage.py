@@ -307,7 +307,11 @@ async def update_exposure(exposure_id: str, data: dict) -> Optional[CompanyNodeE
 
     # Convert evidence list to JSON string if present
     if "evidence" in fields and fields["evidence"] is not None:
-        fields["evidence"] = json.dumps([e.model_dump(mode='json') for e in fields["evidence"]])
+        def _evidence_item_to_json(e):
+            if isinstance(e, dict):
+                return e
+            return e.model_dump(mode='json')
+        fields["evidence"] = json.dumps([_evidence_item_to_json(e) for e in fields["evidence"]])
 
     set_clauses = [f"{k} = ${i + 2}" for i, k in enumerate(fields.keys())]
     sql = f"""
@@ -433,6 +437,9 @@ async def list_exposures_by_nodes(
                 weight,
                 confidence,
                 evidence,
+                status,
+                as_of_date,
+                notes,
                 created_at,
                 updated_at
             FROM company_node_exposures
