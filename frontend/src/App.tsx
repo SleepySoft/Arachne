@@ -257,8 +257,7 @@ export default function App() {
       const activeRef = getActiveCompanyCanvasRef();
       const containerSize = activeRef?.current?.getContainerSize();
       if (entry.layoutOnly) {
-        const { camera, nodePositions } = scaleCameraAndPositions(state, containerSize ?? undefined);
-        activeRef?.current?.setCamera(camera);
+        const { nodePositions } = scaleCameraAndPositions(state, containerSize ?? undefined);
         if (nodePositions) {
           activeRef?.current?.setNodePositions(nodePositions);
         }
@@ -294,8 +293,7 @@ export default function App() {
       const state = entry.state;
       const containerSize = graphCanvasRef.current?.getContainerSize();
       if (entry.layoutOnly) {
-        const { camera, nodePositions } = scaleCameraAndPositions(state, containerSize ?? undefined);
-        graphCanvasRef.current?.setCamera(camera);
+        const { nodePositions } = scaleCameraAndPositions(state, containerSize ?? undefined);
         if (nodePositions) {
           graphCanvasRef.current?.setNodePositions(nodePositions);
         }
@@ -545,7 +543,6 @@ export default function App() {
             connectSourceNodeId={industrial.connectSource?.node_id || null}
             expandedProcessParents={industrial.expandedProcessParents}
             onToggleProcessExpansion={(nodeId) => {
-              pushIndustrialHistory(false);
               industrial.toggleProcessParent(nodeId);
             }}
             wheelSensitivity={industrial.wheelSensitivity}
@@ -1115,6 +1112,7 @@ export default function App() {
           savedViews={savedViews}
           onLoad={(view) => {
             if (viewManagerWorkspace === "industrial") {
+              viewHistory.reset("industrial");
               setLoadedIndustrialView(view);
               const containerSize = graphCanvasRef.current?.getContainerSize();
               const result = applyIndustrialSnapshot(
@@ -1141,6 +1139,7 @@ export default function App() {
                 );
               }
             } else {
+              viewHistory.reset("company");
               setLoadedCompanyView(view);
               const containerSize = activeCompanyCanvasRef.current?.getContainerSize();
               applyCompanySnapshot(
