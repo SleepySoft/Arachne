@@ -389,6 +389,15 @@ export const getCompaniesByNode = async (nodeId: string): Promise<{
   return res.data;
 };
 
+export const getCompaniesByNodes = async (nodeIds: string[]): Promise<{
+  node_ids: string[];
+  companies: Company[];
+  exposures: CompanyNodeExposure[];
+}> => {
+  const res = await client.post("/companies/by-nodes", { node_ids: nodeIds });
+  return res.data;
+};
+
 export const getIndustriesByNode = async (nodeId: string): Promise<{
   node_id: string;
   industries: Industry[];

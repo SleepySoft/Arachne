@@ -411,6 +411,59 @@ async def list_exposures_by_node(
         return items, total
 
 
+async def list_exposures_by_nodes(
+    node_ids: List[str],
+    limit: int = 1000,
+) -> List[CompanyNodeExposure]:
+    """返回一组产业节点上的所有公司暴露关系（去重）。"""
+    pool = await get_postgres_pool()
+    if not pool or not node_ids:
+        return []
+
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT DISTINCT ON (company_id, node_id, activity_type, role)
+                exposure_id,
+                exposure_uuid,
+                company_id,
+                node_id,
+                activity_type,
+                role,
+                weight,
+                confidence,
+                evidence,
+                created_at,
+                updated_at
+            FROM company_node_exposures
+            WHERE node_id = ANY($1::text[])
+            ORDER BY company_id, node_id, activity_type, role, weight DESC, created_at DESC
+            LIMIT $2
+            """,
+            node_ids,
+            limit,
+        )
+        return [_row_to_exposure(r) for r in rows]
+
+
+async def get_companies_by_ids(company_ids: List[str]) -> List[Company]:
+    """根据公司 ID 列表批量查询公司。"""
+    pool = await get_postgres_pool()
+    if not pool or not company_ids:
+        return []
+
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT * FROM companies
+            WHERE company_id = ANY($1::text[])
+            ORDER BY name_zh
+            """,
+            company_ids,
+        )
+        return [_row_to_company(r) for r in rows]
+
+
 async def delete_exposures_by_company(company_id: str) -> int:
     """Delete all exposures for a company. Returns count deleted."""
     pool = await get_postgres_pool()

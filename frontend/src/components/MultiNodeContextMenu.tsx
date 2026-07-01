@@ -4,6 +4,7 @@ import {
   MousePointerClick,
   Eye,
   EyeOff,
+  Building2,
   AlignVerticalJustifyCenter,
   AlignHorizontalJustifyCenter,
   AlignVerticalSpaceBetween,
@@ -23,6 +24,7 @@ interface MultiNodeContextMenuProps {
   onClearSelection?: () => void;
   onFocusSelected?: () => void;
   onHideSelected?: () => void;
+  onShowCompanies?: () => void;
   onClose: () => void;
 }
 
@@ -38,6 +40,7 @@ export function MultiNodeContextMenu({
   onClearSelection,
   onFocusSelected,
   onHideSelected,
+  onShowCompanies,
   onClose,
 }: MultiNodeContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
@@ -110,6 +113,19 @@ export function MultiNodeContextMenu({
             >
               <EyeOff size={14} className="text-rose-400" />
               隐藏选中节点 ({selectedCount})
+            </button>
+          )}
+
+          {onShowCompanies && (
+            <button
+              onClick={() => {
+                onShowCompanies();
+                onClose();
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+            >
+              <Building2 size={14} className="text-cyan-400" />
+              查看关联公司
             </button>
           )}
 

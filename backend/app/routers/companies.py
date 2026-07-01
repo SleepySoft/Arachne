@@ -1,6 +1,7 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Body, HTTPException, Query
+from pydantic import BaseModel
 
 from app.models.company_schema import Company, CompanyNodeExposure
 from app.models.schemas import EDGE_TYPE_LABELS, IndustrialNode
@@ -229,3 +230,24 @@ async def get_companies_by_node(node_id: str):
             companies.append(c)
 
     return {"node_id": node_id, "companies": companies, "exposures": exposures}
+
+
+class NodeIdsRequest(BaseModel):
+    node_ids: List[str]
+
+
+@router.post("/by-nodes", response_model=dict)
+async def get_companies_by_nodes(request: NodeIdsRequest):
+    """返回暴露到一组产业节点的所有公司及其暴露关系（去重并集）。"""
+    node_ids = request.node_ids
+    if not node_ids:
+        return {"node_ids": node_ids, "companies": [], "exposures": []}
+
+    exposures = await company_storage.list_exposures_by_nodes(node_ids, limit=1000)
+    if not exposures:
+        return {"node_ids": node_ids, "companies": [], "exposures": []}
+
+    company_ids = list({e.company_id for e in exposures})
+    companies = await company_storage.get_companies_by_ids(company_ids)
+
+    return {"node_ids": node_ids, "companies": companies, "exposures": exposures}

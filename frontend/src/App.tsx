@@ -429,6 +429,7 @@ export default function App() {
         selectedEdge={industrial.selectedEdge}
         selectedIndustry={industrial.selectedIndustry}
         selectedCompany={industrial.selectedCompany}
+        selectedNodes={industrial.selectedNodes}
         selectedRelation={null}
         contextMenuNode={industrial.contextMenuNode}
         refreshGraph={industrial.refreshGraph}
@@ -719,6 +720,7 @@ export default function App() {
         selectedEdge={null}
         selectedIndustry={null}
         selectedCompany={company.selectedCompany}
+        selectedNodes={null}
         selectedRelation={company.selectedRelation}
         contextMenuNode={null}
         refreshGraph={() => {}}
@@ -973,6 +975,16 @@ export default function App() {
               if (nodes.length > 0) {
                 industrial.hideNodes(nodes.map((n) => n.node_id));
               }
+            }}
+            onShowCompanies={() => {
+              const nodes = industrial.multiNodeContextMenu.nodes;
+              if (nodes.length > 0) {
+                industrial.pushPanel({
+                  panel: "multi-node-companies",
+                  selectedNodes: nodes,
+                });
+              }
+              industrial.handleCloseMultiNodeContextMenu();
             }}
             onClose={industrial.handleCloseMultiNodeContextMenu}
           />

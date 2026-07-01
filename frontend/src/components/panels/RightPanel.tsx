@@ -7,6 +7,7 @@ import { IndustryDetail } from "@/components/IndustryDetail";
 import { IndustryForm } from "@/components/IndustryForm";
 import { NodeDetail } from "@/components/NodeDetail";
 import { NodeCompaniesPanel } from "@/components/NodeCompaniesPanel";
+import { MultiNodeCompaniesPanel } from "@/components/MultiNodeCompaniesPanel";
 import { NodeForm } from "@/components/NodeForm";
 import { NodeIndustriesPanel } from "@/components/NodeIndustriesPanel";
 import {
@@ -28,6 +29,7 @@ interface RightPanelProps {
   selectedEdge: GraphEdge | null;
   selectedIndustry: Industry | null;
   selectedCompany: Company | null;
+  selectedNodes: IndustrialNode[] | null;
   selectedRelation: CompanyNetworkEdge | null;
   contextMenuNode: IndustrialNode | null;
   refreshGraph: () => void;
@@ -68,6 +70,7 @@ interface RightPanelProps {
 export function RightPanel({
   panel,
   selectedNode,
+  selectedNodes,
   selectedEdge,
   selectedIndustry,
   selectedCompany,
@@ -310,6 +313,24 @@ export function RightPanel({
         nodeName={contextMenuNode.canonical_name_zh}
         onClose={onBackPanel}
         onSelectCompany={(company) =>
+          onPushPanel({
+            panel: "company-detail",
+            selectedCompany: company,
+            selectedNode: null,
+            selectedIndustry: null,
+          })
+        }
+      />
+    );
+  }
+
+  if (panel === "multi-node-companies" && selectedNodes && selectedNodes.length > 0) {
+    return (
+      <MultiNodeCompaniesPanel
+        nodes={selectedNodes}
+        onClose={onBackPanel}
+        onHighlightNodes={onHighlightNodes}
+        onViewCompanyDetail={(company) =>
           onPushPanel({
             panel: "company-detail",
             selectedCompany: company,

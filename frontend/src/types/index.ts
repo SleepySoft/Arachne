@@ -530,6 +530,7 @@ export type PanelType =
   | "company-create"
   | "company-edit"
   | "node-companies"
+  | "multi-node-companies"
   | "node-industries"
   | "company-relation-detail";
 

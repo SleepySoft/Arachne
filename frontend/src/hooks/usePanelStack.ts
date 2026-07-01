@@ -11,6 +11,7 @@ import {
 export interface PanelState {
   panel: PanelType;
   selectedNode: IndustrialNode | null;
+  selectedNodes: IndustrialNode[] | null;
   selectedEdge: GraphEdge | null;
   selectedIndustry: Industry | null;
   selectedCompany: Company | null;
@@ -21,6 +22,7 @@ export interface PanelState {
 const EMPTY_PANEL: PanelState = {
   panel: "none",
   selectedNode: null,
+  selectedNodes: null,
   selectedEdge: null,
   selectedIndustry: null,
   selectedCompany: null,
@@ -93,6 +95,7 @@ export function usePanelStack() {
     selectedEdge: top.selectedEdge,
     selectedIndustry: top.selectedIndustry,
     selectedCompany: top.selectedCompany,
+    selectedNodes: top.selectedNodes,
     selectedRelation: top.selectedRelation,
     contextMenuNode: top.contextMenuNode,
     canGoBack: stack.length > 1,

@@ -26,6 +26,7 @@ export function useIndustrialGraph() {
   const selectedEdge = ps.selectedEdge;
   const selectedIndustry = ps.selectedIndustry;
   const selectedCompany = ps.selectedCompany;
+  const selectedNodes = ps.selectedNodes;
   const contextMenuNode = ps.contextMenuNode;
 
   const setPanel = useCallback(
@@ -595,6 +596,7 @@ export function useIndustrialGraph() {
     setSelectedIndustry,
     selectedCompany,
     setSelectedCompany,
+    selectedNodes,
     selectedIndustries,
     setSelectedIndustries,
     selectedCompanies,
