@@ -75,22 +75,145 @@
 
 #### 部署
 
-略，让你的Agent自己看着办。
+> 本项目默认在 Windows 本地以原生服务方式运行（Neo4j + PostgreSQL + Python 后端 + Vite 前端）。仓库也提供 `docker-compose.yml` 作为参考，但当前开发环境以本地安装为准。
 
-#### 导入数据
+##### 环境要求
 
-```shell
-cd scripts
-python import_db.py --input-dir C:\D\code\Arachne\data\ArachneData\newest  --clear --yes
+- Windows 10/11（PowerShell 5.1+）
+- Python 3.12
+- Node.js 18+
+- Neo4j 5.26.0 Community（已放入 `neo4j-community-5.26.0/`）
+- PostgreSQL 17（二进制已放入 `postgresql/pgsql/`）
+
+##### 目录结构
+
+```
+Arachne/
+├── backend/              # FastAPI 后端
+│   ├── app/
+│   ├── venv/             # Python 虚拟环境
+│   └── requirements.txt
+├── frontend/             # React + Vite 前端
+│   └── node_modules/
+├── neo4j-community-5.26.0/   # 本地 Neo4j
+├── postgresql/pgsql/         # 本地 PostgreSQL
+├── scripts/
+│   ├── start-all.ps1
+│   ├── stop-all.ps1
+│   └── import_db.py
+└── data/ArachneData/     # 图谱数据
 ```
 
-#### 启动
+##### 1. 安装后端依赖
 
-```shell
-# Powershell
-cd scripts
-start-all.ps1
+```powershell
+cd backend
+python -m venv venv
+.\venv\Scripts\activate
+pip install -r requirements.txt
 ```
+
+后端默认连接：
+- Neo4j: `bolt://localhost:7687`（用户名 `neo4j`，密码 `arachne123`）
+- PostgreSQL: `postgresql://postgres:postgres@localhost:5433/arachne`
+
+可在 `backend/app/config.py` 或环境变量中修改。
+
+##### 2. 安装前端依赖
+
+```powershell
+cd frontend
+npm install
+```
+
+##### 3. 准备数据库
+
+**Neo4j**
+
+项目已携带 `neo4j-community-5.26.0/`，无需额外安装。首次启动前确认 `conf/neo4j.conf` 中 bolt 端口为 `7687`，并设置初始密码 `arachne123`。
+
+**PostgreSQL**
+
+项目已携带 `postgresql/pgsql/` 二进制。首次使用需要初始化数据目录（仅需执行一次）：
+
+```powershell
+cd postgresql\pgsql
+.\bin\initdb.exe -D .\data -U postgres --encoding=UTF8 --locale=C
+# 启动服务
+.\bin\pg_ctl.exe -D .\data -l logfile start
+```
+
+后端首次启动时会自动创建 `arachne` 数据库及所需表（`industries`、`companies`、`company_node_exposures`、`persons`、`factual_relations` 等）。
+
+##### 4. 一键启动
+
+```powershell
+# 在项目根目录
+.\scripts\start-all.ps1
+```
+
+该脚本会按顺序启动：
+1. Neo4j（端口 7687）
+2. PostgreSQL（端口 5433）
+3. FastAPI 后端（端口 16060）
+4. Vite 前端（端口 3000）
+
+如果 Neo4j 图谱为空，脚本会自动导入 `data/seed_industry_graph.json` 作为种子数据。
+
+##### 5. 数据导入
+
+将导出的图谱数据导入 Neo4j：
+
+```powershell
+cd scripts
+python import_db.py --input-dir ../data/ArachneData/newest --clear --yes
+```
+
+`--clear` 会先清空现有图数据，请谨慎使用。
+
+##### 6. 访问服务
+
+| 服务 | 地址 |
+|------|------|
+| 前端应用 | http://localhost:3000 |
+| 后端 API 文档 | http://localhost:16060/docs |
+| Neo4j Browser | http://localhost:7474 |
+| PostgreSQL | localhost:5433 |
+
+##### 7. 停止服务
+
+```powershell
+.\scripts\stop-all.ps1
+```
+
+##### 常见问题
+
+**Q: 端口被占用**
+
+检查 7687、5433、16060、3000 是否已被占用。`start-all.ps1` 会自动跳过已运行的服务。
+
+**Q: PostgreSQL 提示数据库不存在**
+
+先确保 PostgreSQL 已启动，然后创建数据库：
+
+```powershell
+cd postgresql\pgsql
+.\bin\createdb.exe -U postgres arachne
+```
+
+**Q: 前端构建失败**
+
+确认 Node.js 版本 ≥ 18，并删除 `frontend/node_modules` 后重新 `npm install`。
+
+**Q: Docker 方式**
+
+仓库提供 `docker-compose.yml`，可直接：
+
+```powershell
+docker-compose up -d
+```
+
+注意：当前开发环境因网络策略未使用 Docker，compose 文件未包含 PostgreSQL，如需完整容器化部署需自行补充。
 
 #### 快速上手
 
