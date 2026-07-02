@@ -522,6 +522,8 @@ export default function App() {
             onClearSelection={industrial.handleClearSelection}
             onConnectSourceSelect={industrial.handleConnectSourceSelect}
             onConnectTargetSelect={industrial.handleConnectTargetSelect}
+            onCancelConnect={industrial.exitEditMode}
+            connectTargetNodeId={industrial.connectTarget?.node_id || null}
             filters={industrial.activeFilters}
             highlightNodeId={industrial.selectedNode?.node_id}
             highlightNodeIds={industrial.highlightNodeIds}
@@ -943,6 +945,16 @@ export default function App() {
               if (node) graphCanvasRef.current?.revealInternal(node.node_id);
             }}
             onExitFocus={() => graphCanvasRef.current?.exitFocus()}
+            onConnect={() => {
+              const node = industrial.contextMenu.node;
+              if (!node) return;
+              industrial.setEditMode("connect");
+              industrial.handleConnectSourceSelect(node, {
+                x: industrial.contextMenu.x,
+                y: industrial.contextMenu.y,
+              });
+              industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
+            }}
             onClose={() =>
               industrial.setContextMenu((prev) => ({ ...prev, visible: false }))
             }

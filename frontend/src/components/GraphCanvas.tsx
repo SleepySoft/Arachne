@@ -340,6 +340,7 @@ interface GraphCanvasProps {
   onClearSelection?: () => void;
   onConnectSourceSelect?: (node: IndustrialNode | null, position?: { x: number; y: number }) => void;
   onConnectTargetSelect?: (node: IndustrialNode, position?: { x: number; y: number }) => void;
+  onCancelConnect?: () => void;
   filters: {
     edgeNamespaces: string[];
     edgeTypes: string[];
@@ -354,6 +355,7 @@ interface GraphCanvasProps {
   sourceData?: { nodes: IndustrialNode[]; edges: GraphEdge[] };
   editMode?: EditMode;
   connectSourceNodeId?: string | null;
+  connectTargetNodeId?: string | null;
   expandedProcessParents?: string[];
   onToggleProcessExpansion?: (nodeId: string) => void;
   wheelSensitivity?: number;
@@ -709,6 +711,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     onClearSelection,
     onConnectSourceSelect,
     onConnectTargetSelect,
+    onCancelConnect,
     filters,
     highlightNodeId,
     highlightNodeIds,
@@ -717,6 +720,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     restoredCamera,
     editMode = "default",
     connectSourceNodeId = null,
+    connectTargetNodeId = null,
     expandedProcessParents = [],
     onToggleProcessExpansion,
     wheelSensitivity = 1.0,
@@ -745,10 +749,12 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   const onClearSelectionRef = useRef(onClearSelection);
   const onConnectSourceSelectRef = useRef(onConnectSourceSelect);
   const onConnectTargetSelectRef = useRef(onConnectTargetSelect);
+  const onCancelConnectRef = useRef(onCancelConnect);
   const filtersRef = useRef(filters);
   const sourceDataRef = useRef(sourceData);
   const editModeRef = useRef(editMode);
   const connectSourceNodeIdRef = useRef(connectSourceNodeId);
+  const connectTargetNodeIdRef = useRef(connectTargetNodeId);
   const expandedProcessParentsRef = useRef(expandedProcessParents);
   const prevExpandedProcessParentsRef = useRef<string[]>([]);
   // 恢复已保存视图时，需要跳过 expandedProcessParents effect 触发的自动布局，
@@ -768,6 +774,10 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   const processGroupDragPositionsRef = useRef<Map<string, cytoscape.Position>>(new Map());
   const pendingPositionsRef = useRef<Record<string, { x: number; y: number }> | null>(null);
   const pendingCameraRef = useRef<{ pan: { x: number; y: number }; zoom: number } | null>(null);
+  const connectSvgRef = useRef<SVGSVGElement | null>(null);
+  const connectLineRef = useRef<SVGLineElement | null>(null);
+  const connectMousePosRef = useRef<{ x: number; y: number } | null>(null);
+  const connectMouseVisibleRef = useRef(true);
 
   useEffect(() => {
     onNodeClickRef.current = onNodeClick;
@@ -818,12 +828,20 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   }, [onConnectTargetSelect]);
 
   useEffect(() => {
+    onCancelConnectRef.current = onCancelConnect;
+  }, [onCancelConnect]);
+
+  useEffect(() => {
     editModeRef.current = editMode;
   }, [editMode]);
 
   useEffect(() => {
     connectSourceNodeIdRef.current = connectSourceNodeId;
   }, [connectSourceNodeId]);
+
+  useEffect(() => {
+    connectTargetNodeIdRef.current = connectTargetNodeId;
+  }, [connectTargetNodeId]);
 
   useEffect(() => {
     expandedProcessParentsRef.current = expandedProcessParents;
@@ -2543,6 +2561,10 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
             return;
           }
           if (e.key === "Escape") {
+            if (editModeRef.current === "connect" && connectSourceNodeIdRef.current) {
+              onCancelConnectRef.current?.();
+              return;
+            }
             cy.elements().unselect();
             cy.elements().removeClass("highlighted dimmed");
             cy.elements(".external").remove();
@@ -2711,6 +2733,91 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     }
   }, [connectSourceNodeId]);
 
+  // Connect mode dynamic edge from source node to mouse cursor
+  useEffect(() => {
+    const cy = cyRef.current;
+    const container = containerRef.current;
+    if (!cy || !container) return;
+    if (editMode !== "connect" || !connectSourceNodeId || connectTargetNodeId) {
+      connectMousePosRef.current = null;
+      connectMouseVisibleRef.current = true;
+      return;
+    }
+
+    const line = connectLineRef.current;
+    if (!line) return;
+
+    const updateLine = () => {
+      const source = cy.getElementById(connectSourceNodeId);
+      if (source.length === 0 || source.hasClass("hidden")) {
+        line.style.display = "none";
+        return;
+      }
+      const rect = container.getBoundingClientRect();
+      const sourcePos = source.renderedPosition();
+      line.setAttribute("x1", String(sourcePos.x));
+      line.setAttribute("y1", String(sourcePos.y));
+      if (connectMousePosRef.current && connectMouseVisibleRef.current) {
+        line.setAttribute("x2", String(connectMousePosRef.current.x - rect.left));
+        line.setAttribute("y2", String(connectMousePosRef.current.y - rect.top));
+        line.style.display = "block";
+      } else {
+        line.style.display = "none";
+      }
+    };
+
+    const handlePointerMove = (e: PointerEvent) => {
+      connectMousePosRef.current = { x: e.clientX, y: e.clientY };
+      updateLine();
+    };
+
+    const handlePointerLeave = () => {
+      connectMouseVisibleRef.current = false;
+      updateLine();
+    };
+
+    const handlePointerEnter = () => {
+      connectMouseVisibleRef.current = true;
+      updateLine();
+    };
+
+    const handleWindowMouseOut = (e: MouseEvent) => {
+      if (e.relatedTarget === null) {
+        connectMouseVisibleRef.current = false;
+        updateLine();
+      }
+    };
+
+    const handleWindowMouseOver = (e: MouseEvent) => {
+      if (e.relatedTarget === null) {
+        connectMouseVisibleRef.current = true;
+        updateLine();
+      }
+    };
+
+    const handleRender = () => {
+      updateLine();
+    };
+
+    container.addEventListener("pointermove", handlePointerMove);
+    container.addEventListener("pointerleave", handlePointerLeave);
+    container.addEventListener("pointerenter", handlePointerEnter);
+    window.addEventListener("mouseout", handleWindowMouseOut);
+    window.addEventListener("mouseover", handleWindowMouseOver);
+    cy.on("render", handleRender);
+
+    updateLine();
+
+    return () => {
+      container.removeEventListener("pointermove", handlePointerMove);
+      container.removeEventListener("pointerleave", handlePointerLeave);
+      container.removeEventListener("pointerenter", handlePointerEnter);
+      window.removeEventListener("mouseout", handleWindowMouseOut);
+      window.removeEventListener("mouseover", handleWindowMouseOver);
+      cy.off("render", handleRender);
+    };
+  }, [editMode, connectSourceNodeId, connectTargetNodeId]);
+
   // Queue restored view state (positions + camera) to be applied after the next layout finishes.
   useEffect(() => {
     if (!restoredPositions && !restoredCamera) return;
@@ -2822,9 +2929,28 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
       )}
       <div
         ref={containerRef}
-        className="h-full w-full"
+        className="relative h-full w-full"
         onContextMenu={(e) => e.preventDefault()}
-      />
+      >
+        {editMode === "connect" && connectSourceNodeId && !connectTargetNodeId && (
+          <svg
+            ref={connectSvgRef}
+            className="pointer-events-none absolute inset-0 z-20 h-full w-full"
+          >
+            <line
+              ref={connectLineRef}
+              x1="0"
+              y1="0"
+              x2="0"
+              y2="0"
+              stroke="#22d3ee"
+              strokeWidth="2"
+              strokeDasharray="6,4"
+              opacity="0.85"
+            />
+          </svg>
+        )}
+      </div>
     </div>
   );
 });

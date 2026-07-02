@@ -11,6 +11,7 @@ import {
   Folder,
   FolderTree,
   Move,
+  Link2,
 } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
 
@@ -35,6 +36,7 @@ interface NodeContextMenuProps {
   onHideNode?: () => void;
   onRevealInternal?: () => void;
   onExitFocus?: () => void;
+  onConnect?: () => void;
 }
 
 export function NodeContextMenu({
@@ -58,6 +60,7 @@ export function NodeContextMenu({
   onHideNode,
   onRevealInternal,
   onExitFocus,
+  onConnect,
 }: NodeContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -121,6 +124,19 @@ export function NodeContextMenu({
             </button>
           )}
           {isGroup && <div className="my-1 border-t border-slate-700" />}
+          {onConnect && (
+            <button
+              onClick={() => {
+                onConnect();
+                onClose();
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+            >
+              <Link2 size={14} className="text-cyan-400" />
+              连线
+            </button>
+          )}
+          {onConnect && <div className="my-1 border-t border-slate-700" />}
           {!inFocusMode && onFocusNode && (
             <button
               onClick={() => {
