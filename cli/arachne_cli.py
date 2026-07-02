@@ -8,7 +8,7 @@ from pathlib import Path
 
 import httpx
 
-BASE_URL = "http://localhost:8005/api/v1"
+BASE_URL = "http://localhost:16060/api/v1"
 
 
 # ========================================================================
