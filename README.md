@@ -71,8 +71,6 @@
 
 ## Usage
 
-注意：本项目为程序本体，数据是另一个项目：https://github.com/SleepySoft/ArachneData
-
 #### 部署
 
 > 本项目默认在 Windows 本地以原生服务方式运行（Neo4j + PostgreSQL + Python 后端 + Vite 前端）。仓库也提供 `docker-compose.yml` 作为参考，但当前开发环境以本地安装为准。
@@ -104,7 +102,9 @@ Arachne/
 └── data/ArachneData/     # 图谱数据
 ```
 
-> 注意：`neo4j-community-5.26.0/` 和 `postgresql/pgsql/` 为本地运行目录，不包含在 Git 仓库中。 clone 代码后需按下面步骤自行下载并解压到对应位置。
+> 注意1：`neo4j-community-5.26.0/` 和 `postgresql/pgsql/` 为本地运行目录，不包含在 Git 仓库中。 clone 代码后需按下面步骤自行下载并解压到对应位置。
+
+> 注意2：本仓库为程序本体，数据图谱在另一个仓库：https://github.com/SleepySoft/ArachneData ，当前它作为本项目的一个子模块被引用进来。
 
 ##### 1. 安装后端依赖
 
@@ -236,7 +236,7 @@ docker-compose up -d
 
 访问：http://localhost:3000/
 
-菜单：导入 -> 选择 [semiconductor.json](views/semiconductor.json)
+菜单：导入 -> 选择 [views/semiconductor.json](views/semiconductor.json)
 
 菜单：载入 -> 选择最新的版本
 

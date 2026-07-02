@@ -1,0 +1,1190 @@
+{
+  "batch_id": "seed_industry_graph_001",
+  "task_description": "基于国家统计局行业分类和工信部战略性新兴产业分类，构建核心产业链骨架：半导体、新能源（锂电/光伏/风电）、基础材料（钢铁）",
+  "nodes_to_upsert": [
+    {
+      "node_id": "silicon_metal",
+      "canonical_name_zh": "工业硅",
+      "canonical_name_en": "Metallurgical Grade Silicon",
+      "aliases": ["金属硅", "结晶硅"],
+      "definition": "以石英砂和碳质还原剂在电炉中冶炼得到的高纯度硅元素，纯度通常在98%以上，是生产有机硅、多晶硅和硅铝合金的基础原料。",
+      "entity_type": "material",
+      "evidence": [
+        {
+          "source_title": "国民经济行业分类 GB/T 4754-2017",
+          "quote": "工业硅冶炼属于有色金属冶炼和压延加工业中的硅冶炼。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "polysilicon",
+      "canonical_name_zh": "多晶硅",
+      "canonical_name_en": "Polycrystalline Silicon",
+      "aliases": ["多晶体硅"],
+      "definition": "由工业硅经过化学提纯（西门子法或流化床法）得到的高纯度硅材料，纯度达99.9999%以上，是制造单晶硅和太阳能电池的主要原料。",
+      "entity_type": "material",
+      "evidence": [
+        {
+          "source_title": "战略性新兴产业分类（2018）",
+          "quote": "高储能和关键电子材料制造包括太阳能级多晶硅材料。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "monocrystalline_silicon_ingot",
+      "canonical_name_zh": "单晶硅锭",
+      "canonical_name_en": "Monocrystalline Silicon Ingot",
+      "aliases": ["单晶硅棒"],
+      "definition": "由多晶硅在单晶炉中通过直拉法（CZ法）或区熔法（FZ法）生长形成的圆柱形单晶体，是制造硅片和半导体晶圆的基础材料。",
+      "entity_type": "material",
+      "evidence": [
+        {
+          "source_title": "半导体制造工艺",
+          "quote": "单晶硅锭经切割、研磨、抛光后制成硅晶圆。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "silicon_wafer",
+      "canonical_name_zh": "硅晶圆",
+      "canonical_name_en": "Silicon Wafer",
+      "aliases": ["硅片", "晶圆片"],
+      "definition": "将单晶硅锭切割、研磨、抛光后得到的圆形薄片，是制造集成电路（IC）和半导体分立器件的物理衬底。",
+      "entity_type": "material",
+      "evidence": [
+        {
+          "source_title": "战略性新兴产业分类（2018）",
+          "quote": "集成电路制造需要高纯度硅晶圆作为基础材料。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "photoresist",
+      "canonical_name_zh": "光刻胶",
+      "canonical_name_en": "Photoresist",
+      "aliases": ["光阻"],
+      "definition": "一种对光敏感的高分子化合物，在半导体光刻工艺中涂覆于硅晶圆表面，经曝光、显影后形成微细图形，是芯片制造的核心耗材之一。",
+      "entity_type": "material",
+      "evidence": [
+        {
+          "source_title": "半导体材料产业分析",
+          "quote": "光刻胶是芯片制造过程中不可或缺的关键材料。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "semiconductor_chip",
+      "canonical_name_zh": "半导体芯片",
+      "canonical_name_en": "Semiconductor Chip",
+      "aliases": ["芯片", "集成电路", "IC"],
+      "definition": "在硅晶圆上通过光刻、掺杂、蚀刻等数百道工艺制成的微型电子器件，集成了晶体管、电阻、电容等元件，是实现计算、存储、控制功能的核心部件。",
+      "entity_type": "device",
+      "evidence": [
+        {
+          "source_title": "战略性新兴产业分类（2018）",
+          "quote": "集成电路制造属于电子核心产业中的关键制造环节。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "printed_circuit_board",
+      "canonical_name_zh": "印刷电路板",
+      "canonical_name_en": "Printed Circuit Board",
+      "aliases": ["PCB", "电路板", "线路板"],
+      "definition": "以绝缘基板为载体，通过蚀刻、电镀等工艺在其表面或内部形成导电线路和焊盘的电子部件，用于连接和支持电子元器件，是电子产品的骨架。",
+      "entity_type": "component",
+      "evidence": [
+        {
+          "source_title": "国民经济行业分类 GB/T 4754-2017",
+          "quote": "印刷电路板制造属于计算机、通信和其他电子设备制造业中的电子电路制造。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "display_panel",
+      "canonical_name_zh": "显示面板",
+      "canonical_name_en": "Display Panel",
+      "aliases": ["显示屏", "屏幕"],
+      "definition": "由阵列基板、彩膜基板、液晶层或发光层等构成的平面显示器件，用于将电信号转换为可见图像，包括LCD、OLED、Mini LED等技术路线。",
+      "entity_type": "component",
+      "evidence": [
+        {
+          "source_title": "战略性新兴产业分类（2018）",
+          "quote": "新型显示器件制造属于电子核心产业的重要组成部分。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "lithium_ore",
+      "canonical_name_zh": "锂矿石",
+      "canonical_name_en": "Lithium Ore",
+      "aliases": ["锂辉石", "锂云母"],
+      "definition": "自然界中含锂元素的矿物原料，主要类型包括锂辉石、锂云母和盐湖卤水，是提取锂化合物和制造锂电池的原始资源。",
+      "entity_type": "material",
+      "evidence": [
+        {
+          "source_title": "国民经济行业分类 GB/T 4754-2017",
+          "quote": "有色金属矿采选业包括稀有稀土金属矿采选中的锂矿采选。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "lithium_carbonate",
+      "canonical_name_zh": "碳酸锂",
+      "canonical_name_en": "Lithium Carbonate",
+      "aliases": [],
+      "definition": "由锂矿石或盐湖卤水经酸化、萃取、沉淀等工艺制成的锂盐化合物，是制造锂离子电池正极材料的关键中间体。",
+      "entity_type": "material",
+      "evidence": [
+        {
+          "source_title": "无机盐制造业分类",
+          "quote": "碳酸锂属于无机盐制造中的锂盐产品。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "cathode_material",
+      "canonical_name_zh": "锂电池正极材料",
+      "canonical_name_en": "Cathode Material",
+      "aliases": ["正极材料"],
+      "definition": "锂离子电池中作为正极的活性物质材料，主流类型包括磷酸铁锂（LFP）、三元材料（NCM/NCA），决定电池的能量密度、安全性和成本。",
+      "entity_type": "material",
+      "evidence": [
+        {
+          "source_title": "战略性新兴产业分类（2018）",
+          "quote": "高储能和关键电子材料制造包括锂离子电池正极材料。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "anode_material",
+      "canonical_name_zh": "锂电池负极材料",
+      "canonical_name_en": "Anode Material",
+      "aliases": ["负极材料"],
+      "definition": "锂离子电池中作为负极的活性物质材料，主流类型为人造石墨和天然石墨，负责在充放电过程中嵌入和脱出锂离子。",
+      "entity_type": "material",
+      "evidence": [
+        {
+          "source_title": "电池材料产业概述",
+          "quote": "负极材料主要由石墨类材料构成，是锂电池四大主材之一。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "electrolyte",
+      "canonical_name_zh": "电解液",
+      "canonical_name_en": "Electrolyte",
+      "aliases": [],
+      "definition": "由锂盐（如六氟磷酸锂）、有机溶剂和添加剂组成的离子导电液体，在锂离子电池内部传递锂离子，是电池充放电反应的必要介质。",
+      "entity_type": "material",
+      "evidence": [
+        {
+          "source_title": "战略性新兴产业分类（2018）",
+          "quote": "高储能和关键电子材料制造包括锂离子电池电解液。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "separator",
+      "canonical_name_zh": "锂电池隔膜",
+      "canonical_name_en": "Battery Separator",
+      "aliases": ["隔膜"],
+      "definition": "置于锂电池正负极之间的多孔薄膜材料（通常为聚烯烃），允许锂离子通过但阻止电子直接导通，防止电池内部短路。",
+      "entity_type": "component",
+      "evidence": [
+        {
+          "source_title": "电池材料产业概述",
+          "quote": "隔膜是锂电池四大主材之一，主要采用聚乙烯和聚丙烯材料。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "lithium_battery_cell",
+      "canonical_name_zh": "锂电池电芯",
+      "canonical_name_en": "Lithium Battery Cell",
+      "aliases": ["电芯", "电池单体"],
+      "definition": "由正极材料、负极材料、电解液和隔膜封装而成的基本储能单元，是构成动力电池包和消费电池的最小独立电池单元。",
+      "entity_type": "device",
+      "evidence": [
+        {
+          "source_title": "国民经济行业分类 GB/T 4754-2017",
+          "quote": "锂离子电池制造属于电气机械和器材制造业中的电池制造。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "power_battery_pack",
+      "canonical_name_zh": "动力电池包",
+      "canonical_name_en": "Power Battery Pack",
+      "aliases": ["电池包", "动力电池系统"],
+      "definition": "由多个锂电池电芯通过串并联组合，配合电池管理系统（BMS）、热管理系统和结构件组成的完整储能系统，为电动汽车提供动力来源。",
+      "entity_type": "module",
+      "evidence": [
+        {
+          "source_title": "新能源汽车产业分类",
+          "quote": "新能源汽车储能装置制造包括动力电池包及管理系统。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "electric_motor",
+      "canonical_name_zh": "驱动电机",
+      "canonical_name_en": "Electric Drive Motor",
+      "aliases": ["电机", "牵引电机"],
+      "definition": "将电能转换为机械能的旋转电机装置，是电动汽车的动力输出核心部件，主流类型包括永磁同步电机和交流异步电机。",
+      "entity_type": "device",
+      "evidence": [
+        {
+          "source_title": "战略性新兴产业分类（2018）",
+          "quote": "新能源汽车电机、发动机制造属于新能源汽车核心部件。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "motor_controller",
+      "canonical_name_zh": "电机控制器",
+      "canonical_name_en": "Motor Controller",
+      "aliases": ["电控", "逆变器"],
+      "definition": "通过功率半导体器件（IGBT/SiC MOSFET）控制驱动电机的转速、转矩和方向的电子控制装置，是电动汽车电驱动系统的核心。",
+      "entity_type": "device",
+      "evidence": [
+        {
+          "source_title": "新能源汽车技术架构",
+          "quote": "电机控制器与驱动电机、动力电池并称为电动汽车三电系统。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "electric_vehicle",
+      "canonical_name_zh": "电动汽车",
+      "canonical_name_en": "Electric Vehicle",
+      "aliases": ["新能源车", "EV"],
+      "definition": "以动力电池为能量来源、以驱动电机为动力输出装置的道路交通工具，包括纯电动汽车（BEV）、插电式混合动力汽车（PHEV）和增程式电动汽车。",
+      "entity_type": "system",
+      "evidence": [
+        {
+          "source_title": "战略性新兴产业分类（2018）",
+          "quote": "新能源汽车整车制造属于新能源汽车产业的核心环节。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "iron_ore",
+      "canonical_name_zh": "铁矿石",
+      "canonical_name_en": "Iron Ore",
+      "aliases": [],
+      "definition": "含有铁元素或铁化合物的天然矿石，是钢铁冶炼的主要原料，常见类型包括磁铁矿、赤铁矿和褐铁矿。",
+      "entity_type": "material",
+      "evidence": [
+        {
+          "source_title": "国民经济行业分类 GB/T 4754-2017",
+          "quote": "铁矿采选属于黑色金属矿采选业。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "coke",
+      "canonical_name_zh": "焦炭",
+      "canonical_name_en": "Coke",
+      "aliases": [],
+      "definition": "由炼焦煤在高温干馏炉中隔绝空气加热得到的固体燃料，具有高强度和高孔隙率，是高炉炼铁的主要还原剂和热源。",
+      "entity_type": "material",
+      "evidence": [
+        {
+          "source_title": "国民经济行业分类 GB/T 4754-2017",
+          "quote": "炼焦属于煤炭加工中的炼焦环节。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "pig_iron",
+      "canonical_name_zh": "生铁",
+      "canonical_name_en": "Pig Iron",
+      "aliases": [],
+      "definition": "在高炉中以铁矿石、焦炭和熔剂为原料，经高温还原反应冶炼得到的铁碳合金，含碳量2%-4.3%，是生产粗钢的直接原料。",
+      "entity_type": "material",
+      "evidence": [
+        {
+          "source_title": "国民经济行业分类 GB/T 4754-2017",
+          "quote": "炼铁指用高炉法、直接还原法、熔融还原法等将铁从矿石等含铁化合物中还原出来的生产活动。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "crude_steel",
+      "canonical_name_zh": "粗钢",
+      "canonical_name_en": "Crude Steel",
+      "aliases": [],
+      "definition": "以生铁或废钢为原料，通过转炉、电炉等冶炼设备去除多余碳和杂质后得到的钢水经浇铸形成的钢锭或连铸坯，是制造各类钢材的中间产品。",
+      "entity_type": "material",
+      "evidence": [
+        {
+          "source_title": "国民经济行业分类 GB/T 4754-2017",
+          "quote": "炼钢指利用不同来源的氧来氧化炉料所含杂质的金属提纯活动。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "steel_product",
+      "canonical_name_zh": "钢材",
+      "canonical_name_en": "Steel Product",
+      "aliases": ["钢铁产品"],
+      "definition": "以粗钢为原料，通过热轧、冷轧、锻造等塑性加工工艺制成的具有特定形状和性能的钢铁材料，包括板材、型材、管材、线材等。",
+      "entity_type": "material",
+      "evidence": [
+        {
+          "source_title": "国民经济行业分类 GB/T 4754-2017",
+          "quote": "钢压延加工指通过热轧、冷加工、锻压和挤压等塑性加工使连铸坯、钢锭产生塑性变形，制成具有一定形状尺寸的钢材产品的生产活动。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "machine_tool",
+      "canonical_name_zh": "数控机床",
+      "canonical_name_en": "CNC Machine Tool",
+      "aliases": ["CNC", "数控加工中心"],
+      "definition": "采用数字控制技术对加工过程进行自动控制的机床设备，通过程序指令控制刀具与工件的相对运动，实现高精度、高效率的金属切削或成形加工。",
+      "entity_type": "system",
+      "evidence": [
+        {
+          "source_title": "战略性新兴产业分类（2018）",
+          "quote": "金属切削机床制造属于高端装备制造产业中的智能制造装备。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "industrial_robot",
+      "canonical_name_zh": "工业机器人",
+      "canonical_name_en": "Industrial Robot",
+      "aliases": [],
+      "definition": "面向工业领域的多关节机械手或多自由度机器人装置，通过编程自动控制实现搬运、焊接、装配、喷涂等生产作业，是智能制造的核心装备。",
+      "entity_type": "system",
+      "evidence": [
+        {
+          "source_title": "战略性新兴产业分类（2018）",
+          "quote": "工业机器人制造属于智能制造装备产业。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "smartphone",
+      "canonical_name_zh": "智能手机",
+      "canonical_name_en": "Smartphone",
+      "aliases": ["手机"],
+      "definition": "具有独立操作系统、可安装第三方应用程序、通过移动通信网络实现语音和数据通信的便携式智能终端设备，集成了计算、通信、传感、显示等功能。",
+      "entity_type": "system",
+      "evidence": [
+        {
+          "source_title": "战略性新兴产业分类（2018）",
+          "quote": "新型计算机及信息终端设备制造包括智能手机制造。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "server",
+      "canonical_name_zh": "服务器",
+      "canonical_name_en": "Server",
+      "aliases": [],
+      "definition": "为网络中的其他设备或用户提供计算、存储、数据库、网络等服务的专用高性能计算机系统，是数据中心和云计算基础设施的核心硬件。",
+      "entity_type": "system",
+      "evidence": [
+        {
+          "source_title": "战略性新兴产业分类（2018）",
+          "quote": "高端计算机制造属于下一代信息网络产业。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "solar_cell",
+      "canonical_name_zh": "太阳能电池",
+      "canonical_name_en": "Solar Cell",
+      "aliases": ["光伏电池", "电池片"],
+      "definition": "利用光生伏特效应将太阳光能直接转换为电能的半导体器件，主流类型包括晶硅电池（单晶/多晶）和薄膜电池，是光伏组件的核心发电单元。",
+      "entity_type": "device",
+      "evidence": [
+        {
+          "source_title": "战略性新兴产业分类（2018）",
+          "quote": "太阳能设备和生产装备制造包括太阳能电池制造。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "photovoltaic_module",
+      "canonical_name_zh": "光伏组件",
+      "canonical_name_en": "Photovoltaic Module",
+      "aliases": ["太阳能电池组件", "光伏板"],
+      "definition": "由多个太阳能电池通过串并联方式封装在钢化玻璃、背板和边框内的发电单元，是将太阳能转换为电能可直接使用的最小光伏产品。",
+      "entity_type": "module",
+      "evidence": [
+        {
+          "source_title": "新能源产业分类",
+          "quote": "光伏组件是由太阳能电池片封装而成的发电装置。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "pv_inverter",
+      "canonical_name_zh": "光伏逆变器",
+      "canonical_name_en": "PV Inverter",
+      "aliases": ["逆变器"],
+      "definition": "将光伏组件产生的直流电转换为符合电网标准的交流电的电力电子设备，同时具备最大功率点跟踪（MPPT）和并网控制功能。",
+      "entity_type": "device",
+      "evidence": [
+        {
+          "source_title": "新能源产业分类",
+          "quote": "光伏逆变器是光伏发电系统中实现直流到交流转换的核心设备。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "wind_turbine",
+      "canonical_name_zh": "风力发电机组",
+      "canonical_name_en": "Wind Turbine",
+      "aliases": ["风机", "风电整机"],
+      "definition": "由风轮、传动系统、发电机、塔架和控制系统组成的将风能转换为电能的完整装置，是风力发电场的核心发电设备。",
+      "entity_type": "system",
+      "evidence": [
+        {
+          "source_title": "战略性新兴产业分类（2018）",
+          "quote": "风能发电机装备及零部件制造属于新能源产业中的风能产业。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "rare_earth_metal",
+      "canonical_name_zh": "稀土金属",
+      "canonical_name_en": "Rare Earth Metal",
+      "aliases": ["稀土"],
+      "definition": "镧系元素及钪、钇共17种金属元素的统称，具有独特的磁、光、电性能，是制造高性能永磁材料、催化剂、抛光粉、储氢合金等的关键原料。",
+      "entity_type": "material",
+      "evidence": [
+        {
+          "source_title": "国民经济行业分类 GB/T 4754-2017",
+          "quote": "稀土金属冶炼属于有色金属冶炼和压延加工业中的稀有稀土金属冶炼。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "permanent_magnet",
+      "canonical_name_zh": "永磁材料",
+      "canonical_name_en": "Permanent Magnet Material",
+      "aliases": ["永磁体"],
+      "definition": "一经磁化即能保持恒定磁性的材料，主流类型包括钕铁硼（NdFeB）和铁氧体永磁，广泛应用于驱动电机、风力发电机、消费电子等领域。",
+      "entity_type": "material",
+      "evidence": [
+        {
+          "source_title": "战略性新兴产业分类（2018）",
+          "quote": "稀土新材料制造包括稀土永磁材料。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "data_center",
+      "canonical_name_zh": "数据中心",
+      "canonical_name_en": "Data Center",
+      "aliases": ["IDC", "机房"],
+      "definition": "集中放置服务器、存储设备、网络设备等IT基础设施的专用建筑设施，配备电力供应、冷却系统、消防系统和安全监控系统，为云计算和互联网服务提供物理载体。",
+      "entity_type": "infrastructure",
+      "evidence": [
+        {
+          "source_title": "战略性新兴产业分类（2018）",
+          "quote": "互联网数据中心服务属于互联网与云计算、大数据服务。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "cloud_computing_platform",
+      "canonical_name_zh": "云计算平台",
+      "canonical_name_en": "Cloud Computing Platform",
+      "aliases": ["云平台", "公有云"],
+      "definition": "基于大规模数据中心，通过网络按需提供计算、存储、数据库、网络等IT资源的虚拟化服务平台，采用按需付费模式向用户交付计算能力。",
+      "entity_type": "platform",
+      "evidence": [
+        {
+          "source_title": "战略性新兴产业分类（2018）",
+          "quote": "云计算与大数据服务属于新一代信息技术产业。"
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    }
+  ],
+  "edges_to_upsert": [
+    {
+      "edge_id": "silicon_metal_material_flow_polysilicon",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "from_node": "silicon_metal",
+      "to_node": "polysilicon",
+      "description": "工业硅经过化学提纯（西门子法或流化床法）转化为高纯度多晶硅。",
+      "evidence": [
+        {
+          "source_title": "半导体产业链概述",
+          "quote": "多晶硅由工业硅经过化学提纯得到，是制造单晶硅和太阳能电池的主要原料。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "polysilicon_material_flow_monocrystalline_silicon_ingot",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "from_node": "polysilicon",
+      "to_node": "monocrystalline_silicon_ingot",
+      "description": "多晶硅在单晶炉中通过直拉法生长为单晶硅锭。",
+      "evidence": [
+        {
+          "source_title": "半导体制造工艺",
+          "quote": "多晶硅在单晶炉中通过直拉法（CZ法）生长形成单晶硅锭。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "monocrystalline_silicon_ingot_material_flow_silicon_wafer",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "from_node": "monocrystalline_silicon_ingot",
+      "to_node": "silicon_wafer",
+      "description": "单晶硅锭经切割、研磨、抛光后制成硅晶圆。",
+      "evidence": [
+        {
+          "source_title": "半导体制造工艺",
+          "quote": "单晶硅锭经切割、研磨、抛光后制成硅晶圆。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "silicon_wafer_material_flow_semiconductor_chip",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "from_node": "silicon_wafer",
+      "to_node": "semiconductor_chip",
+      "description": "硅晶圆经光刻、掺杂、蚀刻等数百道工艺制成半导体芯片。",
+      "evidence": [
+        {
+          "source_title": "半导体制造工艺",
+          "quote": "在硅晶圆上通过光刻、掺杂、蚀刻等工艺制成集成电路芯片。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "photoresist_material_flow_semiconductor_chip",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "from_node": "photoresist",
+      "to_node": "semiconductor_chip",
+      "description": "光刻胶涂覆于硅晶圆表面，在光刻工艺中形成微细图形，是芯片制造的核心耗材。",
+      "evidence": [
+        {
+          "source_title": "半导体材料产业分析",
+          "quote": "光刻胶在芯片制造的光刻工艺中用于形成微细图形。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "semiconductor_chip_composition_smartphone",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "from_node": "semiconductor_chip",
+      "to_node": "smartphone",
+      "description": "半导体芯片（SoC、存储芯片、射频芯片等）是智能手机的核心计算和通信部件。",
+      "evidence": [
+        {
+          "source_title": "电子信息产业分类",
+          "quote": "智能手机由SoC芯片、存储芯片、显示屏、电池等多种核心部件组成。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "printed_circuit_board_composition_smartphone",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "from_node": "printed_circuit_board",
+      "to_node": "smartphone",
+      "description": "印刷电路板是智能手机内部连接和支持各类电子元器件的骨架。",
+      "evidence": [
+        {
+          "source_title": "电子信息产业分类",
+          "quote": "PCB是电子产品的骨架，用于连接和支持电子元器件。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "display_panel_composition_smartphone",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "from_node": "display_panel",
+      "to_node": "smartphone",
+      "description": "显示面板是智能手机的人机交互界面，负责将电信号转换为可见图像。",
+      "evidence": [
+        {
+          "source_title": "电子信息产业分类",
+          "quote": "显示面板是智能手机的核心组件之一。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "semiconductor_chip_composition_server",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "from_node": "semiconductor_chip",
+      "to_node": "server",
+      "description": "CPU、内存芯片、网卡芯片等半导体器件是服务器实现计算、存储和网络功能的核心部件。",
+      "evidence": [
+        {
+          "source_title": "数据中心技术架构",
+          "quote": "服务器由CPU、内存、硬盘、网卡等核心芯片和部件组成。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "server_composition_data_center",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "from_node": "server",
+      "to_node": "data_center",
+      "description": "大量服务器是数据中心提供计算和存储服务的基础硬件设施。",
+      "evidence": [
+        {
+          "source_title": "数据中心基础设施",
+          "quote": "数据中心集中放置大量服务器、存储设备和网络设备。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "data_center_capability_supply_cloud_computing_platform",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "capability_supply",
+      "from_node": "data_center",
+      "to_node": "cloud_computing_platform",
+      "description": "数据中心为云计算平台提供物理基础设施承载能力，包括电力、冷却、网络和空间。",
+      "evidence": [
+        {
+          "source_title": "云计算技术架构",
+          "quote": "云计算平台依托数据中心的基础设施资源向用户交付计算能力。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "lithium_ore_material_flow_lithium_carbonate",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "from_node": "lithium_ore",
+      "to_node": "lithium_carbonate",
+      "description": "锂矿石经破碎、酸化、萃取、沉淀等工艺提炼为碳酸锂。",
+      "evidence": [
+        {
+          "source_title": "锂电池产业链",
+          "quote": "锂矿石经选矿、酸化、萃取等工序提炼为碳酸锂。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "lithium_carbonate_material_flow_cathode_material",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "from_node": "lithium_carbonate",
+      "to_node": "cathode_material",
+      "description": "碳酸锂是合成磷酸铁锂和三元正极材料的关键锂源。",
+      "evidence": [
+        {
+          "source_title": "电池材料产业概述",
+          "quote": "碳酸锂是制造锂电池正极材料的关键原料。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "cathode_material_composition_lithium_battery_cell",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "from_node": "cathode_material",
+      "to_node": "lithium_battery_cell",
+      "description": "正极材料是锂电池电芯的核心组成部分，决定电池的能量密度和电压平台。",
+      "evidence": [
+        {
+          "source_title": "电池材料产业概述",
+          "quote": "正极材料是锂电池四大主材之一，决定电池的能量密度。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "anode_material_composition_lithium_battery_cell",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "from_node": "anode_material",
+      "to_node": "lithium_battery_cell",
+      "description": "负极材料是锂电池电芯的核心组成部分，负责在充放电过程中嵌入和脱出锂离子。",
+      "evidence": [
+        {
+          "source_title": "电池材料产业概述",
+          "quote": "负极材料是锂电池四大主材之一，主要由石墨类材料构成。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "electrolyte_composition_lithium_battery_cell",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "from_node": "electrolyte",
+      "to_node": "lithium_battery_cell",
+      "description": "电解液在锂电池电芯内部传递锂离子，是电池充放电反应的必要介质。",
+      "evidence": [
+        {
+          "source_title": "电池材料产业概述",
+          "quote": "电解液是锂电池四大主材之一，负责传递锂离子。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "separator_composition_lithium_battery_cell",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "from_node": "separator",
+      "to_node": "lithium_battery_cell",
+      "description": "隔膜置于锂电池正负极之间，允许锂离子通过但阻止电子直接导通，防止内部短路。",
+      "evidence": [
+        {
+          "source_title": "电池材料产业概述",
+          "quote": "隔膜是锂电池四大主材之一，防止正负极直接接触造成短路。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "lithium_battery_cell_composition_power_battery_pack",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "from_node": "lithium_battery_cell",
+      "to_node": "power_battery_pack",
+      "description": "多个锂电池电芯通过串并联组合构成动力电池包的基本储能单元。",
+      "evidence": [
+        {
+          "source_title": "新能源汽车技术架构",
+          "quote": "动力电池包由多个电池电芯通过串并联组合而成。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "power_battery_pack_energy_flow_electric_vehicle",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "energy_flow",
+      "from_node": "power_battery_pack",
+      "to_node": "electric_vehicle",
+      "description": "动力电池包为电动汽车提供驱动所需的电能。",
+      "evidence": [
+        {
+          "source_title": "新能源汽车技术架构",
+          "quote": "动力电池包是电动汽车的核心能量来源。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "electric_motor_composition_electric_vehicle",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "from_node": "electric_motor",
+      "to_node": "electric_vehicle",
+      "description": "驱动电机是电动汽车的动力输出核心部件，将电能转换为驱动车轮的机械能。",
+      "evidence": [
+        {
+          "source_title": "新能源汽车技术架构",
+          "quote": "驱动电机与动力电池、电机控制器并称为电动汽车三电系统。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "motor_controller_composition_electric_vehicle",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "from_node": "motor_controller",
+      "to_node": "electric_vehicle",
+      "description": "电机控制器是电动汽车电驱动系统的控制核心，控制驱动电机的转速和转矩。",
+      "evidence": [
+        {
+          "source_title": "新能源汽车技术架构",
+          "quote": "电机控制器与驱动电机、动力电池并称为电动汽车三电系统。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "semiconductor_chip_composition_motor_controller",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "from_node": "semiconductor_chip",
+      "to_node": "motor_controller",
+      "description": "IGBT/SiC功率半导体芯片是电机控制器实现电能转换和控制的核心器件。",
+      "evidence": [
+        {
+          "source_title": "新能源汽车技术架构",
+          "quote": "电机控制器核心器件为IGBT或SiC功率模块。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "iron_ore_material_flow_pig_iron",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "from_node": "iron_ore",
+      "to_node": "pig_iron",
+      "description": "铁矿石在高炉中与焦炭和熔剂反应，经高温还原冶炼得到生铁。",
+      "evidence": [
+        {
+          "source_title": "国民经济行业分类 GB/T 4754-2017",
+          "quote": "炼铁指用高炉法将铁从矿石等含铁化合物中还原出来的生产活动。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "coke_energy_flow_pig_iron",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "energy_flow",
+      "from_node": "coke",
+      "to_node": "pig_iron",
+      "description": "焦炭在高炉炼铁过程中提供热源和还原剂。",
+      "evidence": [
+        {
+          "source_title": "钢铁冶炼工艺",
+          "quote": "焦炭是高炉炼铁的主要还原剂和热源。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "pig_iron_material_flow_crude_steel",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "from_node": "pig_iron",
+      "to_node": "crude_steel",
+      "description": "生铁经转炉或电炉冶炼去除多余碳和杂质后转化为粗钢。",
+      "evidence": [
+        {
+          "source_title": "国民经济行业分类 GB/T 4754-2017",
+          "quote": "炼钢指利用不同来源的氧来氧化炉料所含杂质的金属提纯活动。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "crude_steel_material_flow_steel_product",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "from_node": "crude_steel",
+      "to_node": "steel_product",
+      "description": "粗钢经热轧、冷轧等塑性加工工艺制成各类钢材产品。",
+      "evidence": [
+        {
+          "source_title": "国民经济行业分类 GB/T 4754-2017",
+          "quote": "钢压延加工指通过热轧、冷加工等塑性加工使钢锭产生塑性变形，制成钢材产品的生产活动。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "steel_product_material_flow_machine_tool",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "from_node": "steel_product",
+      "to_node": "machine_tool",
+      "description": "钢材是制造数控机床床身、主轴、导轨等结构件的主要原材料。",
+      "evidence": [
+        {
+          "source_title": "机床制造工艺",
+          "quote": "数控机床的主要结构件采用铸铁或钢材制造。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "steel_product_material_flow_electric_vehicle",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "from_node": "steel_product",
+      "to_node": "electric_vehicle",
+      "description": "钢材是制造电动汽车车身、底盘和结构件的主要原材料。",
+      "evidence": [
+        {
+          "source_title": "汽车制造工艺",
+          "quote": "汽车车身和底盘主要采用高强度钢材制造。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "steel_product_material_flow_wind_turbine",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "from_node": "steel_product",
+      "to_node": "wind_turbine",
+      "description": "钢材是制造风力发电机塔架、机舱底座和齿轮箱壳体的主要原材料。",
+      "evidence": [
+        {
+          "source_title": "风电装备制造",
+          "quote": "风力发电机塔架和机舱结构主要采用钢材制造。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "semiconductor_chip_composition_industrial_robot",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "from_node": "semiconductor_chip",
+      "to_node": "industrial_robot",
+      "description": "控制芯片、伺服驱动芯片等半导体器件是工业机器人实现运动控制的核心部件。",
+      "evidence": [
+        {
+          "source_title": "智能制造装备产业",
+          "quote": "工业机器人由控制器、伺服系统和机械本体组成，核心为芯片和算法。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "machine_tool_capability_supply_industrial_robot",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "capability_supply",
+      "from_node": "machine_tool",
+      "to_node": "industrial_robot",
+      "description": "数控机床为工业机器人核心零部件（减速器、轴承等）提供精密加工能力。",
+      "evidence": [
+        {
+          "source_title": "高端装备制造产业",
+          "quote": "数控机床用于加工机器人核心零部件如减速器和精密轴承。"
+        }
+      ],
+      "confidence": "MEDIUM"
+    },
+    {
+      "edge_id": "polysilicon_material_flow_solar_cell",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "from_node": "polysilicon",
+      "to_node": "solar_cell",
+      "description": "多晶硅是制造太阳能电池片的主要原材料。",
+      "evidence": [
+        {
+          "source_title": "光伏产业链",
+          "quote": "太阳能电池由硅材料制成，多晶硅是主要原材料。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "solar_cell_composition_photovoltaic_module",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "from_node": "solar_cell",
+      "to_node": "photovoltaic_module",
+      "description": "多个太阳能电池封装在钢化玻璃和背板之间构成光伏组件。",
+      "evidence": [
+        {
+          "source_title": "光伏产业链",
+          "quote": "光伏组件由多个太阳能电池片封装而成。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "photovoltaic_module_energy_flow_pv_inverter",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "information_flow",
+      "from_node": "photovoltaic_module",
+      "to_node": "pv_inverter",
+      "description": "光伏组件产生的直流电信号输入逆变器进行转换。",
+      "evidence": [
+        {
+          "source_title": "光伏发电系统",
+          "quote": "光伏组件产生的直流电输入逆变器转换为交流电。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "rare_earth_metal_material_flow_permanent_magnet",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "material_flow",
+      "from_node": "rare_earth_metal",
+      "to_node": "permanent_magnet",
+      "description": "稀土金属（主要为钕、镨、镝）经冶炼合金化后制成稀土永磁材料。",
+      "evidence": [
+        {
+          "source_title": "稀土新材料产业",
+          "quote": "钕铁硼永磁材料由稀土金属钕、铁和硼制成。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "permanent_magnet_composition_electric_motor",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "from_node": "permanent_magnet",
+      "to_node": "electric_motor",
+      "description": "永磁材料是制造永磁同步电机转子磁极的核心部件。",
+      "evidence": [
+        {
+          "source_title": "电机制造工艺",
+          "quote": "永磁同步电机采用稀土永磁材料作为转子磁极。"
+        }
+      ],
+      "confidence": "HIGH"
+    },
+    {
+      "edge_id": "permanent_magnet_composition_wind_turbine",
+      "edge_namespace": "industrial_flow",
+      "edge_type": "composition",
+      "from_node": "permanent_magnet",
+      "to_node": "wind_turbine",
+      "description": "永磁材料是直驱式风力发电机永磁同步发电机的核心部件。",
+      "evidence": [
+        {
+          "source_title": "风电装备制造",
+          "quote": "直驱式风力发电机采用永磁同步发电机，需要大量稀土永磁材料。"
+        }
+      ],
+      "confidence": "HIGH"
+    }
+  ],
+  "rejected_or_pending": [
+    {
+      "term": "高端装备制造产业",
+      "reason": "这是国家统计局战略性新兴产业分类中的产业门类名称，属于统计分类口径，不是具体的产业实体。",
+      "suggested_action": "reject_as_application_label",
+      "evidence": [],
+      "notes": "作为视图层标签使用，不进入底层产业图"
+    },
+    {
+      "term": "新能源汽车产业",
+      "reason": "这是产业门类/统计分类名称，不是具体产业实体。底层图中已有电动汽车、动力电池包等具体实体。",
+      "suggested_action": "reject_as_application_label",
+      "evidence": [],
+      "notes": "作为视图层标签使用"
+    },
+    {
+      "term": "新一代信息技术产业",
+      "reason": "这是政策分类口径，不是稳定产业实体。底层图中已有芯片、服务器、云计算平台等具体实体。",
+      "suggested_action": "reject_as_application_label",
+      "evidence": [],
+      "notes": "作为视图层标签使用"
+    },
+    {
+      "term": "工业互联网",
+      "reason": "这是一个技术领域/应用模式概念，不是具体的产业实体。底层图中已有服务器、网络设备、云计算平台等支撑实体。",
+      "suggested_action": "reject_as_market_concept",
+      "evidence": [],
+      "notes": "如后续需登记，应细化为工业互联网平台、工业网关等具体系统"
+    },
+    {
+      "term": "人工智能",
+      "reason": "这是一个宽泛的技术能力领域，不是具体的产业实体。底层图中已有半导体芯片（算力支撑）、云计算平台（训练平台）等关联实体。",
+      "suggested_action": "reject_as_market_concept",
+      "evidence": [],
+      "notes": "如后续需登记，应细化为AI芯片、大语言模型、计算机视觉系统等具体实体"
+    },
+    {
+      "term": "华为",
+      "reason": "华为是公司实体，不属于当前产业本体图的登记范围。",
+      "suggested_action": "reject_as_company",
+      "evidence": [],
+      "notes": "公司层未来通过 Company → Activity → Entity 映射"
+    },
+    {
+      "term": "比亚迪",
+      "reason": "比亚迪是公司实体，不属于当前产业本体图的登记范围。",
+      "suggested_action": "reject_as_company",
+      "evidence": [],
+      "notes": "公司层未来通过 Company → Activity → Entity 映射"
+    }
+  ]
+}
