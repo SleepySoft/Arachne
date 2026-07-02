@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -33,6 +33,10 @@ import {
   TraversalDirection,
 } from "@/types";
 import { queryReasoningObjects, executeReasoning } from "@/services/api";
+import cytoscape from "cytoscape";
+import cytoscapeDagre from "cytoscape-dagre";
+
+cytoscape.use(cytoscapeDagre);
 
 const SCOPE_OPTIONS: { value: QueryScope; label: string }[] = [
   { value: "industrial_node", label: "产业节点" },
@@ -213,17 +217,69 @@ export function ReasoningPage() {
   // ----- Execution -----
   const [result, setResult] = useState<ReasoningResultEnvelope | null>(null);
   const [executeError, setExecuteError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<OutputType | "overview">("overview");
+type ResultTab = OutputType | "overview" | "visual";
+
+  const [activeTab, setActiveTab] = useState<ResultTab>("overview");
 
   const executeMutation = useMutation({
     mutationFn: (payload: ReasoningTask) => executeReasoning(payload),
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       setExecuteError(null);
       setResult(data);
-      setActiveTab("overview");
+      const hasGraph =
+        variables.requested_outputs.includes("subgraph") ||
+        variables.requested_outputs.includes("temporary_graph");
+      setActiveTab(hasGraph ? "visual" : "overview");
     },
     onError: (err) => setExecuteError(formatError(err, "推理执行失败")),
   });
+
+  const [runningExample, setRunningExample] = useState(false);
+
+  const runExample = async () => {
+    try {
+      setRunningExample(true);
+      setExecuteError(null);
+      setQueryText("芯片");
+      setQueryScope("industrial_node");
+      setTaskType("association");
+      setOutputs(["subgraph", "paths", "evidence_chains", "feature_tables"]);
+
+      const queryRes = await queryReasoningObjects({
+        query_id: "example",
+        query_text: "芯片",
+        query_scope: "industrial_node",
+        limit: 5,
+      });
+      const chip = queryRes.candidates.find((c) => c.object_id === "chip") || queryRes.candidates[0];
+      if (!chip) {
+        setExecuteError("示例查询未返回芯片节点");
+        return;
+      }
+      setSources([{ object_id: chip.object_id, label: chip.canonical_name || chip.object_id }]);
+
+      const payload: ReasoningTask = {
+        task_id: "example_run",
+        task_type: "association",
+        source_nodes: [chip.object_id],
+        parameters: {},
+        constraints: {
+          max_depth: 2,
+          max_paths: 50,
+          max_nodes: 200,
+          traversal_direction: "forward",
+        },
+        requested_outputs: ["subgraph", "paths", "evidence_chains", "feature_tables"],
+      };
+      const res = await executeReasoning(payload);
+      setResult(res);
+      setActiveTab("visual");
+    } catch (err) {
+      setExecuteError(formatError(err, "运行示例失败"));
+    } finally {
+      setRunningExample(false);
+    }
+  };
 
   const handleRun = () => {
     if (sources.length === 0) {
@@ -295,9 +351,10 @@ export function ReasoningPage() {
   }, [result]);
 
   const availableTabs = useMemo(() => {
-    const set = new Set<OutputType | "overview">(["overview"]);
+    const set = new Set<ResultTab>(["overview"]);
     if (!result) return set;
     const payload = result.result_payload;
+    if (payload.subgraph || payload.temporary_graph) set.add("visual");
     if (payload.subgraph) set.add("subgraph");
     if (payload.temporary_graph) set.add("temporary_graph");
     if (payload.paths) set.add("paths");
@@ -308,8 +365,9 @@ export function ReasoningPage() {
     return set;
   }, [result]);
 
-  const tabLabel = (t: OutputType | "overview") => {
+  const tabLabel = (t: ResultTab) => {
     if (t === "overview") return "概览";
+    if (t === "visual") return "可视化图";
     return OUTPUT_OPTIONS.find((o) => o.value === t)?.label || t;
   };
 
@@ -321,9 +379,17 @@ export function ReasoningPage() {
           <Brain className="h-5 w-5 text-cyan-400" />
           <div>
             <h1 className="text-lg font-semibold text-slate-100">图推理引擎</h1>
-            <p className="text-xs text-slate-500">对象查询 → 选择起点 → 运行确定性推理任务</p>
+            <p className="text-xs text-slate-500">输入一个产业节点，自动发现它的上下游、影响范围与证据链</p>
           </div>
         </div>
+        <button
+          onClick={runExample}
+          disabled={runningExample}
+          className="flex items-center gap-2 rounded bg-cyan-600/20 px-3 py-1.5 text-xs font-medium text-cyan-400 hover:bg-cyan-600/30 disabled:opacity-50"
+        >
+          {runningExample ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
+          运行示例：芯片
+        </button>
         {result && (
           <div className="flex items-center gap-3 text-xs">
             <Badge color={result.status === "success" ? "emerald" : "amber"}>{result.status}</Badge>
@@ -617,10 +683,7 @@ export function ReasoningPage() {
             <>
               {/* Tabs */}
               <div className="flex items-center gap-1 border-b border-slate-800 bg-slate-900/50 px-4 py-2">
-                {(["overview", ...Array.from(availableTabs).filter((t) => t !== "overview")] as (
-                  | OutputType
-                  | "overview"
-                )[]).map((t) => (
+                {(["overview", ...Array.from(availableTabs).filter((t) => t !== "overview")] as ResultTab[]).map((t) => (
                   <button
                     key={t}
                     onClick={() => setActiveTab(t)}
@@ -639,8 +702,40 @@ export function ReasoningPage() {
               {/* Tab content */}
               <div className="flex-1 overflow-auto p-6">
                 {activeTab === "overview" && (
-                  <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                    <SummaryCard
+                  <div className="space-y-4">
+                    <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+                      <h4 className="mb-1 text-sm font-medium text-slate-200">结果说明</h4>
+                      <p className="text-xs leading-5 text-slate-400">
+                        从起点{" "}
+                        <span className="font-medium text-cyan-300">
+                          {sources.map((s) => s.label).join("、")}
+                        </span>{" "}
+                        执行{" "}
+                        <span className="font-medium text-cyan-300">
+                          {taskType === "association" ? "关联扩展" : "影响传播"}
+                        </span>
+                        ，共发现{" "}
+                        <span className="font-medium text-slate-200">
+                          {resultGraph
+                            ? `${
+                                "nodes" in resultGraph
+                                  ? resultGraph.nodes.length
+                                  : (resultGraph as TemporaryReasoningGraph).nodes.length
+                              } 个节点、${
+                                "edges" in resultGraph
+                                  ? resultGraph.edges.length
+                                  : (resultGraph as TemporaryReasoningGraph).edges.length
+                              } 条边`
+                            : "—"}
+                        </span>
+                        ，找到 {resultPaths.length} 条路径。
+                        {taskType === "association" && "关联扩展用于发现与起点相关的上下游节点和关系。"}
+                        {taskType === "impact_propagation" && "影响传播用于量化上游扰动沿供应链向下传递的强度。"}
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                      <SummaryCard
                       icon={<Layers className="h-4 w-4 text-cyan-400" />}
                       label="图结构"
                       value={
@@ -674,6 +769,13 @@ export function ReasoningPage() {
                         </ul>
                       </div>
                     )}
+                  </div>
+                </div>
+                )}
+
+                {activeTab === "visual" && resultGraph && (
+                  <div className="h-[calc(100%-1rem)] rounded-lg border border-slate-800 bg-slate-900/60 p-2">
+                    <ResultGraph graph={resultGraph} isTemp={"temp_graph_id" in resultGraph} />
                   </div>
                 )}
 
@@ -819,6 +921,143 @@ function GraphView({
       </div>
     </div>
   );
+}
+
+function ResultGraph({
+  graph,
+  isTemp,
+}: {
+  graph: ReasoningSubgraph | TemporaryReasoningGraph;
+  isTemp: boolean;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cyRef = useRef<cytoscape.Core | null>(null);
+
+  const nodeColor = (type?: string) => {
+    const map: Record<string, string> = {
+      material: "#f59e0b",
+      part: "#38bdf8",
+      device: "#a78bfa",
+      equipment: "#34d399",
+      system: "#f472b6",
+      software: "#818cf8",
+      infrastructure: "#94a3b8",
+      process: "#fb923c",
+      service: "#2dd4bf",
+      technology_capability: "#c084fc",
+      platform: "#60a5fa",
+      standard: "#a3e635",
+      data_asset: "#fbbf24",
+      unknown: "#64748b",
+    };
+    return map[type || "unknown"] || "#64748b";
+  };
+
+  const elements = useMemo(() => {
+    const nodes = isTemp
+      ? (graph as TemporaryReasoningGraph).nodes.map((n) => ({
+          data: {
+            id: n.temp_node_id,
+            label: n.label,
+            type: n.node_type,
+            score: n.score,
+          },
+        }))
+      : (graph as ReasoningSubgraph).nodes.map((n) => ({
+          data: {
+            id: n.node_id,
+            label: n.canonical_name_zh || n.node_id,
+            type: n.entity_type,
+          },
+        }));
+    const edges = isTemp
+      ? (graph as TemporaryReasoningGraph).edges.map((e) => ({
+          data: {
+            id: e.temp_edge_id,
+            source: e.from_temp_node_id,
+            target: e.to_temp_node_id,
+            type: e.edge_type,
+            weight: e.weight,
+          },
+        }))
+      : (graph as ReasoningSubgraph).edges.map((e) => ({
+          data: {
+            id: e.edge_id,
+            source: e.from_node,
+            target: e.to_node,
+            type: e.edge_type,
+          },
+        }));
+    return [...nodes, ...edges];
+  }, [graph, isTemp]);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const cy = cytoscape({
+      container: containerRef.current,
+      elements,
+      style: [
+        {
+          selector: "node",
+          style: {
+            label: "data(label)",
+            "background-color": "data(color)",
+            color: "#e2e8f0",
+            "font-size": "10px",
+            "text-valign": "bottom",
+            "text-halign": "center",
+            "text-margin-y": "4px",
+            "text-background-color": "#0f172a",
+            "text-background-opacity": 0.8,
+            "text-background-padding": "2px 4px",
+            "text-background-shape": "roundrectangle",
+            width: 24,
+            height: 24,
+            "border-width": 2,
+            "border-color": "#1e293b",
+          } as unknown as cytoscape.Css.Node,
+        },
+        {
+          selector: "edge",
+          style: {
+            width: 2,
+            "line-color": "#475569",
+            "target-arrow-color": "#475569",
+            "target-arrow-shape": "triangle",
+            "arrow-scale": 0.8,
+            "curve-style": "bezier",
+            label: "data(type)",
+            "font-size": "8px",
+            color: "#94a3b8",
+            "text-background-color": "#0f172a",
+            "text-background-opacity": 0.8,
+            "text-background-padding": "1px 3px",
+            "text-background-shape": "roundrectangle",
+          } as unknown as cytoscape.Css.Edge,
+        },
+      ],
+      layout: { name: "dagre", rankDir: "TB", padding: 20 } as cytoscape.LayoutOptions,
+      minZoom: 0.1,
+      maxZoom: 3,
+      wheelSensitivity: 0.2,
+    });
+
+    // Set node colors after init so we can use our helper
+    cy.nodes().forEach((n) => {
+      n.data("color", nodeColor(n.data("type")));
+    });
+
+    cy.fit(undefined, 24);
+    cyRef.current = cy;
+
+    return () => {
+      cy.destroy();
+      cyRef.current = null;
+    };
+  }, [elements]);
+
+  return <div ref={containerRef} className="h-full w-full" />;
 }
 
 function PathsView({ paths }: { paths: ReasoningPath[] }) {
