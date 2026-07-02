@@ -1086,8 +1086,11 @@ export default function App() {
 
       {mainView === "industrial_graph" && quickNodeAt?.visible && (
         <div
-          className="fixed z-50 w-80 rounded-lg border border-slate-700 bg-slate-900/95 p-3 shadow-xl backdrop-blur"
-          style={{ left: quickNodeAt.node.x, top: quickNodeAt.node.y }}
+          className="fixed z-50 w-80 max-w-[calc(100vw-2rem)] rounded-lg border border-slate-700 bg-slate-900/95 p-3 shadow-xl backdrop-blur"
+          style={{
+            left: Math.min(quickNodeAt.node.x, Math.max(16, window.innerWidth - 320 - 16)),
+            top: Math.min(quickNodeAt.node.y, Math.max(16, window.innerHeight - 420 - 16)),
+          }}
         >
           <QuickNodeForm
             onCancel={() => setQuickNodeAt(null)}

@@ -120,14 +120,14 @@ export function QuickNodeForm({ onSuccess, onCancel, initialName = "" }: QuickNo
           value={form.canonical_name_zh || ""}
           onChange={(e) => setForm((f) => ({ ...f, canonical_name_zh: e.target.value }))}
           placeholder="中文名 *"
-          className="flex-1 rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+          className="min-w-0 flex-1 rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
         />
         <input
           type="text"
           value={form.canonical_name_en || ""}
           onChange={(e) => setForm((f) => ({ ...f, canonical_name_en: e.target.value }))}
           placeholder="English name *"
-          className="flex-1 rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+          className="min-w-0 flex-1 rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
         />
       </div>
 
@@ -135,7 +135,7 @@ export function QuickNodeForm({ onSuccess, onCancel, initialName = "" }: QuickNo
         <select
           value={form.entity_type}
           onChange={(e) => setForm((f) => ({ ...f, entity_type: e.target.value as IndustrialNode["entity_type"] }))}
-          className="rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
+          className="min-w-0 flex-shrink-0 rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
         >
           <option value="unknown">未知类型</option>
           <option value="material">材料</option>
@@ -157,7 +157,7 @@ export function QuickNodeForm({ onSuccess, onCancel, initialName = "" }: QuickNo
           value={form.notes || ""}
           onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
           placeholder="备注（可选）"
-          className="flex-1 rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+          className="min-w-0 flex-1 rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
         />
       </div>
 
@@ -167,7 +167,9 @@ export function QuickNodeForm({ onSuccess, onCancel, initialName = "" }: QuickNo
         className="flex w-full items-center justify-center gap-1 rounded bg-cyan-600/80 py-1 text-xs font-medium text-white hover:bg-cyan-500 disabled:opacity-50"
       >
         <Plus className="h-3 w-3" />
-        {mutation.isPending ? "添加中..." : similar.length > 0 && !dismissed ? "仍要添加为新节点" : "添加为草稿节点（PENDING）"}
+        <span className="break-words text-center leading-tight">
+          {mutation.isPending ? "添加中..." : similar.length > 0 && !dismissed ? "仍要新建" : "添加草稿"}
+        </span>
       </button>
 
       <p className="text-[9px] text-slate-500">
