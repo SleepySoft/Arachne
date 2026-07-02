@@ -21,6 +21,7 @@ from app.routers import (
     industries,
     nodes,
     query,
+    reasoning,
 )
 
 settings = get_settings()
@@ -86,6 +87,7 @@ app.include_router(business_batches.router, prefix=f"{settings.API_V1_STR}/busin
 app.include_router(factual_graph.router, prefix=f"{settings.API_V1_STR}/factual-graph", tags=["Factual Graph"])
 app.include_router(explore.router, prefix=f"{settings.API_V1_STR}/explore", tags=["Explore"])
 app.include_router(query.router, prefix=f"{settings.API_V1_STR}/query", tags=["Query"])
+app.include_router(reasoning.router, prefix=f"{settings.API_V1_STR}/reasoning", tags=["Reasoning"])
 app.include_router(admin_checks.router, prefix=f"{settings.API_V1_STR}/admin/db-checks", tags=["Admin"])
 
 
