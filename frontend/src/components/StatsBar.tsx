@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Database, GitBranch, Layers, Network } from "lucide-react";
+import { Activity, Brain, Database, GitBranch, Layers, Network } from "lucide-react";
 import { getHealth, getStats } from "@/services/api";
-export type MainView = "industrial_graph" | "company_graph" | "db_checks";
+export type MainView = "industrial_graph" | "company_graph" | "db_checks" | "reasoning";
 
 interface StatsBarProps {
   mainView: MainView;
@@ -47,6 +47,12 @@ export function StatsBar({ mainView, onChangeMainView }: StatsBarProps) {
             onClick={() => onChangeMainView("db_checks")}
             icon={<Database className="h-3 w-3" />}
             label="数据检查"
+          />
+          <ViewTab
+            active={mainView === "reasoning"}
+            onClick={() => onChangeMainView("reasoning")}
+            icon={<Brain className="h-3 w-3" />}
+            label="推理"
           />
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { StatsBar, MainView } from "@/components/StatsBar";
 import { DbChecksPage } from "@/pages/DbChecksPage";
+import { ReasoningPage } from "@/pages/ReasoningPage";
 import { Layout } from "@/components/Layout";
 import { GraphCanvas, GraphCanvasRef } from "@/components/GraphCanvas";
 import { CanvasToolbar } from "@/components/toolbar/CanvasToolbar";
@@ -408,6 +409,19 @@ export default function App() {
     node: { x: number; y: number };
     visible: boolean;
   } | null>(null);
+
+  if (mainView === "reasoning") {
+    return (
+      <div className="flex h-screen w-full flex-col bg-slate-950">
+        <div className="h-14 shrink-0 border-b border-slate-800 bg-slate-900">
+          <StatsBar mainView={mainView} onChangeMainView={handleChangeMainView} />
+        </div>
+        <div className="flex-1 overflow-hidden">
+          <ReasoningPage />
+        </div>
+      </div>
+    );
+  }
 
   if (mainView === "db_checks") {
     return (

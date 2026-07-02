@@ -7,6 +7,10 @@ import {
   DbCheckResult,
   DbFixResult,
   GraphEdge,
+  ObjectQueryRequest,
+  ObjectQueryResult,
+  ReasoningTask,
+  ReasoningResultEnvelope,
   GraphRegistrationBatch,
   GraphStats,
   IndustrialFlowEdgeCreate,
@@ -493,5 +497,24 @@ export const runDbCheck = async (checkId: string): Promise<DbCheckResult> => {
 
 export const fixDbCheck = async (checkId: string, issueIds?: string[]): Promise<DbFixResult> => {
   const res = await client.post(`/admin/db-checks/${checkId}/fix`, { issue_ids: issueIds });
+  return res.data;
+};
+
+
+// ============================================================
+// Reasoning Kernel
+// ============================================================
+
+export const queryReasoningObjects = async (
+  payload: ObjectQueryRequest
+): Promise<ObjectQueryResult> => {
+  const res = await client.post("/reasoning/query", payload);
+  return res.data;
+};
+
+export const executeReasoning = async (
+  payload: ReasoningTask
+): Promise<ReasoningResultEnvelope> => {
+  const res = await client.post("/reasoning/execute", payload);
   return res.data;
 };

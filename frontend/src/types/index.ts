@@ -555,3 +555,6 @@ export interface CompanyNetworkEdge {
 // Backward-compatible aliases
 export type CNode = CompanyNetworkNode;
 export type CEdge = CompanyNetworkEdge;
+
+// Reasoning kernel types
+export * from "./reasoning";
