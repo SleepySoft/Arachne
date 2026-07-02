@@ -410,32 +410,6 @@ export default function App() {
     visible: boolean;
   } | null>(null);
 
-  if (mainView === "reasoning") {
-    return (
-      <div className="flex h-screen w-full flex-col bg-slate-950">
-        <div className="h-14 shrink-0 border-b border-slate-800 bg-slate-900">
-          <StatsBar mainView={mainView} onChangeMainView={handleChangeMainView} />
-        </div>
-        <div className="flex-1 overflow-hidden">
-          <ReasoningPage />
-        </div>
-      </div>
-    );
-  }
-
-  if (mainView === "db_checks") {
-    return (
-      <div className="flex h-screen w-full flex-col bg-slate-950">
-        <div className="h-14 shrink-0 border-b border-slate-800 bg-slate-900">
-          <StatsBar mainView={mainView} onChangeMainView={handleChangeMainView} />
-        </div>
-        <div className="flex-1 overflow-hidden">
-          <DbChecksPage />
-        </div>
-      </div>
-    );
-  }
-
   const industrialRightPanel =
     industrial.panel !== "none" ? (
       <RightPanel
@@ -503,9 +477,6 @@ export default function App() {
 
   const industrialWorkspace = (
     <Layout
-      topBar={
-        <StatsBar mainView={mainView} onChangeMainView={handleChangeMainView} />
-      }
       leftSidebar={
         <IndustrialSidebar
           selectedIndustries={industrial.selectedIndustries}
@@ -763,9 +734,6 @@ export default function App() {
 
   const companyWorkspace = (
     <Layout
-      topBar={
-        <StatsBar mainView={mainView} onChangeMainView={handleChangeMainView} />
-      }
       leftSidebar={
         <CompanySidebarPanel
           selectedId={company.selectedCompany?.company_id}
@@ -849,9 +817,30 @@ export default function App() {
     />
   );
 
+  const isGraphView = mainView === "industrial_graph" || mainView === "company_graph";
+
   return (
-    <>
-      {mainView === "company_graph" ? companyWorkspace : industrialWorkspace}
+    <div className="flex h-screen w-full flex-col bg-slate-950">
+      <div className="h-14 shrink-0 border-b border-slate-800 bg-slate-900">
+        <StatsBar mainView={mainView} onChangeMainView={handleChangeMainView} />
+      </div>
+
+      <div className="relative flex-1 overflow-hidden">
+        {/* Graph workspace — keep mounted so switching back does not reload the canvas */}
+        <div className={`absolute inset-0 ${isGraphView ? "" : "hidden"}`}>
+          {mainView === "company_graph" ? companyWorkspace : industrialWorkspace}
+        </div>
+
+        {/* DbChecks page — mounted but hidden when not active */}
+        <div className={`absolute inset-0 ${mainView === "db_checks" ? "" : "hidden"}`}>
+          <DbChecksPage />
+        </div>
+
+        {/* Reasoning page — mounted but hidden when not active */}
+        <div className={`absolute inset-0 ${mainView === "reasoning" ? "" : "hidden"}`}>
+          <ReasoningPage />
+        </div>
+      </div>
 
       {mainView === "industrial_graph" &&
         industrial.contextMenu.visible &&
@@ -1215,6 +1204,6 @@ export default function App() {
           {importMessage}
         </div>
       )}
-    </>
+    </div>
   );
 }

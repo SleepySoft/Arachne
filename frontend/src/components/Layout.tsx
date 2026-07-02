@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 
 interface LayoutProps {
-  topBar: ReactNode;
+  topBar?: ReactNode;
   leftSidebar: ReactNode;
   centerCanvas: ReactNode;
   searchPanel: ReactNode;
@@ -18,9 +18,11 @@ export function Layout({
   return (
     <div className="flex h-full w-full flex-col bg-slate-950">
       {/* TopBar */}
-      <div className="h-14 shrink-0 border-b border-slate-800 bg-slate-900">
-        {topBar}
-      </div>
+      {topBar && (
+        <div className="h-14 shrink-0 border-b border-slate-800 bg-slate-900">
+          {topBar}
+        </div>
+      )}
 
       {/* Main area */}
       <div className="flex flex-1 overflow-hidden">
