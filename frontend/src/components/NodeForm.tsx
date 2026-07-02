@@ -1,9 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import { IndustrialNode, IndustrialNodeCreate } from "@/types";
+import { IndustrialNode, IndustrialNodeCreate, IndustryNodeAssociation } from "@/types";
 import { createNode, fuzzySearchNodes, updateNode } from "@/services/api";
 import { SimilarNodesPanel } from "./SimilarNodesPanel";
+import { IndustryMultiSelect } from "./IndustryMultiSelect";
 
 interface NodeFormProps {
   mode: "create" | "edit";
@@ -57,6 +58,7 @@ export function NodeForm({ mode, node, onClose, onSuccess }: NodeFormProps) {
   const [similar, setSimilar] = useState<{ score: number; node: IndustrialNode }[]>([]);
   const [dismissed, setDismissed] = useState(false);
   const [error, setError] = useState("");
+  const [industries, setIndustries] = useState<IndustryNodeAssociation[]>([]);
 
   const nameQuery = [form.canonical_name_zh, form.canonical_name_en]
     .map((s) => s?.trim())
@@ -97,6 +99,7 @@ export function NodeForm({ mode, node, onClose, onSuccess }: NodeFormProps) {
         status: form.status as IndustrialNode["status"],
         evidence: [],
         notes: form.notes || undefined,
+        industry_ids: mode === "create" && industries.length > 0 ? industries : undefined,
       };
       if (mode === "create") {
         return createNode(payload);
@@ -243,6 +246,12 @@ export function NodeForm({ mode, node, onClose, onSuccess }: NodeFormProps) {
             className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-sm text-slate-200 focus:border-cyan-500 focus:outline-none"
           />
         </FormField>
+
+        {mode === "create" && (
+          <FormField label="所属行业">
+            <IndustryMultiSelect selected={industries} onChange={setIndustries} />
+          </FormField>
+        )}
 
         <div className="pt-2">
           <button

@@ -185,3 +185,66 @@ class TestCompanyRouter:
 
         resp2 = client.get(f"/api/v1/companies/{payload['company_id']}")
         assert resp2.status_code == 404
+
+
+class TestNodeWithIndustries:
+    async def test_create_node_with_industries(self, client):
+        if not await _postgres_available():
+            pytest.skip("PostgreSQL not available")
+
+        uid = uuid4().hex[:6]
+        industry_id = f"test_ind_for_node_{uid}"
+
+        # 先创建目标行业
+        resp_ind = client.post("/api/v1/industries", json={
+            "industry_id": industry_id,
+            "name_zh": "节点创建行业测试",
+            "status": "ACTIVE",
+        })
+        assert resp_ind.status_code == 201
+
+        # 创建节点并同时关联行业
+        node_id = f"test_node_{uid}"
+        resp = client.post("/api/v1/nodes", json={
+            "node_id": node_id,
+            "canonical_name_zh": "测试节点",
+            "definition": "用于测试创建时关联行业的节点",
+            "entity_type": "material",
+            "confidence": "LOW",
+            "status": "PENDING",
+            "industry_ids": [{"industry_id": industry_id}],
+        })
+        assert resp.status_code == 201
+        assert resp.json()["node_id"] == node_id
+
+        # 验证映射已生成
+        resp2 = client.get(f"/api/v1/industries/{industry_id}/mappings")
+        assert resp2.status_code == 200
+        items = resp2.json()["items"]
+        assert any(i["node_id"] == node_id for i in items)
+
+    async def test_quick_create_node_with_industries(self, client):
+        if not await _postgres_available():
+            pytest.skip("PostgreSQL not available")
+
+        uid = uuid4().hex[:6]
+        industry_id = f"test_ind_for_qnode_{uid}"
+
+        client.post("/api/v1/industries", json={
+            "industry_id": industry_id,
+            "name_zh": "快速创建行业测试",
+            "status": "ACTIVE",
+        })
+
+        resp = client.post("/api/v1/nodes/quick-create", json={
+            "canonical_name_zh": f"快速测试节点-{uid}",
+            "industry_ids": [{"industry_id": industry_id}],
+        })
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["node_id"].startswith("draft_")
+
+        resp2 = client.get(f"/api/v1/industries/{industry_id}/mappings")
+        assert resp2.status_code == 200
+        items = resp2.json()["items"]
+        assert any(i["node_id"] == data["node_id"] for i in items)

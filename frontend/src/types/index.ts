@@ -59,6 +59,15 @@ export interface IndustrialNode {
   updated_at?: string;
 }
 
+export interface IndustryNodeAssociation {
+  industry_id: string;
+  role?: string;
+  weight?: number;
+  confidence?: Confidence;
+  status?: NodeStatus;
+  notes?: string;
+}
+
 export interface IndustrialNodeCreate {
   node_id: string;
   canonical_name_zh: string;
@@ -70,6 +79,7 @@ export interface IndustrialNodeCreate {
   confidence: Confidence;
   status: NodeStatus;
   notes?: string;
+  industry_ids?: IndustryNodeAssociation[];
 }
 
 export interface IndustrialNodeUpdate {
@@ -95,6 +105,7 @@ export interface IndustrialNodeQuickCreate {
   confidence?: Confidence;
   status?: NodeStatus;
   notes?: string;
+  industry_ids?: IndustryNodeAssociation[];
 }
 
 export interface BaseEdge {

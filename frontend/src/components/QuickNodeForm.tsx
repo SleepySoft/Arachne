@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, X, Sparkles } from "lucide-react";
-import { IndustrialNode, IndustrialNodeQuickCreate } from "@/types";
+import { IndustrialNode, IndustrialNodeQuickCreate, IndustryNodeAssociation } from "@/types";
 import { fuzzySearchNodes, quickCreateNode } from "@/services/api";
 import { SimilarNodesPanel } from "./SimilarNodesPanel";
+import { IndustryMultiSelect } from "./IndustryMultiSelect";
 
 interface QuickNodeFormProps {
   onSuccess?: (node: IndustrialNode) => void;
@@ -23,6 +24,7 @@ export function QuickNodeForm({ onSuccess, onCancel, initialName = "" }: QuickNo
   const [searching, setSearching] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [industries, setIndustries] = useState<IndustryNodeAssociation[]>([]);
 
   const nameQuery = [form.canonical_name_zh, form.canonical_name_en]
     .map((s) => s?.trim())
@@ -54,6 +56,7 @@ export function QuickNodeForm({ onSuccess, onCancel, initialName = "" }: QuickNo
       queryClient.invalidateQueries({ queryKey: ["nodes"] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
       setForm({ canonical_name_zh: "", canonical_name_en: "", entity_type: "unknown", notes: "" });
+      setIndustries([]);
       setError(null);
       onSuccess?.(node);
     },
@@ -72,6 +75,7 @@ export function QuickNodeForm({ onSuccess, onCancel, initialName = "" }: QuickNo
       canonical_name_zh: form.canonical_name_zh?.trim() || undefined,
       canonical_name_en: form.canonical_name_en?.trim() || undefined,
       notes: form.notes?.trim() || undefined,
+      industry_ids: industries.length > 0 ? industries : undefined,
     };
     mutation.mutate(payload);
   };
@@ -130,6 +134,8 @@ export function QuickNodeForm({ onSuccess, onCancel, initialName = "" }: QuickNo
           className="min-w-0 flex-1 rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
         />
       </div>
+
+      <IndustryMultiSelect selected={industries} onChange={setIndustries} />
 
       <div className="flex gap-2">
         <select

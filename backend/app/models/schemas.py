@@ -506,6 +506,21 @@ class IndustrialNode(BaseModel):
         return self
 
 
+class IndustryNodeAssociation(BaseModel):
+    """创建节点时同时关联行业的输入项。字段都有默认值，前端通常只需传 industry_id。"""
+    industry_id: str = Field(
+        ...,
+        pattern=r"^[a-z][a-z0-9_]*$",
+        min_length=3,
+        max_length=64,
+    )
+    role: Optional[str] = Field(default=None, description="节点在该行业中的角色")
+    weight: float = Field(default=1.0, ge=0.0, le=1.0, description="关联权重")
+    confidence: Confidence = Field(default=Confidence.MEDIUM, description="关联置信度")
+    status: NodeStatus = Field(default=NodeStatus.ACTIVE, description="映射状态")
+    notes: Optional[str] = Field(default=None, description="备注")
+
+
 class IndustrialNodeCreate(BaseModel):
     """用于创建节点的输入模型（不含自动生成的字段）"""
     node_id: str = Field(
@@ -523,6 +538,10 @@ class IndustrialNodeCreate(BaseModel):
     confidence: Confidence = Confidence.LOW
     status: NodeStatus = NodeStatus.PENDING
     notes: Optional[str] = None
+    industry_ids: List[IndustryNodeAssociation] = Field(
+        default_factory=list,
+        description="创建节点时同时关联的行业",
+    )
 
     @field_validator("canonical_name_zh", "definition")
     @classmethod
@@ -586,6 +605,10 @@ class IndustrialNodeQuickCreate(BaseModel):
     notes: Optional[str] = Field(
         default=None,
         description="可记录'由人工快速添加，待 AI 补全'等备注",
+    )
+    industry_ids: List[IndustryNodeAssociation] = Field(
+        default_factory=list,
+        description="创建节点时同时关联的行业",
     )
 
     @model_validator(mode="after")

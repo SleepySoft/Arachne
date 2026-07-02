@@ -7,6 +7,7 @@ from app.models.schemas import (
     IndustrialFlowEdge,
     IndustrialFlowEdgeCreate,
     IndustrialFlowEdgeQuickCreate,
+    IndustryNodeAssociation,
     IndustrialNode,
     IndustrialNodeCreate,
     IndustrialNodeQuickCreate,
@@ -15,6 +16,7 @@ from app.models.schemas import (
     OntologyEdgeCreate,
     RejectedOrPendingItem,
 )
+from app.models.industry_schema import IndustryNodeMapping
 from app.models.company_schema import BusinessRegistrationBatch
 # Use memory storage when Neo4j is unavailable
 from app.services import neo4j_storage
@@ -27,13 +29,61 @@ from app.database_postgres import get_postgres_pool
 # Node Service
 # ---------------------------------------------------------------------------
 
+async def _create_node_industry_mapping(
+    node_id: str,
+    assoc: IndustryNodeAssociation,
+) -> bool:
+    """为节点创建一个行业映射；行业不存在或已存在映射时静默跳过。"""
+    try:
+        industry = await industry_storage.get_industry(assoc.industry_id)
+        if industry is None:
+            return False
+
+        existing = await industry_storage.get_mapping_by_industry_and_node(
+            assoc.industry_id, node_id
+        )
+        if existing:
+            return True
+
+        mapping_id = f"{assoc.industry_id}_contains_{node_id}"
+        # 防御性处理超长或冲突 ID
+        if len(mapping_id) > 128:
+            from uuid import uuid4
+            mapping_id = f"{assoc.industry_id}_contains_{uuid4().hex[:8]}"
+        if await industry_storage.get_mapping(mapping_id):
+            from uuid import uuid4
+            mapping_id = f"{mapping_id}_{uuid4().hex[:6]}"
+
+        mapping = IndustryNodeMapping(
+            mapping_id=mapping_id,
+            industry_id=assoc.industry_id,
+            node_id=node_id,
+            role=assoc.role,
+            weight=assoc.weight,
+            confidence=assoc.confidence,
+            evidence=[],
+            status=assoc.status,
+            notes=assoc.notes or "由节点创建表单自动关联",
+        )
+        await industry_storage.create_mapping(mapping)
+        return True
+    except Exception:
+        # PostgreSQL 不可用或其他异常不应阻塞节点创建
+        return False
+
+
 async def create_node(data: IndustrialNodeCreate) -> IndustrialNode:
     existing = await neo4j_storage.get_node(data.node_id)
     if existing:
         raise ValueError(f"node_id '{data.node_id}' already exists")
 
-    node = IndustrialNode(**data.model_dump())
-    return await neo4j_storage.create_node(node)
+    node = IndustrialNode(**data.model_dump(exclude={"industry_ids"}))
+    created = await neo4j_storage.create_node(node)
+
+    for assoc in data.industry_ids:
+        await _create_node_industry_mapping(created.node_id, assoc)
+
+    return created
 
 
 async def quick_create_node(data: IndustrialNodeQuickCreate) -> IndustrialNode:
@@ -66,7 +116,12 @@ async def quick_create_node(data: IndustrialNodeQuickCreate) -> IndustrialNode:
         status=data.status,
         notes=data.notes,
     )
-    return await neo4j_storage.create_node(node)
+    created = await neo4j_storage.create_node(node)
+
+    for assoc in data.industry_ids:
+        await _create_node_industry_mapping(created.node_id, assoc)
+
+    return created
 
 
 async def get_node(node_id: str) -> Optional[IndustrialNode]:
