@@ -82,8 +82,8 @@
 - Windows 10/11（PowerShell 5.1+）
 - Python 3.12
 - Node.js 18+
-- Neo4j 5.26.0 Community（已放入 `neo4j-community-5.26.0/`）
-- PostgreSQL 17（二进制已放入 `postgresql/pgsql/`）
+- Neo4j 5.26.0 Community（需自行下载并放到 `neo4j-community-5.26.0/`）
+- PostgreSQL 17（需自行下载并放到 `postgresql/pgsql/`）
 
 ##### 目录结构
 
@@ -95,14 +95,16 @@ Arachne/
 │   └── requirements.txt
 ├── frontend/             # React + Vite 前端
 │   └── node_modules/
-├── neo4j-community-5.26.0/   # 本地 Neo4j
-├── postgresql/pgsql/         # 本地 PostgreSQL
+├── neo4j-community-5.26.0/   # 本地 Neo4j（需自行准备，见下文）
+├── postgresql/pgsql/         # 本地 PostgreSQL（需自行准备，见下文）
 ├── scripts/
 │   ├── start-all.ps1
 │   ├── stop-all.ps1
 │   └── import_db.py
 └── data/ArachneData/     # 图谱数据
 ```
+
+> 注意：`neo4j-community-5.26.0/` 和 `postgresql/pgsql/` 为本地运行目录，不包含在 Git 仓库中。 clone 代码后需按下面步骤自行下载并解压到对应位置。
 
 ##### 1. 安装后端依赖
 
@@ -130,11 +132,26 @@ npm install
 
 **Neo4j**
 
-项目已携带 `neo4j-community-5.26.0/`，无需额外安装。首次启动前确认 `conf/neo4j.conf` 中 bolt 端口为 `7687`，并设置初始密码 `arachne123`。
+1. 下载 Neo4j 5.26.0 Community 版：
+   - 官方下载页：https://neo4j.com/download-center/#community
+   - 或 Neo4j Deployment Center：https://deployment.neo4j.com/5.26.0/neo4j-community-5.26.0-windows.zip
+2. 解压到项目根目录，确保目录名为 `neo4j-community-5.26.0/`。
+3. 设置初始密码（仅需一次）：
+
+```powershell
+cd neo4j-community-5.26.0
+.\bin\neo4j-admin dbms set-initial-password arachne123
+```
+
+4. 确认 `conf/neo4j.conf` 中 bolt 端口为 `7687`（默认即是）。
 
 **PostgreSQL**
 
-项目已携带 `postgresql/pgsql/` 二进制。首次使用需要初始化数据目录（仅需执行一次）：
+1. 下载 PostgreSQL 17 Windows 二进制包（zip 版）：
+   - 官方下载页：https://www.postgresql.org/download/windows/
+   - 或 PostgreSQL 二进制镜像（EnterpriseDB / BigSQL）
+2. 解压到 `postgresql/pgsql/`。
+3. 初始化数据目录（仅需执行一次）：
 
 ```powershell
 cd postgresql\pgsql
