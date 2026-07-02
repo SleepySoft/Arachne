@@ -341,8 +341,11 @@ export function ReasoningPage() {
         {/* Left: input */}
         <div className="flex w-[420px] shrink-0 flex-col gap-4 overflow-y-auto border-r border-slate-800 bg-slate-950 p-4">
           {/* Query */}
-          <Card title="对象查询" icon={<Search className="h-4 w-4" />}>
+          <Card title="1. 搜索对象" icon={<Search className="h-4 w-4" />}>
             <div className="space-y-3">
+              <p className="text-xs text-slate-500">
+                输入名称或别名搜索节点/公司/行业，点击“添加”将其加入推理起点。
+              </p>
               <FormField label="查询范围">
                 <select
                   value={queryScope}
@@ -382,6 +385,19 @@ export function ReasoningPage() {
                   {queryError}
                 </div>
               )}
+
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-slate-600">没有头绪？</span>
+                <button
+                  onClick={() => {
+                    setQueryText("芯片");
+                    setQueryScope("industrial_node");
+                  }}
+                  className="text-[10px] text-cyan-400 hover:text-cyan-300"
+                >
+                  填入示例：芯片
+                </button>
+              </div>
 
               {candidates.length > 0 && (
                 <div className="max-h-56 overflow-y-auto rounded border border-slate-800">
@@ -425,9 +441,9 @@ export function ReasoningPage() {
           </Card>
 
           {/* Selected sources */}
-          <Card title="已选起点" icon={<Layers className="h-4 w-4" />}>
+          <Card title="2. 已选起点" icon={<Layers className="h-4 w-4" />}>
             {sources.length === 0 ? (
-              <div className="text-xs text-slate-500">从上方查询结果中添加起点对象。</div>
+              <div className="text-xs text-slate-500">推理需要至少一个起点。请先在上方搜索并添加。</div>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {sources.map((s) => (
@@ -450,8 +466,11 @@ export function ReasoningPage() {
           </Card>
 
           {/* Task config */}
-          <Card title="推理任务配置" icon={<Brain className="h-4 w-4" />}>
+          <Card title="3. 配置推理任务" icon={<Brain className="h-4 w-4" />}>
             <div className="space-y-3">
+              <p className="text-xs text-slate-500">
+                选择任务类型、遍历约束和希望返回的输出内容，然后运行推理。
+              </p>
               <FormField label="任务类型">
                 <select
                   value={taskType}
@@ -564,7 +583,7 @@ export function ReasoningPage() {
                 ) : (
                   <Play className="h-4 w-4" />
                 )}
-                运行推理
+                运行推理（{sources.length} 个起点）
               </button>
             </div>
           </Card>
@@ -573,9 +592,17 @@ export function ReasoningPage() {
         {/* Right: results */}
         <div className="flex flex-1 flex-col overflow-hidden bg-slate-950">
           {!result && !executeMutation.isPending && (
-            <div className="flex flex-1 flex-col items-center justify-center gap-3 text-slate-500">
+            <div className="flex flex-1 flex-col items-center justify-center gap-4 text-slate-500">
               <Brain className="h-12 w-12 opacity-20" />
-              <p className="text-sm">在左侧查询对象、配置任务后点击“运行推理”</p>
+              <div className="max-w-md space-y-2 text-center text-sm">
+                <p>使用流程：</p>
+                <ol className="list-inside list-decimal space-y-1 text-xs text-slate-400">
+                  <li>在左侧搜索节点/公司/行业</li>
+                  <li>点击“添加”将其设为推理起点</li>
+                  <li>选择任务类型（关联扩展 / 影响传播）和输出内容</li>
+                  <li>点击“运行推理”，在右侧查看结果</li>
+                </ol>
+              </div>
             </div>
           )}
 
@@ -752,11 +779,7 @@ function GraphView({
                     <td className="px-3 py-2">
                       <Badge color="cyan">{n.type}</Badge>
                     </td>
-                    {isTemp && (
-                      <td className="px-3 py-2">
-                        {n.score !== undefined ? n.score.toFixed(3) : "—"}
-                      </td>
-                    )}
+                    {isTemp && <td className="px-3 py-2">{formatScore(n.score)}</td>}
                   </tr>
                 ))}
               </tbody>
@@ -786,11 +809,7 @@ function GraphView({
                     <td className="px-3 py-2">
                       <Badge color="amber">{e.type}</Badge>
                     </td>
-                    {isTemp && (
-                      <td className="px-3 py-2">
-                        {e.weight !== undefined ? e.weight.toFixed(3) : "—"}
-                      </td>
-                    )}
+                    {isTemp && <td className="px-3 py-2">{formatScore(e.weight)}</td>}
                   </tr>
                 ))}
               </tbody>
@@ -810,7 +829,7 @@ function PathsView({ paths }: { paths: ReasoningPath[] }) {
         <div key={p.path_id} className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
           <div className="mb-2 flex items-center justify-between">
             <span className="font-mono text-[10px] text-slate-500">{p.path_id}</span>
-            <Badge color="emerald">score {p.path_score.toFixed(3)}</Badge>
+            <Badge color="emerald">score {formatScore(p.path_score)}</Badge>
           </div>
           <div className="flex flex-wrap items-center gap-1 text-xs">
             {p.node_sequence.map((nid, idx) => (
@@ -849,7 +868,7 @@ function NodeScoresView({ scores }: { scores: NodeScore[] }) {
             <tr key={s.node_id} className="hover:bg-slate-800/40">
               <td className="px-3 py-2">{s.rank}</td>
               <td className="px-3 py-2 font-mono text-slate-300">{s.node_id}</td>
-              <td className="px-3 py-2 font-semibold text-cyan-300">{s.score.toFixed(3)}</td>
+              <td className="px-3 py-2 font-semibold text-cyan-300">{formatScore(s.score)}</td>
               <td className="px-3 py-2 text-slate-400">{s.score_type}</td>
             </tr>
           ))}
@@ -876,7 +895,7 @@ function EdgeScoresView({ scores }: { scores: EdgeScore[] }) {
             <tr key={s.edge_id} className="hover:bg-slate-800/40">
               <td className="px-3 py-2">{s.rank}</td>
               <td className="px-3 py-2 font-mono text-slate-300">{s.edge_id}</td>
-              <td className="px-3 py-2 font-semibold text-cyan-300">{s.score.toFixed(3)}</td>
+              <td className="px-3 py-2 font-semibold text-cyan-300">{formatScore(s.score)}</td>
             </tr>
           ))}
         </tbody>
@@ -976,6 +995,11 @@ function formatCell(value: unknown): string {
   if (typeof value === "boolean") return value ? "true" : "false";
   if (typeof value === "object") return JSON.stringify(value).slice(0, 80);
   return String(value).slice(0, 80);
+}
+
+function formatScore(value: number | null | undefined, digits = 3): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return "—";
+  return value.toFixed(digits);
 }
 
 function Empty({ message }: { message: string }) {
