@@ -1,0 +1,4 @@
+[submodule "data/ArachneData"]
+	path = data/ArachneData
+	url = https://github.com/SleepySoft/ArachneData.git
+	branch = main
