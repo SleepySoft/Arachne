@@ -58,12 +58,12 @@
 
 **已实现：**
 
-- 文件存储：`data/prov_statements/{node_id}.prov.json`（已从 PostgreSQL `prov_statements` 迁移 30 条声明）
+- 文件存储：`data/prov_statements/{node_id}.provn`（已从 PostgreSQL `prov_statements` 迁移，格式为 W3C PROV-N）
 - 后端模型：`backend/app/models/prov_schema.py`
 - 存储层：`backend/app/services/prov_storage.py`
 - REST API：`backend/app/routers/prov.py`，挂载在 `/api/v1/prov`
-- 测试：`backend/tests/test_prov_storage.py`
-- 前端集成：`NodeProvPanel`、节点详情 PROV 区、右键菜单 "查看 PROV"
+- PROV-N 解析/序列化：`backend/app/services/prov_n.py`
+- 前端集成：`NodeProvPanel`（关系列表 / PROV-N 源码双视图）、节点详情 PROV 区、右键菜单 "查看 PROV"
 
 **待后续决定的问题：**
 

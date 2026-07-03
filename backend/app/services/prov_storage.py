@@ -1,10 +1,10 @@
 """
 File-based storage layer for PROV statements.
 
-PROV statements are persisted as plain JSON files under `data/prov_statements/`.
-Each file is named `{node_id}.prov.json` and contains an array of PROV statements
-whose `node_id` equals the file name. This makes the data transparent, diffable,
-and easy for humans to inspect or edit directly.
+PROV statements are persisted as PROV-N documents under `data/prov_statements/`.
+Each file is named `{node_id}.provn` and contains a self-contained PROV-N
+document with declarations and the relation statements whose subject is
+`node_id`. The format is human-readable, diffable, and standard PROV-N.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ from typing import List, Optional, Tuple
 from uuid import UUID
 
 from app.models.prov_schema import ProvStatement, ProvRelation, ProvRole
+from app.services.prov_n import parse_provn, serialize_provn
 
 
 # ---------------------------------------------------------------------------
@@ -32,45 +33,67 @@ def _ensure_dir() -> None:
 
 def _node_file(node_id: str) -> Path:
     _ensure_dir()
+    return PROV_DIR / f"{node_id}.provn"
+
+
+def _legacy_node_file(node_id: str) -> Path:
+    _ensure_dir()
     return PROV_DIR / f"{node_id}.prov.json"
 
 
 def _load_statements(node_id: str) -> List[ProvStatement]:
     path = _node_file(node_id)
+    legacy_path = _legacy_node_file(node_id)
+
+    if not path.exists() and legacy_path.exists():
+        # Fallback: load legacy JSON once, then caller can migrate if desired.
+        try:
+            with legacy_path.open("r", encoding="utf-8") as f:
+                raw = json.load(f)
+            if isinstance(raw, list):
+                statements: List[ProvStatement] = []
+                for item in raw:
+                    try:
+                        statements.append(ProvStatement(**item))
+                    except Exception:
+                        continue
+                return statements
+        except (json.JSONDecodeError, OSError):
+            pass
+
     if not path.exists():
         return []
+
     try:
         with path.open("r", encoding="utf-8") as f:
-            raw = json.load(f)
-    except (json.JSONDecodeError, OSError):
+            text = f.read()
+    except OSError:
         return []
-    if not isinstance(raw, list):
-        return []
-    statements: List[ProvStatement] = []
-    for item in raw:
-        try:
-            statements.append(ProvStatement(**item))
-        except Exception:
-            # Skip malformed entries; could be logged in the future
-            continue
+
+    _, statements = parse_provn(text)
     return statements
 
 
 def _save_statements(node_id: str, statements: List[ProvStatement]) -> None:
     path = _node_file(node_id)
+    legacy_path = _legacy_node_file(node_id)
+
     if not statements:
         if path.exists():
             path.unlink()
+        if legacy_path.exists():
+            legacy_path.unlink()
         return
 
-    payload = [s.model_dump(mode="json") for s in statements]
-    # Atomic write: write to temp file in the same directory, then rename
+    text = serialize_provn(statements, node_id)
+
+    # Atomic write: write to temp file in the same directory, then rename.
     fd, tmp_path = tempfile.mkstemp(
         suffix=".tmp", prefix=f"{node_id}_", dir=str(PROV_DIR)
     )
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
-            json.dump(payload, f, ensure_ascii=False, indent=2)
+            f.write(text)
         os.replace(tmp_path, path)
     except Exception:
         try:
@@ -78,6 +101,28 @@ def _save_statements(node_id: str, statements: List[ProvStatement]) -> None:
         except FileNotFoundError:
             pass
         raise
+
+    # Remove legacy JSON after successful PROV-N write.
+    if legacy_path.exists():
+        try:
+            legacy_path.unlink()
+        except OSError:
+            pass
+
+
+def get_provn_text(node_id: str) -> Optional[str]:
+    """Return the raw PROV-N text for a node, or a default document if none."""
+    path = _node_file(node_id)
+    if path.exists():
+        try:
+            return path.read_text(encoding="utf-8")
+        except OSError:
+            return None
+    legacy_path = _legacy_node_file(node_id)
+    if legacy_path.exists():
+        statements = _load_statements(node_id)
+        return serialize_provn(statements, node_id)
+    return serialize_provn([], node_id)
 
 
 # ---------------------------------------------------------------------------
@@ -223,7 +268,7 @@ async def list_statements(
     if node_id:
         files = [_node_file(node_id)]
     else:
-        files = sorted(PROV_DIR.glob("*.prov.json"))
+        files = sorted(PROV_DIR.glob("*.provn"))
 
     all_statements: List[ProvStatement] = []
     for path in files:
