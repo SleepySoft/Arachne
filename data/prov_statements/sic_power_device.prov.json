@@ -1,0 +1,46 @@
+[
+  {
+    "statement_uuid": "c4dc05f4-9054-4354-a1b3-a9791f68872a",
+    "statement_id": "sic_power_device__wasDerivedFrom__sic_wafer",
+    "node_id": "sic_power_device",
+    "node_role": "entity",
+    "prov_relation": "wasDerivedFrom",
+    "target_node_id": "sic_wafer",
+    "target_role": "entity",
+    "is_inferred": false,
+    "evidence": [
+      {
+        "source_title": "碳化硅功率器件制造",
+        "source_url": null,
+        "quote": "碳化硅功率器件由碳化硅晶圆加工而成。"
+      }
+    ],
+    "confidence": "HIGH",
+    "status": "ACTIVE",
+    "notes": "晶圆到器件的跨层派生",
+    "created_at": "2026-07-03T07:24:54.261899Z",
+    "updated_at": "2026-07-03T07:24:54.261899Z"
+  },
+  {
+    "statement_uuid": "ecb5976b-6a40-4c78-8817-cbebfc76cfd3",
+    "statement_id": "sic_power_device__wasDerivedFrom__silicon_carbide",
+    "node_id": "sic_power_device",
+    "node_role": "entity",
+    "prov_relation": "wasDerivedFrom",
+    "target_node_id": "silicon_carbide",
+    "target_role": "entity",
+    "is_inferred": false,
+    "evidence": [
+      {
+        "source_title": "碳化硅功率器件产业链",
+        "source_url": null,
+        "quote": "碳化硅功率器件由碳化硅衬底/外延片加工而成。"
+      }
+    ],
+    "confidence": "HIGH",
+    "status": "ACTIVE",
+    "notes": "材料到器件的跨层派生",
+    "created_at": "2026-07-03T06:58:30.666116Z",
+    "updated_at": "2026-07-03T06:58:30.666116Z"
+  }
+]

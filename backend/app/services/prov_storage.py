@@ -1,57 +1,98 @@
 """
-PostgreSQL storage layer for PROV statements.
+File-based storage layer for PROV statements.
 
-PROV statements are type-level provenance assertions attached to industrial nodes.
-They are stored independently of the Neo4j graph topology.
+PROV statements are persisted as plain JSON files under `data/prov_statements/`.
+Each file is named `{node_id}.prov.json` and contains an array of PROV statements
+whose `node_id` equals the file name. This makes the data transparent, diffable,
+and easy for humans to inspect or edit directly.
 """
 
 from __future__ import annotations
 
 import json
+import os
+import tempfile
+from pathlib import Path
 from typing import List, Optional, Tuple
 from uuid import UUID
 
-from app.database_postgres import get_postgres_pool
 from app.models.prov_schema import ProvStatement, ProvRelation, ProvRole
+
+
+# ---------------------------------------------------------------------------
+# Storage layout
+# ---------------------------------------------------------------------------
+
+PROV_DIR = Path(__file__).resolve().parents[3] / "data" / "prov_statements"
+
+
+def _ensure_dir() -> None:
+    PROV_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _node_file(node_id: str) -> Path:
+    _ensure_dir()
+    return PROV_DIR / f"{node_id}.prov.json"
+
+
+def _load_statements(node_id: str) -> List[ProvStatement]:
+    path = _node_file(node_id)
+    if not path.exists():
+        return []
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            raw = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return []
+    if not isinstance(raw, list):
+        return []
+    statements: List[ProvStatement] = []
+    for item in raw:
+        try:
+            statements.append(ProvStatement(**item))
+        except Exception:
+            # Skip malformed entries; could be logged in the future
+            continue
+    return statements
+
+
+def _save_statements(node_id: str, statements: List[ProvStatement]) -> None:
+    path = _node_file(node_id)
+    if not statements:
+        if path.exists():
+            path.unlink()
+        return
+
+    payload = [s.model_dump(mode="json") for s in statements]
+    # Atomic write: write to temp file in the same directory, then rename
+    fd, tmp_path = tempfile.mkstemp(
+        suffix=".tmp", prefix=f"{node_id}_", dir=str(PROV_DIR)
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2)
+        os.replace(tmp_path, path)
+    except Exception:
+        try:
+            os.unlink(tmp_path)
+        except FileNotFoundError:
+            pass
+        raise
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _evidence_to_db(evidence: List) -> str:
-    if not evidence:
-        return "[]"
-    return json.dumps([e.model_dump(mode="json") for e in evidence])
+def _statement_id(node_id: str, relation: str, target_node_id: str) -> str:
+    return f"{node_id}__{relation}__{target_node_id}"
 
 
-def _evidence_from_db(raw):
-    if raw is None:
-        return []
-    while isinstance(raw, str):
-        raw = json.loads(raw)
-    if not isinstance(raw, list):
-        return []
-    return raw
-
-
-def _row_to_statement(row) -> ProvStatement:
-    return ProvStatement(
-        statement_uuid=row["statement_uuid"],
-        statement_id=row["statement_id"],
-        node_id=row["node_id"],
-        node_role=ProvRole(row["node_role"]),
-        prov_relation=ProvRelation(row["prov_relation"]),
-        target_node_id=row["target_node_id"],
-        target_role=ProvRole(row["target_role"]),
-        is_inferred=row["is_inferred"],
-        evidence=_evidence_from_db(row.get("evidence")),
-        confidence=row["confidence"],
-        status=row["status"],
-        notes=row.get("notes"),
-        created_at=row.get("created_at"),
-        updated_at=row.get("updated_at"),
-    )
+def _parse_statement_id(statement_id: str) -> Tuple[str, str, str]:
+    parts = statement_id.split("__")
+    if len(parts) != 3:
+        raise ValueError(f"Invalid statement_id: {statement_id}")
+    return parts[0], parts[1], parts[2]
 
 
 # ---------------------------------------------------------------------------
@@ -59,64 +100,47 @@ def _row_to_statement(row) -> ProvStatement:
 # ---------------------------------------------------------------------------
 
 async def create_statement(data: ProvStatement) -> ProvStatement:
-    pool = await get_postgres_pool()
-    if pool is None:
-        raise RuntimeError("PostgreSQL not available")
+    data = data.model_copy(
+        update={"statement_id": data.statement_id or _statement_id(data.node_id, data.prov_relation.value, data.target_node_id)}
+    )
 
-    # Ensure statement_id is generated before insert
-    data = data.model_copy(update={"statement_id": data.statement_id or f"{data.node_id}__{data.prov_relation.value}__{data.target_node_id}"})
+    statements = _load_statements(data.node_id)
+    if any(
+        s.node_id == data.node_id
+        and s.prov_relation == data.prov_relation
+        and s.target_node_id == data.target_node_id
+        for s in statements
+    ):
+        raise ValueError(
+            f"PROV statement already exists: {data.node_id} {data.prov_relation.value} {data.target_node_id}"
+        )
 
-    async with pool.acquire() as conn:
-        try:
-            row = await conn.fetchrow(
-                """
-                INSERT INTO prov_statements (
-                    statement_id, statement_uuid, node_id, node_role,
-                    prov_relation, target_node_id, target_role,
-                    is_inferred, evidence, confidence, status, notes
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-                RETURNING *
-                """,
-                data.statement_id,
-                data.statement_uuid or str(UUID(int=0)),
-                data.node_id,
-                data.node_role.value,
-                data.prov_relation.value,
-                data.target_node_id,
-                data.target_role.value,
-                data.is_inferred,
-                _evidence_to_db(data.evidence),
-                data.confidence.value,
-                data.status.value,
-                data.notes,
-            )
-        except Exception as exc:
-            if "unique" in str(exc).lower():
-                raise ValueError(
-                    f"PROV statement already exists: {data.node_id} {data.prov_relation.value} {data.target_node_id}"
-                ) from exc
-            raise
-        return _row_to_statement(row)
+    statements.append(data)
+    _save_statements(data.node_id, statements)
+    return data
 
 
 async def get_statement(statement_id: str) -> Optional[ProvStatement]:
-    pool = await get_postgres_pool()
-    if pool is None:
+    try:
+        node_id, relation, target_node_id = _parse_statement_id(statement_id)
+    except ValueError:
         return None
 
-    async with pool.acquire() as conn:
-        row = await conn.fetchrow(
-            "SELECT * FROM prov_statements WHERE statement_id = $1",
-            statement_id,
-        )
-        if row is None:
-            return None
-        return _row_to_statement(row)
+    statements = _load_statements(node_id)
+    for s in statements:
+        if s.statement_id == statement_id or (
+            s.node_id == node_id
+            and s.prov_relation.value == relation
+            and s.target_node_id == target_node_id
+        ):
+            return s
+    return None
 
 
 async def update_statement(statement_id: str, data: dict) -> Optional[ProvStatement]:
-    pool = await get_postgres_pool()
-    if pool is None:
+    try:
+        node_id, relation, target_node_id = _parse_statement_id(statement_id)
+    except ValueError:
         return None
 
     allowed = {
@@ -132,44 +156,53 @@ async def update_statement(statement_id: str, data: dict) -> Optional[ProvStatem
     if not fields:
         return await get_statement(statement_id)
 
-    if "evidence" in fields and fields["evidence"] is not None:
-        fields["evidence"] = _evidence_to_db(fields["evidence"])
-
-    if "node_role" in fields:
-        fields["node_role"] = fields["node_role"].value if hasattr(fields["node_role"], "value") else fields["node_role"]
-    if "target_role" in fields:
-        fields["target_role"] = fields["target_role"].value if hasattr(fields["target_role"], "value") else fields["target_role"]
-    if "confidence" in fields:
-        fields["confidence"] = fields["confidence"].value if hasattr(fields["confidence"], "value") else fields["confidence"]
-    if "status" in fields:
-        fields["status"] = fields["status"].value if hasattr(fields["status"], "value") else fields["status"]
-
-    set_clauses = [f"{k} = ${i + 2}" for i, k in enumerate(fields.keys())]
-    sql = f"""
-        UPDATE prov_statements
-        SET {', '.join(set_clauses)}, updated_at = NOW()
-        WHERE statement_id = $1
-        RETURNING *
-    """
-
-    async with pool.acquire() as conn:
-        row = await conn.fetchrow(sql, statement_id, *fields.values())
-        if row is None:
-            return None
-        return _row_to_statement(row)
+    statements = _load_statements(node_id)
+    for idx, s in enumerate(statements):
+        if s.statement_id == statement_id or (
+            s.node_id == node_id
+            and s.prov_relation.value == relation
+            and s.target_node_id == target_node_id
+        ):
+            update_dict = s.model_dump()
+            update_dict.update(fields)
+            # Normalize enum/string values
+            if "node_role" in update_dict and hasattr(update_dict["node_role"], "value"):
+                update_dict["node_role"] = update_dict["node_role"].value
+            if "target_role" in update_dict and hasattr(update_dict["target_role"], "value"):
+                update_dict["target_role"] = update_dict["target_role"].value
+            if "prov_relation" in update_dict and hasattr(update_dict["prov_relation"], "value"):
+                update_dict["prov_relation"] = update_dict["prov_relation"].value
+            if "confidence" in update_dict and hasattr(update_dict["confidence"], "value"):
+                update_dict["confidence"] = update_dict["confidence"].value
+            if "status" in update_dict and hasattr(update_dict["status"], "value"):
+                update_dict["status"] = update_dict["status"].value
+            updated = ProvStatement(**update_dict)
+            statements[idx] = updated
+            _save_statements(node_id, statements)
+            return updated
+    return None
 
 
 async def delete_statement(statement_id: str) -> bool:
-    pool = await get_postgres_pool()
-    if pool is None:
+    try:
+        node_id, relation, target_node_id = _parse_statement_id(statement_id)
+    except ValueError:
         return False
 
-    async with pool.acquire() as conn:
-        result = await conn.execute(
-            "DELETE FROM prov_statements WHERE statement_id = $1",
-            statement_id,
+    statements = _load_statements(node_id)
+    new_statements = [
+        s
+        for s in statements
+        if not (
+            s.node_id == node_id
+            and s.prov_relation.value == relation
+            and s.target_node_id == target_node_id
         )
-        return result.split()[-1] != "0"
+    ]
+    if len(new_statements) == len(statements):
+        return False
+    _save_statements(node_id, new_statements)
+    return True
 
 
 # ---------------------------------------------------------------------------
@@ -184,56 +217,32 @@ async def list_statements(
     prov_relation: Optional[str] = None,
     status: Optional[str] = None,
 ) -> Tuple[List[ProvStatement], int]:
-    pool = await get_postgres_pool()
-    if pool is None:
-        return [], 0
+    _ensure_dir()
 
-    conditions = ["1=1"]
-    params: list = []
-    param_idx = 1
-
+    files: List[Path] = []
     if node_id:
-        conditions.append(f"node_id = ${param_idx}")
-        params.append(node_id)
-        param_idx += 1
+        files = [_node_file(node_id)]
+    else:
+        files = sorted(PROV_DIR.glob("*.prov.json"))
+
+    all_statements: List[ProvStatement] = []
+    for path in files:
+        if not path.exists():
+            continue
+        # Derive node_id from file name
+        nid = path.stem.replace(".prov", "")
+        all_statements.extend(_load_statements(nid))
 
     if target_node_id:
-        conditions.append(f"target_node_id = ${param_idx}")
-        params.append(target_node_id)
-        param_idx += 1
-
+        all_statements = [s for s in all_statements if s.target_node_id == target_node_id]
     if prov_relation:
-        conditions.append(f"prov_relation = ${param_idx}")
-        params.append(prov_relation)
-        param_idx += 1
-
+        all_statements = [s for s in all_statements if s.prov_relation.value == prov_relation]
     if status:
-        conditions.append(f"status = ${param_idx}")
-        params.append(status)
-        param_idx += 1
+        all_statements = [s for s in all_statements if s.status.value == status]
 
-    where_clause = " AND ".join(conditions)
-
-    async with pool.acquire() as conn:
-        total_row = await conn.fetchrow(
-            f"SELECT COUNT(*) FROM prov_statements WHERE {where_clause}",
-            *params,
-        )
-        total = total_row["count"] if total_row else 0
-
-        rows = await conn.fetch(
-            f"""
-            SELECT * FROM prov_statements
-            WHERE {where_clause}
-            ORDER BY created_at DESC
-            LIMIT ${param_idx} OFFSET ${param_idx + 1}
-            """,
-            *params,
-            limit,
-            skip,
-        )
-        items = [_row_to_statement(r) for r in rows]
-        return items, total
+    total = len(all_statements)
+    items = all_statements[skip : skip + limit]
+    return items, total
 
 
 async def list_statements_by_node(
@@ -241,12 +250,6 @@ async def list_statements_by_node(
     skip: int = 0,
     limit: int = 100,
 ) -> Tuple[List[ProvStatement], int]:
-    return await list_statements(skip=skip, limit=limit, node_id=node_id)
-
-
-async def list_statements_by_target(
-    target_node_id: str,
-    skip: int = 0,
-    limit: int = 100,
-) -> Tuple[List[ProvStatement], int]:
-    return await list_statements(skip=skip, limit=limit, target_node_id=target_node_id)
+    statements = _load_statements(node_id)
+    total = len(statements)
+    return statements[skip : skip + limit], total

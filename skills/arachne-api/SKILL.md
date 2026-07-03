@@ -357,7 +357,7 @@ python cli/arachne_cli.py company del-exposure hesai_technology hesai_technology
 
 ### 6. PROV 声明管理（仅 API，暂不支持 CLI）
 
-PROV 声明是附着在产业图节点上的**类型级溯源断言**，存储在 PostgreSQL，通过 `/api/v1/prov` 管理。它与产业图的节点/边**完全独立**：
+PROV 声明是附着在产业图节点上的**类型级溯源断言**，以文件形式存储在 `data/prov_statements/{node_id}.prov.json`，通过 `/api/v1/prov` 管理。它与产业图的节点/边**完全独立**：
 
 > **加图是加图，加 PROV 是加 PROV，不要混在一起，也不要建立隐式关联。**
 

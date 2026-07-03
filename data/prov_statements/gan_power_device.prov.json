@@ -1,0 +1,68 @@
+[
+  {
+    "statement_uuid": "5fae4e29-5693-4ecf-a0a7-27e64774f7f3",
+    "statement_id": "gan_power_device__wasDerivedFrom__gallium",
+    "node_id": "gan_power_device",
+    "node_role": "entity",
+    "prov_relation": "wasDerivedFrom",
+    "target_node_id": "gallium",
+    "target_role": "entity",
+    "is_inferred": false,
+    "evidence": [
+      {
+        "source_title": "第三代半导体材料",
+        "source_url": null,
+        "quote": "氮化镓功率器件的原始金属来源之一是镓。"
+      }
+    ],
+    "confidence": "MEDIUM",
+    "status": "ACTIVE",
+    "notes": "原始金属到终端器件的跨层派生",
+    "created_at": "2026-07-03T06:58:30.663211Z",
+    "updated_at": "2026-07-03T06:58:30.663211Z"
+  },
+  {
+    "statement_uuid": "90dc9fc1-5655-4706-9a86-fa666f335e20",
+    "statement_id": "gan_power_device__wasDerivedFrom__gallium_nitride",
+    "node_id": "gan_power_device",
+    "node_role": "entity",
+    "prov_relation": "wasDerivedFrom",
+    "target_node_id": "gallium_nitride",
+    "target_role": "entity",
+    "is_inferred": false,
+    "evidence": [
+      {
+        "source_title": "氮化镓功率器件产业链",
+        "source_url": null,
+        "quote": "氮化镓功率器件由氮化镓材料经过外延、器件加工等工序制成。"
+      }
+    ],
+    "confidence": "HIGH",
+    "status": "ACTIVE",
+    "notes": "材料到器件的跨层派生",
+    "created_at": "2026-07-03T06:58:30.656348Z",
+    "updated_at": "2026-07-03T06:58:30.656348Z"
+  },
+  {
+    "statement_uuid": "c88da7cd-570b-4fc3-b0f3-ec6190e542f6",
+    "statement_id": "gan_power_device__wasDerivedFrom__gan_wafer",
+    "node_id": "gan_power_device",
+    "node_role": "entity",
+    "prov_relation": "wasDerivedFrom",
+    "target_node_id": "gan_wafer",
+    "target_role": "entity",
+    "is_inferred": false,
+    "evidence": [
+      {
+        "source_title": "氮化镓功率器件制造",
+        "source_url": null,
+        "quote": "氮化镓功率器件由氮化镓晶圆经过前道和后道工艺制成。"
+      }
+    ],
+    "confidence": "HIGH",
+    "status": "ACTIVE",
+    "notes": "晶圆到器件的跨层派生",
+    "created_at": "2026-07-03T07:24:54.255824Z",
+    "updated_at": "2026-07-03T07:24:54.255824Z"
+  }
+]

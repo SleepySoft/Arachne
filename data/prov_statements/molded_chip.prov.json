@@ -1,0 +1,24 @@
+[
+  {
+    "statement_uuid": "12c43de6-aea1-4baf-a34c-b30efb9c11e6",
+    "statement_id": "molded_chip__wasGeneratedBy__chip_molding",
+    "node_id": "molded_chip",
+    "node_role": "entity",
+    "prov_relation": "wasGeneratedBy",
+    "target_node_id": "chip_molding",
+    "target_role": "activity",
+    "is_inferred": false,
+    "evidence": [
+      {
+        "source_title": "芯片封装测试工艺",
+        "source_url": null,
+        "quote": "芯片塑封（molding）将芯片裸片封装在树脂外壳中，形成塑封芯片。"
+      }
+    ],
+    "confidence": "HIGH",
+    "status": "ACTIVE",
+    "notes": null,
+    "created_at": "2026-07-03T06:09:01.325587Z",
+    "updated_at": "2026-07-03T06:09:01.325587Z"
+  }
+]

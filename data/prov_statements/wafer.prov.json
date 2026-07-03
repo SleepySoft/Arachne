@@ -1,0 +1,24 @@
+[
+  {
+    "statement_uuid": "aff73b63-ded5-4a83-9640-069d7ba9f9b6",
+    "statement_id": "wafer__wasGeneratedBy__wafer_manufacturing",
+    "node_id": "wafer",
+    "node_role": "entity",
+    "prov_relation": "wasGeneratedBy",
+    "target_node_id": "wafer_manufacturing",
+    "target_role": "activity",
+    "is_inferred": false,
+    "evidence": [
+      {
+        "source_title": "半导体制造工艺",
+        "source_url": null,
+        "quote": "晶圆制造是将硅片加工成可用于后续光刻、刻蚀等工序的晶圆。"
+      }
+    ],
+    "confidence": "HIGH",
+    "status": "ACTIVE",
+    "notes": "类型级标准生成路径",
+    "created_at": "2026-07-03T06:09:01.317121Z",
+    "updated_at": "2026-07-03T06:09:01.317121Z"
+  }
+]

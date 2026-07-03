@@ -1,0 +1,46 @@
+[
+  {
+    "statement_uuid": "70a71c03-b067-47a3-8ebd-289202dc4e06",
+    "statement_id": "lithography_process__used__lithography_machine",
+    "node_id": "lithography_process",
+    "node_role": "activity",
+    "prov_relation": "used",
+    "target_node_id": "lithography_machine",
+    "target_role": "entity",
+    "is_inferred": false,
+    "evidence": [
+      {
+        "source_title": "光刻设备综述",
+        "source_url": null,
+        "quote": "光刻机是光刻工艺的核心设备，用于将掩模版图形精确投影到晶圆上。"
+      }
+    ],
+    "confidence": "HIGH",
+    "status": "ACTIVE",
+    "notes": null,
+    "created_at": "2026-07-03T06:09:01.323641Z",
+    "updated_at": "2026-07-03T06:09:01.323641Z"
+  },
+  {
+    "statement_uuid": "634b0c76-9d6d-4712-962f-dfb5a8f571be",
+    "statement_id": "lithography_process__used__photoresist",
+    "node_id": "lithography_process",
+    "node_role": "activity",
+    "prov_relation": "used",
+    "target_node_id": "photoresist",
+    "target_role": "entity",
+    "is_inferred": false,
+    "evidence": [
+      {
+        "source_title": "光刻工艺原理",
+        "source_url": null,
+        "quote": "光刻工艺使用光刻胶作为感光材料，通过曝光和显影形成图形。"
+      }
+    ],
+    "confidence": "HIGH",
+    "status": "ACTIVE",
+    "notes": null,
+    "created_at": "2026-07-03T06:09:01.322976Z",
+    "updated_at": "2026-07-03T06:09:01.322976Z"
+  }
+]

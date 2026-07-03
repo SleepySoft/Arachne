@@ -49,8 +49,7 @@ async def test_init_tables_creates_schema(pg_pool):
                 'industries',
                 'industry_node_mappings',
                 'companies',
-                'company_node_exposures',
-                'prov_statements'
+                'company_node_exposures'
             )
             ORDER BY table_name
             """

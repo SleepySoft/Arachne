@@ -58,7 +58,7 @@
 
 **已实现：**
 
-- PostgreSQL 表 `prov_statements`（由 `init_postgres_tables()` 创建）
+- 文件存储：`data/prov_statements/{node_id}.prov.json`（已从 PostgreSQL `prov_statements` 迁移 30 条声明）
 - 后端模型：`backend/app/models/prov_schema.py`
 - 存储层：`backend/app/services/prov_storage.py`
 - REST API：`backend/app/routers/prov.py`，挂载在 `/api/v1/prov`
