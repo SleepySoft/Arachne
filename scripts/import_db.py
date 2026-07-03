@@ -22,7 +22,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, date
 
 # Add backend dir to path so we can import app.*
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
@@ -290,7 +290,7 @@ async def import_postgres_table(conn, table: str, filepath: Path) -> int:
         ON CONFLICT DO NOTHING
     """
 
-    # Parse datetime strings back to objects
+    # Parse datetime/date strings back to objects
     values = []
     for row in data:
         row_values = []
@@ -300,6 +300,12 @@ async def import_postgres_table(conn, table: str, filepath: Path) -> int:
             if isinstance(val, str) and len(val) >= 19 and "T" in val:
                 try:
                     val = datetime.fromisoformat(val)
+                except ValueError:
+                    pass
+            # Try to parse ISO date strings (YYYY-MM-DD)
+            elif isinstance(val, str) and len(val) == 10 and val.count("-") == 2:
+                try:
+                    val = date.fromisoformat(val)
                 except ValueError:
                     pass
             row_values.append(val)
