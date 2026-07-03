@@ -355,7 +355,108 @@ python cli/arachne_cli.py company add-exposure hesai_technology --json exposure.
 python cli/arachne_cli.py company del-exposure hesai_technology hesai_technology_produce_lidar_system
 ```
 
-### 6. 查询图谱
+### 6. PROV 声明管理（仅 API，暂不支持 CLI）
+
+PROV 声明是附着在产业图节点上的**类型级溯源断言**，存储在 PostgreSQL，通过 `/api/v1/prov` 管理。它与产业图的节点/边**完全独立**：
+
+> **加图是加图，加 PROV 是加 PROV，不要混在一起，也不要建立隐式关联。**
+
+#### PROV 声明规范
+
+| 字段 | 必填 | 说明 |
+|---|---|---|
+| `node_id` | 是 | 被描述的节点 ID（必须已在 Neo4j 中存在） |
+| `node_role` | 是 | `entity` / `activity` / `agent` |
+| `prov_relation` | 是 | `used` / `wasGeneratedBy` / `wasDerivedFrom` / `wasAttributedTo` / `wasAssociatedWith` / `actedOnBehalfOf` |
+| `target_node_id` | 是 | 指向的节点 ID（必须已在 Neo4j 中存在） |
+| `target_role` | 是 | `entity` / `activity` / `agent` |
+| `evidence` | 推荐 | 至少包含 `source_title` 和 `quote`；`HIGH` 置信度时必须提供 |
+| `confidence` / `status` / `notes` | 否 | 遵循通用枚举规范 |
+
+#### 常用 PROV 关系
+
+| prov_relation | 含义 | 方向 | 示例 |
+|---|---|---|---|
+| `used` | Activity 使用了 Entity | activity → entity | `wafer_manufacturing` used `silicon_wafer` |
+| `wasGeneratedBy` | Entity 由 Activity 生成 | entity → activity | `wafer` wasGeneratedBy `wafer_manufacturing` |
+| `wasDerivedFrom` | Entity 派生自 Entity | entity → entity | `gan_power_device` wasDerivedFrom `gallium_nitride` |
+| `wasAttributedTo` | Entity 归因于 Agent | entity → agent | 暂不推荐 |
+| `wasAssociatedWith` | Activity 与 Agent 关联 | activity → agent | 暂不推荐 |
+| `actedOnBehalfOf` | Agent 代表 Agent | agent → agent | 暂不推荐 |
+
+#### 常用 API
+
+```bash
+# 创建 PROV 声明
+curl -X POST http://localhost:8005/api/v1/prov/statements \
+  -H "Content-Type: application/json" \
+  -d '{
+    "node_id": "wafer",
+    "node_role": "entity",
+    "prov_relation": "wasGeneratedBy",
+    "target_node_id": "wafer_manufacturing",
+    "target_role": "activity",
+    "evidence": [{"source_title": "半导体制造工艺", "quote": "晶圆由晶圆制造工艺生成。"}],
+    "confidence": "HIGH",
+    "status": "ACTIVE"
+  }'
+
+# 按节点列出其 PROV 声明
+curl "http://localhost:8005/api/v1/prov/nodes/wafer/statements"
+
+# 过滤
+curl "http://localhost:8005/api/v1/prov/statements?node_id=wafer&prov_relation=wasGeneratedBy"
+```
+
+#### 要点与提醒
+
+- **PROV 不是图边**，不要在 `GraphRegistrationBatch.edges_to_upsert` 里提交 PROV 关系。
+- **`node_id` 和 `target_node_id` 必须已在 Neo4j 中存在**；PROV 声明本身不会创建节点。
+- **新增实体时建议同时编写 PROV**：如果资料能明确一个典型实体的生成/使用/派生路径，顺手用 `/api/v1/prov/statements` 补一条；不确定时宁可不写，不要硬造。
+- **禁止用 PROV 表达“关键性/强相关”**，例如“氮化镓对功率器件很关键”不应写成 `wasDerivedFrom`。
+- 本项目**永远不讨论批次/实例级溯源**。
+
+### 7. 图谱推理（仅 API，暂不支持 CLI）
+
+推理内核提供**确定性图推理**，不使用 LLM，不写库。分两步：
+
+1. **对象查询** `POST /api/v1/reasoning/query`：把名称/别名解析为候选对象 ID。
+2. **执行任务** `POST /api/v1/reasoning/execute`：使用精确 ID 执行推理任务。
+
+当前支持的任务：
+
+| task_type | 用途 |
+|---|---|
+| `association` | 从源节点做 BFS 关联扩展 |
+| `impact_propagation` | 加权影响传播（如原料短缺影响分析） |
+
+示例：
+
+```bash
+# 1. 查询对象
+curl -X POST http://localhost:8005/api/v1/reasoning/query \
+  -H "Content-Type: application/json" \
+  -d '{"query_id":"q1","query_text":"氮化镓","query_scope":"industrial_node","limit":5}'
+
+# 2. 执行关联推理
+curl -X POST http://localhost:8005/api/v1/reasoning/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "task_id":"t1",
+    "task_type":"association",
+    "source_object_ids":[{"object_id":"gallium_nitride","graph":"industrial"}],
+    "requested_outputs":["subgraph","paths","evidence_chains"],
+    "constraints":{"max_depth":3}
+  }'
+```
+
+返回结果类型：`subgraph`、`temporary_graph`、`paths`、`node_scores`、`edge_scores`、`evidence_chains`、`feature_tables`、`company_exposures`。
+
+重要：
+- 对象查询返回的 `suggestions` 只是模糊相似项，**不会自动进入执行阶段**。AI 必须显式从 `candidates` 中选择精确 ID。
+- 如果查询不到目标节点，说明数据缺失，应先补数据再推理。
+
+### 8. 查询图谱
 
 ```bash
 # 图谱统计
@@ -462,10 +563,12 @@ python cli/arachne_cli.py industry list --search 智能驾驶
 
 ## CLI 未直接覆盖的操作
 
-当前 `arachne_cli.py` 未提供单独的节点/边/人员/事实关系管理命令。对于这些情况，推荐做法：
+当前 `arachne_cli.py` 未提供以下操作的单独命令。推荐直接调用后端 API（参见 references/API_REFERENCE.md）：
 
 1. **节点和边**：整理为 `GraphRegistrationBatch`，使用 `submit` 命令批量提交。
-2. **人员与事实关系**：CLI 暂不支持，可直接调用后端 API（参见 references/API_REFERENCE.md）作为补充。
+2. **人员与事实关系**：直接调用 `/api/v1/factual-graph/*`。
+3. **PROV 声明**：直接调用 `/api/v1/prov/statements` 等接口。
+4. **图谱推理**：直接调用 `/api/v1/reasoning/query` 和 `/api/v1/reasoning/execute`。
 
 ## 常见错误处理
 
@@ -487,5 +590,7 @@ python cli/arachne_cli.py industry list --search 智能驾驶
 | `industry_type` | `formal_industry`, `curated_view`, `theme_view` |
 | `company_type` | `public`, `private`, `state_owned`, `startup`, `unknown` |
 | `activity_type` | `rnd`, `design`, `manufacture`, `produce`, `integrate`, `operate`, `provide_service`, `procure`, `use`, `unknown` |
+| `prov_relation` | `used`, `wasGeneratedBy`, `wasDerivedFrom`, `wasAttributedTo`, `wasAssociatedWith`, `actedOnBehalfOf` |
+| `prov_role` | `entity`, `activity`, `agent` |
 
 完整 CLI 命令列表见 references/CLI_REFERENCE.md，底层 API schema 和枚举见 references/API_REFERENCE.md。
