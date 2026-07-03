@@ -1,0 +1,11 @@
+document
+  prefix ex <http://arachne.graph/>
+
+  entity(ex:lithography_machine)
+  activity(ex:lithography_process)
+  entity(ex:photoresist)
+
+  used(ex:lithography_process, ex:lithography_machine)
+  used(ex:lithography_process, ex:photoresist)
+
+endDocument

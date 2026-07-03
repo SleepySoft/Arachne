@@ -1,0 +1,9 @@
+document
+  prefix ex <http://arachne.graph/>
+
+  activity(ex:prov_test_mfg_dup)
+  entity(ex:prov_test_wafer_dup)
+
+  wasGeneratedBy(ex:prov_test_wafer_dup, ex:prov_test_mfg_dup)
+
+endDocument

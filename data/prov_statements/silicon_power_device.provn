@@ -1,0 +1,9 @@
+document
+  prefix ex <http://arachne.graph/>
+
+  entity(ex:silicon)
+  entity(ex:silicon_power_device)
+
+  wasDerivedFrom(ex:silicon_power_device, ex:silicon)
+
+endDocument

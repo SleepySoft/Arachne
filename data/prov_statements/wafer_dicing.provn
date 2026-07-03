@@ -1,0 +1,9 @@
+document
+  prefix ex <http://arachne.graph/>
+
+  entity(ex:wafer)
+  activity(ex:wafer_dicing)
+
+  used(ex:wafer_dicing, ex:wafer)
+
+endDocument

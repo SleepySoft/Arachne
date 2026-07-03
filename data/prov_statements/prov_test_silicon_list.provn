@@ -1,0 +1,11 @@
+document
+  prefix ex <http://arachne.graph/>
+
+  activity(ex:prov_test_mfg_list)
+  entity(ex:prov_test_ore_list)
+  entity(ex:prov_test_silicon_list)
+
+  used(ex:prov_test_silicon_list, ex:prov_test_mfg_list)
+  wasDerivedFrom(ex:prov_test_silicon_list, ex:prov_test_ore_list)
+
+endDocument

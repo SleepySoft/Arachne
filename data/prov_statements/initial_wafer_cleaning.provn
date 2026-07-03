@@ -1,0 +1,11 @@
+document
+  prefix ex <http://arachne.graph/>
+
+  entity(ex:gan_wafer)
+  activity(ex:initial_wafer_cleaning)
+  entity(ex:sic_wafer)
+
+  used(ex:initial_wafer_cleaning, ex:gan_wafer)
+  used(ex:initial_wafer_cleaning, ex:sic_wafer)
+
+endDocument

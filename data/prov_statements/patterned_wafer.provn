@@ -1,0 +1,9 @@
+document
+  prefix ex <http://arachne.graph/>
+
+  activity(ex:lithography_process)
+  entity(ex:patterned_wafer)
+
+  wasGeneratedBy(ex:patterned_wafer, ex:lithography_process)
+
+endDocument

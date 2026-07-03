@@ -1,0 +1,9 @@
+document
+  prefix ex <http://arachne.graph/>
+
+  entity(ex:chip_die)
+  activity(ex:chip_molding)
+
+  used(ex:chip_molding, ex:chip_die)
+
+endDocument

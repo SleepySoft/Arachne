@@ -1,0 +1,13 @@
+document
+  prefix ex <http://arachne.graph/>
+
+  entity(ex:gallium)
+  entity(ex:gallium_nitride)
+  entity(ex:gan_power_device)
+  entity(ex:gan_wafer)
+
+  wasDerivedFrom(ex:gan_power_device, ex:gallium)
+  wasDerivedFrom(ex:gan_power_device, ex:gallium_nitride)
+  wasDerivedFrom(ex:gan_power_device, ex:gan_wafer)
+
+endDocument

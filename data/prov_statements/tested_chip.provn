@@ -1,0 +1,11 @@
+document
+  prefix ex <http://arachne.graph/>
+
+  activity(ex:chip_testing)
+  entity(ex:silicon_wafer)
+  entity(ex:tested_chip)
+
+  wasDerivedFrom(ex:tested_chip, ex:silicon_wafer)
+  wasGeneratedBy(ex:tested_chip, ex:chip_testing)
+
+endDocument

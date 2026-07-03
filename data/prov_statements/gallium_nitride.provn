@@ -1,0 +1,9 @@
+document
+  prefix ex <http://arachne.graph/>
+
+  entity(ex:gallium)
+  entity(ex:gallium_nitride)
+
+  wasDerivedFrom(ex:gallium_nitride, ex:gallium)
+
+endDocument
