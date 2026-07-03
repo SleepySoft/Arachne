@@ -10,6 +10,7 @@ import { NodeCompaniesPanel } from "@/components/NodeCompaniesPanel";
 import { MultiNodeCompaniesPanel } from "@/components/MultiNodeCompaniesPanel";
 import { NodeForm } from "@/components/NodeForm";
 import { NodeIndustriesPanel } from "@/components/NodeIndustriesPanel";
+import { NodeProvPanel } from "@/components/NodeProvPanel";
 import {
   CompanyNetworkEdge,
   Company,
@@ -356,6 +357,16 @@ export function RightPanel({
             selectedCompany: null,
           })
         }
+      />
+    );
+  }
+
+  if (panel === "node-prov" && selectedNode) {
+    return (
+      <NodeProvPanel
+        nodeId={selectedNode.node_id}
+        nodeName={selectedNode.canonical_name_zh}
+        onClose={onBackPanel}
       />
     );
   }

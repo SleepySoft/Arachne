@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Edit2, Layers, Trash2, X } from "lucide-react";
 import { IndustrialNode, Company, Industry, GraphEdge } from "@/types";
-import { deleteNode, listEdges } from "@/services/api";
+import { deleteNode, listEdges, listProvStatementsByNode } from "@/services/api";
 import { NodeAssociations } from "./NodeAssociations";
 
 interface NodeDetailProps {
@@ -47,6 +47,13 @@ export function NodeDetail({
     staleTime: 60_000,
   });
   const childCount = childrenEdges?.items.length ?? 0;
+
+  const { data: provData } = useQuery({
+    queryKey: ["node-prov", node.node_id],
+    queryFn: () => listProvStatementsByNode(node.node_id, 1, 100),
+    staleTime: 60_000,
+  });
+  const provItems = provData?.items ?? [];
 
   return (
     <div className="space-y-4 p-4">
@@ -143,6 +150,36 @@ export function NodeDetail({
           <div>
             <div className="text-[10px] font-semibold uppercase text-slate-500">备注</div>
             <div className="mt-1 text-xs text-slate-400">{node.notes}</div>
+          </div>
+        )}
+
+        {provItems.length > 0 && (
+          <div>
+            <div className="text-[10px] font-semibold uppercase text-slate-500">
+              PROV 来源声明 ({provItems.length})
+            </div>
+            <div className="mt-1 space-y-1.5">
+              {provItems.slice(0, 5).map((stmt) => (
+                <div
+                  key={stmt.statement_id}
+                  className="flex items-center gap-2 rounded bg-slate-850 px-2 py-1.5 text-xs"
+                >
+                  <span className="rounded bg-slate-800 px-1 py-0.5 text-[10px] text-slate-400">
+                    {stmt.node_role}
+                  </span>
+                  <span className="text-cyan-400">{stmt.prov_relation}</span>
+                  <span className="rounded bg-slate-800 px-1 py-0.5 text-[10px] text-slate-400">
+                    {stmt.target_role}
+                  </span>
+                  <span className="ml-auto font-mono text-slate-500">{stmt.target_node_id}</span>
+                </div>
+              ))}
+              {provItems.length > 5 && (
+                <div className="text-center text-[10px] text-slate-500">
+                  还有 {provItems.length - 5} 条…
+                </div>
+              )}
+            </div>
           </div>
         )}
 

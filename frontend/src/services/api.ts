@@ -28,6 +28,8 @@ import {
   PaginatedIndustries,
   PaginatedMappings,
   PaginatedNodes,
+  PaginatedProvStatements,
+  ProvStatement,
   SubgraphResult,
 } from "@/types";
 
@@ -167,6 +169,37 @@ export const updateEdge = async (edgeId: string, data: Partial<GraphEdge>): Prom
 
 export const deleteEdge = async (edgeId: string): Promise<void> => {
   await client.delete(`/edges/${edgeId}`);
+};
+
+// PROV statements
+export const listProvStatementsByNode = async (
+  nodeId: string,
+  page = 1,
+  pageSize = 100
+): Promise<PaginatedProvStatements> => {
+  const res = await client.get(`/prov/nodes/${nodeId}/statements`, {
+    params: { page, page_size: pageSize },
+  });
+  return res.data;
+};
+
+export const listProvStatements = async (
+  page = 1,
+  pageSize = 20,
+  filters?: { node_id?: string; target_node_id?: string; prov_relation?: string; status?: string }
+): Promise<PaginatedProvStatements> => {
+  const params: Record<string, unknown> = { page, page_size: pageSize };
+  if (filters?.node_id) params.node_id = filters.node_id;
+  if (filters?.target_node_id) params.target_node_id = filters.target_node_id;
+  if (filters?.prov_relation) params.prov_relation = filters.prov_relation;
+  if (filters?.status) params.status = filters.status;
+  const res = await client.get("/prov/statements", { params });
+  return res.data;
+};
+
+export const createProvStatement = async (data: Omit<ProvStatement, "statement_uuid" | "statement_id" | "created_at" | "updated_at">): Promise<ProvStatement> => {
+  const res = await client.post("/prov/statements", data);
+  return res.data;
 };
 
 // Batches

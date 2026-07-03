@@ -37,6 +37,40 @@ export type OntologyType =
 
 export type EdgeNamespace = "industrial_flow" | "ontology";
 
+export type ProvRole = "entity" | "activity" | "agent";
+
+export type ProvRelation =
+  | "used"
+  | "wasGeneratedBy"
+  | "wasDerivedFrom"
+  | "wasAttributedTo"
+  | "wasAssociatedWith"
+  | "actedOnBehalfOf";
+
+export interface ProvStatement {
+  statement_uuid: string;
+  statement_id: string;
+  node_id: string;
+  node_role: ProvRole;
+  prov_relation: ProvRelation;
+  target_node_id: string;
+  target_role: ProvRole;
+  is_inferred: boolean;
+  evidence: Evidence[];
+  confidence: Confidence;
+  status: NodeStatus;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PaginatedProvStatements {
+  total: number;
+  page: number;
+  page_size: number;
+  items: ProvStatement[];
+}
+
 export interface Evidence {
   source_title: string;
   source_url?: string;
@@ -543,6 +577,7 @@ export type PanelType =
   | "node-companies"
   | "multi-node-companies"
   | "node-industries"
+  | "node-prov"
   | "company-relation-detail";
 
 // Company network node type used for canvas

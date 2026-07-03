@@ -12,6 +12,7 @@ import {
   FolderTree,
   Move,
   Link2,
+  History,
 } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
 
@@ -21,6 +22,8 @@ interface NodeContextMenuProps {
   nodeName: string;
   onShowCompanies: () => void;
   onShowIndustries: () => void;
+  onViewProv?: () => void;
+  provCount?: number;
   onShowUpstream: () => void;
   onShowDownstream: () => void;
   onHighlightUpstream: () => void;
@@ -45,6 +48,8 @@ export function NodeContextMenu({
   nodeName,
   onShowCompanies,
   onShowIndustries,
+  onViewProv,
+  provCount = 0,
   onShowUpstream,
   onShowDownstream,
   onHighlightUpstream,
@@ -271,6 +276,18 @@ export function NodeContextMenu({
             <Factory size={14} className="text-amber-400" />
             查看关联行业
           </button>
+          {provCount > 0 && onViewProv && (
+            <button
+              onClick={() => {
+                onViewProv();
+                onClose();
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+            >
+              <History size={14} className="text-cyan-400" />
+              查看 PROV ({provCount})
+            </button>
+          )}
         </div>
       </div>
     </>

@@ -63,12 +63,13 @@
 - 存储层：`backend/app/services/prov_storage.py`
 - REST API：`backend/app/routers/prov.py`，挂载在 `/api/v1/prov`
 - 测试：`backend/tests/test_prov_storage.py`
+- 前端集成：`NodeProvPanel`、节点详情 PROV 区、右键菜单 "查看 PROV"
 
 **待后续决定的问题：**
 
 - 是否允许从 PROV 视图一键写回产业图关系（如补全缺失的 `material_input`）。
 - `wasDerivedFrom` 的具体推导算法（路径长度、`is_a` 跳跃次数限制等）。
-- 前端 PROV 视图开关与高亮逻辑。
+- PROV 在画布上的高亮/投影逻辑（目前只在右侧面板展示）。
 
 ---
 

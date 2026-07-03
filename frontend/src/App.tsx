@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { StatsBar, MainView } from "@/components/StatsBar";
 import { DbChecksPage } from "@/pages/DbChecksPage";
 import { ReasoningPage } from "@/pages/ReasoningPage";
@@ -20,7 +21,7 @@ import { CanvasContextMenu } from "@/components/CanvasContextMenu";
 import { EdgeContextMenu } from "@/components/EdgeContextMenu";
 import { ConnectEdgePanel } from "@/components/ConnectEdgePanel";
 import { QuickNodeForm } from "@/components/QuickNodeForm";
-import { deleteEdge, listCompanies, listIndustries } from "@/services/api";
+import { deleteEdge, listCompanies, listIndustries, listProvStatementsByNode } from "@/services/api";
 import { IndustrialSidebar } from "@/components/panels/IndustrialSidebar";
 import { IndustrialSearchPanel } from "@/components/panels/IndustrialSearchPanel";
 import { CompanySidebarPanel } from "@/components/panels/CompanySidebarPanel";
@@ -821,6 +822,15 @@ export default function App() {
 
   const isGraphView = mainView === "industrial_graph" || mainView === "company_graph";
 
+  const contextMenuNodeId = industrial.contextMenu.node?.node_id;
+  const { data: provCountData } = useQuery({
+    queryKey: ["prov-count", contextMenuNodeId],
+    queryFn: () => listProvStatementsByNode(contextMenuNodeId!, 1, 1),
+    enabled: !!contextMenuNodeId,
+    staleTime: 60_000,
+  });
+  const provCount = provCountData?.total ?? 0;
+
   return (
     <div className="flex h-screen w-full flex-col bg-slate-950">
       <div className="h-14 shrink-0 border-b border-slate-800 bg-slate-900">
@@ -851,6 +861,14 @@ export default function App() {
             x={industrial.contextMenu.x}
             y={industrial.contextMenu.y}
             nodeName={industrial.contextMenu.node.canonical_name_zh}
+            provCount={provCount}
+            onViewProv={() => {
+              industrial.pushPanel({
+                panel: "node-prov",
+                selectedNode: industrial.contextMenu.node,
+              });
+              industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
+            }}
             onShowCompanies={() => {
               if (industrial.contextMenu.node) {
                 industrial.showCompanyFilter([industrial.contextMenu.node]);
