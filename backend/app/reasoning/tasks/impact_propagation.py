@@ -26,6 +26,7 @@ from app.reasoning.schemas import (
 )
 from app.reasoning.tasks.association import _fetch_paths, _paths_to_reasoning_paths
 from app.reasoning.tasks.utils import (
+    build_company_exposures,
     collect_unique_edges,
     collect_unique_node_ids,
     edge_to_dict,
@@ -172,6 +173,14 @@ async def run_impact_propagation(
         score_components = scorer.score_components(node_ids_seq, scored_edges)
 
         path_id = f"path_{reasoning_id}_{idx}"
+        node_name_map = {
+            nid: {
+                "canonical_name_zh": nodes_map.get(nid).canonical_name_zh if nodes_map.get(nid) else None,
+                "canonical_name_en": nodes_map.get(nid).canonical_name_en if nodes_map.get(nid) else None,
+                "entity_type": nodes_map.get(nid).entity_type if nodes_map.get(nid) else None,
+            }
+            for nid in node_ids_seq
+        }
         reasoning_paths.append(
             ReasoningPath(
                 path_id=path_id,
@@ -183,6 +192,7 @@ async def run_impact_propagation(
                 path_length=len(rels),
                 path_score=score,
                 score_components=score_components,
+                node_name_map=node_name_map,
             )
         )
 
@@ -257,6 +267,9 @@ async def run_impact_propagation(
                 rank=idx + 1,
                 score_type="impact_propagation",
                 score_components={"initial_score": initial_score},
+                canonical_name_zh=nodes_map.get(nid).canonical_name_zh if nodes_map.get(nid) else None,
+                canonical_name_en=nodes_map.get(nid).canonical_name_en if nodes_map.get(nid) else None,
+                entity_type=nodes_map.get(nid).entity_type if nodes_map.get(nid) else None,
             ).model_dump()
             for idx, (nid, score) in enumerate(sorted_nodes)
         ]
@@ -275,8 +288,16 @@ async def run_impact_propagation(
                 rank=idx + 1,
                 score_type="impact_propagation",
                 score_components={},
+                from_node=edge_rec.get("from_node"),
+                to_node=edge_rec.get("to_node"),
+                from_node_name_zh=nodes_map.get(edge_rec.get("from_node")).canonical_name_zh if nodes_map.get(edge_rec.get("from_node")) else None,
+                from_node_name_en=nodes_map.get(edge_rec.get("from_node")).canonical_name_en if nodes_map.get(edge_rec.get("from_node")) else None,
+                to_node_name_zh=nodes_map.get(edge_rec.get("to_node")).canonical_name_zh if nodes_map.get(edge_rec.get("to_node")) else None,
+                to_node_name_en=nodes_map.get(edge_rec.get("to_node")).canonical_name_en if nodes_map.get(edge_rec.get("to_node")) else None,
+                edge_type=edge_rec.get("edge_type"),
             ).model_dump()
             for idx, (eid, score) in enumerate(sorted_edges)
+            for edge_rec in [filtered_edge_records.get(eid, {})]
         ]
 
     evidence_chains: List[EvidenceChain] = []
@@ -311,6 +332,19 @@ async def run_impact_propagation(
                 rows=edge_rows,
             ).model_dump(),
         ]
+
+    if task.parameters.get("include_company_exposures"):
+        max_exposures = task.parameters.get("max_company_exposures", 50)
+        try:
+            max_exposures = int(max_exposures)
+        except Exception:
+            max_exposures = 50
+        company_exposures = await build_company_exposures(
+            list(filtered_node_ids),
+            max_exposures=max_exposures,
+        )
+        if company_exposures:
+            result_payload["company_exposures"] = company_exposures.model_dump()
 
     diagnostics = build_diagnostics(
         nodes=list(filtered_nodes.values()),

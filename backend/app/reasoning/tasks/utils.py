@@ -6,7 +6,12 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 from app.database import get_async_driver
 from app.models.schemas import Confidence, GraphEdge, IndustrialNode
-from app.reasoning.schemas import ReasoningConstraints
+from app.reasoning.schemas import (
+    CompanyExposureInfo,
+    CompanyExposuresOutput,
+    ExposedNodeInfo,
+    ReasoningConstraints,
+)
 
 
 CONFIDENCE_ORDER = {"LOW": 1, "MEDIUM": 2, "HIGH": 3}
@@ -161,3 +166,69 @@ def collect_unique_node_ids(path_records: List[Dict[str, Any]]) -> Set[str]:
     for record in path_records:
         node_ids.update(record.get("node_ids", []))
     return node_ids
+
+
+async def build_company_exposures(
+    node_ids: List[str],
+    max_exposures: int = 50,
+) -> Optional[CompanyExposuresOutput]:
+    """Build a company exposure summary for a set of industrial nodes.
+
+    Returns companies grouped by company_id, each listing the nodes they expose.
+    The total number of exposure records is capped by max_exposures.
+    """
+    if not node_ids:
+        return None
+    try:
+        from app.services import company_storage
+    except Exception:
+        return None
+
+    exposures = await company_storage.list_exposures_by_nodes(node_ids, limit=max_exposures)
+    if not exposures:
+        return None
+
+    company_ids = list({e.company_id for e in exposures})
+    companies = await company_storage.get_companies_by_ids(company_ids)
+    company_map = {c.company_id: c for c in companies}
+
+    grouped: Dict[str, CompanyExposureInfo] = {}
+    for e in exposures:
+        company = company_map.get(e.company_id)
+        if company is None:
+            continue
+        if company.company_id not in grouped:
+            grouped[company.company_id] = CompanyExposureInfo(
+                company_id=company.company_id,
+                name_zh=company.name_zh,
+                name_en=company.name_en,
+                stock_codes=company.stock_codes or [],
+                company_type=company.company_type.value if company.company_type else None,
+                exposed_nodes=[],
+            )
+        grouped[company.company_id].exposed_nodes.append(
+            ExposedNodeInfo(
+                node_id=e.node_id,
+                activity_type=e.activity_type.value if e.activity_type else None,
+                role=e.role,
+                weight=e.weight,
+                confidence=e.confidence.value if e.confidence else None,
+            )
+        )
+
+    # Enrich exposed nodes with names/entity_type from the industrial graph
+    nodes_map = await fetch_nodes_by_ids(node_ids)
+    for info in grouped.values():
+        for exposed in info.exposed_nodes:
+            node = nodes_map.get(exposed.node_id)
+            if node:
+                exposed.canonical_name_zh = node.canonical_name_zh
+                exposed.canonical_name_en = node.canonical_name_en
+                exposed.entity_type = node.entity_type
+
+    company_list = list(grouped.values())
+    return CompanyExposuresOutput(
+        total_companies=len(company_list),
+        total_exposures=sum(len(c.exposed_nodes) for c in company_list),
+        companies=company_list,
+    )

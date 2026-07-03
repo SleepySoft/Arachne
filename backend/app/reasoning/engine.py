@@ -8,6 +8,9 @@ from typing import Any, Dict
 from uuid import uuid4
 
 from app.reasoning.schemas import (
+    GraphType,
+    ObjectCandidate,
+    ObjectKind,
     ReasoningDiagnostics,
     ReasoningResultEnvelope,
     ReasoningTask,
@@ -16,6 +19,8 @@ from app.reasoning.schemas import (
 )
 from app.reasoning.tasks.association import run_association
 from app.reasoning.tasks.impact_propagation import run_impact_propagation
+from app.reasoning.tasks.utils import validate_source_nodes
+from app.services import fuzzy_search
 
 
 _TASK_DISPATCH: Dict[TaskType, Any] = {
@@ -37,10 +42,49 @@ def _compute_input_fingerprint(task: ReasoningTask) -> str:
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
 
 
+async def _suggest_similar_nodes(
+    missing_ids: list[str],
+    limit: int = 3,
+) -> dict[str, list[ObjectCandidate]]:
+    """Suggest similar existing nodes for missing source IDs."""
+    suggestions: dict[str, list[ObjectCandidate]] = {}
+    for mid in missing_ids:
+        try:
+            items = await fuzzy_search.fuzzy_search_nodes(query=mid, limit=limit)
+        except Exception:
+            continue
+        candidates: list[ObjectCandidate] = []
+        for item in items:
+            node = item["node"]
+            candidates.append(
+                ObjectCandidate(
+                    object_id=node.node_id,
+                    object_kind=ObjectKind.NODE,
+                    graph=GraphType.INDUSTRIAL,
+                    canonical_name=node.canonical_name_zh or node.canonical_name_en,
+                    aliases=node.aliases or [],
+                    entity_type=node.entity_type,
+                    status=node.status,
+                    confidence=node.confidence,
+                    match_type="keyword",
+                    match_score=item["score"],
+                )
+            )
+        if candidates:
+            suggestions[mid] = candidates
+    return suggestions
+
+
 async def execute_reasoning_task(task: ReasoningTask) -> ReasoningResultEnvelope:
     """Execute a reasoning task and return a uniform envelope."""
     reasoning_id = f"reasoning_{str(uuid4())[:8]}"
     started_at = datetime.utcnow()
+
+    # Pre-validate sources so we can suggest alternatives for missing IDs
+    existing, missing = await validate_source_nodes(task.source_nodes)
+    suggestions: dict[str, list[ObjectCandidate]] = {}
+    if missing and task.parameters.get("suggest_similar_on_missing", True):
+        suggestions = await _suggest_similar_nodes(missing)
 
     handler = _TASK_DISPATCH.get(task.task_type)
     if handler is None:
@@ -63,6 +107,10 @@ async def execute_reasoning_task(task: ReasoningTask) -> ReasoningResultEnvelope
     try:
         result = await handler(task, reasoning_id)
         result.input_fingerprint = _compute_input_fingerprint(task)
+        if suggestions:
+            result.result_payload["missing_source_suggestions"] = {
+                mid: [c.model_dump() for c in lst] for mid, lst in suggestions.items()
+            }
         return result
     except Exception as exc:
         diagnostics = ReasoningDiagnostics(

@@ -26,6 +26,7 @@ from app.reasoning.schemas import (
 from app.reasoning.tasks.utils import (
     allowed_confidence_values,
     build_allowed_rel_types,
+    build_company_exposures,
     collect_unique_edges,
     collect_unique_node_ids,
     edge_to_dict,
@@ -113,6 +114,7 @@ async def _fetch_paths(
 def _paths_to_reasoning_paths(
     paths: List[Dict[str, Any]],
     source_id: str,
+    nodes_map: Dict[str, Any],
 ) -> List[ReasoningPath]:
     """Convert raw path records to ReasoningPath objects."""
     out: List[ReasoningPath] = []
@@ -127,6 +129,14 @@ def _paths_to_reasoning_paths(
         if key in seen:
             continue
         seen.add(key)
+        node_name_map = {
+            nid: {
+                "canonical_name_zh": getattr(nodes_map.get(nid), "canonical_name_zh", None),
+                "canonical_name_en": getattr(nodes_map.get(nid), "canonical_name_en", None),
+                "entity_type": getattr(nodes_map.get(nid), "entity_type", None),
+            }
+            for nid in node_ids
+        }
         out.append(
             ReasoningPath(
                 path_id=f"path_{source_id}_{idx}",
@@ -136,6 +146,7 @@ def _paths_to_reasoning_paths(
                 edge_sequence=[r["edge_id"] for r in rels],
                 graph_sequence=["industrial"] * len(node_ids),
                 path_length=len(rels),
+                node_name_map=node_name_map,
             )
         )
     return out
@@ -226,7 +237,7 @@ async def run_association(
             truncation_reason=diagnostics.truncation_reason,
         ).model_dump()
 
-    reasoning_paths = _paths_to_reasoning_paths(all_paths, existing[0] if existing else "")
+    reasoning_paths = _paths_to_reasoning_paths(all_paths, existing[0] if existing else "", nodes_map)
     if OutputType.PATHS in task.requested_outputs:
         result_payload["paths"] = PathOutput(
             paths=reasoning_paths,
@@ -297,6 +308,19 @@ async def run_association(
                 rows=edge_rows,
             ).model_dump(),
         ]
+
+    if task.parameters.get("include_company_exposures"):
+        max_exposures = task.parameters.get("max_company_exposures", 50)
+        try:
+            max_exposures = int(max_exposures)
+        except Exception:
+            max_exposures = 50
+        company_exposures = await build_company_exposures(
+            list(filtered_node_ids),
+            max_exposures=max_exposures,
+        )
+        if company_exposures:
+            result_payload["company_exposures"] = company_exposures.model_dump()
 
     diagnostics = build_diagnostics(
         nodes=list(filtered_nodes.values()),

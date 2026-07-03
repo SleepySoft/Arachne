@@ -107,8 +107,11 @@ def _edge_candidate(edge: Any, match_type: MatchType) -> ObjectCandidate:
     )
 
 
-async def _query_industrial_nodes(req: ObjectQueryRequest) -> List[ObjectCandidate]:
+async def _query_industrial_nodes(
+    req: ObjectQueryRequest,
+) -> tuple[List[ObjectCandidate], List[ObjectCandidate]]:
     candidates: List[ObjectCandidate] = []
+    suggestions: List[ObjectCandidate] = []
 
     # Exact ID match first
     if req.search_mode in (MatchType.EXACT, MatchType.NORMALIZED, MatchType.ALIAS):
@@ -116,20 +119,23 @@ async def _query_industrial_nodes(req: ObjectQueryRequest) -> List[ObjectCandida
         if node is not None:
             candidates.append(_node_candidate(node, MatchType.EXACT, 1.0))
 
-    # Fuzzy / keyword search
+    # Fuzzy / keyword search -> exact matches go to candidates, similar go to suggestions
     if req.search_mode in (MatchType.NORMALIZED, MatchType.KEYWORD, MatchType.PREFIX, MatchType.ALIAS):
         scored = await fuzzy_search.fuzzy_search_nodes(
             query=req.query_text,
-            limit=req.limit,
+            limit=req.limit * 2,
         )
         for item in scored:
             node = item["node"]
-            # Avoid duplicate exact match
             if any(c.object_id == node.node_id for c in candidates):
                 continue
-            candidates.append(_node_candidate(node, MatchType.NORMALIZED, item["score"]))
+            cand = _node_candidate(node, MatchType.NORMALIZED, item["score"])
+            if item["score"] >= 0.99:
+                candidates.append(cand)
+            else:
+                suggestions.append(cand)
 
-    return candidates[: req.limit]
+    return candidates[: req.limit], suggestions[: req.limit]
 
 
 async def _query_companies(req: ObjectQueryRequest) -> List[ObjectCandidate]:
@@ -157,7 +163,9 @@ async def _query_factual_nodes(req: ObjectQueryRequest) -> List[ObjectCandidate]
     return [_person_candidate(p, MatchType.KEYWORD) for p in items]
 
 
-async def _query_industrial_edges(req: ObjectQueryRequest) -> List[ObjectCandidate]:
+async def _query_industrial_edges(
+    req: ObjectQueryRequest,
+) -> tuple[List[ObjectCandidate], List[ObjectCandidate]]:
     items, _ = await neo4j_storage.list_edges(limit=1000)
     query = req.query_text.lower()
     matched = [
@@ -167,13 +175,15 @@ async def _query_industrial_edges(req: ObjectQueryRequest) -> List[ObjectCandida
         or query in e.to_node.lower()
         or query in (getattr(e, "edge_type", "") or "").lower()
     ]
-    return [_edge_candidate(e, MatchType.KEYWORD) for e in matched[: req.limit]]
+    return [_edge_candidate(e, MatchType.KEYWORD) for e in matched[: req.limit]], []
 
 
-async def _query_factual_edges(req: ObjectQueryRequest) -> List[ObjectCandidate]:
+async def _query_factual_edges(
+    req: ObjectQueryRequest,
+) -> tuple[List[ObjectCandidate], List[ObjectCandidate]]:
     relation = await factual_graph_storage.get_relation(req.query_text)
     if relation is None:
-        return []
+        return [], []
     return [
         ObjectCandidate(
             object_id=relation.relation_id,
@@ -184,7 +194,7 @@ async def _query_factual_edges(req: ObjectQueryRequest) -> List[ObjectCandidate]
             confidence=relation.confidence,
             match_type=MatchType.EXACT,
         )
-    ]
+    ], []
 
 
 @router.post("/query", response_model=ObjectQueryResult)
@@ -192,19 +202,19 @@ async def query_objects(req: ObjectQueryRequest):
     """Resolve query text to candidate object IDs."""
     try:
         if req.query_scope.value == "industrial_node":
-            candidates = await _query_industrial_nodes(req)
+            candidates, suggestions = await _query_industrial_nodes(req)
         elif req.query_scope.value == "company":
-            candidates = await _query_companies(req)
+            candidates, suggestions = await _query_companies(req)
         elif req.query_scope.value == "industry":
-            candidates = await _query_industries(req)
+            candidates, suggestions = await _query_industries(req)
         elif req.query_scope.value == "factual_node":
-            candidates = await _query_factual_nodes(req)
+            candidates, suggestions = await _query_factual_nodes(req)
         elif req.query_scope.value == "industrial_edge":
-            candidates = await _query_industrial_edges(req)
+            candidates, suggestions = await _query_industrial_edges(req)
         elif req.query_scope.value == "factual_edge":
-            candidates = await _query_factual_edges(req)
+            candidates, suggestions = await _query_factual_edges(req)
         else:
-            candidates = []
+            candidates, suggestions = [], []
     except Exception as exc:
         return ObjectQueryResult(
             query_id=req.query_id,
@@ -217,7 +227,8 @@ async def query_objects(req: ObjectQueryRequest):
         query_id=req.query_id,
         status=status,
         candidates=candidates,
-        diagnostics={"returned": len(candidates)},
+        suggestions=suggestions,
+        diagnostics={"returned": len(candidates), "suggested": len(suggestions)},
     )
 
 

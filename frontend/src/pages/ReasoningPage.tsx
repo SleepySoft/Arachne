@@ -27,6 +27,7 @@ import {
   EdgeScore,
   EvidenceChain,
   FeatureTable,
+  CompanyExposuresOutput,
   TemporaryReasoningGraph,
   QueryScope,
   TaskType,
@@ -192,6 +193,8 @@ export function ReasoningPage() {
   const [maxNodes, setMaxNodes] = useState(200);
   const [traversalDirection, setTraversalDirection] = useState<TraversalDirection>("forward");
   const [propagationProfile, setPropagationProfile] = useState("supply_forward");
+  const [includeCompanyExposures, setIncludeCompanyExposures] = useState(false);
+  const [maxCompanyExposures, setMaxCompanyExposures] = useState(20);
   const [outputs, setOutputs] = useState<OutputType[]>(DEFAULT_OUTPUTS);
 
   useEffect(() => {
@@ -217,7 +220,7 @@ export function ReasoningPage() {
   // ----- Execution -----
   const [result, setResult] = useState<ReasoningResultEnvelope | null>(null);
   const [executeError, setExecuteError] = useState<string | null>(null);
-type ResultTab = OutputType | "overview" | "visual";
+type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
 
   const [activeTab, setActiveTab] = useState<ResultTab>("overview");
 
@@ -262,7 +265,10 @@ type ResultTab = OutputType | "overview" | "visual";
         task_id: "example_run",
         task_type: "association",
         source_nodes: [chip.object_id],
-        parameters: {},
+        parameters: {
+          include_company_exposures: includeCompanyExposures,
+          max_company_exposures: maxCompanyExposures,
+        },
         constraints: {
           max_depth: 2,
           max_paths: 50,
@@ -295,6 +301,11 @@ type ResultTab = OutputType | "overview" | "visual";
     const parameters: Record<string, unknown> = {};
     if (taskType === "impact_propagation") {
       parameters.propagation_profile = propagationProfile;
+    }
+
+    if (includeCompanyExposures) {
+      parameters.include_company_exposures = true;
+      parameters.max_company_exposures = maxCompanyExposures;
     }
 
     const payload: ReasoningTask = {
@@ -350,6 +361,10 @@ type ResultTab = OutputType | "overview" | "visual";
     return (result?.result_payload.feature_tables as FeatureTable[]) || [];
   }, [result]);
 
+  const resultCompanyExposures = useMemo<CompanyExposuresOutput | null>(() => {
+    return (result?.result_payload.company_exposures as CompanyExposuresOutput) || null;
+  }, [result]);
+
   const availableTabs = useMemo(() => {
     const set = new Set<ResultTab>(["overview"]);
     if (!result) return set;
@@ -362,12 +377,14 @@ type ResultTab = OutputType | "overview" | "visual";
     if (payload.edge_scores) set.add("edge_scores");
     if (payload.evidence_chains) set.add("evidence_chains");
     if (payload.feature_tables) set.add("feature_tables");
+    if (payload.company_exposures) set.add("company_exposures");
     return set;
   }, [result]);
 
   const tabLabel = (t: ResultTab) => {
     if (t === "overview") return "概览";
     if (t === "visual") return "可视化图";
+    if (t === "company_exposures") return "公司暴露";
     return OUTPUT_OPTIONS.find((o) => o.value === t)?.label || t;
   };
 
@@ -632,6 +649,41 @@ type ResultTab = OutputType | "overview" | "visual";
                 </div>
               </FormField>
 
+              <FormField label="公司暴露">
+                <div className="space-y-2">
+                  <label
+                    className={cn(
+                      "flex cursor-pointer items-center gap-2 rounded border px-2 py-1.5 text-xs transition-colors",
+                      includeCompanyExposures
+                        ? "border-cyan-700/50 bg-cyan-900/20 text-cyan-200"
+                        : "border-slate-800 bg-slate-900 text-slate-400 hover:bg-slate-800"
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={includeCompanyExposures}
+                      onChange={() => setIncludeCompanyExposures((v) => !v)}
+                      className="h-3 w-3 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-0"
+                    />
+                    返回关联公司暴露（独立数据区，不混入节点）
+                  </label>
+                  {includeCompanyExposures && (
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                      <span>最多返回</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={200}
+                        value={maxCompanyExposures}
+                        onChange={(e) => setMaxCompanyExposures(parseInt(e.target.value, 10) || 20)}
+                        className="w-16 rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
+                      />
+                      <span>条暴露记录</span>
+                    </div>
+                  )}
+                </div>
+              </FormField>
+
               {executeError && (
                 <div className="flex items-center gap-2 rounded bg-red-950/30 px-2 py-1.5 text-xs text-red-400">
                   <AlertTriangle className="h-3 w-3" />
@@ -788,6 +840,9 @@ type ResultTab = OutputType | "overview" | "visual";
                 {activeTab === "edge_scores" && <EdgeScoresView scores={resultEdgeScores} />}
                 {activeTab === "evidence_chains" && <EvidenceChainsView chains={resultEvidenceChains} />}
                 {activeTab === "feature_tables" && <FeatureTablesView tables={resultFeatureTables} />}
+                {activeTab === "company_exposures" && resultCompanyExposures && (
+                  <CompanyExposuresView data={resultCompanyExposures} />
+                )}
               </div>
             </>
           )}
@@ -1071,14 +1126,22 @@ function PathsView({ paths }: { paths: ReasoningPath[] }) {
             <Badge color="emerald">score {formatScore(p.path_score)}</Badge>
           </div>
           <div className="flex flex-wrap items-center gap-1 text-xs">
-            {p.node_sequence.map((nid, idx) => (
-              <span key={idx} className="flex items-center gap-1">
-                <span className="rounded bg-slate-800 px-2 py-1 text-slate-200">{nid}</span>
-                {idx < p.node_sequence.length - 1 && (
-                  <ChevronRight className="h-3 w-3 text-slate-600" />
-                )}
-              </span>
-            ))}
+            {p.node_sequence.map((nid, idx) => {
+              const name =
+                p.node_name_map?.[nid]?.canonical_name_zh ||
+                p.node_name_map?.[nid]?.canonical_name_en ||
+                nid;
+              return (
+                <span key={idx} className="flex items-center gap-1">
+                  <span className="rounded bg-slate-800 px-2 py-1 text-slate-200" title={nid}>
+                    {name}
+                  </span>
+                  {idx < p.node_sequence.length - 1 && (
+                    <ChevronRight className="h-3 w-3 text-slate-600" />
+                  )}
+                </span>
+              );
+            })}
           </div>
           <div className="mt-2 text-[10px] text-slate-500">
             长度 {p.path_length} · 边 {p.edge_sequence.join(", ")}
@@ -1098,8 +1161,9 @@ function NodeScoresView({ scores }: { scores: NodeScore[] }) {
           <tr>
             <th className="px-3 py-2">排名</th>
             <th className="px-3 py-2">节点</th>
-            <th className="px-3 py-2">得分</th>
+            <th className="px-3 py-2">名称</th>
             <th className="px-3 py-2">类型</th>
+            <th className="px-3 py-2">得分</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-800">
@@ -1107,8 +1171,13 @@ function NodeScoresView({ scores }: { scores: NodeScore[] }) {
             <tr key={s.node_id} className="hover:bg-slate-800/40">
               <td className="px-3 py-2">{s.rank}</td>
               <td className="px-3 py-2 font-mono text-slate-300">{s.node_id}</td>
+              <td className="px-3 py-2 text-slate-200">
+                {s.canonical_name_zh || s.canonical_name_en || "—"}
+              </td>
+              <td className="px-3 py-2">
+                <Badge color="cyan">{s.entity_type}</Badge>
+              </td>
               <td className="px-3 py-2 font-semibold text-cyan-300">{formatScore(s.score)}</td>
-              <td className="px-3 py-2 text-slate-400">{s.score_type}</td>
             </tr>
           ))}
         </tbody>
@@ -1126,6 +1195,9 @@ function EdgeScoresView({ scores }: { scores: EdgeScore[] }) {
           <tr>
             <th className="px-3 py-2">排名</th>
             <th className="px-3 py-2">边</th>
+            <th className="px-3 py-2">起点</th>
+            <th className="px-3 py-2">终点</th>
+            <th className="px-3 py-2">类型</th>
             <th className="px-3 py-2">得分</th>
           </tr>
         </thead>
@@ -1134,6 +1206,15 @@ function EdgeScoresView({ scores }: { scores: EdgeScore[] }) {
             <tr key={s.edge_id} className="hover:bg-slate-800/40">
               <td className="px-3 py-2">{s.rank}</td>
               <td className="px-3 py-2 font-mono text-slate-300">{s.edge_id}</td>
+              <td className="px-3 py-2 text-slate-200">
+                {s.from_node_name_zh || s.from_node_name_en || s.from_node || "—"}
+              </td>
+              <td className="px-3 py-2 text-slate-200">
+                {s.to_node_name_zh || s.to_node_name_en || s.to_node || "—"}
+              </td>
+              <td className="px-3 py-2">
+                <Badge color="amber">{s.edge_type}</Badge>
+              </td>
               <td className="px-3 py-2 font-semibold text-cyan-300">{formatScore(s.score)}</td>
             </tr>
           ))}
@@ -1222,6 +1303,56 @@ function FeatureTablesView({ tables }: { tables: FeatureTable[] }) {
             {t.rows.length > 20 && (
               <div className="px-3 py-2 text-[10px] text-slate-500">还有 {t.rows.length - 20} 行未显示</div>
             )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CompanyExposuresView({ data }: { data: CompanyExposuresOutput }) {
+  if (data.companies.length === 0) return <Empty message="无公司暴露" />;
+  return (
+    <div className="space-y-4">
+      <div className="text-xs text-slate-500">
+        共 {data.total_companies} 家公司、{data.total_exposures} 条暴露记录
+      </div>
+      {data.companies.map((c) => (
+        <div key={c.company_id} className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <div>
+              <div className="text-sm font-medium text-slate-200">
+                {c.name_zh || c.name_en || c.company_id}
+              </div>
+              <div className="text-[10px] text-slate-500">{c.company_id}</div>
+            </div>
+            <div className="flex gap-2">
+              {c.stock_codes?.map((code) => (
+                <Badge key={code} color="slate">
+                  {code}
+                </Badge>
+              ))}
+              {c.company_type && <Badge color="cyan">{c.company_type}</Badge>}
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {c.exposed_nodes.map((n) => (
+              <div
+                key={n.node_id}
+                className="rounded border border-slate-800 bg-slate-900 px-2 py-1 text-xs"
+                title={n.node_id}
+              >
+                <span className="text-slate-200">
+                  {n.canonical_name_zh || n.canonical_name_en || n.node_id}
+                </span>
+                {n.activity_type && (
+                  <span className="ml-1 text-[10px] text-slate-500">({n.activity_type})</span>
+                )}
+                {n.weight !== undefined && (
+                  <span className="ml-1 text-[10px] text-cyan-400">w{n.weight}</span>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       ))}

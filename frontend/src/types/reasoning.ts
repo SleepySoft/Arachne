@@ -179,6 +179,7 @@ export interface ReasoningPath {
   path_length: number;
   path_score: number;
   score_components?: Record<string, unknown>;
+  node_name_map: Record<string, { canonical_name_zh?: string; canonical_name_en?: string; entity_type?: string }>;
 }
 
 export interface PathOutput {
@@ -196,6 +197,9 @@ export interface NodeScore {
   rank: number;
   score_type: string;
   score_components: Record<string, unknown>;
+  canonical_name_zh?: string;
+  canonical_name_en?: string;
+  entity_type?: string;
   source_paths?: string[];
   evidence_chain_ids?: string[];
   flags?: string[];
@@ -208,6 +212,13 @@ export interface EdgeScore {
   rank: number;
   score_type: string;
   score_components: Record<string, unknown>;
+  from_node?: string;
+  to_node?: string;
+  from_node_name_zh?: string;
+  from_node_name_en?: string;
+  to_node_name_zh?: string;
+  to_node_name_en?: string;
+  edge_type?: string;
 }
 
 export interface EvidenceRef {
@@ -226,6 +237,32 @@ export interface EvidenceChain {
   target_id: string;
   evidence_items: EvidenceRef[];
   completeness: "complete" | "partial" | "missing";
+}
+
+export interface ExposedNodeInfo {
+  node_id: string;
+  canonical_name_zh?: string;
+  canonical_name_en?: string;
+  entity_type?: string;
+  activity_type?: string;
+  role?: string;
+  weight?: number;
+  confidence?: string;
+}
+
+export interface CompanyExposureInfo {
+  company_id: string;
+  name_zh?: string;
+  name_en?: string;
+  stock_codes: string[];
+  company_type?: string;
+  exposed_nodes: ExposedNodeInfo[];
+}
+
+export interface CompanyExposuresOutput {
+  total_companies: number;
+  total_exposures: number;
+  companies: CompanyExposureInfo[];
 }
 
 export interface FeatureTable {

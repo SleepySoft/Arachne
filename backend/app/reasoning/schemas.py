@@ -165,6 +165,7 @@ class ObjectQueryResult(BaseModel):
     query_id: str
     status: ResultStatus
     candidates: List[ObjectCandidate] = Field(default_factory=list)
+    suggestions: List[ObjectCandidate] = Field(default_factory=list)
     diagnostics: Dict[str, Any] = Field(default_factory=dict)
 
 
@@ -291,6 +292,7 @@ class ReasoningPath(BaseModel):
     path_length: int
     path_score: Optional[float] = None
     score_components: Dict[str, Any] = Field(default_factory=dict)
+    node_name_map: Dict[str, Dict[str, Optional[str]]] = Field(default_factory=dict)
     evidence_chain_id: Optional[str] = None
     flags: List[str] = Field(default_factory=list)
 
@@ -330,6 +332,9 @@ class NodeScore(BaseModel):
     rank: int
     score_type: str
     score_components: Dict[str, Any]
+    canonical_name_zh: Optional[str] = None
+    canonical_name_en: Optional[str] = None
+    entity_type: Optional[str] = None
     source_paths: List[str] = Field(default_factory=list)
     evidence_chain_ids: List[str] = Field(default_factory=list)
     flags: List[str] = Field(default_factory=list)
@@ -342,9 +347,42 @@ class EdgeScore(BaseModel):
     rank: int
     score_type: str
     score_components: Dict[str, Any]
+    from_node: Optional[str] = None
+    to_node: Optional[str] = None
+    from_node_name_zh: Optional[str] = None
+    from_node_name_en: Optional[str] = None
+    to_node_name_zh: Optional[str] = None
+    to_node_name_en: Optional[str] = None
+    edge_type: Optional[str] = None
     source_paths: List[str] = Field(default_factory=list)
     evidence_chain_ids: List[str] = Field(default_factory=list)
     flags: List[str] = Field(default_factory=list)
+
+
+class ExposedNodeInfo(BaseModel):
+    node_id: str
+    canonical_name_zh: Optional[str] = None
+    canonical_name_en: Optional[str] = None
+    entity_type: Optional[str] = None
+    activity_type: Optional[str] = None
+    role: Optional[str] = None
+    weight: Optional[float] = None
+    confidence: Optional[str] = None
+
+
+class CompanyExposureInfo(BaseModel):
+    company_id: str
+    name_zh: Optional[str] = None
+    name_en: Optional[str] = None
+    stock_codes: List[str] = Field(default_factory=list)
+    company_type: Optional[str] = None
+    exposed_nodes: List[ExposedNodeInfo] = Field(default_factory=list)
+
+
+class CompanyExposuresOutput(BaseModel):
+    total_companies: int
+    total_exposures: int
+    companies: List[CompanyExposureInfo]
 
 
 class FeatureTable(BaseModel):
