@@ -319,4 +319,51 @@ async def init_postgres_tables() -> None:
             """
         )
 
+        # PROV statements (type-level provenance assertions)
+        await conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS prov_statements (
+                statement_id   VARCHAR(256) PRIMARY KEY,
+                statement_uuid UUID NOT NULL DEFAULT gen_random_uuid(),
+                node_id        VARCHAR(64) NOT NULL,
+                node_role      VARCHAR(16) NOT NULL DEFAULT 'entity',
+                prov_relation  VARCHAR(32) NOT NULL,
+                target_node_id VARCHAR(64) NOT NULL,
+                target_role    VARCHAR(16) NOT NULL DEFAULT 'entity',
+                is_inferred    BOOLEAN NOT NULL DEFAULT FALSE,
+                evidence       JSONB DEFAULT '[]'::jsonb,
+                confidence     VARCHAR(16) NOT NULL DEFAULT 'MEDIUM',
+                status         VARCHAR(16) NOT NULL DEFAULT 'ACTIVE',
+                notes          TEXT,
+                created_at     TIMESTAMPTZ DEFAULT NOW(),
+                updated_at     TIMESTAMPTZ DEFAULT NOW(),
+                UNIQUE (node_id, prov_relation, target_node_id)
+            )
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_prov_node_id
+            ON prov_statements(node_id)
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_prov_target_node_id
+            ON prov_statements(target_node_id)
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_prov_relation
+            ON prov_statements(prov_relation)
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_prov_status
+            ON prov_statements(status)
+            """
+        )
+
 

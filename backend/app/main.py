@@ -20,6 +20,7 @@ from app.routers import (
     factual_graph,
     industries,
     nodes,
+    prov,
     query,
     reasoning,
 )
@@ -76,6 +77,7 @@ app.add_middleware(
 )
 
 app.include_router(nodes.router, prefix=f"{settings.API_V1_STR}/nodes", tags=["Nodes"])
+app.include_router(prov.router, prefix=f"{settings.API_V1_STR}/prov", tags=["PROV"])
 app.include_router(edges.router, prefix=f"{settings.API_V1_STR}/edges", tags=["Edges"])
 app.include_router(industries.router, prefix=f"{settings.API_V1_STR}/industries", tags=["Industries"])
 app.include_router(companies.router, prefix=f"{settings.API_V1_STR}/companies", tags=["Companies"])
