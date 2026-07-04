@@ -89,3 +89,12 @@ async def get_provn_for_node(node_id: str):
     if text is None:
         raise HTTPException(status_code=404, detail="PROV-N document not found")
     return text
+
+
+@router.put("/nodes/{node_id}/provn", response_class=PlainTextResponse)
+async def set_provn_for_node(node_id: str, text: str):
+    try:
+        prov_storage.set_provn_text(node_id, text)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid PROV-N: {e}")
+    return text

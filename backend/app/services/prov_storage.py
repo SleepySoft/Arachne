@@ -1,23 +1,29 @@
 """
 File-based storage layer for PROV statements.
 
-PROV statements are persisted as PROV-N documents under `data/prov_statements/`.
-Each file is named `{node_id}.provn` and contains a self-contained PROV-N
-document with declarations and the relation statements whose subject is
-`node_id`. The format is human-readable, diffable, and standard PROV-N.
+PROV assertions are persisted as human-editable PROV-N documents under
+`data/prov_statements/{node_id}.provn`. The file content is the source of truth
+and is preserved exactly as written. Statement-level APIs read from and append
+to these documents, but they never rewrite a document from scratch, so manual
+edits (extra declarations, attributes, comments, formatting) are kept intact.
+
+The only expected link to the industrial graph is that `entity(...)` identifiers
+should reuse existing `node_id`s when possible; the parser does not enforce this
+and will happily load PROV-N documents that reference entities not yet in the
+graph.
 """
 
 from __future__ import annotations
 
 import json
 import os
+import re
 import tempfile
 from pathlib import Path
 from typing import List, Optional, Tuple
-from uuid import UUID
 
-from app.models.prov_schema import ProvStatement, ProvRelation, ProvRole
-from app.services.prov_n import parse_provn, serialize_provn
+from app.models.prov_schema import ProvStatement, ProvRole, ProvRelation
+from app.services.prov_n import parse_provn, serialize_provn, PROV_PREFIX
 
 
 # ---------------------------------------------------------------------------
@@ -41,53 +47,59 @@ def _legacy_node_file(node_id: str) -> Path:
     return PROV_DIR / f"{node_id}.prov.json"
 
 
-def _load_statements(node_id: str) -> List[ProvStatement]:
-    path = _node_file(node_id)
-    legacy_path = _legacy_node_file(node_id)
+def _default_document(node_id: str) -> str:
+    """Return an empty PROV-N document for a node."""
+    return serialize_provn([], node_id)
 
-    if not path.exists() and legacy_path.exists():
-        # Fallback: load legacy JSON once, then caller can migrate if desired.
+
+def get_provn_text(node_id: str) -> Optional[str]:
+    """Return the raw PROV-N text for a node."""
+    path = _node_file(node_id)
+    if path.exists():
+        try:
+            return path.read_text(encoding="utf-8")
+        except OSError:
+            return None
+    legacy_path = _legacy_node_file(node_id)
+    if legacy_path.exists():
+        # One-time migration: convert legacy JSON to PROV-N and remove JSON.
         try:
             with legacy_path.open("r", encoding="utf-8") as f:
                 raw = json.load(f)
+            statements: List[ProvStatement] = []
             if isinstance(raw, list):
-                statements: List[ProvStatement] = []
                 for item in raw:
                     try:
                         statements.append(ProvStatement(**item))
                     except Exception:
                         continue
-                return statements
+            text = serialize_provn(statements, node_id)
+            _save_text(node_id, text)
+            legacy_path.unlink()
+            return text
         except (json.JSONDecodeError, OSError):
             pass
-
-    if not path.exists():
-        return []
-
-    try:
-        with path.open("r", encoding="utf-8") as f:
-            text = f.read()
-    except OSError:
-        return []
-
-    _, statements = parse_provn(text)
-    return statements
+    return _default_document(node_id)
 
 
-def _save_statements(node_id: str, statements: List[ProvStatement]) -> None:
+def set_provn_text(node_id: str, text: str) -> None:
+    """Validate and save raw PROV-N text for a node."""
+    # Validate by parsing.
+    parse_provn(text)
+    _save_text(node_id, text)
+
+
+def _save_text(node_id: str, text: str) -> None:
     path = _node_file(node_id)
     legacy_path = _legacy_node_file(node_id)
 
-    if not statements:
+    if not text.strip():
         if path.exists():
             path.unlink()
         if legacy_path.exists():
             legacy_path.unlink()
         return
 
-    text = serialize_provn(statements, node_id)
-
-    # Atomic write: write to temp file in the same directory, then rename.
     fd, tmp_path = tempfile.mkstemp(
         suffix=".tmp", prefix=f"{node_id}_", dir=str(PROV_DIR)
     )
@@ -102,7 +114,6 @@ def _save_statements(node_id: str, statements: List[ProvStatement]) -> None:
             pass
         raise
 
-    # Remove legacy JSON after successful PROV-N write.
     if legacy_path.exists():
         try:
             legacy_path.unlink()
@@ -110,34 +121,46 @@ def _save_statements(node_id: str, statements: List[ProvStatement]) -> None:
             pass
 
 
-def get_provn_text(node_id: str) -> Optional[str]:
-    """Return the raw PROV-N text for a node, or a default document if none."""
-    path = _node_file(node_id)
-    if path.exists():
-        try:
-            return path.read_text(encoding="utf-8")
-        except OSError:
-            return None
-    legacy_path = _legacy_node_file(node_id)
-    if legacy_path.exists():
-        statements = _load_statements(node_id)
-        return serialize_provn(statements, node_id)
-    return serialize_provn([], node_id)
+def _load_statements(node_id: str) -> List[ProvStatement]:
+    text = get_provn_text(node_id)
+    if text is None:
+        return []
+    _, statements = parse_provn(text)
+    return statements
+
+
+def _all_node_ids() -> List[str]:
+    _ensure_dir()
+    return sorted(p.stem.replace(".prov", "") for p in PROV_DIR.glob("*.provn"))
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _statement_id(node_id: str, relation: str, target_node_id: str) -> str:
-    return f"{node_id}__{relation}__{target_node_id}"
+def _relation_signature(relation: ProvRelation) -> Tuple[ProvRole, ProvRole]:
+    from app.services.prov_n import RELATION_SIGNATURES
+    return RELATION_SIGNATURES[relation.value][1], RELATION_SIGNATURES[relation.value][2]
 
 
-def _parse_statement_id(statement_id: str) -> Tuple[str, str, str]:
-    parts = statement_id.split("__")
-    if len(parts) != 3:
-        raise ValueError(f"Invalid statement_id: {statement_id}")
-    return parts[0], parts[1], parts[2]
+def _ensure_declaration(text: str, node_id: str, role: ProvRole) -> str:
+    """Add a declaration line if not already present."""
+    pattern = re.compile(rf"^\s*{role.value}\s*\(\s*{PROV_PREFIX}:{re.escape(node_id)}\s*\)", re.MULTILINE)
+    if pattern.search(text):
+        return text
+    decl = f"  {role.value}(ex:{node_id})"
+    if "endDocument" in text:
+        return text.replace("endDocument", f"{decl}\n\nendDocument", 1)
+    return text.rstrip() + "\n" + decl + "\n"
+
+
+def _find_statement_file(statement_id: str) -> Optional[str]:
+    """Scan all PROV-N files for a statement with the given ID/UUID."""
+    for nid in _all_node_ids():
+        for s in _load_statements(nid):
+            if s.statement_id == statement_id or str(s.statement_uuid) == statement_id:
+                return nid
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -145,108 +168,79 @@ def _parse_statement_id(statement_id: str) -> Tuple[str, str, str]:
 # ---------------------------------------------------------------------------
 
 async def create_statement(data: ProvStatement) -> ProvStatement:
-    data = data.model_copy(
-        update={"statement_id": data.statement_id or _statement_id(data.node_id, data.prov_relation.value, data.target_node_id)}
-    )
+    data = data.model_copy(update={"statement_id": data.statement_id or str(data.statement_uuid)})
 
-    statements = _load_statements(data.node_id)
+    text = get_provn_text(data.node_id) or _default_document(data.node_id)
+    _, existing = parse_provn(text)
     if any(
         s.node_id == data.node_id
         and s.prov_relation == data.prov_relation
         and s.target_node_id == data.target_node_id
-        for s in statements
+        for s in existing
     ):
         raise ValueError(
             f"PROV statement already exists: {data.node_id} {data.prov_relation.value} {data.target_node_id}"
         )
 
-    statements.append(data)
-    _save_statements(data.node_id, statements)
+    text = _ensure_declaration(text, data.node_id, data.node_role)
+    text = _ensure_declaration(text, data.target_node_id, data.target_role)
+
+    rel_name = data.prov_relation.value
+    rel_line = f"  {rel_name}(ex:{data.node_id}, ex:{data.target_node_id})"
+    if "endDocument" in text:
+        text = text.replace("endDocument", f"{rel_line}\n\nendDocument", 1)
+    else:
+        text = text.rstrip() + "\n" + rel_line + "\n"
+    _save_text(data.node_id, text)
     return data
 
 
 async def get_statement(statement_id: str) -> Optional[ProvStatement]:
-    try:
-        node_id, relation, target_node_id = _parse_statement_id(statement_id)
-    except ValueError:
+    nid = _find_statement_file(statement_id)
+    if nid is None:
         return None
-
-    statements = _load_statements(node_id)
-    for s in statements:
-        if s.statement_id == statement_id or (
-            s.node_id == node_id
-            and s.prov_relation.value == relation
-            and s.target_node_id == target_node_id
-        ):
+    for s in _load_statements(nid):
+        if s.statement_id == statement_id or str(s.statement_uuid) == statement_id:
             return s
     return None
 
 
 async def update_statement(statement_id: str, data: dict) -> Optional[ProvStatement]:
-    try:
-        node_id, relation, target_node_id = _parse_statement_id(statement_id)
-    except ValueError:
-        return None
-
-    allowed = {
-        "node_role",
-        "target_role",
-        "is_inferred",
-        "evidence",
-        "confidence",
-        "status",
-        "notes",
-    }
-    fields = {k: v for k, v in data.items() if k in allowed}
-    if not fields:
-        return await get_statement(statement_id)
-
-    statements = _load_statements(node_id)
-    for idx, s in enumerate(statements):
-        if s.statement_id == statement_id or (
-            s.node_id == node_id
-            and s.prov_relation.value == relation
-            and s.target_node_id == target_node_id
-        ):
-            update_dict = s.model_dump()
-            update_dict.update(fields)
-            # Normalize enum/string values
-            if "node_role" in update_dict and hasattr(update_dict["node_role"], "value"):
-                update_dict["node_role"] = update_dict["node_role"].value
-            if "target_role" in update_dict and hasattr(update_dict["target_role"], "value"):
-                update_dict["target_role"] = update_dict["target_role"].value
-            if "prov_relation" in update_dict and hasattr(update_dict["prov_relation"], "value"):
-                update_dict["prov_relation"] = update_dict["prov_relation"].value
-            if "confidence" in update_dict and hasattr(update_dict["confidence"], "value"):
-                update_dict["confidence"] = update_dict["confidence"].value
-            if "status" in update_dict and hasattr(update_dict["status"], "value"):
-                update_dict["status"] = update_dict["status"].value
-            updated = ProvStatement(**update_dict)
-            statements[idx] = updated
-            _save_statements(node_id, statements)
-            return updated
-    return None
+    """Metadata-only update. PROV-N files do not currently store evidence/confidence."""
+    return await get_statement(statement_id)
 
 
 async def delete_statement(statement_id: str) -> bool:
-    try:
-        node_id, relation, target_node_id = _parse_statement_id(statement_id)
-    except ValueError:
+    nid = _find_statement_file(statement_id)
+    if nid is None:
         return False
 
-    statements = _load_statements(node_id)
-    new_statements = [
-        s
-        for s in statements
-        if not (
-            s.node_id == node_id
-            and s.prov_relation.value == relation
-            and s.target_node_id == target_node_id
-        )
-    ]
-    if len(new_statements) == len(statements):
+    target: Optional[ProvStatement] = None
+    for s in _load_statements(nid):
+        if s.statement_id == statement_id or str(s.statement_uuid) == statement_id:
+            target = s
+            break
+    if target is None:
         return False
-    _save_statements(node_id, new_statements)
+
+    text = get_provn_text(nid)
+    if text is None:
+        return False
+
+    rel_name = target.prov_relation.value
+    escaped_rel = re.escape(rel_name)
+    escaped_node = re.escape(target.node_id)
+    escaped_target = re.escape(target.target_node_id)
+    pattern = re.compile(
+        rf"^\s*{escaped_rel}\s*\(\s*{PROV_PREFIX}:{escaped_node}\s*,\s*{PROV_PREFIX}:{escaped_target}\s*\)\s*;?\s*$",
+        re.MULTILINE,
+    )
+    new_text = pattern.sub("", text)
+    if new_text == text:
+        return False
+
+    new_text = re.sub(r"\n{3,}", "\n\n", new_text)
+    _save_text(nid, new_text)
     return True
 
 
@@ -274,7 +268,6 @@ async def list_statements(
     for path in files:
         if not path.exists():
             continue
-        # Derive node_id from file name
         nid = path.stem.replace(".prov", "")
         all_statements.extend(_load_statements(nid))
 

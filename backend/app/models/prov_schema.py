@@ -1,8 +1,12 @@
 """
 PROV statement schema.
 
-A PROV statement is a type-level provenance assertion attached to an entity node.
-It is stored in PostgreSQL and projected onto the industrial graph on demand.
+A PROV statement is a parsed relation from a PROV-N document. It is intentionally
+loosely coupled to the industrial graph: `node_id` and `target_node_id` hold the
+PROV identifiers exactly as they appear in the PROV-N file. If an identifier
+happens to match an existing `IndustrialNode.node_id`, the frontend or other
+consumers may create a link; otherwise the statement is still valid provenance
+metadata.
 """
 
 from __future__ import annotations
@@ -37,16 +41,14 @@ class ProvStatement(BaseModel):
 
     statement_id: Optional[str] = Field(
         default=None,
-        max_length=256,
-        description="自动生成的语句 ID，格式为 node_id__relation__target_node_id",
+        max_length=512,
+        description="语句唯一标识，默认使用 statement_uuid 的字符串",
     )
 
     node_id: str = Field(
         ...,
-        pattern=r"^[a-z][a-z0-9_]*$",
-        min_length=3,
-        max_length=64,
-        description="被描述的节点（entity/activity）的 node_id",
+        max_length=256,
+        description="PROV 关系主体标识符（尽量复用图谱 node_id，但不强制）",
     )
 
     node_role: ProvRole = Field(
@@ -61,10 +63,8 @@ class ProvStatement(BaseModel):
 
     target_node_id: str = Field(
         ...,
-        pattern=r"^[a-z][a-z0-9_]*$",
-        min_length=3,
-        max_length=64,
-        description="指向节点的 node_id",
+        max_length=256,
+        description="PROV 关系客体标识符（尽量复用图谱 node_id，但不强制）",
     )
 
     target_role: ProvRole = Field(
@@ -92,13 +92,13 @@ class ProvStatement(BaseModel):
     @classmethod
     def id_non_empty(cls, v: str) -> str:
         if not v or not v.strip():
-            raise ValueError("node_id cannot be empty")
-        return v
+            raise ValueError("identifier cannot be empty")
+        return v.strip()
 
     @model_validator(mode="after")
     def generate_statement_id(self) -> "ProvStatement":
         if self.statement_id is None or not self.statement_id.strip():
-            self.statement_id = f"{self.node_id}__{self.prov_relation.value}__{self.target_node_id}"
+            self.statement_id = str(self.statement_uuid)
         return self
 
     @model_validator(mode="after")
