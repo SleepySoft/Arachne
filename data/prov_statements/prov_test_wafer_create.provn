@@ -1,9 +1,0 @@
-document
-  prefix ex <http://arachne.graph/>
-
-  activity(ex:prov_test_mfg_create)
-  entity(ex:prov_test_wafer_create)
-
-  wasGeneratedBy(ex:prov_test_wafer_create, ex:prov_test_mfg_create)
-
-endDocument

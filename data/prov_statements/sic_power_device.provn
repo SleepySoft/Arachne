@@ -1,11 +1,116 @@
 document
   prefix ex <http://arachne.graph/>
 
-  entity(ex:sic_power_device)
-  entity(ex:sic_wafer)
-  entity(ex:silicon_carbide)
+  // SiC 功率器件完整制造流程
 
-  wasDerivedFrom(ex:sic_power_device, ex:sic_wafer)
+  entity(ex:silicon_carbide)
+  entity(ex:sic_wafer)
+
+  entity(ex:initial_cleaned_wafer)
+  entity(ex:patterned_wafer)
+  entity(ex:etched_wafer)
+  entity(ex:etch_cleaned_wafer)
+  entity(ex:annealed_wafer)
+  entity(ex:deposited_wafer)
+  entity(ex:cmp_cleaned_wafer)
+  entity(ex:wafer)
+  entity(ex:chip_die)
+  entity(ex:die_attached_substrate)
+  entity(ex:wire_bonded_package)
+  entity(ex:molded_chip)
+  entity(ex:tested_chip)
+  entity(ex:sic_power_device)
+
+  entity(ex:photoresist)
+  entity(ex:photomask)
+  entity(ex:wet_chemicals)
+  entity(ex:electronic_special_gases)
+  entity(ex:sputtering_target)
+  entity(ex:cmp_slurry)
+  entity(ex:packaging_substrate)
+  entity(ex:packaging_material)
+  entity(ex:probe_card)
+  entity(ex:test_equipment)
+
+  activity(ex:sic_wafer_manufacturing)
+  activity(ex:initial_wafer_cleaning)
+  activity(ex:lithography_process)
+  activity(ex:etching_process)
+  activity(ex:post_etch_residue_cleaning)
+  activity(ex:ion_implantation_process)
+  activity(ex:annealing_process)
+  activity(ex:thin_film_deposition_process)
+  activity(ex:cmp_process)
+  activity(ex:post_cmp_cleaning)
+  activity(ex:wafer_manufacturing)
+  activity(ex:wafer_dicing)
+  activity(ex:die_bonding)
+  activity(ex:wire_bonding)
+  activity(ex:chip_molding)
+  activity(ex:chip_testing)
+
+  agent(ex:wafer_foundry)
+  agent(ex:osat)
+
+  used(ex:sic_wafer_manufacturing, ex:silicon_carbide)
+  wasGeneratedBy(ex:sic_wafer, ex:sic_wafer_manufacturing)
+  wasDerivedFrom(ex:sic_wafer, ex:silicon_carbide)
+
+  used(ex:initial_wafer_cleaning, ex:sic_wafer)
+  wasGeneratedBy(ex:initial_cleaned_wafer, ex:initial_wafer_cleaning)
+
+  used(ex:lithography_process, ex:initial_cleaned_wafer)
+  used(ex:lithography_process, ex:photoresist)
+  used(ex:lithography_process, ex:photomask)
+  wasGeneratedBy(ex:patterned_wafer, ex:lithography_process)
+
+  used(ex:etching_process, ex:patterned_wafer)
+  used(ex:etching_process, ex:wet_chemicals)
+  used(ex:etching_process, ex:electronic_special_gases)
+  wasGeneratedBy(ex:etched_wafer, ex:etching_process)
+
+  used(ex:post_etch_residue_cleaning, ex:etched_wafer)
+  wasGeneratedBy(ex:etch_cleaned_wafer, ex:post_etch_residue_cleaning)
+
+  used(ex:ion_implantation_process, ex:etch_cleaned_wafer)
+  wasGeneratedBy(ex:annealed_wafer, ex:ion_implantation_process)
+
+  used(ex:thin_film_deposition_process, ex:annealed_wafer)
+  used(ex:thin_film_deposition_process, ex:sputtering_target)
+  wasGeneratedBy(ex:deposited_wafer, ex:thin_film_deposition_process)
+
+  used(ex:cmp_process, ex:deposited_wafer)
+  used(ex:cmp_process, ex:cmp_slurry)
+  wasGeneratedBy(ex:cmp_cleaned_wafer, ex:cmp_process)
+
+  wasGeneratedBy(ex:wafer, ex:wafer_manufacturing)
+  wasDerivedFrom(ex:wafer, ex:cmp_cleaned_wafer)
+
+  used(ex:wafer_dicing, ex:wafer)
+  wasGeneratedBy(ex:chip_die, ex:wafer_dicing)
+
+  used(ex:die_bonding, ex:chip_die)
+  used(ex:die_bonding, ex:packaging_substrate)
+  wasGeneratedBy(ex:die_attached_substrate, ex:die_bonding)
+
+  used(ex:wire_bonding, ex:die_attached_substrate)
+  wasGeneratedBy(ex:wire_bonded_package, ex:wire_bonding)
+
+  used(ex:chip_molding, ex:wire_bonded_package)
+  used(ex:chip_molding, ex:packaging_material)
+  wasGeneratedBy(ex:molded_chip, ex:chip_molding)
+
+  used(ex:chip_testing, ex:molded_chip)
+  used(ex:chip_testing, ex:probe_card)
+  used(ex:chip_testing, ex:test_equipment)
+  wasGeneratedBy(ex:tested_chip, ex:chip_testing)
+
+  wasDerivedFrom(ex:sic_power_device, ex:tested_chip)
   wasDerivedFrom(ex:sic_power_device, ex:silicon_carbide)
+  wasDerivedFrom(ex:sic_power_device, ex:sic_wafer)
+
+  wasAssociatedWith(ex:sic_wafer_manufacturing, ex:wafer_foundry)
+  wasAssociatedWith(ex:wafer_manufacturing, ex:wafer_foundry)
+  wasAssociatedWith(ex:chip_testing, ex:osat)
 
 endDocument

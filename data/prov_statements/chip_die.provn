@@ -1,9 +1,25 @@
 document
   prefix ex <http://arachne.graph/>
 
+  // 芯片裸片（chip_die）的来源
+
+  entity(ex:wafer)
   entity(ex:chip_die)
+
+  entity(ex:dicing_tape)
+  entity(ex:dicing_blade)
+  entity(ex:deionized_water)
+
   activity(ex:wafer_dicing)
+  agent(ex:osat)
+
+  used(ex:wafer_dicing, ex:wafer)
+  used(ex:wafer_dicing, ex:dicing_tape)
+  used(ex:wafer_dicing, ex:dicing_blade)
+  used(ex:wafer_dicing, ex:deionized_water)
 
   wasGeneratedBy(ex:chip_die, ex:wafer_dicing)
+  wasDerivedFrom(ex:chip_die, ex:wafer)
+  wasAssociatedWith(ex:wafer_dicing, ex:osat)
 
 endDocument

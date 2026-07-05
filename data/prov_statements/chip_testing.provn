@@ -1,9 +1,26 @@
 document
   prefix ex <http://arachne.graph/>
 
-  activity(ex:chip_testing)
+  // 芯片测试：对塑封芯片进行电性/功能测试
+
   entity(ex:molded_chip)
+  entity(ex:tested_chip)
+
+  entity(ex:probe_card)
+  entity(ex:test_equipment)
+  entity(ex:test_program)
+  entity(ex:handler)
+
+  activity(ex:chip_testing)
+  agent(ex:osat)
 
   used(ex:chip_testing, ex:molded_chip)
+  used(ex:chip_testing, ex:probe_card)
+  used(ex:chip_testing, ex:test_equipment)
+  used(ex:chip_testing, ex:test_program)
+  used(ex:chip_testing, ex:handler)
+
+  wasGeneratedBy(ex:tested_chip, ex:chip_testing)
+  wasAssociatedWith(ex:chip_testing, ex:osat)
 
 endDocument

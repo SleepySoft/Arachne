@@ -1,9 +1,47 @@
 document
   prefix ex <http://arachne.graph/>
 
-  entity(ex:igbt)
-  entity(ex:silicon)
+  // IGBT（绝缘栅双极晶体管）是硅基功率器件的一种
 
+  entity(ex:silicon)
+  entity(ex:silicon_wafer)
+  entity(ex:wafer)
+  entity(ex:chip_die)
+  entity(ex:molded_chip)
+  entity(ex:tested_chip)
+  entity(ex:igbt)
+
+  activity(ex:silicon_purification)
+  activity(ex:wafer_manufacturing)
+  activity(ex:wafer_dicing)
+  activity(ex:chip_molding)
+  activity(ex:chip_testing)
+
+  agent(ex:wafer_foundry)
+  agent(ex:osat)
+
+  used(ex:silicon_purification, ex:silicon)
+  wasGeneratedBy(ex:silicon_wafer, ex:silicon_purification)
+
+  used(ex:wafer_manufacturing, ex:silicon_wafer)
+  wasGeneratedBy(ex:wafer, ex:wafer_manufacturing)
+  wasDerivedFrom(ex:wafer, ex:silicon_wafer)
+
+  used(ex:wafer_dicing, ex:wafer)
+  wasGeneratedBy(ex:chip_die, ex:wafer_dicing)
+
+  used(ex:chip_molding, ex:chip_die)
+  wasGeneratedBy(ex:molded_chip, ex:chip_molding)
+  wasDerivedFrom(ex:molded_chip, ex:chip_die)
+
+  used(ex:chip_testing, ex:molded_chip)
+  wasGeneratedBy(ex:tested_chip, ex:chip_testing)
+
+  wasDerivedFrom(ex:igbt, ex:tested_chip)
   wasDerivedFrom(ex:igbt, ex:silicon)
+  wasDerivedFrom(ex:igbt, ex:silicon_wafer)
+
+  wasAssociatedWith(ex:wafer_manufacturing, ex:wafer_foundry)
+  wasAssociatedWith(ex:chip_testing, ex:osat)
 
 endDocument

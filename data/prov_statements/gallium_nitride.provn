@@ -1,9 +1,21 @@
 document
   prefix ex <http://arachne.graph/>
 
+  // 氮化镓（GaN）衬底/粉体的真实合成：金属 Ga + NH3 在高温下生长 GaN
+
   entity(ex:gallium)
+  entity(ex:ammonia)
+  entity(ex:nitrogen_gas)
   entity(ex:gallium_nitride)
 
-  wasDerivedFrom(ex:gallium_nitride, ex:gallium)
+  activity(ex:gan_crystal_growth)
+  agent(ex:chemical_supplier)
+
+  used(ex:gan_crystal_growth, ex:gallium)
+  used(ex:gan_crystal_growth, ex:ammonia)
+  used(ex:gan_crystal_growth, ex:nitrogen_gas)
+
+  wasGeneratedBy(ex:gallium_nitride, ex:gan_crystal_growth)
+  wasAssociatedWith(ex:gan_crystal_growth, ex:chemical_supplier)
 
 endDocument

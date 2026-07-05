@@ -1,9 +1,95 @@
 document
   prefix ex <http://arachne.graph/>
 
+  // 完工晶圆（wafer）的完整来源：前段制程 + 量测
+
+  entity(ex:silicon_wafer)
+  entity(ex:initial_cleaned_wafer)
+  entity(ex:lithography_ready_wafer)
+  entity(ex:patterned_wafer)
+  entity(ex:etched_wafer)
+  entity(ex:etch_cleaned_wafer)
+  entity(ex:annealed_wafer)
+  entity(ex:deposited_wafer)
+  entity(ex:cmp_cleaned_wafer)
   entity(ex:wafer)
+  entity(ex:metrology_data)
+
+  entity(ex:photoresist)
+  entity(ex:photomask)
+  entity(ex:wet_chemicals)
+  entity(ex:electronic_special_gases)
+  entity(ex:sputtering_target)
+  entity(ex:cmp_slurry)
+
+  entity(ex:cleaning_equipment)
+  entity(ex:lithography_machine)
+  entity(ex:track_coater_developer)
+  entity(ex:etching_machine)
+  entity(ex:ion_implanter)
+  entity(ex:deposition_equipment)
+  entity(ex:cmp_equipment)
+  entity(ex:metrology_equipment)
+
+  activity(ex:initial_wafer_cleaning)
+  activity(ex:pre_lithography_wafer_cleaning)
+  activity(ex:lithography_process)
+  activity(ex:etching_process)
+  activity(ex:post_etch_residue_cleaning)
+  activity(ex:ion_implantation_process)
+  activity(ex:annealing_process)
+  activity(ex:thin_film_deposition_process)
+  activity(ex:cmp_process)
+  activity(ex:post_cmp_cleaning)
+  activity(ex:metrology_inspection)
   activity(ex:wafer_manufacturing)
 
+  agent(ex:foundry)
+
+  used(ex:initial_wafer_cleaning, ex:silicon_wafer)
+  used(ex:initial_wafer_cleaning, ex:cleaning_equipment)
+  wasGeneratedBy(ex:initial_cleaned_wafer, ex:initial_wafer_cleaning)
+
+  used(ex:pre_lithography_wafer_cleaning, ex:initial_cleaned_wafer)
+  wasGeneratedBy(ex:lithography_ready_wafer, ex:pre_lithography_wafer_cleaning)
+
+  used(ex:lithography_process, ex:lithography_ready_wafer)
+  used(ex:lithography_process, ex:photoresist)
+  used(ex:lithography_process, ex:photomask)
+  used(ex:lithography_process, ex:lithography_machine)
+  used(ex:lithography_process, ex:track_coater_developer)
+  wasGeneratedBy(ex:patterned_wafer, ex:lithography_process)
+
+  used(ex:etching_process, ex:patterned_wafer)
+  used(ex:etching_process, ex:etching_machine)
+  used(ex:etching_process, ex:wet_chemicals)
+  used(ex:etching_process, ex:electronic_special_gases)
+  wasGeneratedBy(ex:etched_wafer, ex:etching_process)
+
+  used(ex:post_etch_residue_cleaning, ex:etched_wafer)
+  wasGeneratedBy(ex:etch_cleaned_wafer, ex:post_etch_residue_cleaning)
+
+  used(ex:ion_implantation_process, ex:etch_cleaned_wafer)
+  used(ex:ion_implantation_process, ex:ion_implanter)
+  wasGeneratedBy(ex:annealed_wafer, ex:ion_implantation_process)
+
+  used(ex:thin_film_deposition_process, ex:annealed_wafer)
+  used(ex:thin_film_deposition_process, ex:deposition_equipment)
+  used(ex:thin_film_deposition_process, ex:sputtering_target)
+  wasGeneratedBy(ex:deposited_wafer, ex:thin_film_deposition_process)
+
+  used(ex:cmp_process, ex:deposited_wafer)
+  used(ex:cmp_process, ex:cmp_equipment)
+  used(ex:cmp_process, ex:cmp_slurry)
+  wasGeneratedBy(ex:cmp_cleaned_wafer, ex:cmp_process)
+
+  used(ex:metrology_inspection, ex:annealed_wafer)
+  used(ex:metrology_inspection, ex:metrology_equipment)
+  wasGeneratedBy(ex:metrology_data, ex:metrology_inspection)
+
   wasGeneratedBy(ex:wafer, ex:wafer_manufacturing)
+  wasDerivedFrom(ex:wafer, ex:silicon_wafer)
+  wasDerivedFrom(ex:wafer, ex:cmp_cleaned_wafer)
+  wasAssociatedWith(ex:wafer_manufacturing, ex:foundry)
 
 endDocument
