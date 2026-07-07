@@ -1,7 +1,10 @@
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import PlainTextResponse
+
+# PROV-N support is deprecated. PlainTextResponse was only used by the raw
+# PROV-N endpoints below.
+# from fastapi.responses import PlainTextResponse
 
 from app.models.prov_schema import ProvStatement
 from app.services import prov_storage
@@ -83,18 +86,26 @@ async def list_statements_for_node(
     return {"total": total, "page": page, "page_size": page_size, "items": items}
 
 
-@router.get("/nodes/{node_id}/provn", response_class=PlainTextResponse)
-async def get_provn_for_node(node_id: str):
-    text = prov_storage.get_provn_text(node_id)
-    if text is None:
-        raise HTTPException(status_code=404, detail="PROV-N document not found")
-    return text
-
-
-@router.put("/nodes/{node_id}/provn", response_class=PlainTextResponse)
-async def set_provn_for_node(node_id: str, text: str):
-    try:
-        prov_storage.set_provn_text(node_id, text)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid PROV-N: {e}")
-    return text
+# ---------------------------------------------------------------------------
+# Deprecated PROV-N endpoints
+# ---------------------------------------------------------------------------
+# Raw PROV-N read/write is no longer supported. The parser module is kept for
+# reference and potential future export use, but the storage layer now uses
+# JSON files. These endpoints are preserved in comments to document the prior
+# API surface.
+#
+# @router.get("/nodes/{node_id}/provn", response_class=PlainTextResponse)
+# async def get_provn_for_node(node_id: str):
+#     text = prov_storage.get_provn_text(node_id)
+#     if text is None:
+#         raise HTTPException(status_code=404, detail="PROV-N document not found")
+#     return text
+#
+#
+# @router.put("/nodes/{node_id}/provn", response_class=PlainTextResponse)
+# async def set_provn_for_node(node_id: str, text: str):
+#     try:
+#         prov_storage.set_provn_text(node_id, text)
+#     except ValueError as e:
+#         raise HTTPException(status_code=400, detail=f"Invalid PROV-N: {e}")
+#     return text

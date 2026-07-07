@@ -202,12 +202,13 @@ export const createProvStatement = async (data: Omit<ProvStatement, "statement_u
   return res.data;
 };
 
-export const getProvNByNode = async (nodeId: string): Promise<string> => {
-  const res = await client.get(`/prov/nodes/${nodeId}/provn`, {
-    responseType: "text",
-  });
-  return res.data;
-};
+// PROV-N support is deprecated. The backend no longer exposes /prov/nodes/{id}/provn.
+// export const getProvNByNode = async (nodeId: string): Promise<string> => {
+//   const res = await client.get(`/prov/nodes/${nodeId}/provn`, {
+//     responseType: "text",
+//   });
+//   return res.data;
+// };
 
 // Batches
 export const submitBatch = async (
