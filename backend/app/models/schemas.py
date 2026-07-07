@@ -364,6 +364,7 @@ class IndustrialFlowType(str, Enum):
     CAPABILITY_ENABLEMENT = "capability_enablement"       # 能力使能
     STRUCTURAL_COMPOSITION = "structural_composition"     # 结构组成
     SUPPLY_RELATION = "supply_relation"                   # 供应关系（摘要级上下游、缺少明确中间工艺、产业链层级）
+    DERIVED_FROM = "derived_from"                         # 直接物料派生（显式、人工、默认隐藏）
     UNKNOWN = "unknown"                                   # 未知/待分类
 
 
@@ -382,6 +383,7 @@ EDGE_TYPE_LABELS: dict[str, str] = {
     "capability_enablement": "能力使能",
     "structural_composition": "结构组成",
     "supply_relation": "供应关系",
+    "derived_from": "派生自",
     "unknown": "未知关系",
     # OntologyType
     "alias_of": "别名/同义",

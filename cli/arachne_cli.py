@@ -420,7 +420,7 @@ Examples:
     p_qedge.add_argument("--edge-type", default="material_input", choices=[
         "material_input", "energy_input", "information_input", "equipment_enablement",
         "process_output", "service_provision", "capability_enablement",
-        "structural_composition", "supply_relation", "unknown"
+        "structural_composition", "supply_relation", "derived_from", "unknown"
     ], help="Edge type (default: material_input)")
     p_qedge.add_argument("--description", help="Optional description; auto-generated if omitted")
     p_qedge.add_argument("--notes", help="Notes, e.g. '待 AI 补全'")

@@ -26,6 +26,7 @@ export type IndustrialFlowType =
   | "capability_enablement"
   | "structural_composition"
   | "supply_relation"
+  | "derived_from"
   | "unknown";
 
 export type OntologyType =
@@ -506,6 +507,7 @@ export const EDGE_TYPE_LABELS: Record<string, string> = {
   capability_enablement: "能力使能",
   structural_composition: "结构组成",
   supply_relation: "供应关系",
+  derived_from: "派生自",
   unknown: "未知关系",
   // OntologyType
   alias_of: "别名/同义",

@@ -108,7 +108,7 @@
 
 **待实现（按本设计推进）：**
 
-- 在 `IndustrialFlowType` 中增加 `derived_from`。
+- ✅ 在 `IndustrialFlowType` 中增加 `derived_from`（schema 标签已添加）。
 - 为 `derived_from` 增加创建入口（仅人工创建，需要证据和置信度）。
 - 前端实现“物料派生视图”临时开关；`derived_from` 边默认隐藏，不参与主布局和传统上下游查询。
 - 将人工创建的 `derived_from` 边同步写回 JSON PROV 文件（`wasDerivedFrom`），标记 `is_inferred = false`。

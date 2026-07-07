@@ -39,6 +39,7 @@ const INDUSTRIAL_FLOW_TYPES = [
   "capability_enablement",
   "structural_composition",
   "supply_relation",
+  "derived_from",
   "unknown",
 ];
 

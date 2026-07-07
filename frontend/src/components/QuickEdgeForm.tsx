@@ -30,6 +30,7 @@ const EDGE_TYPES: { value: IndustrialFlowType; label: string }[] = [
   { value: "capability_enablement", label: "能力使能" },
   { value: "structural_composition", label: "结构组成" },
   { value: "supply_relation", label: "供应关系" },
+  { value: "derived_from", label: "派生自" },
   { value: "unknown", label: "未知关系" },
 ];
 

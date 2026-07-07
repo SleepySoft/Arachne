@@ -395,7 +395,8 @@ Missing or stubbed:
 - [ ] **Run full test suite** — PostgreSQL is now available; run PG-dependent tests to verify
 
 ### PROV / Derivation
-- [ ] **Implement `derived_from` industrial-flow edge type**: add `IndustrialFlowType.DERIVED_FROM`, label, backend validation (entity endpoints, no process nodes, no generic consumables, acyclic), and a dedicated manual creation workflow with evidence.
+- [x] **Add `derived_from` to schemas and labels**: `IndustrialFlowType.DERIVED_FROM` and `EDGE_TYPE_LABELS` updated in backend, frontend types/labels, edge forms, and CLI choices.
+- [ ] **Implement `derived_from` creation workflow**: backend validation (entity endpoints, no process nodes, no generic consumables, acyclic), dedicated manual creation UI, and PROV-N/JSON sync.
 - [ ] **Implement material-derivation overlay view**: frontend toggle to show/hide `derived_from` edges as a non-layout overlay; default hidden; excluded from normal upstream/downstream queries.
 - [ ] **Sync `derived_from` edges to PROV-N**: on create/delete of a `derived_from` edge, update `data/prov_statements/{node_id}.provn` with `wasDerivedFrom(...)` and `is_inferred = false`.
 - [ ] **Backfill existing chains**: manually curate and create `derived_from` edges for chip and power-semiconductor flows (e.g., `tested_chip → silicon_wafer`, `gallium_nitride → gallium`).
