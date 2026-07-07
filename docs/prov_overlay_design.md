@@ -98,22 +98,23 @@
 
 ## 6. 实现状态
 
-**已实现：**
+**历史实现（PROV 覆盖层已弃用）：**
 
-- 文件存储：`data/prov_statements/{node_id}.prov.json`（已从 PostgreSQL `prov_statements` 迁移；早期实验性的 PROV-N 格式已弃用，parser 代码保留但不再被主代码引用）
+- 文件存储：`data/prov_statements/{node_id}.prov.json`（早期实现，已不再维护）
 - 后端模型：`backend/app/models/prov_schema.py`
 - 存储层：`backend/app/services/prov_storage.py` + `backend/app/services/prov_n.py`
 - REST API：`backend/app/routers/prov.py`，挂载在 `/api/v1/prov`
 - 前端集成：`NodeProvPanel`、节点详情 PROV 区、右键菜单 "查看 PROV"
 
-**待实现（按本设计推进）：**
+> 注：PROV 覆盖层已整体弃用。`derived_from` 直接作为产业图工业流边存在，不再维护 PROV 声明文件，也不再进行任何 PROV 同步。
+
+**按本设计已实现：**
 
 - ✅ 在 `IndustrialFlowType` 中增加 `derived_from`（schema 标签已添加）。
 - ✅ 后端 `derived_from` 策略校验：端点不能是 process、不能指向通用耗材、防重复、防环。
 - ✅ 前端过滤面板增加“显示物料派生边（derived_from）”开关，默认关闭；关闭时边被隐藏且不参与布局和邻近展开。
 - ✅ `derived_from` 边已被排除在公司探索/物料关联等传统上下游查询之外。
 - 为 `derived_from` 增加更明显的创建入口（当前与普通边共用表单，后续可加专用快捷入口）。
-- 将人工创建的 `derived_from` 边同步写回 JSON PROV 文件（`wasDerivedFrom`），标记 `is_inferred = false`。
 
 ---
 
@@ -215,22 +216,16 @@ process_output:    wafer_manufacturing → wafer
    - 两端都不是通用消耗品（可通过标签/黑名单/人工审核实现）；
    - 不形成循环；
    - 不与已有 `derived_from` 重复。
-5. 写入产业图 `derived_from` 边，并同步生成一条 `wasDerivedFrom` PROV 声明，`is_inferred = false`。
+5. 写入产业图 `derived_from` 边。PROV 覆盖层已弃用，因此不再生成 PROV 声明。
 
-### 7.8 同步到 PROV 文件
+### 7.8 与 PROV 的关系（已弃用）
 
-由于 `derived_from` 是人工显式声明，它应该在 PROV 覆盖层有对应记录：
+本项目曾使用 PROV 覆盖层记录 `wasDerivedFrom` 声明。随着 `derived_from` 被实现为产业图本身的一条工业流边，PROV 覆盖层不再必要：
 
-| 图中边 | PROV 声明 | `is_inferred` |
-|---|---|---|
-| `derived_from`（人工创建） | `wasDerivedFrom(...)` | `false` |
-| 工艺路径推荐（未写入图的候选） | 不写入 PROV 文件 | - |
-
-推荐做法：
-- 仅在用户确认创建 `derived_from` 边后，才写入 `data/prov_statements/{node_id}.prov.json`；
-- 前端“PROV 来源视图”和“物料派生视图”都读取同一份 JSON PROV 数据；
-- 删除 `derived_from` 边时同步删除对应 PROV 声明。
-- PROV-N 可以作为未来从产业图导出的*输出*格式，但不再是存储格式。
+- `derived_from` 边就是物料血缘的正式表达；
+- 不再维护 `data/prov_statements/` 中的 PROV 声明文件；
+- 创建/删除 `derived_from` 边时不需要同步到 PROV；
+- 如需向外部导出 PROV-N/PROV-JSON，可基于当前产业图临时生成，但这不是主流程。
 
 ### 7.9 校验规则
 
