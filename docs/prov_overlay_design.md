@@ -70,7 +70,7 @@
 | `process_output` | `wasGeneratedBy` | `activity` → `entity` | `wafer_manufacturing → wafer` 表示 `wafer wasGeneratedBy wafer_manufacturing` |
 | `service_provision` | `wasAssociatedWith` / `used` | `activity/entity` → `entity` | 检测服务与检测活动的关联 |
 | `capability_enablement` | `wasAssociatedWith` | `entity` → `activity` | 某技术能力使能某工艺 |
-| `structural_composition` | **无直接 PROV 对应** | `entity` → `entity` | 结构组成属于本体/装配关系，不属于 PROV 过程语义 |
+| `structural_composition` | **无直接 PROV 对应** | `entity` → `entity` | 结构组成（A 是 B 的组成部分）属于装配/本体关系；既不是 `derived_from`，也不是其反向 |
 | `supply_relation` | **无直接 PROV 对应** | `entity` → `entity` | 摘要级供应关系，太抽象，不归入 PROV |
 | `derived_from`（新增） | `wasDerivedFrom` | `entity` → `entity` | `tested_chip → silicon_wafer`、`gallium_nitride → gallium` |
 
@@ -154,7 +154,21 @@ process_output:    wafer_manufacturing → wafer
   - `process_output`：从 process 指向 entity，表示“被某个工艺生成”。
   - `derived_from`：从 entity 指向 entity，表示“在物料身份上直接派生自”。
 
-### 7.4 什么情况下应该创建 `derived_from`
+### 7.4 `derived_from` 与 `structural_composition` 的区别
+
+`structural_composition`（A 是 B 的结构组成部分）**不是** `derived_from`，也不是它的反向。
+
+| 维度 | `structural_composition` | `derived_from` |
+|---|---|---|
+| 语义 | 装配关系：A 作为部件存在于 B 中 | 物料血缘：B 在物料身份上来源于 A |
+| 方向 | `component → whole`（部件指向整体） | `product → source`（产物指向来源） |
+| 示例 | `bearing → motor`（轴承是电机的部件） | `motor derived_from copper`（电机在物料上来源于铜） |
+| 是否跳过工艺 | 与工艺无关 | 跳过具体工艺步骤 |
+| PROV 对应 | 无 | `wasDerivedFrom` |
+
+因此，**不要因为一个部件属于某个整体，就写 `whole derived_from component`**。如果确实想表达“电机由铜线派生而来”，应该写 `motor derived_from copper_wire`，并且需要证据支持。
+
+### 7.5 什么情况下应该创建 `derived_from`
 
 **适合创建 `derived_from` 的场景：**
 
@@ -179,7 +193,7 @@ process_output:    wafer_manufacturing → wafer
 4. **仅“强相关/关键”但不构成物料身份**：应使用 `key_input_for` / `enables` 等独立语义层，而不是 `derived_from`。
    - ❌ `power_device derived_from gallium_nitride`（若仅表示“氮化镓对功率器件很关键”）
 
-### 7.5 为什么不自动推导
+### 7.6 为什么不自动推导
 
 理论上可以从工艺路径 `process_output → activity → material_input` 推导出“产物由哪些原料生成”，但实际会导致：
 
@@ -189,7 +203,7 @@ process_output:    wafer_manufacturing → wafer
 
 因此，当前架构下 **禁止自动推论 `derived_from`**。未来即使引入推导辅助，也应是“推荐候选，人工确认后写入”，而不是直接写边。
 
-### 7.6 人工显式声明流程
+### 7.7 人工显式声明流程
 
 1. 用户在“物料派生视图”或节点详情中点击“声明派生关系”。
 2. 选择来源实体（必须是 material/part/device 等物料身份明确的实体）。
@@ -201,7 +215,7 @@ process_output:    wafer_manufacturing → wafer
    - 不与已有 `derived_from` 重复。
 5. 写入产业图 `derived_from` 边，并同步生成一条 `wasDerivedFrom` PROV 声明，`is_inferred = false`。
 
-### 7.7 同步到 PROV 文件
+### 7.8 同步到 PROV 文件
 
 由于 `derived_from` 是人工显式声明，它应该在 PROV 覆盖层有对应记录：
 
@@ -216,7 +230,7 @@ process_output:    wafer_manufacturing → wafer
 - 删除 `derived_from` 边时同步删除对应 PROV 声明。
 - PROV-N 可以作为未来从产业图导出的*输出*格式，但不再是存储格式。
 
-### 7.8 校验规则
+### 7.9 校验规则
 
 1. **端点类型校验**：`derived_from` 两端不能是 `process`。
 2. **端点语义校验**：两端应属于 `material` / `part` / `device` / `system` 等具有物料身份的实体；不建议使用 `service` / `technology_capability` / `infrastructure` / `platform` / `standard` / `software` / `data_asset`。
@@ -225,14 +239,14 @@ process_output:    wafer_manufacturing → wafer
 5. **不重复**：同一对 `(from_node, to_node)` 只能有一条 `derived_from` 边。
 6. **证据要求**：`confidence = HIGH` 时必须有证据。
 
-### 7.9 显示规则
+### 7.10 显示规则
 
 - **默认不显示**：`derived_from` 边不出现在常规工艺画布、上游/下游查询、公司关联查询中。
 - **独立开关**：通过“物料派生视图”按钮临时开启；开启时以叠加层形式渲染，不参与主布局（dagre）。
 - **视觉样式**：建议使用虚线、低饱和度颜色（如灰蓝或暗橙），并在边标签上显示“派生自”。
 - **临时性**：切换回工艺视图或刷新页面后，若未保存视图状态，则默认恢复隐藏。
 
-### 7.10 迁移路径
+### 7.11 迁移路径
 
 1. 在 `backend/app/models/schemas.py` 的 `IndustrialFlowType` 中新增 `DERIVED_FROM = "derived_from"`。
 2. 在 `EDGE_TYPE_LABELS` 中增加 `"derived_from": "派生自"`。
