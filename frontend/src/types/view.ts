@@ -19,6 +19,7 @@ export interface IndustrialFiltersState {
   confidence: string[];
   showIsA: boolean;
   showWeakOntology: boolean;
+  showDerivedFrom: boolean;
 }
 
 export interface FocusStep {

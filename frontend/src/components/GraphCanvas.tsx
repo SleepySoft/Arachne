@@ -349,6 +349,7 @@ interface GraphCanvasProps {
     confidence: string[];
     showIsA: boolean;
     showWeakOntology: boolean;
+    showDerivedFrom?: boolean;
   };
   highlightNodeId?: string;
   highlightNodeIds?: string[];
@@ -594,6 +595,7 @@ function applyFilters(
         ns === "ontology" &&
         et === "part_of" &&
         expandedParentSet.has(edge.target().id());
+      const isDerivedFrom = ns === "industrial_flow" && et === "derived_from";
       const show =
         visibleNodeIds.has(edge.source().id()) &&
         visibleNodeIds.has(edge.target().id()) &&
@@ -601,6 +603,7 @@ function applyFilters(
         (edgeTypeSet.size === 0 || edgeTypeSet.has(et)) &&
         (!isIsA || filters.showIsA) &&
         (!isWeakOntology || filters.showWeakOntology) &&
+        (!isDerivedFrom || filters.showDerivedFrom) &&
         !isInternalPartOf;
       edge.toggleClass("hidden", !show);
     });

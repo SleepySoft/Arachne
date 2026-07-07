@@ -22,6 +22,7 @@ from app.models.company_schema import BusinessRegistrationBatch
 from app.services import neo4j_storage
 from app.services import industry_storage
 from app.services import company_storage
+from app.services.derived_from_policy import validate_derived_from_edge
 from app.database_postgres import get_postgres_pool
 
 
@@ -169,6 +170,9 @@ async def create_edge(data) -> GraphEdge:
     if data.from_node == data.to_node:
         raise ValueError("self-loop edge is not allowed")
 
+    if isinstance(data, IndustrialFlowEdgeCreate) and data.edge_type == "derived_from":
+        await validate_derived_from_edge(data.from_node, data.to_node)
+
     existing = await neo4j_storage.get_edge(data.edge_id)
     if existing:
         raise ValueError(f"edge_id '{data.edge_id}' already exists")
@@ -195,6 +199,9 @@ async def quick_create_edge(data: IndustrialFlowEdgeQuickCreate) -> IndustrialFl
         raise ValueError(f"to_node '{data.to_node}' does not exist")
     if data.from_node == data.to_node:
         raise ValueError("self-loop edge is not allowed")
+
+    if data.edge_type == "derived_from":
+        await validate_derived_from_edge(data.from_node, data.to_node)
 
     edge_id = data.edge_id
     if not edge_id:
@@ -237,6 +244,12 @@ async def update_edge(edge_id: str, data, namespace: str) -> Optional[GraphEdge]
     update_dict = {k: v for k, v in data.model_dump().items() if v is not None}
     if not update_dict:
         return existing
+
+    new_edge_type = update_dict.get("edge_type", existing.edge_type)
+    if namespace == "industrial_flow" and new_edge_type == "derived_from":
+        from_node = update_dict.get("from_node", existing.from_node)
+        to_node = update_dict.get("to_node", existing.to_node)
+        await validate_derived_from_edge(from_node, to_node)
 
     return await neo4j_storage.update_edge(edge_id, update_dict, namespace)
 
@@ -297,10 +310,14 @@ async def process_batch(batch: GraphRegistrationBatch) -> dict:
             existing = await neo4j_storage.get_edge(edge.edge_id)
             if existing:
                 update_data = edge.model_dump(exclude={"edge_id", "created_at", "edge_uuid", "from_node", "to_node", "edge_namespace"})
+                if edge.edge_namespace == "industrial_flow" and edge.edge_type == "derived_from":
+                    await validate_derived_from_edge(edge.from_node, edge.to_node)
                 await neo4j_storage.update_edge(edge.edge_id, update_data, edge.edge_namespace)
                 results["edges_updated"] += 1
             else:
                 if isinstance(edge, IndustrialFlowEdge):
+                    if edge.edge_type == "derived_from":
+                        await validate_derived_from_edge(edge.from_node, edge.to_node)
                     await neo4j_storage.create_industrial_flow_edge(edge)
                 else:
                     await neo4j_storage.create_ontology_edge(edge)

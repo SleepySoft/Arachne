@@ -3,26 +3,19 @@ import { CompanyMultiSelector } from "@/components/CompanyMultiSelector";
 import { FilterPanel } from "@/components/FilterPanel";
 import { IndustryMultiSelector } from "@/components/IndustryMultiSelector";
 import { Company, Industry } from "@/types";
+import { IndustrialFiltersState } from "@/types/view";
 
 interface IndustrialSidebarProps {
   selectedIndustries: Industry[];
   selectedCompanies: Company[];
-  activeFilters: {
-    edgeNamespaces: string[];
-    edgeTypes: string[];
-    entityTypes: string[];
-    status: string[];
-    confidence: string[];
-    showIsA: boolean;
-    showWeakOntology: boolean;
-  };
+  activeFilters: IndustrialFiltersState;
   onToggleIndustry: (industry: Industry) => void;
   onSelectIndustry: (industry: Industry) => void;
   onToggleCompany: (company: Company) => void;
   onSelectCompany: (company: Company) => void;
   onCreateIndustry: () => void;
   onCreateCompany: () => void;
-  onChangeFilters: (filters: IndustrialSidebarProps["activeFilters"]) => void;
+  onChangeFilters: (filters: IndustrialFiltersState) => void;
 }
 
 export function IndustrialSidebar({

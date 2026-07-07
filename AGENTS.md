@@ -396,7 +396,9 @@ Missing or stubbed:
 
 ### PROV / Derivation
 - [x] **Add `derived_from` to schemas and labels**: `IndustrialFlowType.DERIVED_FROM` and `EDGE_TYPE_LABELS` updated in backend, frontend types/labels, edge forms, and CLI choices.
-- [ ] **Implement `derived_from` creation workflow**: backend validation (entity endpoints, no process nodes, no generic consumables, acyclic), dedicated manual creation UI, and PROV-N/JSON sync.
+- [x] **Implement `derived_from` policy validation**: endpoints cannot be `process`, target cannot be a generic consumable, no duplicate, acyclic; enforced in `create_edge`, `quick_create_edge`, `update_edge`, and `process_batch`.
+- [x] **Implement material-derivation overlay view**: frontend filter panel toggle "显示物料派生边（derived_from）" default off; hidden edges are excluded from layout and neighbor expansion. `derived_from` also excluded from company exploration and material-connection queries.
+- [ ] **Dedicated `derived_from` creation UI**: currently shares the normal edge creation form; a dedicated shortcut/wizard can be added later.
 - [ ] **Implement material-derivation overlay view**: frontend toggle to show/hide `derived_from` edges as a non-layout overlay; default hidden; excluded from normal upstream/downstream queries.
 - [ ] **Sync `derived_from` edges to PROV-N**: on create/delete of a `derived_from` edge, update `data/prov_statements/{node_id}.provn` with `wasDerivedFrom(...)` and `is_inferred = false`.
 - [ ] **Backfill existing chains**: manually curate and create `derived_from` edges for chip and power-semiconductor flows (e.g., `tested_chip → silicon_wafer`, `gallium_nitride → gallium`).

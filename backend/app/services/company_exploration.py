@@ -162,7 +162,8 @@ async def get_material_companies(node_id: str, exclude_company_id: str | None = 
     async with driver.session() as session:
         up_result = await session.run(
             """
-            MATCH (up:IndustrialNode)-[:INDUSTRIAL_FLOW]->(n:IndustrialNode {node_id: $node_id})
+            MATCH (up:IndustrialNode)-[r:INDUSTRIAL_FLOW]->(n:IndustrialNode {node_id: $node_id})
+            WHERE r.edge_type <> 'derived_from'
             RETURN up.node_id AS node_id, up.canonical_name_zh AS name
             ORDER BY up.canonical_name_zh
             """,
@@ -172,7 +173,8 @@ async def get_material_companies(node_id: str, exclude_company_id: str | None = 
 
         down_result = await session.run(
             """
-            MATCH (n:IndustrialNode {node_id: $node_id})-[:INDUSTRIAL_FLOW]->(down:IndustrialNode)
+            MATCH (n:IndustrialNode {node_id: $node_id})-[r:INDUSTRIAL_FLOW]->(down:IndustrialNode)
+            WHERE r.edge_type <> 'derived_from'
             RETURN down.node_id AS node_id, down.canonical_name_zh AS name
             ORDER BY down.canonical_name_zh
             """,

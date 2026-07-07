@@ -14,6 +14,7 @@ interface FilterState {
   confidence: string[];
   showIsA: boolean;
   showWeakOntology: boolean;
+  showDerivedFrom: boolean;
 }
 
 type ArrayFilterKey = "edgeNamespaces" | "edgeTypes" | "entityTypes" | "status" | "confidence";
@@ -81,6 +82,20 @@ export function FilterPanel({ filters, onChange }: FilterPanelProps) {
           />
           <span className={filters.edgeNamespaces.includes("ontology") ? "" : "opacity-40"}>
             显示弱本体关系（别名/相关/变体）
+          </span>
+        </label>
+        <label className="ml-4 flex items-center gap-2 text-xs text-slate-500">
+          <input
+            type="checkbox"
+            checked={filters.showDerivedFrom}
+            disabled={!filters.edgeNamespaces.includes("industrial_flow")}
+            onChange={() =>
+              onChange({ ...filters, showDerivedFrom: !filters.showDerivedFrom })
+            }
+            className="h-3 w-3 rounded border-slate-600 bg-slate-800 text-cyan-500 disabled:opacity-40"
+          />
+          <span className={filters.edgeNamespaces.includes("industrial_flow") ? "" : "opacity-40"}>
+            显示物料派生边（derived_from）
           </span>
         </label>
       </FilterGroup>

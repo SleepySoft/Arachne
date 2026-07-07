@@ -109,8 +109,10 @@
 **待实现（按本设计推进）：**
 
 - ✅ 在 `IndustrialFlowType` 中增加 `derived_from`（schema 标签已添加）。
-- 为 `derived_from` 增加创建入口（仅人工创建，需要证据和置信度）。
-- 前端实现“物料派生视图”临时开关；`derived_from` 边默认隐藏，不参与主布局和传统上下游查询。
+- ✅ 后端 `derived_from` 策略校验：端点不能是 process、不能指向通用耗材、防重复、防环。
+- ✅ 前端过滤面板增加“显示物料派生边（derived_from）”开关，默认关闭；关闭时边被隐藏且不参与布局和邻近展开。
+- ✅ `derived_from` 边已被排除在公司探索/物料关联等传统上下游查询之外。
+- 为 `derived_from` 增加更明显的创建入口（当前与普通边共用表单，后续可加专用快捷入口）。
 - 将人工创建的 `derived_from` 边同步写回 JSON PROV 文件（`wasDerivedFrom`），标记 `is_inferred = false`。
 
 ---

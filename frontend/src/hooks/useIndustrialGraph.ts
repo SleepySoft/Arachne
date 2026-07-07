@@ -61,6 +61,7 @@ export function useIndustrialGraph() {
     confidence: [] as string[],
     showIsA: true,
     showWeakOntology: false,
+    showDerivedFrom: false,
   });
   const [graphKey, setGraphKey] = useState(0);
   const [editMode, setEditMode] = useState<EditMode>("default");
