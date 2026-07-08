@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
+from app.reasoning.derived_from_utils import expand_by_derived_from
 from app.reasoning.rules import get_propagation_profile
 from app.reasoning.scorers import CompositeScorer, DepthDecayScorer, EdgeWeightScorer
 from app.reasoning.schemas import (
@@ -107,9 +108,22 @@ async def run_impact_propagation(
     scorer = propagation_ctx["scorer"]
     initial_score = propagation_ctx["initial_score"]
 
+    expand_derived = task.parameters.get("expand_derived_from", True)
+    seed_nodes = existing
+    if expand_derived:
+        try:
+            expanded = await expand_by_derived_from(existing, direction="both", max_hops=5)
+            seed_nodes = sorted(expanded)
+            if len(seed_nodes) > len(existing):
+                warnings.append(
+                    f"Expanded {len(existing)} source(s) to {len(seed_nodes)} equivalent nodes via derived_from"
+                )
+        except Exception as exc:
+            warnings.append(f"derived_from expansion failed: {exc}")
+
     # Fetch raw paths
     all_paths: List[Dict[str, Any]] = []
-    for source_id in existing:
+    for source_id in seed_nodes:
         source_paths = await _fetch_paths(source_id, constraints)
         all_paths.extend(source_paths)
         if len(all_paths) >= constraints.max_paths:
@@ -147,7 +161,7 @@ async def run_impact_propagation(
     }
 
     # Score nodes and paths
-    node_scores: Dict[str, float] = {nid: initial_score for nid in existing}
+    node_scores: Dict[str, float] = {nid: initial_score for nid in seed_nodes}
     edge_scores: Dict[str, float] = {}
     reasoning_paths: List[ReasoningPath] = []
 

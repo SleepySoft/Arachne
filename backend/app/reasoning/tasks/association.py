@@ -23,6 +23,7 @@ from app.reasoning.schemas import (
     TempGraphEdge,
     TempGraphNode,
 )
+from app.reasoning.derived_from_utils import expand_by_derived_from
 from app.reasoning.tasks.utils import (
     allowed_confidence_values,
     build_allowed_rel_types,
@@ -137,6 +138,9 @@ def _paths_to_reasoning_paths(
             }
             for nid in node_ids
         }
+        flags = []
+        if any(r.get("edge_type") == "derived_from" for r in rels):
+            flags.append("via_derived_from")
         out.append(
             ReasoningPath(
                 path_id=f"path_{source_id}_{idx}",
@@ -147,6 +151,7 @@ def _paths_to_reasoning_paths(
                 graph_sequence=["industrial"] * len(node_ids),
                 path_length=len(rels),
                 node_name_map=node_name_map,
+                flags=flags,
             )
         )
     return out
@@ -179,9 +184,22 @@ async def run_association(
             diagnostics=diagnostics,
         )
 
+    expand_derived = task.parameters.get("expand_derived_from", True)
+    seed_nodes = existing
+    if expand_derived:
+        try:
+            expanded = await expand_by_derived_from(existing, direction="both", max_hops=5)
+            seed_nodes = sorted(expanded)
+            if len(seed_nodes) > len(existing):
+                warnings.append(
+                    f"Expanded {len(existing)} source(s) to {len(seed_nodes)} equivalent nodes via derived_from"
+                )
+        except Exception as exc:
+            warnings.append(f"derived_from expansion failed: {exc}")
+
     # Fetch raw paths for all sources
     all_paths: List[Dict[str, Any]] = []
-    for source_id in existing:
+    for source_id in seed_nodes:
         source_paths = await _fetch_paths(source_id, task.constraints)
         all_paths.extend(source_paths)
         if len(all_paths) >= task.constraints.max_paths:

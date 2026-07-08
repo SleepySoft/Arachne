@@ -5,9 +5,11 @@ from __future__ import annotations
 import os
 
 import pytest
+import pytest_asyncio
 
-# Skip all tests in this module if POSTGRES_URL is not configured or PostgreSQL is unreachable
-pytestmark = pytest.mark.asyncio
+# Skip all tests in this module if POSTGRES_URL is not configured or PostgreSQL is unreachable.
+# Use a module-scoped event loop so the shared asyncpg pool stays valid across both tests.
+pytestmark = pytest.mark.asyncio(loop_scope="module")
 
 
 async def _postgres_available() -> bool:
@@ -21,25 +23,17 @@ async def _postgres_available() -> bool:
         return False
 
 
-@pytest.fixture(scope="module")
-async def pg_pool():
-    from app.database_postgres import get_postgres_pool, close_postgres_pool
+async def test_init_tables_creates_schema():
+    from app.database_postgres import get_postgres_pool, init_postgres_tables
 
     if not await _postgres_available():
         pytest.skip("PostgreSQL not available")
 
-    pool = await get_postgres_pool()
-    assert pool is not None
-    yield pool
-    await close_postgres_pool()
-
-
-async def test_init_tables_creates_schema(pg_pool):
-    from app.database_postgres import init_postgres_tables
-
     await init_postgres_tables()
 
-    async with pg_pool.acquire() as conn:
+    pool = await get_postgres_pool()
+    assert pool is not None
+    async with pool.acquire() as conn:
         tables = await conn.fetch(
             """
             SELECT table_name

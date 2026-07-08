@@ -8,6 +8,8 @@ allowing the rest of the app to continue using Neo4j.
 
 from __future__ import annotations
 
+import asyncio
+
 import asyncpg
 from asyncpg import Pool
 
@@ -15,11 +17,28 @@ from app.config import get_settings
 
 _settings = get_settings()
 _pool: Pool | None = None
+_pool_loop: asyncio.AbstractEventLoop | None = None
 
 
 async def get_postgres_pool() -> Pool | None:
-    """Return the shared connection pool, creating it on first call."""
-    global _pool
+    """Return the shared connection pool, creating it on first call.
+
+    The pool is bound to the event loop that created it. If the running loop
+    changes (e.g. across pytest-asyncio tests), the stale pool is closed and a
+    new one is created automatically.
+    """
+    global _pool, _pool_loop
+    current_loop = asyncio.get_running_loop()
+
+    if _pool is not None:
+        if _pool_loop is not current_loop or current_loop.is_closed():
+            try:
+                await _pool.close()
+            except Exception:
+                pass
+            _pool = None
+            _pool_loop = None
+
     if _pool is None:
         try:
             _pool = await asyncpg.create_pool(
@@ -28,18 +47,24 @@ async def get_postgres_pool() -> Pool | None:
                 max_size=10,
                 command_timeout=60,
             )
+            _pool_loop = current_loop
         except Exception:
             # PostgreSQL not available; callers should handle None gracefully
             _pool = None
+            _pool_loop = None
     return _pool
 
 
 async def close_postgres_pool() -> None:
     """Close the shared connection pool."""
-    global _pool
+    global _pool, _pool_loop
     if _pool is not None:
-        await _pool.close()
+        try:
+            await _pool.close()
+        except Exception:
+            pass
         _pool = None
+        _pool_loop = None
 
 
 async def init_postgres_tables() -> None:

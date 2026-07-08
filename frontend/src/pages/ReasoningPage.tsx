@@ -52,6 +52,10 @@ const SCOPE_OPTIONS: { value: QueryScope; label: string }[] = [
 const TASK_OPTIONS: { value: TaskType; label: string }[] = [
   { value: "association", label: "关联扩展" },
   { value: "impact_propagation", label: "影响传播" },
+  { value: "bottleneck_detection", label: "瓶颈检测" },
+  { value: "substitution_search", label: "替代搜索" },
+  { value: "candidate_discovery", label: "候选发现" },
+  { value: "cross_graph_context", label: "跨图上下文" },
 ];
 
 const OUTPUT_OPTIONS: { value: OutputType; label: string }[] = [
@@ -210,6 +214,14 @@ export function ReasoningPage() {
         "evidence_chains",
         "feature_tables",
       ]);
+    } else if (taskType === "bottleneck_detection") {
+      setOutputs(["temporary_graph", "node_scores", "candidate_nodes", "paths"]);
+    } else if (taskType === "substitution_search") {
+      setOutputs(["candidate_nodes", "temporary_graph", "paths"]);
+    } else if (taskType === "candidate_discovery") {
+      setOutputs(["candidate_nodes", "candidate_edges", "feature_tables"]);
+    } else if (taskType === "cross_graph_context") {
+      setOutputs(["temporary_graph", "paths"]);
     }
   }, [taskType]);
 
@@ -783,6 +795,10 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
                         ，找到 {resultPaths.length} 条路径。
                         {taskType === "association" && "关联扩展用于发现与起点相关的上下游节点和关系。"}
                         {taskType === "impact_propagation" && "影响传播用于量化上游扰动沿供应链向下传递的强度。"}
+                        {taskType === "bottleneck_detection" && "瓶颈检测用于找出被多条路径共享、替代来源少的关键节点。"}
+                        {taskType === "substitution_search" && "替代搜索用于基于物料谱系和结构相似性寻找可替代节点。"}
+                        {taskType === "candidate_discovery" && "候选发现用于识别图中可能缺失的工艺节点或关系。"}
+                        {taskType === "cross_graph_context" && "跨图上下文用于把产业节点关联到公司、行业和关键人员。"}
                       </p>
                     </div>
 
@@ -1092,7 +1108,6 @@ function ResultGraph({
           } as unknown as cytoscape.Css.Edge,
         },
       ],
-      layout: { name: "dagre", rankDir: "TB", padding: 20 } as cytoscape.LayoutOptions,
       minZoom: 0.1,
       maxZoom: 3,
       wheelSensitivity: 0.2,
@@ -1103,7 +1118,19 @@ function ResultGraph({
       n.data("color", nodeColor(n.data("type")));
     });
 
-    cy.fit(undefined, 24);
+    // Explicitly run the layout; the `layout` init option does not always execute.
+    const layout = cy.layout({
+      name: "dagre",
+      rankDir: "TB",
+      padding: 20,
+      animate: false,
+      fit: false,
+    } as cytoscape.LayoutOptions);
+    layout.on("layoutstop", () => {
+      cy.fit(undefined, 24);
+    });
+    layout.run();
+
     cyRef.current = cy;
 
     return () => {

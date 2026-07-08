@@ -4,6 +4,7 @@
 import argparse
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import httpx
@@ -262,6 +263,50 @@ def cmd_cleanup_test_data(dry_run: bool = False):
         print("\n[OK] Test data cleanup completed")
 
 
+def cmd_reasoning_query(scope: str, query: str, limit: int = 20):
+    payload = {
+        "query_id": f"rq_{datetime.utcnow().timestamp()}",
+        "query_text": query,
+        "query_scope": scope,
+        "limit": limit,
+    }
+    result = _request("POST", "/reasoning/query", json=payload)
+    _print(result)
+
+
+def cmd_reasoning_execute(
+    task_type: str,
+    sources: list[str],
+    depth: int = 2,
+    max_paths: int = 50,
+    max_nodes: int = 200,
+    direction: str = "forward",
+    outputs: list[str] = None,
+    params: dict = None,
+    dry_run: bool = False,
+):
+    if outputs is None:
+        outputs = ["subgraph", "paths", "evidence_chains", "feature_tables"]
+    payload = {
+        "task_id": f"rt_{datetime.utcnow().timestamp()}",
+        "task_type": task_type,
+        "source_nodes": sources,
+        "parameters": params or {},
+        "constraints": {
+            "max_depth": depth,
+            "max_paths": max_paths,
+            "max_nodes": max_nodes,
+            "traversal_direction": direction,
+        },
+        "requested_outputs": outputs,
+    }
+    if dry_run:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return
+    result = _request("POST", "/reasoning/execute", json=payload)
+    _print(result)
+
+
 def cmd_quick_edge(from_node: str, to_node: str, edge_type: str = "material_input", description: str = None, notes: str = None):
     data = {
         "from_node": from_node,
@@ -301,6 +346,9 @@ Examples:
   %(prog)s quick-node --name-zh "六氟化铀" --entity-type material
   %(prog)s quick-edge --from lithium_metal --to battery_cell --edge-type material_input
   %(prog)s cleanup-test-data --dry-run
+  %(prog)s reasoning query industrial_node "芯片" --limit 5
+  %(prog)s reasoning execute --task-type association --source chip --depth 2
+  %(prog)s reasoning execute --task-type substitution_search --source chip --outputs candidate_nodes temporary_graph
         """
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -439,6 +487,36 @@ Examples:
     p_cleanup = subparsers.add_parser("cleanup-test-data", help="Delete all entities marked as test data")
     p_cleanup.add_argument("--dry-run", action="store_true", help="Show counts without deleting")
 
+    # reasoning
+    p_reasoning = subparsers.add_parser("reasoning", help="Graph reasoning engine")
+    reasoning_sub = p_reasoning.add_subparsers(dest="subcommand", required=True)
+
+    p_reasoning_query = reasoning_sub.add_parser("query", help="Query candidate objects")
+    p_reasoning_query.add_argument("scope", choices=[
+        "industrial_node", "industrial_edge", "factual_node", "factual_edge",
+        "company", "industry", "claim"
+    ], help="Query scope")
+    p_reasoning_query.add_argument("query", help="Query text")
+    p_reasoning_query.add_argument("--limit", type=int, default=20, help="Max results")
+
+    p_reasoning_exec = reasoning_sub.add_parser("execute", help="Execute a reasoning task")
+    p_reasoning_exec.add_argument("--task-type", required=True, choices=[
+        "association", "impact_propagation", "bottleneck_detection",
+        "substitution_search", "candidate_discovery", "cross_graph_context"
+    ], help="Reasoning task type")
+    p_reasoning_exec.add_argument("--source", action="append", dest="sources", required=True, help="Source node ID (repeatable)")
+    p_reasoning_exec.add_argument("--depth", type=int, default=2, help="Max traversal depth")
+    p_reasoning_exec.add_argument("--max-paths", type=int, default=50, help="Max paths")
+    p_reasoning_exec.add_argument("--max-nodes", type=int, default=200, help="Max nodes")
+    p_reasoning_exec.add_argument("--direction", choices=["forward", "backward", "both"], default="forward")
+    p_reasoning_exec.add_argument(
+        "--outputs",
+        default="subgraph,paths,evidence_chains,feature_tables",
+        help="Comma-separated output types",
+    )
+    p_reasoning_exec.add_argument("--param", action="append", dest="params", help="Extra parameters as key=value (repeatable)")
+    p_reasoning_exec.add_argument("--dry-run", action="store_true", help="Print payload without executing")
+
     args = parser.parse_args()
 
     if args.command == "submit":
@@ -509,6 +587,41 @@ Examples:
         cmd_quick_edge(args.from_node, args.to_node, args.edge_type, args.description, args.notes)
     elif args.command == "cleanup-test-data":
         cmd_cleanup_test_data(args.dry_run)
+    elif args.command == "reasoning":
+        if args.subcommand == "query":
+            cmd_reasoning_query(args.scope, args.query, args.limit)
+        elif args.subcommand == "execute":
+            params = {}
+            if args.params:
+                for p in args.params:
+                    if "=" in p:
+                        k, v = p.split("=", 1)
+                        # Try boolean/numeric conversions
+                        if v.lower() == "true":
+                            v = True
+                        elif v.lower() == "false":
+                            v = False
+                        else:
+                            try:
+                                v = int(v)
+                            except ValueError:
+                                try:
+                                    v = float(v)
+                                except ValueError:
+                                    pass
+                        params[k] = v
+            outputs = [o.strip() for o in args.outputs.split(",") if o.strip()]
+            cmd_reasoning_execute(
+                task_type=args.task_type,
+                sources=args.sources,
+                depth=args.depth,
+                max_paths=args.max_paths,
+                max_nodes=args.max_nodes,
+                direction=args.direction,
+                outputs=outputs,
+                params=params,
+                dry_run=args.dry_run,
+            )
 
 
 if __name__ == "__main__":

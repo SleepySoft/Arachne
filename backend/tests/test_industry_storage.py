@@ -6,6 +6,7 @@ import os
 from uuid import uuid4
 
 import pytest
+import pytest_asyncio
 
 from app.database_postgres import get_postgres_pool
 from app.models.industry_schema import (
@@ -30,7 +31,7 @@ async def _postgres_available() -> bool:
         return False
 
 
-@pytest.fixture(autouse=True)
+@pytest_asyncio.fixture(autouse=True)
 async def cleanup():
     """Auto-cleanup after each test."""
     yield
@@ -45,7 +46,7 @@ async def cleanup():
 
 
 @pytest.fixture
-async def sample_industry() -> Industry:
+def sample_industry() -> Industry:
     return Industry(
         industry_id=f"test_solar_{uuid4().hex[:6]}",
         industry_uuid=uuid4(),

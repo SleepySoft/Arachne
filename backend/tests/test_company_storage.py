@@ -6,6 +6,7 @@ import os
 from uuid import uuid4
 
 import pytest
+import pytest_asyncio
 
 from app.database_postgres import get_postgres_pool
 from app.models.company_schema import (
@@ -31,7 +32,7 @@ async def _postgres_available() -> bool:
         return False
 
 
-@pytest.fixture(autouse=True)
+@pytest_asyncio.fixture(autouse=True)
 async def cleanup():
     yield
     if not await _postgres_available():
@@ -159,7 +160,7 @@ class TestExposureCRUD:
             sample_company.company_id
         )
         assert total == 1
-        assert items[0].weight == 0.95
+        assert abs(items[0].weight - 0.95) < 1e-6
 
     async def test_list_by_company_with_activity_filter(self, sample_company):
         if not await _postgres_available():

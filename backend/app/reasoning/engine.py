@@ -18,7 +18,11 @@ from app.reasoning.schemas import (
     TaskType,
 )
 from app.reasoning.tasks.association import run_association
+from app.reasoning.tasks.bottleneck_detection import run_bottleneck_detection
+from app.reasoning.tasks.candidate_discovery import run_candidate_discovery
+from app.reasoning.tasks.cross_graph_context import run_cross_graph_context
 from app.reasoning.tasks.impact_propagation import run_impact_propagation
+from app.reasoning.tasks.substitution_search import run_substitution_search
 from app.reasoning.tasks.utils import validate_source_nodes
 from app.services import fuzzy_search
 
@@ -26,6 +30,10 @@ from app.services import fuzzy_search
 _TASK_DISPATCH: Dict[TaskType, Any] = {
     TaskType.ASSOCIATION: run_association,
     TaskType.IMPACT_PROPAGATION: run_impact_propagation,
+    TaskType.BOTTLENECK_DETECTION: run_bottleneck_detection,
+    TaskType.SUBSTITUTION_SEARCH: run_substitution_search,
+    TaskType.CANDIDATE_DISCOVERY: run_candidate_discovery,
+    TaskType.CROSS_GRAPH_CONTEXT: run_cross_graph_context,
 }
 
 
