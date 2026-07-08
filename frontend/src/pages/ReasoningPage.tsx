@@ -40,10 +40,10 @@ import cytoscapeDagre from "cytoscape-dagre";
 cytoscape.use(cytoscapeDagre);
 
 // Reasoning tasks take node-like objects as sources; edge/claim scopes are not valid here.
+// factual_node already covers both persons and companies, so a separate company scope is unnecessary.
 const SCOPE_OPTIONS: { value: QueryScope; label: string }[] = [
   { value: "industrial_node", label: "产业节点" },
   { value: "factual_node", label: "事实节点" },
-  { value: "company", label: "公司" },
   { value: "industry", label: "行业" },
 ];
 
