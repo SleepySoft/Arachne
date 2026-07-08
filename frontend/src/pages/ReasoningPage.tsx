@@ -39,15 +39,52 @@ import cytoscapeDagre from "cytoscape-dagre";
 
 cytoscape.use(cytoscapeDagre);
 
+// Reasoning tasks take node-like objects as sources; edge/claim scopes are not valid here.
 const SCOPE_OPTIONS: { value: QueryScope; label: string }[] = [
   { value: "industrial_node", label: "产业节点" },
-  { value: "industrial_edge", label: "产业关系" },
   { value: "factual_node", label: "事实节点" },
-  { value: "factual_edge", label: "事实关系" },
   { value: "company", label: "公司" },
   { value: "industry", label: "行业" },
-  { value: "claim", label: "断言" },
 ];
+
+function scopeHint(scope: QueryScope): {
+  label: string;
+  placeholder: string;
+  example: string;
+} {
+  switch (scope) {
+    case "industrial_node":
+      return {
+        label: "节点名称",
+        placeholder: "输入节点名称/别名/ID 片段，如：芯片",
+        example: "芯片",
+      };
+    case "factual_node":
+      return {
+        label: "人员姓名",
+        placeholder: "输入人员姓名，如：张三",
+        example: "张三",
+      };
+    case "company":
+      return {
+        label: "公司名称",
+        placeholder: "输入公司名/别名/股票代码，如：比亚迪",
+        example: "比亚迪",
+      };
+    case "industry":
+      return {
+        label: "行业名称",
+        placeholder: "输入行业名/别名，如：半导体",
+        example: "半导体",
+      };
+    default:
+      return {
+        label: "查询文本",
+        placeholder: "输入名称/别名/ID 片段",
+        example: "芯片",
+      };
+  }
+}
 
 const TASK_OPTIONS: { value: TaskType; label: string }[] = [
   { value: "association", label: "关联扩展" },
@@ -439,7 +476,7 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
           <Card title="1. 搜索对象" icon={<Search className="h-4 w-4" />}>
             <div className="space-y-3">
               <p className="text-xs text-slate-500">
-                输入名称或别名搜索节点/公司/行业，点击“添加”将其加入推理起点。
+                选择查询范围后，输入对应对象的名称/别名/ID 片段，点击“添加”将其加入推理起点。
               </p>
               <FormField label="查询范围">
                 <select
@@ -454,13 +491,13 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
                   ))}
                 </select>
               </FormField>
-              <FormField label="查询文本">
+              <FormField label={scopeHint(queryScope).label}>
                 <div className="flex gap-2">
                   <input
                     value={queryText}
                     onChange={(e) => setQueryText(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleQuery()}
-                    placeholder="输入名称/别名/ID 片段，如：芯片"
+                    placeholder={scopeHint(queryScope).placeholder}
                     className="flex-1 rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-slate-200 placeholder:text-slate-600 focus:border-cyan-500 focus:outline-none"
                   />
                   <button
@@ -485,12 +522,11 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
                 <span className="text-[10px] text-slate-600">没有头绪？</span>
                 <button
                   onClick={() => {
-                    setQueryText("芯片");
-                    setQueryScope("industrial_node");
+                    setQueryText(scopeHint(queryScope).example);
                   }}
                   className="text-[10px] text-cyan-400 hover:text-cyan-300"
                 >
-                  填入示例：芯片
+                  填入示例：{scopeHint(queryScope).example}
                 </button>
               </div>
 
