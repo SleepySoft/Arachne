@@ -103,6 +103,7 @@ def _node_from_record(record) -> IndustrialNode:
         confidence=confidence,
         status=status,
         notes=props.get("notes"),
+        is_test=props.get("is_test", False),
         created_at=_to_datetime(props.get("created_at")),
         updated_at=_to_datetime(props.get("updated_at")),
     )
@@ -136,6 +137,7 @@ def _edge_from_record(record) -> GraphEdge:
         "evidence": evidence,
         "confidence": confidence,
         "notes": rel.get("notes"),
+        "is_test": rel.get("is_test", False),
         "created_at": _to_datetime(rel.get("created_at")),
         "updated_at": _to_datetime(rel.get("updated_at")),
     }
@@ -177,6 +179,7 @@ async def create_node(node: IndustrialNode) -> IndustrialNode:
                 confidence: $confidence,
                 status: $status,
                 notes: $notes,
+                is_test: $is_test,
                 created_at: $now,
                 updated_at: $now
             })
@@ -193,6 +196,7 @@ async def create_node(node: IndustrialNode) -> IndustrialNode:
             confidence=node.confidence.value,
             status=node.status.value,
             notes=node.notes,
+            is_test=node.is_test,
             now=now,
         )
         record = await result.single()
@@ -349,6 +353,7 @@ async def create_industrial_flow_edge(edge: IndustrialFlowEdge) -> IndustrialFlo
                 evidence: $evidence,
                 confidence: $confidence,
                 notes: $notes,
+                is_test: $is_test,
                 created_at: $now,
                 updated_at: $now
             }]->(b)
@@ -364,6 +369,7 @@ async def create_industrial_flow_edge(edge: IndustrialFlowEdge) -> IndustrialFlo
             evidence=_evidence_to_db(edge.evidence),
             confidence=edge.confidence.value,
             notes=edge.notes,
+            is_test=edge.is_test,
             now=now,
         )
         record = await result.single()
@@ -389,6 +395,7 @@ async def create_ontology_edge(edge: OntologyEdge) -> OntologyEdge:
                 evidence: $evidence,
                 confidence: $confidence,
                 notes: $notes,
+                is_test: $is_test,
                 created_at: $now,
                 updated_at: $now
             }]->(b)
@@ -449,6 +456,7 @@ async def update_edge(edge_id: str, data: dict, namespace: str) -> Optional[Grap
         "evidence": _evidence_to_db(existing.evidence),
         "confidence": existing.confidence.value if hasattr(existing.confidence, "value") else existing.confidence,
         "notes": existing.notes,
+        "is_test": existing.is_test,
         "created_at": existing.created_at,
     }
     if getattr(existing, "edge_uuid", None):

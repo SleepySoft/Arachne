@@ -39,6 +39,7 @@ def _row_to_company(row: dict) -> Company:
         company_type=row["company_type"],
         status=row["status"],
         notes=row.get("notes"),
+        is_test=row.get("is_test", False),
         created_at=row.get("created_at"),
         updated_at=row.get("updated_at"),
     )
@@ -61,6 +62,7 @@ def _row_to_exposure(row: dict) -> CompanyNodeExposure:
         status=row["status"],
         as_of_date=row.get("as_of_date"),
         notes=row.get("notes"),
+        is_test=row.get("is_test", False),
         created_at=row.get("created_at"),
         updated_at=row.get("updated_at"),
     )
@@ -85,8 +87,8 @@ async def create_company(data: Company) -> Company:
                 company_id, company_uuid, name_zh, name_en,
                 aliases, stock_codes, description, country, province, city,
                 founded_year, employee_count, revenue_cny, market_cap_cny,
-                net_profit_cny, company_type, status, notes
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+                net_profit_cny, company_type, status, notes, is_test
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
             RETURNING *
             """,
             data.company_id,
@@ -107,6 +109,7 @@ async def create_company(data: Company) -> Company:
             data.company_type.value,
             data.status.value,
             data.notes,
+            data.is_test,
         )
         return _row_to_company(row)
 
@@ -151,7 +154,7 @@ async def update_company(company_id: str, data: dict) -> Optional[Company]:
         "name_zh", "name_en", "aliases", "stock_codes", "description",
         "country", "province", "city", "founded_year", "employee_count",
         "revenue_cny", "market_cap_cny", "net_profit_cny",
-        "company_type", "status", "notes",
+        "company_type", "status", "notes", "is_test",
     }
     fields = {k: v for k, v in data.items() if k in allowed}
     if not fields:
@@ -261,8 +264,8 @@ async def create_exposure(data: CompanyNodeExposure) -> CompanyNodeExposure:
             """
             INSERT INTO company_node_exposures (
                 exposure_id, exposure_uuid, company_id, node_id,
-                activity_type, role, weight, confidence, evidence, status, as_of_date, notes
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                activity_type, role, weight, confidence, evidence, status, as_of_date, notes, is_test
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             RETURNING *
             """,
             data.exposure_id,
@@ -277,6 +280,7 @@ async def create_exposure(data: CompanyNodeExposure) -> CompanyNodeExposure:
             data.status.value,
             data.as_of_date,
             data.notes,
+            data.is_test,
         )
         return _row_to_exposure(row)
 
@@ -319,7 +323,7 @@ async def update_exposure(exposure_id: str, data: dict) -> Optional[CompanyNodeE
     if pool is None:
         return None
 
-    allowed = {"activity_type", "role", "weight", "confidence", "evidence", "status", "as_of_date", "notes"}
+    allowed = {"activity_type", "role", "weight", "confidence", "evidence", "status", "as_of_date", "notes", "is_test"}
     fields = {k: v for k, v in data.items() if k in allowed}
     if not fields:
         return await get_exposure(exposure_id)

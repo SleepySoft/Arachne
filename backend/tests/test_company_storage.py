@@ -63,6 +63,7 @@ def sample_company() -> Company:
         market_cap_cny=150000000000,
         company_type=CompanyType.PUBLIC,
         status=RecordStatus.ACTIVE,
+        is_test=True,
     )
 
 
@@ -93,6 +94,7 @@ class TestCompanyCRUD:
             country="CN",
             company_type=CompanyType.PUBLIC,
             status=RecordStatus.ACTIVE,
+            is_test=True,
         )
         with pytest.raises(ValueError, match="already exists"):
             await company_storage.create_company(duplicate)
@@ -147,6 +149,7 @@ class TestExposureCRUD:
             activity_type=CompanyActivityType.PRODUCE,
             role="核心产品",
             weight=0.95,
+            is_test=True,
         )
         created = await company_storage.create_exposure(exp)
         assert created.node_id == "silicon_wafer"
@@ -168,18 +171,21 @@ class TestExposureCRUD:
             company_id=sample_company.company_id,
             node_id="silicon_wafer",
             activity_type=CompanyActivityType.PRODUCE,
+            is_test=True,
         )
         exp2 = CompanyNodeExposure(
             exposure_id=f"test_exp2_{uuid4().hex[:6]}",
             company_id=sample_company.company_id,
             node_id="solar_cell",
             activity_type=CompanyActivityType.PRODUCE,
+            is_test=True,
         )
         exp3 = CompanyNodeExposure(
             exposure_id=f"test_exp3_{uuid4().hex[:6]}",
             company_id=sample_company.company_id,
             node_id="rnd_center",
             activity_type=CompanyActivityType.RND,
+            is_test=True,
         )
         await company_storage.create_exposure(exp1)
         await company_storage.create_exposure(exp2)
@@ -202,6 +208,7 @@ class TestExposureCRUD:
             company_id=sample_company.company_id,
             node_id="polysilicon",
             activity_type=CompanyActivityType.PROCURE,
+            is_test=True,
         )
         await company_storage.create_exposure(exp)
 
@@ -218,6 +225,7 @@ class TestExposureCRUD:
             exposure_id=f"test_exp_{uuid4().hex[:6]}",
             company_id=sample_company.company_id,
             node_id="solar_module",
+            is_test=True,
         )
         await company_storage.create_exposure(exp)
 

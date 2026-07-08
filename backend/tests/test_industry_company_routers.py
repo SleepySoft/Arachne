@@ -41,6 +41,7 @@ class TestIndustryRouter:
             "industry_type": "curated_view",
             "description": "用于测试的行业",
             "status": "ACTIVE",
+            "is_test": True,
         }
         resp = client.post("/api/v1/industries", json=payload)
         assert resp.status_code == 201
@@ -70,6 +71,7 @@ class TestIndustryRouter:
             "industry_id": f"test_del_{uid}",
             "name_zh": "待删除行业",
             "status": "ACTIVE",
+            "is_test": True,
         }
         client.post("/api/v1/industries", json=payload)
         resp = client.delete(f"/api/v1/industries/{payload['industry_id']}")
@@ -88,6 +90,7 @@ class TestIndustryRouter:
             "industry_id": industry_id,
             "name_zh": "映射测试行业",
             "status": "ACTIVE",
+            "is_test": True,
         })
 
         # Create mapping
@@ -99,6 +102,7 @@ class TestIndustryRouter:
             node_id="silicon_wafer",
             role="核心产品",
             weight=0.9,
+            is_test=True,
         )
         await industry_storage.create_mapping(mapping)
 
@@ -121,6 +125,7 @@ class TestCompanyRouter:
             "country": "CN",
             "company_type": "public",
             "status": "ACTIVE",
+            "is_test": True,
         }
         resp = client.post("/api/v1/companies", json=payload)
         assert resp.status_code == 201
@@ -150,6 +155,7 @@ class TestCompanyRouter:
             "company_id": company_id,
             "name_zh": f"exposure测试公司-{uid}",
             "status": "ACTIVE",
+            "is_test": True,
         })
 
         from app.services import company_storage
@@ -160,6 +166,7 @@ class TestCompanyRouter:
             node_id="lithium_battery_cell",
             activity_type=CompanyActivityType.PRODUCE,
             weight=0.85,
+            is_test=True,
         )
         await company_storage.create_exposure(exp)
 
@@ -178,6 +185,7 @@ class TestCompanyRouter:
             "company_id": f"test_del_co_{uid}",
             "name_zh": "待删除公司",
             "status": "ACTIVE",
+            "is_test": True,
         }
         client.post("/api/v1/companies", json=payload)
         resp = client.delete(f"/api/v1/companies/{payload['company_id']}")
@@ -200,6 +208,7 @@ class TestNodeWithIndustries:
             "industry_id": industry_id,
             "name_zh": "节点创建行业测试",
             "status": "ACTIVE",
+            "is_test": True,
         })
         assert resp_ind.status_code == 201
 
@@ -213,6 +222,7 @@ class TestNodeWithIndustries:
             "confidence": "LOW",
             "status": "PENDING",
             "industry_ids": [{"industry_id": industry_id}],
+            "is_test": True,
         })
         assert resp.status_code == 201
         assert resp.json()["node_id"] == node_id
@@ -234,11 +244,13 @@ class TestNodeWithIndustries:
             "industry_id": industry_id,
             "name_zh": "快速创建行业测试",
             "status": "ACTIVE",
+            "is_test": True,
         })
 
         resp = client.post("/api/v1/nodes/quick-create", json={
             "canonical_name_zh": f"快速测试节点-{uid}",
             "industry_ids": [{"industry_id": industry_id}],
+            "is_test": True,
         })
         assert resp.status_code == 201
         data = resp.json()

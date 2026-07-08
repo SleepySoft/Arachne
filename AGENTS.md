@@ -360,6 +360,8 @@ backend/
 - **Import script DATE fix**: Fixed `scripts/import_db.py` to parse ISO date strings (`YYYY-MM-DD`) back into `datetime.date` objects when importing PostgreSQL tables. Previously only full ISO datetime strings with a `T` separator were converted, so `DATE` columns like `company_node_exposures.as_of_date` caused `asyncpg.exceptions.DataError: 'str' object has no attribute 'toordinal'`. Verified by successfully importing `data/ArachneData/newest` with `--clear --yes`.
 - **PROV semantics mapping & derivation design**: Mapped all `EntityType` and `IndustrialFlowType` values to PROV roles/relations in `docs/prov_overlay_design.md`. Identified that `wasDerivedFrom` has no direct graph equivalent. Designed `derived_from` as an explicit, human-curated industrial-flow edge for direct material lineage between entity nodes; it intentionally skips process nodes, must not be auto-inferred from the current process graph, and must remain hidden by default to avoid polluting the main canvas. Documented allowed/disallowed scenarios, validation rules, display rules, and PROV-N synchronization.
 - **PROV-N storage format (deprecated)**: Experimented with W3C PROV-N text documents stored as `data/prov_statements/{node_id}.provn`. Added `backend/app/services/prov_n.py` with a parser/serializer and `/prov/nodes/{id}/provn` endpoints. Later reversed: PROV-N support was commented out of the main backend/frontend code path, storage reverted to JSON (`{node_id}.prov.json`), existing `.provn` files were converted back to JSON and moved to `data/prov_statements/legacy_provn/`. The `prov_n.py` module and raw endpoints remain in the repository for reference and potential future export use, but are no longer imported or mounted. Updated `docs/prov_overlay_design.md` and `frontend/src/components/NodeProvPanel.tsx`. Frontend `npm run build` passes.
+- **Semiconductor `derived_from` backfill**: Created 25 `derived_from` edges for semiconductor product chains, including `tested_chip`/`molded_chip`/`chip`/logic/memory/analog/sensor/rf/automotive/dram/nand/ddr5 chips → `chip_die`, `chip_die` → `wafer`, `wafer` → `silicon_wafer`, `silicon_wafer` → `silicon`, silicon-based power devices → `silicon`, and GaN/SiC chains (`gallium_nitride` → `gallium`, `gan_wafer` → `gallium_nitride`, `gan_power_device` → `gan_wafer`, `sic_wafer` → `silicon_carbide`, `sic_power_device` → `sic_wafer`). Fixed a bug in `backend/app/services/derived_from_policy.py` `_existing_derived_from()` where it treated the `(items, total)` tuple returned by `neo4j_storage.list_edges()` as a list, causing all new `derived_from` edges to be rejected as duplicates. Backend restarted to pick up the fix; verification script at `temp/verify_semiconductor_derived_from.py`.
+- **`is_test` flag + automated cleanup**: Added `is_test: bool` to IndustrialNode/edge create/update models, Industry/Company/Person/FactualRelation schemas, and PostgreSQL tables (`industries`, `industry_node_mappings`, `companies`, `company_node_exposures`, `persons`, `factual_relations`). Implemented `backend/app/services/test_data_cleanup.py`, `backend/app/routers/admin.py` (`POST /api/v1/admin/cleanup-test-data`), CLI `cleanup-test-data`, and `scripts/cleanup_test_data.py`. Updated test fixtures to stamp `is_test=True`. PostgreSQL `init_postgres_tables()` now adds the column via `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` for existing databases.
 
 ---
 
@@ -401,7 +403,7 @@ Missing or stubbed:
 - [x] **Implement `derived_from` policy validation**: endpoints cannot be `process`, target cannot be a generic consumable, no duplicate, acyclic; enforced in `create_edge`, `quick_create_edge`, `update_edge`, and `process_batch`.
 - [x] **Implement material-derivation overlay view**: frontend filter panel toggle "显示物料派生边（derived_from）" default off; hidden edges are excluded from layout and neighbor expansion. `derived_from` also excluded from company exploration and material-connection queries.
 - [ ] **Dedicated `derived_from` creation UI**: currently shares the normal edge creation form; a dedicated shortcut/wizard can be added later.
-- [ ] **Backfill existing chains**: manually curate and create `derived_from` edges for chip and power-semiconductor flows (e.g., `tested_chip → silicon_wafer`, `gallium_nitride → gallium`).
+- [x] **Backfill existing chains**: manually curated and created 25 `derived_from` edges for chip and power-semiconductor flows (e.g., `tested_chip → silicon_wafer`, `gallium_nitride → gallium`).
 
 ### Data / Batch Debt
 Historical batch construction logs list these as future work; none are implemented:
@@ -434,6 +436,13 @@ Historical batch construction logs list these as future work; none are implement
 - `IndustrialFlowType` now includes `process_output` for process → output relationships.
 - UUID fields now auto-generate; callers do not need to supply them.
 
+### Test Data Conventions
+- All test-created entities (nodes, edges, industries, companies, mappings, exposures, persons, factual relations) **SHOULD set `is_test: true`**.
+- The backend exposes `POST /api/v1/admin/cleanup-test-data?dry_run=true|false` to delete all entities flagged as test data.
+- The CLI provides `python cli/arachne_cli.py cleanup-test-data [--dry-run]`.
+- A standalone script is available at `scripts/cleanup_test_data.py` for post-test hooks.
+- After running tests, call one of the cleanup tools to remove residual test data instead of deleting manually.
+
 ### Git Hygiene
 - Do NOT run `git commit`, `git push`, `git reset`, `git rebase` without explicit user confirmation.
 - LF/CRLF warnings are normal on Windows; Git will handle conversion.
@@ -460,4 +469,4 @@ Historical batch construction logs list these as future work; none are implement
 
 ---
 
-*Last updated: 2026-06-29 09:50 CST*
+*Last updated: 2026-06-29 10:30 CST*

@@ -63,8 +63,20 @@ async def init_postgres_tables() -> None:
                 status         VARCHAR(16) NOT NULL DEFAULT 'PENDING',
                 notes          TEXT,
                 created_at     TIMESTAMPTZ DEFAULT NOW(),
-                updated_at     TIMESTAMPTZ DEFAULT NOW()
+                updated_at     TIMESTAMPTZ DEFAULT NOW(),
+                is_test        BOOLEAN NOT NULL DEFAULT FALSE
             )
+            """
+        )
+        await conn.execute(
+            """
+            ALTER TABLE industries ADD COLUMN IF NOT EXISTS is_test BOOLEAN NOT NULL DEFAULT FALSE
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_industries_is_test
+            ON industries(is_test)
             """
         )
         await conn.execute(
@@ -95,8 +107,20 @@ async def init_postgres_tables() -> None:
                 status         VARCHAR(16) NOT NULL DEFAULT 'PENDING',
                 notes          TEXT,
                 created_at     TIMESTAMPTZ DEFAULT NOW(),
-                updated_at     TIMESTAMPTZ DEFAULT NOW()
+                updated_at     TIMESTAMPTZ DEFAULT NOW(),
+                is_test        BOOLEAN NOT NULL DEFAULT FALSE
             )
+            """
+        )
+        await conn.execute(
+            """
+            ALTER TABLE industry_node_mappings ADD COLUMN IF NOT EXISTS is_test BOOLEAN NOT NULL DEFAULT FALSE
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_inm_is_test
+            ON industry_node_mappings(is_test)
             """
         )
         await conn.execute(
@@ -135,8 +159,20 @@ async def init_postgres_tables() -> None:
                 status         VARCHAR(16) NOT NULL DEFAULT 'PENDING',
                 notes          TEXT,
                 created_at     TIMESTAMPTZ DEFAULT NOW(),
-                updated_at     TIMESTAMPTZ DEFAULT NOW()
+                updated_at     TIMESTAMPTZ DEFAULT NOW(),
+                is_test        BOOLEAN NOT NULL DEFAULT FALSE
             )
+            """
+        )
+        await conn.execute(
+            """
+            ALTER TABLE companies ADD COLUMN IF NOT EXISTS is_test BOOLEAN NOT NULL DEFAULT FALSE
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_companies_is_test
+            ON companies(is_test)
             """
         )
         await conn.execute(
@@ -175,8 +211,20 @@ async def init_postgres_tables() -> None:
                 as_of_date     DATE,
                 notes          TEXT,
                 created_at     TIMESTAMPTZ DEFAULT NOW(),
-                updated_at     TIMESTAMPTZ DEFAULT NOW()
+                updated_at     TIMESTAMPTZ DEFAULT NOW(),
+                is_test        BOOLEAN NOT NULL DEFAULT FALSE
             )
+            """
+        )
+        await conn.execute(
+            """
+            ALTER TABLE company_node_exposures ADD COLUMN IF NOT EXISTS is_test BOOLEAN NOT NULL DEFAULT FALSE
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_cne_is_test
+            ON company_node_exposures(is_test)
             """
         )
         await conn.execute(
@@ -235,8 +283,20 @@ async def init_postgres_tables() -> None:
                 status         VARCHAR(16) NOT NULL DEFAULT 'PENDING',
                 notes          TEXT,
                 created_at     TIMESTAMPTZ DEFAULT NOW(),
-                updated_at     TIMESTAMPTZ DEFAULT NOW()
+                updated_at     TIMESTAMPTZ DEFAULT NOW(),
+                is_test        BOOLEAN NOT NULL DEFAULT FALSE
             )
+            """
+        )
+        await conn.execute(
+            """
+            ALTER TABLE persons ADD COLUMN IF NOT EXISTS is_test BOOLEAN NOT NULL DEFAULT FALSE
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_persons_is_test
+            ON persons(is_test)
             """
         )
         await conn.execute(
@@ -284,8 +344,20 @@ async def init_postgres_tables() -> None:
                 status           VARCHAR(16) NOT NULL DEFAULT 'PENDING',
                 notes            TEXT,
                 created_at       TIMESTAMPTZ DEFAULT NOW(),
-                updated_at       TIMESTAMPTZ DEFAULT NOW()
+                updated_at       TIMESTAMPTZ DEFAULT NOW(),
+                is_test          BOOLEAN NOT NULL DEFAULT FALSE
             )
+            """
+        )
+        await conn.execute(
+            """
+            ALTER TABLE factual_relations ADD COLUMN IF NOT EXISTS is_test BOOLEAN NOT NULL DEFAULT FALSE
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_fr_is_test
+            ON factual_relations(is_test)
             """
         )
         await conn.execute(

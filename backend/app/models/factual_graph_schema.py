@@ -107,6 +107,7 @@ class Person(BaseModel):
     profile: Optional[str] = Field(default=None, description="人物简介")
     status: RecordStatus = Field(default=RecordStatus.ACTIVE)
     notes: Optional[str] = None
+    is_test: bool = Field(default=False, description="标记是否为测试数据")
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -133,6 +134,7 @@ class PersonCreate(BaseModel):
     profile: Optional[str] = None
     status: RecordStatus = Field(default=RecordStatus.PENDING)
     notes: Optional[str] = None
+    is_test: Optional[bool] = Field(default=False, description="标记是否为测试数据")
 
     @field_validator("name_zh")
     @classmethod
@@ -156,6 +158,7 @@ class PersonUpdate(BaseModel):
     profile: Optional[str] = None
     status: Optional[RecordStatus] = None
     notes: Optional[str] = None
+    is_test: Optional[bool] = Field(default=False, description="标记是否为测试数据")
 
 
 # ---------------------------------------------------------------------------
@@ -186,6 +189,7 @@ class FactualRelationBase(BaseModel):
     is_history: bool = False
 
     notes: Optional[str] = None
+    is_test: bool = Field(default=False, description="标记是否为测试数据")
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

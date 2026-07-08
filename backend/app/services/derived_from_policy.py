@@ -69,13 +69,13 @@ async def _get_node_or_raise(node_id: str, label: str) -> dict:
 
 async def _existing_derived_from(from_node_id: str, to_node_id: str) -> bool:
     """Return True if a derived_from edge already exists between the two nodes."""
-    edges = await neo4j_storage.list_edges(
+    edges, total = await neo4j_storage.list_edges(
         edge_namespace="industrial_flow",
         edge_type="derived_from",
         from_node=from_node_id,
         to_node=to_node_id,
     )
-    return len(edges) > 0
+    return total > 0 or len(edges) > 0
 
 
 async def _would_create_cycle(from_node_id: str, to_node_id: str) -> bool:

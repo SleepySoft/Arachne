@@ -484,6 +484,7 @@ class IndustrialNode(BaseModel):
         default=NodeStatus.PENDING
     )
     notes: Optional[str] = None
+    is_test: bool = Field(default=False, description="标记是否为测试数据")
 
     # DB timestamps (not required for input, populated by storage)
     created_at: Optional[datetime] = None
@@ -540,6 +541,7 @@ class IndustrialNodeCreate(BaseModel):
     confidence: Confidence = Confidence.LOW
     status: NodeStatus = NodeStatus.PENDING
     notes: Optional[str] = None
+    is_test: Optional[bool] = Field(default=False, description="标记是否为测试数据")
     industry_ids: List[IndustryNodeAssociation] = Field(
         default_factory=list,
         description="创建节点时同时关联的行业",
@@ -573,6 +575,7 @@ class IndustrialNodeUpdate(BaseModel):
     confidence: Optional[Confidence] = None
     status: Optional[NodeStatus] = None
     notes: Optional[str] = None
+    is_test: Optional[bool] = Field(default=False, description="标记是否为测试数据")
 
 
 class IndustrialNodeQuickCreate(BaseModel):
@@ -608,6 +611,7 @@ class IndustrialNodeQuickCreate(BaseModel):
         default=None,
         description="可记录'由人工快速添加，待 AI 补全'等备注",
     )
+    is_test: Optional[bool] = Field(default=False, description="标记是否为测试数据")
     industry_ids: List[IndustryNodeAssociation] = Field(
         default_factory=list,
         description="创建节点时同时关联的行业",
@@ -654,6 +658,7 @@ class BaseEdge(BaseModel):
         default=Confidence.LOW
     )
     notes: Optional[str] = None
+    is_test: bool = Field(default=False, description="标记是否为测试数据")
 
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -707,6 +712,7 @@ class IndustrialFlowEdgeCreate(BaseModel):
     evidence: List[Evidence] = Field(default_factory=list)
     confidence: Confidence = Confidence.LOW
     notes: Optional[str] = None
+    is_test: Optional[bool] = Field(default=False, description="标记是否为测试数据")
 
     @field_validator("description")
     @classmethod
@@ -756,6 +762,7 @@ class IndustrialFlowEdgeQuickCreate(BaseModel):
         default=None,
         description="备注",
     )
+    is_test: Optional[bool] = Field(default=False, description="标记是否为测试数据")
 
     @model_validator(mode="after")
     def validate_policy(self) -> "IndustrialFlowEdgeQuickCreate":
@@ -772,6 +779,7 @@ class IndustrialFlowEdgeUpdate(BaseModel):
     evidence: Optional[List[Evidence]] = None
     confidence: Optional[Confidence] = None
     notes: Optional[str] = None
+    is_test: Optional[bool] = Field(default=False, description="标记是否为测试数据")
     from_node: Optional[str] = Field(default=None, pattern=r"^[a-z][a-z0-9_]*$")
     to_node: Optional[str] = Field(default=None, pattern=r"^[a-z][a-z0-9_]*$")
 
@@ -815,6 +823,7 @@ class OntologyEdgeCreate(BaseModel):
     evidence: List[Evidence] = Field(default_factory=list)
     confidence: Confidence = Confidence.LOW
     notes: Optional[str] = None
+    is_test: Optional[bool] = Field(default=False, description="标记是否为测试数据")
 
     @field_validator("description")
     @classmethod
@@ -839,6 +848,7 @@ class OntologyEdgeUpdate(BaseModel):
     evidence: Optional[List[Evidence]] = None
     confidence: Optional[Confidence] = None
     notes: Optional[str] = None
+    is_test: Optional[bool] = Field(default=False, description="标记是否为测试数据")
     from_node: Optional[str] = Field(default=None, pattern=r"^[a-z][a-z0-9_]*$")
     to_node: Optional[str] = Field(default=None, pattern=r"^[a-z][a-z0-9_]*$")
 

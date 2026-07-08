@@ -55,6 +55,7 @@ async def sample_industry() -> Industry:
         industry_type=IndustryType.CURATED_VIEW,
         description="用于测试的光伏行业",
         status=RecordStatus.ACTIVE,
+        is_test=True,
     )
 
 
@@ -121,6 +122,7 @@ class TestMappingCRUD:
             node_id="silicon_wafer",
             role="核心产品",
             weight=0.9,
+            is_test=True,
         )
         created = await industry_storage.create_mapping(mapping)
         assert created.mapping_id == mapping.mapping_id
@@ -143,6 +145,7 @@ class TestMappingCRUD:
             node_id="polysilicon",
             role="上游材料",
             weight=0.8,
+            is_test=True,
         )
         await industry_storage.create_mapping(mapping)
 
@@ -177,6 +180,7 @@ class TestMappingCRUD:
             mapping_id=f"test_map_{uuid4().hex[:6]}",
             industry_id=sample_industry.industry_id,
             node_id="solar_module",
+            is_test=True,
         )
         await industry_storage.create_mapping(mapping)
 

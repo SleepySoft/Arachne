@@ -85,9 +85,9 @@ async def create_person(person: Person) -> bool:
                 """
                 INSERT INTO persons (
                     person_id, name_zh, name_en, aliases, gender, birth_year,
-                    nationality, id_card_hash, profile, status, notes, created_at, updated_at
+                    nationality, id_card_hash, profile, status, notes, is_test, created_at, updated_at
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
                 """,
                 person.person_id,
                 person.name_zh,
@@ -100,6 +100,7 @@ async def create_person(person: Person) -> bool:
                 person.profile,
                 person.status.value,
                 person.notes,
+                person.is_test,
             )
             return True
         except Exception:
@@ -225,6 +226,7 @@ def _row_to_person(row: Any) -> Person:
         profile=row["profile"],
         status=row["status"],
         notes=row["notes"],
+        is_test=row.get("is_test", False),
         created_at=_to_datetime(row["created_at"]),
         updated_at=_to_datetime(row["updated_at"]),
     )
@@ -249,9 +251,9 @@ async def create_relation(relation: FactualRelation) -> bool:
                     from_entity_type, from_entity_id, to_entity_type, to_entity_id,
                     subtype, equity_ratio, amount_cny, contract_no, proportion,
                     start_date, end_date, is_history,
-                    evidence, source, confidence, status, notes, created_at, updated_at
+                    evidence, source, confidence, status, notes, is_test, created_at, updated_at
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, NOW(), NOW())
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, NOW(), NOW())
                 """,
                 data["relation_id"],
                 data["relation_type"],
@@ -273,6 +275,7 @@ async def create_relation(relation: FactualRelation) -> bool:
                 data["confidence"],
                 data["status"],
                 data["notes"],
+                data["is_test"],
             )
             return True
         except Exception:
@@ -364,7 +367,7 @@ async def update_relation(relation_id: str, updates: Dict[str, Any]) -> bool:
     allowed = {
         "relation_type", "subtype", "equity_ratio", "amount_cny",
         "contract_no", "proportion", "start_date", "end_date",
-        "is_history", "evidence", "source", "confidence", "status", "notes",
+        "is_history", "evidence", "source", "confidence", "status", "notes", "is_test",
     }
     fields = []
     values: List[Any] = []
@@ -420,6 +423,7 @@ def _relation_to_db_dict(relation: FactualRelation) -> Dict[str, Any]:
         "end_date": relation.end_date,
         "is_history": relation.is_history,
         "notes": relation.notes,
+        "is_test": relation.is_test,
         "subtype": None,
         "equity_ratio": None,
         "amount_cny": None,
@@ -474,6 +478,7 @@ def _row_to_relation(row: Any) -> FactualRelation:
         "end_date": row["end_date"],
         "is_history": row["is_history"],
         "notes": row["notes"],
+        "is_test": row.get("is_test", False),
         "created_at": _to_datetime(row["created_at"]),
         "updated_at": _to_datetime(row["updated_at"]),
     }
@@ -568,6 +573,7 @@ async def sync_person_to_neo4j(person: Person) -> bool:
                 p.id_card_hash = $id_card_hash,
                 p.profile = $profile,
                 p.status = $status,
+                p.is_test = $is_test,
                 p.created_at = datetime()
             ON MATCH SET
                 p.name_zh = $name_zh,
@@ -579,6 +585,7 @@ async def sync_person_to_neo4j(person: Person) -> bool:
                 p.id_card_hash = $id_card_hash,
                 p.profile = $profile,
                 p.status = $status,
+                p.is_test = $is_test,
                 p.updated_at = datetime()
             RETURN p.person_id AS pid
             """,
@@ -592,6 +599,7 @@ async def sync_person_to_neo4j(person: Person) -> bool:
             id_card_hash=person.id_card_hash or "",
             profile=person.profile or "",
             status=person.status.value if person.status else "PENDING",
+            is_test=person.is_test,
         )
         record = await result.single()
         return record is not None
@@ -678,6 +686,7 @@ async def create_relation_in_neo4j(relation: FactualRelation) -> bool:
         "source": relation.source,
         "confidence": relation.confidence.value if hasattr(relation.confidence, "value") else relation.confidence,
         "status": relation.status.value if hasattr(relation.status, "value") else relation.status,
+        "is_test": relation.is_test,
         "evidence": _evidence_to_db(relation.evidence),
     }
     if relation.start_date:

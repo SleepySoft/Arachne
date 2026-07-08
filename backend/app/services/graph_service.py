@@ -33,6 +33,7 @@ from app.database_postgres import get_postgres_pool
 async def _create_node_industry_mapping(
     node_id: str,
     assoc: IndustryNodeAssociation,
+    node_is_test: bool = False,
 ) -> bool:
     """为节点创建一个行业映射；行业不存在或已存在映射时静默跳过。"""
     try:
@@ -65,6 +66,7 @@ async def _create_node_industry_mapping(
             evidence=[],
             status=assoc.status,
             notes=assoc.notes or "由节点创建表单自动关联",
+            is_test=node_is_test,
         )
         await industry_storage.create_mapping(mapping)
         return True
@@ -82,7 +84,7 @@ async def create_node(data: IndustrialNodeCreate) -> IndustrialNode:
     created = await neo4j_storage.create_node(node)
 
     for assoc in data.industry_ids:
-        await _create_node_industry_mapping(created.node_id, assoc)
+        await _create_node_industry_mapping(created.node_id, assoc, node_is_test=node.is_test)
 
     return created
 
@@ -116,11 +118,12 @@ async def quick_create_node(data: IndustrialNodeQuickCreate) -> IndustrialNode:
         confidence=data.confidence,
         status=data.status,
         notes=data.notes,
+        is_test=data.is_test or False,
     )
     created = await neo4j_storage.create_node(node)
 
     for assoc in data.industry_ids:
-        await _create_node_industry_mapping(created.node_id, assoc)
+        await _create_node_industry_mapping(created.node_id, assoc, node_is_test=data.is_test or False)
 
     return created
 
@@ -228,6 +231,7 @@ async def quick_create_edge(data: IndustrialFlowEdgeQuickCreate) -> IndustrialFl
         evidence=data.evidence,
         confidence=data.confidence,
         notes=data.notes,
+        is_test=data.is_test or False,
     )
     return await neo4j_storage.create_industrial_flow_edge(edge)
 

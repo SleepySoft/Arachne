@@ -253,6 +253,15 @@ def cmd_quick_node(name_zh: str = None, name_en: str = None, entity_type: str = 
     print("\n[OK] Draft node created")
 
 
+def cmd_cleanup_test_data(dry_run: bool = False):
+    result = _request("POST", "/admin/cleanup-test-data", params={"dry_run": dry_run})
+    _print(result)
+    if dry_run:
+        print("\n[DRY-RUN] No data was deleted. Rerun without --dry-run to delete.")
+    else:
+        print("\n[OK] Test data cleanup completed")
+
+
 def cmd_quick_edge(from_node: str, to_node: str, edge_type: str = "material_input", description: str = None, notes: str = None):
     data = {
         "from_node": from_node,
@@ -291,6 +300,7 @@ Examples:
   %(prog)s query --incomplete-items --limit 50
   %(prog)s quick-node --name-zh "六氟化铀" --entity-type material
   %(prog)s quick-edge --from lithium_metal --to battery_cell --edge-type material_input
+  %(prog)s cleanup-test-data --dry-run
         """
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -425,6 +435,10 @@ Examples:
     p_qedge.add_argument("--description", help="Optional description; auto-generated if omitted")
     p_qedge.add_argument("--notes", help="Notes, e.g. '待 AI 补全'")
 
+    # cleanup-test-data
+    p_cleanup = subparsers.add_parser("cleanup-test-data", help="Delete all entities marked as test data")
+    p_cleanup.add_argument("--dry-run", action="store_true", help="Show counts without deleting")
+
     args = parser.parse_args()
 
     if args.command == "submit":
@@ -493,6 +507,8 @@ Examples:
         cmd_quick_node(args.name_zh, args.name_en, args.entity_type, args.notes)
     elif args.command == "quick-edge":
         cmd_quick_edge(args.from_node, args.to_node, args.edge_type, args.description, args.notes)
+    elif args.command == "cleanup-test-data":
+        cmd_cleanup_test_data(args.dry_run)
 
 
 if __name__ == "__main__":

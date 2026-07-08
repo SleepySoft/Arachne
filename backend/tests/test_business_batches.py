@@ -45,6 +45,7 @@ class TestBusinessBatchRouter:
                         "name_zh": f"测试批量行业-{uid}",
                         "industry_type": "curated_view",
                         "status": "ACTIVE",
+                        "is_test": True,
                     }
                 ],
                 "companies_to_upsert": [
@@ -54,6 +55,7 @@ class TestBusinessBatchRouter:
                         "country": "CN",
                         "company_type": "public",
                         "status": "ACTIVE",
+                        "is_test": True,
                     }
                 ],
                 "industry_node_mappings_to_upsert": [
@@ -63,6 +65,7 @@ class TestBusinessBatchRouter:
                         "node_id": "silicon_wafer",
                         "weight": 0.9,
                         "status": "ACTIVE",
+                        "is_test": True,
                     }
                 ],
                 "company_node_exposures_to_upsert": [
@@ -73,6 +76,7 @@ class TestBusinessBatchRouter:
                         "activity_type": "produce",
                         "weight": 0.8,
                         "status": "ACTIVE",
+                        "is_test": True,
                         "evidence": [
                             {
                                 "source_title": "测试来源",
@@ -106,6 +110,7 @@ class TestBusinessBatchRouter:
                         "name_zh": "原始名称",
                         "industry_type": "curated_view",
                         "status": "ACTIVE",
+                        "is_test": True,
                     }
                 ],
             })
@@ -121,6 +126,7 @@ class TestBusinessBatchRouter:
                         "name_zh": "更新后的名称",
                         "industry_type": "curated_view",
                         "status": "ACTIVE",
+                        "is_test": True,
                     }
                 ],
             })
@@ -146,6 +152,7 @@ class TestBusinessBatchRouter:
                         "industry_id": industry_id3,
                         "name_zh": "映射去重测试行业",
                         "status": "ACTIVE",
+                        "is_test": True,
                     }
                 ],
                 "industry_node_mappings_to_upsert": [
@@ -155,6 +162,7 @@ class TestBusinessBatchRouter:
                         "node_id": "lithium_battery_cell",
                         "weight": 0.5,
                         "status": "ACTIVE",
+                        "is_test": True,
                     },
                     {
                         "mapping_id": f"map2_{uid3}",
@@ -162,6 +170,7 @@ class TestBusinessBatchRouter:
                         "node_id": "lithium_battery_cell",
                         "weight": 0.8,
                         "status": "ACTIVE",
+                        "is_test": True,
                     },
                 ],
             })

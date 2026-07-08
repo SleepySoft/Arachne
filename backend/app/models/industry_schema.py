@@ -76,6 +76,7 @@ class Industry(BaseModel):
     )
 
     notes: Optional[str] = None
+    is_test: bool = Field(default=False, description="标记是否为测试数据")
 
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -134,6 +135,7 @@ class IndustryNodeMapping(BaseModel):
     )
 
     notes: Optional[str] = None
+    is_test: bool = Field(default=False, description="标记是否为测试数据")
 
     @model_validator(mode="after")
     def validate_mapping_policy(self) -> "IndustryNodeMapping":

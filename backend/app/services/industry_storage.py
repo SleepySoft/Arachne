@@ -30,6 +30,7 @@ def _row_to_industry(row: dict) -> Industry:
         description=row.get("description"),
         status=row["status"],
         notes=row.get("notes"),
+        is_test=row.get("is_test", False),
         created_at=row.get("created_at"),
         updated_at=row.get("updated_at"),
     )
@@ -50,6 +51,7 @@ def _row_to_mapping(row: dict) -> IndustryNodeMapping:
         evidence=evidence_raw,
         status=row["status"],
         notes=row.get("notes"),
+        is_test=row.get("is_test", False),
         created_at=row.get("created_at"),
         updated_at=row.get("updated_at"),
     )
@@ -69,8 +71,8 @@ async def create_industry(data: Industry) -> Industry:
             """
             INSERT INTO industries (
                 industry_id, industry_uuid, name_zh, name_en,
-                aliases, industry_type, description, status, notes
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                aliases, industry_type, description, status, notes, is_test
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING *
             """,
             data.industry_id,
@@ -82,6 +84,7 @@ async def create_industry(data: Industry) -> Industry:
             data.description,
             data.status.value,
             data.notes,
+            data.is_test,
         )
         return _row_to_industry(row)
 
@@ -106,7 +109,7 @@ async def update_industry(industry_id: str, data: dict) -> Optional[Industry]:
     if pool is None:
         return None
 
-    allowed = {"name_zh", "name_en", "aliases", "industry_type", "description", "status", "notes"}
+    allowed = {"name_zh", "name_en", "aliases", "industry_type", "description", "status", "notes", "is_test"}
     fields = {k: v for k, v in data.items() if k in allowed}
     if not fields:
         return await get_industry(industry_id)
@@ -209,8 +212,8 @@ async def create_mapping(data: IndustryNodeMapping) -> IndustryNodeMapping:
             """
             INSERT INTO industry_node_mappings (
                 mapping_id, mapping_uuid, industry_id, node_id,
-                role, weight, confidence, evidence, status, notes
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                role, weight, confidence, evidence, status, notes, is_test
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING *
             """,
             data.mapping_id,
@@ -223,6 +226,7 @@ async def create_mapping(data: IndustryNodeMapping) -> IndustryNodeMapping:
             json.dumps([e.model_dump(mode='json') for e in data.evidence]) if data.evidence else "[]",
             data.status.value,
             data.notes,
+            data.is_test,
         )
         return _row_to_mapping(row)
 
@@ -265,7 +269,7 @@ async def update_mapping(mapping_id: str, data: dict) -> Optional[IndustryNodeMa
     if pool is None:
         return None
 
-    allowed = {"role", "weight", "confidence", "evidence", "status", "notes"}
+    allowed = {"role", "weight", "confidence", "evidence", "status", "notes", "is_test"}
     fields = {k: v for k, v in data.items() if k in allowed}
     if not fields:
         return await get_mapping(mapping_id)

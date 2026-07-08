@@ -34,6 +34,8 @@ python cli/arachne_cli.py --help
 - 创建前先使用 `query` 或 `list` 命令检查节点/公司/行业是否已存在，避免重复。
 - 快速添加草稿节点时，只需中文名或英文名之一；系统会自动生成 `draft_{uuid}` 占位 ID 并设为 `PENDING` 状态，后续由 AI 或管理员补全。
 - 映射节点到行业时，先确认目标 `node_id` 已在 Neo4j 中存在；否则映射会创建成功但无法在行业子图中显示。
+- **测试数据必须标记 `is_test: true`**：在创建节点、边、行业、公司、映射、暴露、人员或事实关系时，如果是测试/调试用途，请在 JSON 中加上 `"is_test": true`。
+- 测试结束后运行清理：`python cli/arachne_cli.py cleanup-test-data`（或 `scripts/cleanup_test_data.py`），不需要手动删除。
 - 关于本体决策（是否建新节点、是否别名、是否拒绝、是否登记为行业）请咨询 `arachne-graph` 技能。
 
 ## 核心操作流程
@@ -478,6 +480,30 @@ python cli/arachne_cli.py query --neighbors lidar_system
 # 未竟项目扫描（AI 批量补全入口）
 python cli/arachne_cli.py query --incomplete-items --limit 50
 ```
+
+### 9. 测试数据清理
+
+所有测试数据都应带有 `"is_test": true` 标记。测试结束后，使用以下任一方式一键清理：
+
+```bash
+# 1. CLI（推荐，默认连接本地后端）
+python cli/arachne_cli.py cleanup-test-data --dry-run   # 先查看数量
+python cli/arachne_cli.py cleanup-test-data             # 正式删除
+
+# 2. 独立脚本（适合作为 pytest 后处理钩子）
+python scripts/cleanup_test_data.py --dry-run
+python scripts/cleanup_test_data.py
+
+# 3. 直接调用后端 Admin API
+curl -X POST "http://localhost:16060/api/v1/admin/cleanup-test-data?dry_run=true"
+curl -X POST "http://localhost:16060/api/v1/admin/cleanup-test-data"
+```
+
+清理范围：
+- Neo4j：`is_test = true` 的 `IndustrialNode`、`:Person`、`:Company` 及其关联边（`INDUSTRIAL_FLOW` / `ONTOLOGY` / 事实关系）。
+- PostgreSQL：`is_test = true` 的 `industries`、`industry_node_mappings`、`companies`、`company_node_exposures`、`persons`、`factual_relations`。
+
+> 注意：`--dry-run` 只返回待删除数量，不会真正删除。
 
 ## AI 批量补全未竟项目工作流
 
