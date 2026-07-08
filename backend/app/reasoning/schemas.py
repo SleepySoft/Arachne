@@ -405,6 +405,7 @@ class ReasoningDiagnostics(BaseModel):
     graph_boundary_crossed: bool = False
     metadata_links_used: int = 0
     execution_time_ms: int = 0
+    metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
 class CandidateNodeOutput(BaseModel):

@@ -189,6 +189,65 @@ async def test_association_topology_edges_not_mixed_by_default():
     assert "is_a" not in edge_types_expand, f"Ontology edges should still not be returned as flow paths, got {edge_types_expand}"
 
 
+async def test_association_resolves_alias_of_source():
+    alias = _unique("test_alias")
+    canonical = _unique("test_canonical")
+    downstream = _unique("test_downstream")
+
+    await _create_test_node(alias, "别名节点", EntityType.MATERIAL)
+    await _create_test_node(canonical, "规范节点", EntityType.MATERIAL)
+    await _create_test_node(downstream, "下游节点", EntityType.PART)
+    await _create_test_ontology_edge(
+        _unique("e_alias"), alias, canonical, OntologyType.ALIAS_OF
+    )
+    await _create_test_edge(
+        _unique("e_flow"), canonical, downstream, IndustrialFlowType.MATERIAL_INPUT
+    )
+
+    # Even without expand_ontology, alias_of sources should be resolved to canonical.
+    task = _make_task(TaskType.ASSOCIATION, [alias])
+    result = await run_association(task, reasoning_id="test_alias_resolution")
+    assert result.status in ("success", "partial")
+    subgraph = result.result_payload.get("subgraph", {})
+    node_ids = {n["node_id"] for n in subgraph.get("nodes", [])}
+    assert canonical in node_ids, "Should resolve alias to canonical node"
+    assert downstream in node_ids, "Should traverse flow edges from canonical node"
+    assert any(
+        "alias" in w.lower() for w in result.diagnostics.warnings
+    ), "Expected a warning about alias resolution"
+
+
+async def test_association_part_of_whole_expansion():
+    part = _unique("test_part")
+    whole = _unique("test_whole")
+    downstream = _unique("test_whole_downstream")
+
+    await _create_test_node(part, "子部件", EntityType.PART)
+    await _create_test_node(whole, "整体", EntityType.SYSTEM)
+    await _create_test_node(downstream, "整体下游", EntityType.PART)
+    await _create_test_ontology_edge(
+        _unique("e_part_of"), part, whole, OntologyType.PART_OF
+    )
+    await _create_test_edge(
+        _unique("e_flow"), whole, downstream, IndustrialFlowType.MATERIAL_INPUT
+    )
+
+    task = _make_task(
+        TaskType.ASSOCIATION,
+        [part],
+        parameters={"expand_ontology": True},
+    )
+    result = await run_association(task, reasoning_id="test_part_of_expand")
+    assert result.status in ("success", "partial")
+    subgraph = result.result_payload.get("subgraph", {})
+    node_ids = {n["node_id"] for n in subgraph.get("nodes", [])}
+    assert part in node_ids
+    assert whole in node_ids, f"Should expand part -> whole via part_of, got {node_ids}"
+    assert downstream in node_ids, f"Should traverse flow from whole to downstream, got {node_ids}"
+    edge_types = {e.get("edge_type") for e in subgraph.get("edges", [])}
+    assert "part_of" not in edge_types, f"part_of edges should not appear as flow paths, got {edge_types}"
+
+
 async def test_impact_propagation_with_derived_from():
     a = _unique("test_mat_a")
     b = _unique("test_mat_b")

@@ -24,7 +24,7 @@ from app.reasoning.schemas import (
     TempGraphNode,
 )
 from app.reasoning.derived_from_utils import expand_by_derived_from
-from app.reasoning.topology import expand_by_topology
+from app.reasoning.topology import resolve_sources_topologically
 from app.reasoning.tasks.utils import (
     allowed_confidence_values,
     build_allowed_rel_types,
@@ -185,29 +185,52 @@ async def run_association(
             diagnostics=diagnostics,
         )
 
+    # 1. Always resolve alias_of to canonical targets.
+    try:
+        canonical_ids, alias_map = await resolve_sources_topologically(
+            existing, expand_ontology=False
+        )
+        aliased = {k: v for k, v in alias_map.items() if k != v}
+        if aliased:
+            warnings.append(
+                f"Resolved {len(aliased)} alias source(s) to canonical node(s): {aliased}"
+            )
+        seed_nodes = sorted(canonical_ids)
+    except Exception as exc:
+        warnings.append(f"alias resolution failed: {exc}")
+        seed_nodes = existing
+
+    # 2. Expand derived_from material lineage.
     expand_derived = task.parameters.get("expand_derived_from", True)
-    seed_nodes = existing
     if expand_derived:
         try:
-            expanded = await expand_by_derived_from(existing, direction="both", max_hops=5)
-            seed_nodes = sorted(expanded)
-            if len(seed_nodes) > len(existing):
-                warnings.append(
-                    f"Expanded {len(existing)} source(s) to {len(seed_nodes)} equivalent nodes via derived_from"
-                )
-        except Exception as exc:
-            warnings.append(f"derived_from expansion failed: {exc}")
-
-    expand_ontology = task.parameters.get("expand_ontology", False)
-    if expand_ontology:
-        try:
-            expanded = await expand_by_topology(seed_nodes, direction="both", max_hops=2)
+            expanded = await expand_by_derived_from(seed_nodes, direction="both", max_hops=5)
             before = len(seed_nodes)
             seed_nodes = sorted(expanded)
             if len(seed_nodes) > before:
                 warnings.append(
+                    f"Expanded {before} source(s) to {len(seed_nodes)} equivalent nodes via derived_from"
+                )
+        except Exception as exc:
+            warnings.append(f"derived_from expansion failed: {exc}")
+
+    # 3. Optionally expand ontology semantics (is_a, part_of, related).
+    expand_ontology = task.parameters.get("expand_ontology", False)
+    if expand_ontology:
+        try:
+            before = len(seed_nodes)
+            effective, details = await resolve_sources_topologically(
+                seed_nodes, expand_ontology=True, max_ontology_hops=2
+            )
+            seed_nodes = sorted(effective)
+            if len(seed_nodes) > before:
+                warnings.append(
                     f"Expanded {before} seed(s) to {len(seed_nodes)} nodes via ontology topology"
                 )
+            diagnostics.metadata["topology_expansion"] = {
+                k: sorted(v) if isinstance(v, set) else v
+                for k, v in details.items()
+            }
         except Exception as exc:
             warnings.append(f"ontology expansion failed: {exc}")
 
