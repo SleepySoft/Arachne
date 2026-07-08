@@ -10,29 +10,31 @@ Semantics:
   relationships should attach to the downstream (canonical) node. We always
   resolve aliases to their canonical targets.
 
-* ``is_a`` (是一种): logical subclass/superclass. Generic material/process
-  edges attach to the downstream (parent/superclass), while specific
-  upstream/downstream edges attach to the upstream (child/subclass). For
-  reasoning we expand in both directions (parents and children).
+* ``is_a`` / ``variant_of``: taxonomic/generalisation edges. ``is_a`` is a
+  stable subclass/superclass relation; ``variant_of`` is a technical variant
+  of the same parent concept. For reasoning we treat them almost equivalently:
+  expand both to parents (downstream) and children (upstream).
 
-* ``part_of`` (组成部分): a part can be viewed as its whole. We expand from
-  part (upstream) to whole (downstream). We also expand from whole to direct
-  parts because real process flows often connect to sub-nodes.
+* ``part_of`` (组成部分): a part can be viewed as its whole, and a whole can
+  be viewed through its parts. We expand in both directions, but conservatively
+  limit whole -> parts to a small hop count because real process flows attach
+  to sub-nodes and the entry/exit structure is not explicitly modelled.
 
-* ``variant_of`` / ``related_term``: semantically related but ambiguous. We
-  treat them as bidirectional semantic neighbours with a small hop limit.
+* ``related_term``: intentionally excluded from automatic expansion. It is
+  defined in the skill as an undetermined/temporary relation that should be
+  upgraded or removed.
 """
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Set, Tuple
 
 from app.database import get_async_driver
 
 ALIAS_EDGE_TYPE = "alias_of"
-HIERARCHY_EDGE_TYPES = {"is_a", "part_of"}
-RELATED_EDGE_TYPES = {"variant_of", "related_term"}
-ALL_TOPOLOGY_EDGE_TYPES = {ALIAS_EDGE_TYPE, *HIERARCHY_EDGE_TYPES, *RELATED_EDGE_TYPES}
+TAXONOMIC_EDGE_TYPES = {"is_a", "variant_of"}
+PART_OF_EDGE_TYPE = "part_of"
+ALL_TOPOLOGY_EDGE_TYPES = {ALIAS_EDGE_TYPE, *TAXONOMIC_EDGE_TYPES, PART_OF_EDGE_TYPE, "related_term"}
 
 
 async def _query_direct_neighbors(
@@ -120,12 +122,12 @@ async def resolve_aliases(
 
 async def _expand_hierarchy(
     node_ids: List[str],
-    edge_type: str,
+    edge_types: Set[str],
     direction: str,
     max_hops: int,
 ) -> Set[str]:
-    """Expand node set along a directed ontology edge type up to max_hops."""
-    if not node_ids or max_hops <= 0:
+    """Expand node set along directed ontology edge types up to max_hops."""
+    if not node_ids or max_hops <= 0 or not edge_types:
         return set()
 
     driver = get_async_driver()
@@ -138,7 +140,7 @@ async def _expand_hierarchy(
     MATCH (src:IndustrialNode)
     WHERE src.node_id IN $node_ids
     MATCH (src){rel_clause}(dst:IndustrialNode)
-    WHERE all(rel IN r WHERE rel.edge_type = $edge_type)
+    WHERE all(rel IN r WHERE rel.edge_type IN $edge_types)
     RETURN DISTINCT dst.node_id AS node_id
     """
 
@@ -147,24 +149,24 @@ async def _expand_hierarchy(
         result = await session.run(
             cypher,
             node_ids=list(node_ids),
-            edge_type=edge_type,
+            edge_types=list(edge_types),
         )
         async for record in result:
             expanded.add(record["node_id"])
     return expanded
 
 
-async def expand_is_a(
+async def expand_taxonomic(
     node_ids: List[str],
     max_hops: int = 2,
 ) -> Tuple[Set[str], Set[str]]:
-    """Expand by ``is_a``: return (parents, children).
+    """Expand by ``is_a`` and ``variant_of``: return (parents, children).
 
-    - parents  = downstream targets of ``is_a`` (superclasses).
-    - children = upstream sources of ``is_a`` (subclasses).
+    - parents  = downstream targets (superclasses / base concepts).
+    - children = upstream sources (subclasses / variants).
     """
-    parents = await _expand_hierarchy(node_ids, "is_a", "out", max_hops)
-    children = await _expand_hierarchy(node_ids, "is_a", "in", max_hops)
+    parents = await _expand_hierarchy(node_ids, TAXONOMIC_EDGE_TYPES, "out", max_hops)
+    children = await _expand_hierarchy(node_ids, TAXONOMIC_EDGE_TYPES, "in", max_hops)
     return parents, children
 
 
@@ -177,39 +179,17 @@ async def expand_part_of(
 
     - wholes = downstream targets of ``part_of`` (groups/parents).
     - parts  = upstream sources of ``part_of`` (sub-parts).
+
+    ``max_hops_part`` is kept small because real process flows attach to
+    sub-nodes and the group entry/exit structure is not explicitly modelled.
     """
-    wholes = await _expand_hierarchy(node_ids, "part_of", "out", max_hops_whole)
-    parts = await _expand_hierarchy(node_ids, "part_of", "in", max_hops_part)
+    wholes = await _expand_hierarchy(
+        node_ids, {PART_OF_EDGE_TYPE}, "out", max_hops_whole
+    )
+    parts = await _expand_hierarchy(
+        node_ids, {PART_OF_EDGE_TYPE}, "in", max_hops_part
+    )
     return wholes, parts
-
-
-async def expand_related(
-    node_ids: List[str],
-    max_hops: int = 1,
-) -> Set[str]:
-    """Expand by ``variant_of`` / ``related_term`` in both directions."""
-    if not node_ids or max_hops <= 0:
-        return set()
-
-    driver = get_async_driver()
-    cypher = f"""
-    MATCH (src:IndustrialNode)
-    WHERE src.node_id IN $node_ids
-    MATCH (src)-[r:ONTOLOGY*1..{max_hops}]-(dst:IndustrialNode)
-    WHERE all(rel IN r WHERE rel.edge_type IN $edge_types)
-    RETURN DISTINCT dst.node_id AS node_id
-    """
-
-    expanded: Set[str] = set()
-    async with driver.session() as session:
-        result = await session.run(
-            cypher,
-            node_ids=list(node_ids),
-            edge_types=list(RELATED_EDGE_TYPES),
-        )
-        async for record in result:
-            expanded.add(record["node_id"])
-    return expanded
 
 
 async def resolve_sources_topologically(
@@ -220,7 +200,8 @@ async def resolve_sources_topologically(
     """Resolve source nodes according to topology semantics.
 
     Always performs alias normalization. When ``expand_ontology`` is true,
-    also expands ``is_a``, ``part_of``, ``variant_of`` and ``related_term``.
+    also expands ``is_a`` / ``variant_of`` and ``part_of``. ``related_term``
+    is intentionally excluded from automatic expansion.
 
     Returns:
         - Effective source node IDs for flow traversal.
@@ -238,7 +219,7 @@ async def resolve_sources_topologically(
     if not expand_ontology:
         return canonical_ids, details
 
-    is_a_parents, is_a_children = await expand_is_a(
+    taxonomic_parents, taxonomic_children = await expand_taxonomic(
         list(canonical_ids), max_hops=max_ontology_hops
     )
     part_of_wholes, part_of_parts = await expand_part_of(
@@ -246,25 +227,21 @@ async def resolve_sources_topologically(
         max_hops_whole=max_ontology_hops,
         max_hops_part=1,
     )
-    related = await expand_related(list(canonical_ids), max_hops=1)
 
     effective = (
         canonical_ids
-        | is_a_parents
-        | is_a_children
+        | taxonomic_parents
+        | taxonomic_children
         | part_of_wholes
         | part_of_parts
-        | related
     )
 
     details.update(
         {
-            "is_a_parents": is_a_parents,
-            "is_a_children": is_a_children,
+            "taxonomic_parents": taxonomic_parents,
+            "taxonomic_children": taxonomic_children,
             "part_of_wholes": part_of_wholes,
             "part_of_parts": part_of_parts,
-            "related": related,
         }
     )
     return effective, details
-
