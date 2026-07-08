@@ -263,9 +263,10 @@ async def run_bottleneck_detection(
 
     # 1. Always resolve alias_of to canonical targets.
     try:
-        canonical_ids, alias_map = await resolve_sources_topologically(
+        canonical_ids, details = await resolve_sources_topologically(
             existing, expand_ontology=False
         )
+        alias_map = details.get("aliases_resolved", {})
         aliased = {k: v for k, v in alias_map.items() if k != v}
         if aliased:
             warnings.append(
