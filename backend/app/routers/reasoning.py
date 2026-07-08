@@ -61,6 +61,7 @@ def _company_candidate(company: Any, match_type: MatchType) -> ObjectCandidate:
         graph=GraphType.FACTUAL,
         canonical_name=company.name_zh or company.name_en,
         aliases=company.aliases or [],
+        entity_type="company",
         status=company.status,
         confidence=None,
         match_type=match_type,
@@ -87,6 +88,7 @@ def _person_candidate(person: Any, match_type: MatchType) -> ObjectCandidate:
         graph=GraphType.FACTUAL,
         canonical_name=person.name_zh or person.name_en,
         aliases=person.aliases or [],
+        entity_type="person",
         status=person.status,
         confidence=None,
         match_type=match_type,
@@ -154,13 +156,32 @@ async def _query_industries(req: ObjectQueryRequest) -> List[ObjectCandidate]:
     return [_industry_candidate(i, MatchType.KEYWORD) for i in items]
 
 
-async def _query_factual_nodes(req: ObjectQueryRequest) -> List[ObjectCandidate]:
-    # Person search; companies are handled via _query_companies
-    items, _ = await factual_graph_storage.list_persons(
-        search=req.query_text,
-        page_size=req.limit,
-    )
-    return [_person_candidate(p, MatchType.KEYWORD) for p in items]
+async def _query_factual_nodes(
+    req: ObjectQueryRequest,
+) -> tuple[List[ObjectCandidate], List[ObjectCandidate]]:
+    """Search factual nodes (persons and/or companies).
+
+    Use filters.object_type="person" or "company" to restrict the search;
+    otherwise both are returned.
+    """
+    object_type = req.filters.get("object_type") if req.filters else None
+    candidates: List[ObjectCandidate] = []
+
+    if object_type in (None, "person"):
+        persons, _ = await factual_graph_storage.list_persons(
+            search=req.query_text,
+            page_size=req.limit,
+        )
+        candidates.extend([_person_candidate(p, MatchType.KEYWORD) for p in persons])
+
+    if object_type in (None, "company"):
+        companies, _ = await company_storage.list_companies(
+            search=req.query_text,
+            limit=req.limit,
+        )
+        candidates.extend([_company_candidate(c, MatchType.KEYWORD) for c in companies])
+
+    return candidates[: req.limit], []
 
 
 async def _query_industrial_edges(

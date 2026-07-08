@@ -61,9 +61,9 @@ function scopeHint(scope: QueryScope): {
       };
     case "factual_node":
       return {
-        label: "人员姓名",
-        placeholder: "输入人员姓名，如：张三",
-        example: "张三",
+        label: "事实节点",
+        placeholder: "输入人员姓名或公司名/股票代码，如：张三、比亚迪",
+        example: "张三 / 比亚迪",
       };
     case "company":
       return {
@@ -189,6 +189,7 @@ export function ReasoningPage() {
   // ----- Object query state -----
   const [queryText, setQueryText] = useState("");
   const [queryScope, setQueryScope] = useState<QueryScope>("industrial_node");
+  const [factualNodeType, setFactualNodeType] = useState<"" | "person" | "company">("");
   const [candidates, setCandidates] = useState<ObjectCandidate[]>([]);
   const [queryError, setQueryError] = useState<string | null>(null);
 
@@ -204,10 +205,15 @@ export function ReasoningPage() {
   const handleQuery = () => {
     if (!queryText.trim()) return;
     setQueryError(null);
+    const filters: Record<string, unknown> = {};
+    if (queryScope === "factual_node" && factualNodeType) {
+      filters.object_type = factualNodeType;
+    }
     queryMutation.mutate({
       query_id: `rq_${Date.now()}`,
       query_text: queryText.trim(),
       query_scope: queryScope,
+      filters,
       limit: 20,
     });
   };
@@ -491,6 +497,21 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
                   ))}
                 </select>
               </FormField>
+
+              {queryScope === "factual_node" && (
+                <FormField label="事实节点类型">
+                  <select
+                    value={factualNodeType}
+                    onChange={(e) => setFactualNodeType(e.target.value as "" | "person" | "company")}
+                    className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
+                  >
+                    <option value="">全部（人员 + 公司）</option>
+                    <option value="person">仅人员</option>
+                    <option value="company">仅公司</option>
+                  </select>
+                </FormField>
+              )}
+
               <FormField label={scopeHint(queryScope).label}>
                 <div className="flex gap-2">
                   <input
