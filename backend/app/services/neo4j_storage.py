@@ -411,6 +411,7 @@ async def create_ontology_edge(edge: OntologyEdge) -> OntologyEdge:
             evidence=_evidence_to_db(edge.evidence),
             confidence=edge.confidence.value,
             notes=edge.notes,
+            is_test=edge.is_test,
             now=now,
         )
         record = await result.single()

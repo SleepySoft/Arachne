@@ -18,6 +18,8 @@ from app.models.schemas import (
     IndustrialFlowEdge,
     IndustrialFlowType,
     IndustrialNode,
+    OntologyEdge,
+    OntologyType,
     RecordStatus,
 )
 from app.reasoning.schemas import OutputType, ReasoningConstraints, ReasoningTask, TaskType
@@ -76,6 +78,25 @@ async def _create_test_edge(
     return await neo4j_storage.create_industrial_flow_edge(edge)
 
 
+async def _create_test_ontology_edge(
+    edge_id: str,
+    from_node: str,
+    to_node: str,
+    edge_type: OntologyType,
+):
+    edge = OntologyEdge(
+        edge_id=edge_id,
+        from_node=from_node,
+        to_node=to_node,
+        edge_type=edge_type,
+        description=f"test {edge_type.value}",
+        evidence=[Evidence(source_title="test", quote="test")],
+        confidence=Confidence.HIGH,
+        is_test=True,
+    )
+    return await neo4j_storage.create_ontology_edge(edge)
+
+
 def _make_task(task_type: TaskType, source_nodes: list[str], **overrides) -> ReasoningTask:
     return ReasoningTask(
         task_id=f"test_{task_type.value}",
@@ -126,6 +147,46 @@ async def test_association_with_derived_from_expansion():
     paths = result.result_payload.get("paths", {}).get("paths", [])
     sequences = [p["node_sequence"] for p in paths]
     assert any(a in seq and b in seq and c in seq for seq in sequences), f"Expected path through derived_from, got {sequences}"
+
+
+async def test_association_topology_edges_not_mixed_by_default():
+    a = _unique("test_onto_a")
+    b = _unique("test_onto_b")
+    c = _unique("test_onto_c")
+
+    await _create_test_node(a, "测试原料A", EntityType.MATERIAL)
+    await _create_test_node(b, "测试原料B", EntityType.MATERIAL)
+    await _create_test_node(c, "测试概念C", EntityType.MATERIAL)
+    await _create_test_edge(_unique("e_mi"), a, b, IndustrialFlowType.MATERIAL_INPUT)
+    await _create_test_ontology_edge(_unique("e_ont"), a, c, OntologyType.IS_A)
+
+    # Default association should follow the flow edge only, not the ontology edge.
+    task = _make_task(TaskType.ASSOCIATION, [a])
+    result = await run_association(task, reasoning_id="test_onto_default")
+    assert result.status in ("success", "partial")
+    subgraph = result.result_payload.get("subgraph", {})
+    node_ids = {n["node_id"] for n in subgraph.get("nodes", [])}
+    edge_types = {e.get("edge_type") for e in subgraph.get("edges", [])}
+    assert a in node_ids
+    assert b in node_ids
+    assert c not in node_ids, f"Ontology neighbor should not appear without expand_ontology, got {node_ids}"
+    assert "is_a" not in edge_types, f"Ontology edges should not be traversed by default, got {edge_types}"
+
+    # With expand_ontology=True the topology neighbor is included as a source expansion.
+    task_expand = _make_task(
+        TaskType.ASSOCIATION,
+        [a],
+        parameters={"expand_ontology": True},
+    )
+    result_expand = await run_association(task_expand, reasoning_id="test_onto_expand")
+    assert result_expand.status in ("success", "partial")
+    subgraph_expand = result_expand.result_payload.get("subgraph", {})
+    node_ids_expand = {n["node_id"] for n in subgraph_expand.get("nodes", [])}
+    edge_types_expand = {e.get("edge_type") for e in subgraph_expand.get("edges", [])}
+    assert a in node_ids_expand
+    assert b in node_ids_expand
+    assert c in node_ids_expand, f"Ontology neighbor should appear when expand_ontology=True, got {node_ids_expand}"
+    assert "is_a" not in edge_types_expand, f"Ontology edges should still not be returned as flow paths, got {edge_types_expand}"
 
 
 async def test_impact_propagation_with_derived_from():

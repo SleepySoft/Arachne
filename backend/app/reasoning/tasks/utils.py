@@ -81,10 +81,16 @@ def passes_edge_filters(
 
 
 def build_allowed_rel_types(constraints: ReasoningConstraints) -> str:
-    """Build a Cypher relationship type pattern from allowed namespaces."""
+    """Build a Cypher relationship type pattern from allowed namespaces.
+
+    When the caller does not explicitly request namespaces, the default is
+    ``INDUSTRIAL_FLOW`` only. Ontology/topology edges are opt-in because they
+    represent taxonomic/structural relationships and should not be mixed into
+    supply-chain traversal by default.
+    """
     namespaces = constraints.allowed_edge_namespaces
     if not namespaces:
-        return "INDUSTRIAL_FLOW|ONTOLOGY"
+        return "INDUSTRIAL_FLOW"
     parts = []
     for ns in namespaces:
         parts.append(ns.upper())

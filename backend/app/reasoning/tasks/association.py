@@ -24,6 +24,7 @@ from app.reasoning.schemas import (
     TempGraphNode,
 )
 from app.reasoning.derived_from_utils import expand_by_derived_from
+from app.reasoning.topology import expand_by_topology
 from app.reasoning.tasks.utils import (
     allowed_confidence_values,
     build_allowed_rel_types,
@@ -197,6 +198,19 @@ async def run_association(
         except Exception as exc:
             warnings.append(f"derived_from expansion failed: {exc}")
 
+    expand_ontology = task.parameters.get("expand_ontology", False)
+    if expand_ontology:
+        try:
+            expanded = await expand_by_topology(seed_nodes, direction="both", max_hops=2)
+            before = len(seed_nodes)
+            seed_nodes = sorted(expanded)
+            if len(seed_nodes) > before:
+                warnings.append(
+                    f"Expanded {before} seed(s) to {len(seed_nodes)} nodes via ontology topology"
+                )
+        except Exception as exc:
+            warnings.append(f"ontology expansion failed: {exc}")
+
     # Fetch raw paths for all sources
     all_paths: List[Dict[str, Any]] = []
     for source_id in seed_nodes:
@@ -210,8 +224,8 @@ async def run_association(
             break
 
     node_ids = collect_unique_node_ids(all_paths)
-    # Ensure source nodes are included even if no paths
-    node_ids.update(existing)
+    # Ensure all seed nodes (including derived_from/ontology expansions) are included
+    node_ids.update(seed_nodes)
 
     if len(node_ids) > task.constraints.max_nodes:
         diagnostics.truncated = True
@@ -226,7 +240,7 @@ async def run_association(
     nodes_map = await fetch_nodes_by_ids(list(node_ids))
 
     # Filter nodes, but always retain source nodes even if pending
-    source_set = set(existing)
+    source_set = set(seed_nodes)
     filtered_nodes = {
         nid: n for nid, n in nodes_map.items()
         if nid in source_set or passes_node_filters(n, task.constraints)

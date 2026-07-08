@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 from app.database import get_async_driver
 from app.reasoning.derived_from_utils import expand_by_derived_from
+from app.reasoning.topology import expand_by_topology
 from app.reasoning.schemas import (
     CandidateNodeOutput,
     EvidenceChain,
@@ -272,6 +273,19 @@ async def run_bottleneck_detection(
                 )
         except Exception as exc:
             warnings.append(f"derived_from expansion failed: {exc}")
+
+    expand_ontology = task.parameters.get("expand_ontology", False)
+    if expand_ontology:
+        try:
+            expanded = await expand_by_topology(seed_nodes, direction="both", max_hops=2)
+            before = len(seed_nodes)
+            seed_nodes = sorted(expanded)
+            if len(seed_nodes) > before:
+                warnings.append(
+                    f"Expanded {before} seed(s) to {len(seed_nodes)} nodes via ontology topology"
+                )
+        except Exception as exc:
+            warnings.append(f"ontology expansion failed: {exc}")
 
     nodes, edges = await _fetch_reachable_subgraph(seed_nodes, task.constraints)
     nodes_map = {n.node_id: n for n in nodes}

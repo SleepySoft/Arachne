@@ -242,6 +242,7 @@ export function ReasoningPage() {
   const [propagationProfile, setPropagationProfile] = useState("supply_forward");
   const [includeCompanyExposures, setIncludeCompanyExposures] = useState(false);
   const [maxCompanyExposures, setMaxCompanyExposures] = useState(20);
+  const [expandOntology, setExpandOntology] = useState(false);
   const [outputs, setOutputs] = useState<OutputType[]>(DEFAULT_OUTPUTS);
 
   useEffect(() => {
@@ -361,6 +362,9 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
     if (includeCompanyExposures) {
       parameters.include_company_exposures = true;
       parameters.max_company_exposures = maxCompanyExposures;
+    }
+    if (expandOntology) {
+      parameters.expand_ontology = true;
     }
 
     const payload: ReasoningTask = {
@@ -693,6 +697,25 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
                   </select>
                 </FormField>
               </div>
+
+              <FormField label="拓扑扩展">
+                <label
+                  className={cn(
+                    "flex cursor-pointer items-center gap-2 rounded border px-2 py-1.5 text-xs transition-colors",
+                    expandOntology
+                      ? "border-cyan-700/50 bg-cyan-900/20 text-cyan-200"
+                      : "border-slate-800 bg-slate-900 text-slate-400 hover:bg-slate-800"
+                  )}
+                >
+                  <input
+                    type="checkbox"
+                    checked={expandOntology}
+                    onChange={() => setExpandOntology((v) => !v)}
+                    className="h-3 w-3 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-0"
+                  />
+                  通过本体关系扩展起点（is_a / part_of / related_term）
+                </label>
+              </FormField>
 
               <FormField label="输出内容">
                 <div className="grid grid-cols-2 gap-2">

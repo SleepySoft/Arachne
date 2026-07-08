@@ -283,10 +283,15 @@ def cmd_reasoning_execute(
     direction: str = "forward",
     outputs: list[str] = None,
     params: dict = None,
+    expand_ontology: bool = False,
     dry_run: bool = False,
 ):
     if outputs is None:
         outputs = ["subgraph", "paths", "evidence_chains", "feature_tables"]
+    if params is None:
+        params = {}
+    if expand_ontology:
+        params["expand_ontology"] = True
     payload = {
         "task_id": f"rt_{datetime.utcnow().timestamp()}",
         "task_type": task_type,
@@ -515,6 +520,7 @@ Examples:
         help="Comma-separated output types",
     )
     p_reasoning_exec.add_argument("--param", action="append", dest="params", help="Extra parameters as key=value (repeatable)")
+    p_reasoning_exec.add_argument("--expand-ontology", action="store_true", help="Expand source nodes via ontology edges (is_a/part_of/related_term) before traversal")
     p_reasoning_exec.add_argument("--dry-run", action="store_true", help="Print payload without executing")
 
     args = parser.parse_args()
@@ -620,6 +626,7 @@ Examples:
                 direction=args.direction,
                 outputs=outputs,
                 params=params,
+                expand_ontology=args.expand_ontology,
                 dry_run=args.dry_run,
             )
 
