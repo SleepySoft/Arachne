@@ -398,3 +398,62 @@ async def test_cross_graph_context_returns_company_exposure():
     node_ids = {n["temp_node_id"] for n in temp_graph.get("nodes", [])}
     assert node_id in node_ids
     assert company_id in node_ids
+
+
+async def test_cross_graph_context_expand_ontology_finds_parent_exposure():
+    try:
+        from app.database_postgres import get_postgres_pool
+        pool = await get_postgres_pool()
+        if pool is None:
+            pytest.skip("PostgreSQL not available")
+    except Exception:
+        pytest.skip("PostgreSQL not available")
+
+    parent_id = _unique("test_cross_parent")
+    child_id = _unique("test_cross_child")
+    company_id = _unique("test_cross_company")
+    unique_suffix = str(uuid.uuid4())[:6]
+
+    await _create_test_node(parent_id, f"测试父节点{unique_suffix}", EntityType.PART)
+    await _create_test_node(child_id, f"测试子节点{unique_suffix}", EntityType.PART)
+    await _create_test_ontology_edge(
+        _unique("test_isa"), child_id, parent_id, OntologyType.IS_A
+    )
+
+    company = await company_storage.create_company(
+        Company(
+            company_id=company_id,
+            name_zh=f"测试交叉公司{unique_suffix}",
+            company_type=CompanyType.PRIVATE,
+            country="CN",
+            is_test=True,
+        )
+    )
+    assert company is not None
+
+    exposure = await company_storage.create_exposure(
+        CompanyNodeExposure(
+            exposure_id=_unique("exp"),
+            company_id=company_id,
+            node_id=parent_id,
+            activity_type=CompanyActivityType.PRODUCE,
+            role="producer",
+            is_test=True,
+        ),
+    )
+    assert exposure is not None
+
+    task = _make_task(
+        TaskType.CROSS_GRAPH_CONTEXT,
+        [child_id],
+        parameters={"expand_ontology": True},
+        requested_outputs=[OutputType.TEMPORARY_GRAPH],
+    )
+    result = await run_cross_graph_context(task, reasoning_id="test_cross_onto")
+
+    assert result.status in ("success", "partial")
+    temp_graph = result.result_payload.get("temporary_graph", {})
+    node_ids = {n["temp_node_id"] for n in temp_graph.get("nodes", [])}
+    assert child_id in node_ids
+    assert parent_id in node_ids
+    assert company_id in node_ids

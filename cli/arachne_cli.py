@@ -284,6 +284,7 @@ def cmd_reasoning_execute(
     outputs: list[str] = None,
     params: dict = None,
     expand_ontology: bool = False,
+    neighbor_depth: int = 0,
     dry_run: bool = False,
 ):
     if outputs is None:
@@ -292,6 +293,8 @@ def cmd_reasoning_execute(
         params = {}
     if expand_ontology:
         params["expand_ontology"] = True
+    if neighbor_depth:
+        params["industrial_neighbor_depth"] = neighbor_depth
     payload = {
         "task_id": f"rt_{datetime.utcnow().timestamp()}",
         "task_type": task_type,
@@ -520,7 +523,8 @@ Examples:
         help="Comma-separated output types",
     )
     p_reasoning_exec.add_argument("--param", action="append", dest="params", help="Extra parameters as key=value (repeatable)")
-    p_reasoning_exec.add_argument("--expand-ontology", action="store_true", help="Expand source nodes via ontology edges (is_a/part_of/related_term) before traversal")
+    p_reasoning_exec.add_argument("--expand-ontology", action="store_true", help="Expand source nodes via ontology edges (is_a/part_of/variant_of) before traversal")
+    p_reasoning_exec.add_argument("--neighbor-depth", type=int, default=0, help="Include industrial-flow neighbors up to N hops when querying companies/industries (cross_graph_context only)")
     p_reasoning_exec.add_argument("--dry-run", action="store_true", help="Print payload without executing")
 
     args = parser.parse_args()
@@ -627,6 +631,7 @@ Examples:
                 outputs=outputs,
                 params=params,
                 expand_ontology=args.expand_ontology,
+                neighbor_depth=args.neighbor_depth,
                 dry_run=args.dry_run,
             )
 

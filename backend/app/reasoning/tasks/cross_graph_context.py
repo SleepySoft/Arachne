@@ -10,7 +10,9 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Set, Tuple
 
+from app.database import get_async_driver
 from app.reasoning.derived_from_utils import expand_by_derived_from
+from app.reasoning.topology import resolve_sources_topologically
 from app.reasoning.schemas import (
     CompanyExposuresOutput,
     EvidenceChain,
@@ -106,6 +108,41 @@ async def _get_relations_for_companies(company_ids: List[str], limit_per_company
     return all_relations, persons
 
 
+async def _expand_industrial_neighbors(
+    seed_nodes: List[str],
+    depth: int,
+    direction: str = "both",
+) -> Set[str]:
+    """Grow the seed set by following industrial-flow edges for `depth` hops.
+
+    Direction may be "forward" (downstream), "backward" (upstream), or "both".
+    The original seed nodes are always included in the returned set.
+    """
+    if depth <= 0 or not seed_nodes:
+        return set(seed_nodes)
+
+    driver = get_async_driver()
+    rel_clause = {
+        "forward": "-[r:INDUSTRIAL_FLOW*1..{depth}]->",
+        "backward": "<-[r:INDUSTRIAL_FLOW*1..{depth}]-",
+        "both": "-[r:INDUSTRIAL_FLOW*1..{depth}]-",
+    }.get(direction, "-[r:INDUSTRIAL_FLOW*1..{depth}]-")
+    rel_clause = rel_clause.format(depth=depth)
+
+    cypher = f"""
+        MATCH (src:IndustrialNode)-[:INDUSTRIAL_FLOW*0..{depth}]-(n:IndustrialNode)
+        WHERE src.node_id IN $seed_nodes
+        RETURN collect(DISTINCT n.node_id) AS node_ids
+    """
+
+    async with driver.session() as session:
+        result = await session.run(cypher, seed_nodes=seed_nodes, depth=depth)
+        record = await result.single()
+        if record is None:
+            return set(seed_nodes)
+        return set(record["node_ids"])
+
+
 async def run_cross_graph_context(
     task: ReasoningTask,
     reasoning_id: str,
@@ -133,18 +170,69 @@ async def run_cross_graph_context(
             diagnostics=diagnostics,
         )
 
+    # 1. Always resolve alias_of to canonical targets.
+    try:
+        canonical_ids, details = await resolve_sources_topologically(existing, expand_ontology=False)
+        alias_map = details.get("aliases_resolved", {})
+        aliased = {k: v for k, v in alias_map.items() if k != v}
+        if aliased:
+            warnings.append(f"Resolved {len(aliased)} alias source(s) to canonical node(s): {aliased}")
+        seed_nodes = sorted(canonical_ids)
+    except Exception as exc:
+        warnings.append(f"alias resolution failed: {exc}")
+        seed_nodes = existing
+
+    # 2. Expand derived_from material lineage.
     expand_derived = task.parameters.get("expand_derived_from", True)
-    seed_nodes = existing
     if expand_derived:
         try:
-            expanded = await expand_by_derived_from(existing, direction="both", max_hops=5)
+            before = len(seed_nodes)
+            expanded = await expand_by_derived_from(seed_nodes, direction="both", max_hops=5)
             seed_nodes = sorted(expanded)
-            if len(seed_nodes) > len(existing):
+            if len(seed_nodes) > before:
                 warnings.append(
-                    f"Expanded {len(existing)} source(s) to {len(seed_nodes)} equivalent nodes via derived_from"
+                    f"Expanded {before} source(s) to {len(seed_nodes)} equivalent nodes via derived_from"
                 )
         except Exception as exc:
             warnings.append(f"derived_from expansion failed: {exc}")
+
+    # 3. Optionally expand ontology semantics (is_a, part_of, variant_of).
+    expand_ontology = task.parameters.get("expand_ontology", False)
+    if expand_ontology:
+        try:
+            before = len(seed_nodes)
+            effective, topo_details = await resolve_sources_topologically(
+                seed_nodes, expand_ontology=True, max_ontology_hops=2
+            )
+            seed_nodes = sorted(effective)
+            if len(seed_nodes) > before:
+                warnings.append(
+                    f"Expanded {before} seed(s) to {len(seed_nodes)} nodes via ontology topology"
+                )
+            diagnostics.metadata["topology_expansion"] = {
+                k: sorted(v) if isinstance(v, set) else v for k, v in topo_details.items()
+            }
+        except Exception as exc:
+            warnings.append(f"ontology expansion failed: {exc}")
+
+    # 4. Optionally expand along industrial-flow neighbors (upstream/downstream).
+    neighbor_depth = int(task.parameters.get("industrial_neighbor_depth", 0))
+    if neighbor_depth > 0:
+        try:
+            before = len(seed_nodes)
+            neighbors = await _expand_industrial_neighbors(
+                seed_nodes,
+                neighbor_depth,
+                direction=task.constraints.traversal_direction.value,
+            )
+            seed_nodes = sorted(neighbors)
+            if len(seed_nodes) > before:
+                warnings.append(
+                    f"Expanded {before} seed(s) to {len(seed_nodes)} nodes via industrial-flow neighbors (depth={neighbor_depth})"
+                )
+            diagnostics.metadata["industrial_neighbor_depth"] = neighbor_depth
+        except Exception as exc:
+            warnings.append(f"industrial neighbor expansion failed: {exc}")
 
     max_exposures = int(task.parameters.get("max_company_exposures", 50))
     exposures, companies = await _get_company_exposures(seed_nodes, max_exposures)
