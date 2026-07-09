@@ -58,6 +58,7 @@ endpoints) rather than batch-computed and persisted.
 | Industries + node mappings | PostgreSQL | `industries`, `industry_node_mappings` |
 | Companies + node exposures | PostgreSQL | `companies`, `company_node_exposures` |
 | Persons + factual relations | PostgreSQL + Neo4j | `persons`, `factual_relations` tables; `:Person`, `:Company` nodes + typed relations in Neo4j |
+| Node metadata | PostgreSQL | `industrial_nodes` |
 | Computation jobs | PostgreSQL | `computation_jobs` (async/batch job tracking) |
 
 ### 3.2 Backend Directory Structure
@@ -68,14 +69,15 @@ backend/
 │   ├── main.py                    # FastAPI entry, registers all routers
 │   ├── config.py                  # Settings (Neo4j + PostgreSQL URLs)
 │   ├── database.py                # Neo4j async driver
-│   ├── database_postgres.py       # asyncpg pool + table init (7 tables)
+│   ├── database_postgres.py       # asyncpg pool + table init (8 tables)
 │   ├── models/
 │   │   ├── schemas.py             # Core graph models (Node, Edge, Evidence, RecordStatus)
 │   │   ├── industry_schema.py     # Industry, IndustryNodeMapping, IndustryType
 │   │   ├── company_schema.py      # Company, CompanyNodeExposure, CompanyActivityType, CompanyType, BusinessRegistrationBatch
 │   │   └── factual_graph_schema.py # Person, FactualRelation, three relation types
 │   ├── services/
-│   │   ├── neo4j_storage.py       # Neo4j CRUD + subgraph queries
+│   │   ├── neo4j_storage.py       # Neo4j relationship CRUD + skeleton node ops
+│   │   ├── node_storage.py        # PostgreSQL CRUD for IndustrialNode metadata
 │   │   ├── graph_service.py       # Business logic: nodes, edges, batches, conflicts, business batch processing
 │   │   ├── industry_storage.py    # PostgreSQL CRUD for industries + mappings
 │   │   ├── company_storage.py     # PostgreSQL CRUD for companies + exposures
@@ -170,7 +172,7 @@ backend/
 ## 4. Completed Work
 
 ### Commit 1 — PostgreSQL Infrastructure
-- `database_postgres.py`: asyncpg pool + `init_postgres_tables()` creates **7 tables**
+- `database_postgres.py`: asyncpg pool + `init_postgres_tables()` creates **8 tables**
   (`industries`, `industry_node_mappings`, `companies`, `company_node_exposures`, `computation_jobs`, `persons`, `factual_relations`)
 - `config.py`: `POSTGRES_URL` setting (default port 5433)
 - `requirements.txt`: added `asyncpg`
@@ -298,6 +300,11 @@ backend/
 - **Neo4j deployment**: local Windows install (Docker blocked by Zscaler)
 
 ### Recent Changes
+- **v2 architecture: node metadata moved to PostgreSQL**: All IndustrialNode metadata now lives in the industrial_nodes PostgreSQL table. Neo4j :IndustrialNode skeletons only store 
+ode_id + label; relationships remain in Neo4j. Added ackend/app/services/node_storage.py and ackend/scripts/migrate_nodes_to_postgres.py. Refactored 
+eo4j_storage.py, graph_service.py, db_checkers.py, 	est_data_cleanup.py, routers, and reasoning tasks to read node metadata from PG. Removed obsolete 
+eo4j_storage._node_from_record and the Neo4j 
+ode_name_zh index. All 48 backend tests pass.
 - **HBM supply-chain enrichment + cross-graph expansion**: Completed `backend/tmp_enrich_hbm.py`. Created/activated upstream nodes (`advanced_packaging`, `memory_die`, `tsv`, `silicon_interposer`, `microbump`, `underfill`) and downstream nodes (`gpu`, `ai_accelerator`, `server`, `data_center`), plus the corresponding `INDUSTRIAL_FLOW` edges. Fixed the downstream activation bug where `neo4j_storage._node_from_record` downgraded `ACTIVE`/`HIGH` nodes without evidence back to `PENDING`/`MEDIUM` by adding evidence during activation. Deduplicated company names: `雅克科技` maps to existing `jacques_technology`; created `联瑞新材` (`lianruixin_material`) and `华海诚科` (`huahai_chengke`). Created 13 `CompanyNodeExposure` records linking `hbm`, `advanced_packaging`, `silicon_interposer`, `packaging_substrate`, `underfill`, and `memory_module` to relevant companies.
   - Decomposed `advanced_packaging` into a process group with 5 `part_of` subprocesses: `tsv_interconnection`, `die_stacking`, `silicon_interposer_integration`, `bumping_process`, `underfill_process`. Moved material/capability inputs from the aggregate `advanced_packaging` node down to the appropriate subprocesses (`memory_die -> die_stacking`, `memory_wafer -> tsv_interconnection`, `tsv -> tsv_interconnection`, `silicon_interposer/packaging_substrate -> silicon_interposer_integration`, `microbump -> bumping_process`, `underfill -> underfill_process`), and linked each subprocess back to `advanced_packaging` via `process_output`. Added `advanced_packaging is_a chip_packaging_and_testing`.
   - Wired `expand_ontology` into `cross_graph_context` (`backend/app/reasoning/tasks/cross_graph_context.py`) so the task can grow its seed set via `is_a`/`part_of`/`variant_of` before querying companies/industries.
@@ -442,7 +449,7 @@ Historical batch construction logs list these as future work; none are implement
 - Code is fully written but **not locally installed**.
 - When PostgreSQL is unavailable, `get_postgres_pool()` returns `None`; storage functions return empty lists / `None` gracefully.
 - Table schemas use `TEXT[]` for arrays, `JSONB` for evidence, `TIMESTAMPTZ` for timestamps.
-- `init_postgres_tables()` now creates 7 tables: `industries`, `industry_node_mappings`, `companies`, `company_node_exposures`, `computation_jobs`, `persons`, `factual_relations`.
+- `init_postgres_tables()` now creates 8 tables: `industries`, `industry_node_mappings`, `companies`, `company_node_exposures`, `computation_jobs`, `persons`, `factual_relations`, `industrial_nodes`.
 
 ### Schema Patterns
 - All IDs use snake_case regex: `^[a-z][a-z0-9_]*$`, min 3 chars, max 64.

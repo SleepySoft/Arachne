@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from app.database import get_async_driver
 from app.models.schemas import Confidence, GraphEdge, IndustrialNode
 from app.reasoning.schemas import (
     CompanyExposureInfo,
@@ -125,26 +124,12 @@ def edge_to_dict(edge: GraphEdge) -> Dict[str, Any]:
 
 
 async def fetch_nodes_by_ids(node_ids: List[str]) -> Dict[str, IndustrialNode]:
-    """Fetch IndustrialNode objects by IDs from Neo4j."""
+    """Fetch IndustrialNode objects by IDs from PostgreSQL."""
     if not node_ids:
         return {}
-    from app.services import neo4j_storage
+    from app.services import node_storage
 
-    driver = get_async_driver()
-    async with driver.session() as session:
-        result = await session.run(
-            """
-            MATCH (n:IndustrialNode)
-            WHERE n.node_id IN $node_ids
-            RETURN n
-            """,
-            node_ids=node_ids,
-        )
-        nodes = {}
-        async for record in result:
-            node = neo4j_storage._node_from_record(record)
-            nodes[node.node_id] = node
-        return nodes
+    return await node_storage.get_nodes_by_ids(node_ids)
 
 
 async def validate_source_nodes(node_ids: List[str]) -> Tuple[List[str], List[str]]:

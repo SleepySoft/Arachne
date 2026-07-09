@@ -16,6 +16,7 @@ from typing import Dict, List
 
 from app.database import get_async_driver
 from app.database_postgres import get_postgres_pool
+from app.services import node_storage
 
 
 async def get_material_connections(company_id: str) -> dict:
@@ -78,33 +79,40 @@ async def get_material_connections(company_id: str) -> dict:
         # 2a. Peers: other companies exposing the same node
         peers = await _get_peer_companies(pool, company_id, node_id)
 
-        # 2b. Upstream & downstream nodes from Neo4j
-        upstream_nodes: List[dict] = []
-        downstream_nodes: List[dict] = []
+        # 2b. Upstream & downstream node IDs from Neo4j; names from PostgreSQL
+        upstream_node_ids: List[str] = []
+        downstream_node_ids: List[str] = []
         async with driver.session() as session:
             # Upstream nodes: nodes that have INDUSTRIAL_FLOW TO this node
             up_result = await session.run(
                 """
                 MATCH (up:IndustrialNode)-[r:INDUSTRIAL_FLOW]->(n:IndustrialNode {node_id: $node_id})
                 WHERE r.edge_type <> 'derived_from'
-                RETURN up.node_id AS node_id, up.canonical_name_zh AS name
-                ORDER BY up.canonical_name_zh
+                RETURN up.node_id AS node_id
                 """,
                 node_id=node_id,
             )
-            upstream_nodes = await up_result.data()
+            upstream_node_ids = [r["node_id"] async for r in up_result]
 
             # Downstream nodes: nodes that this node has INDUSTRIAL_FLOW TO
             down_result = await session.run(
                 """
                 MATCH (n:IndustrialNode {node_id: $node_id})-[r:INDUSTRIAL_FLOW]->(down:IndustrialNode)
                 WHERE r.edge_type <> 'derived_from'
-                RETURN down.node_id AS node_id, down.canonical_name_zh AS name
-                ORDER BY down.canonical_name_zh
+                RETURN down.node_id AS node_id
                 """,
                 node_id=node_id,
             )
-            downstream_nodes = await down_result.data()
+            downstream_node_ids = [r["node_id"] async for r in down_result]
+
+        upstream_nodes = [
+            {"node_id": nid, "name": node.canonical_name_zh or nid}
+            for nid, node in (await node_storage.get_nodes_by_ids(upstream_node_ids)).items()
+        ]
+        downstream_nodes = [
+            {"node_id": nid, "name": node.canonical_name_zh or nid}
+            for nid, node in (await node_storage.get_nodes_by_ids(downstream_node_ids)).items()
+        ]
 
         # 2c. Companies exposing upstream nodes
         upstream_companies = await _get_companies_by_nodes(pool, company_id, upstream_nodes)
@@ -114,7 +122,7 @@ async def get_material_connections(company_id: str) -> dict:
 
         exposures.append({
             "node_id": node_id,
-            "node_name": await _get_node_name(driver, node_id),
+            "node_name": await _get_node_name(node_id),
             "activity_type": exp["activity_type"],
             "weight": float(exp["weight"]) if exp["weight"] is not None else 1.0,
             "role": exp["role"],
@@ -196,12 +204,7 @@ async def _get_companies_by_nodes(
     ]
 
 
-async def _get_node_name(driver, node_id: str) -> str:
-    """Fetch canonical_name_zh for a node from Neo4j."""
-    async with driver.session() as session:
-        result = await session.run(
-            "MATCH (n:IndustrialNode {node_id: $node_id}) RETURN n.canonical_name_zh AS name",
-            node_id=node_id,
-        )
-        record = await result.single()
-        return record["name"] if record else node_id
+async def _get_node_name(node_id: str) -> str:
+    """Fetch canonical_name_zh for a node from PostgreSQL."""
+    node = await node_storage.get_node(node_id)
+    return node.canonical_name_zh if node else node_id

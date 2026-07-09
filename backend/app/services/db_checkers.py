@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 
 from app.database import get_async_driver
 from app.database_postgres import get_postgres_pool
+from app.services import node_storage
 from app.services.ontology_rules import get_rule_by_checker
 
 
@@ -119,6 +120,19 @@ async def _neo4j_node_ids() -> set:
     async with driver.session() as s:
         result = await s.run("MATCH (n:IndustrialNode) RETURN n.node_id AS id")
         return {rec["id"] async for rec in result if rec["id"]}
+
+
+async def _pg_node_name_map(node_ids: List[str]) -> Dict[str, str]:
+    """Fetch canonical_name_zh for a list of node_ids from PostgreSQL."""
+    if not node_ids:
+        return {}
+    from app.services import node_storage
+
+    nodes = await node_storage.get_nodes_by_ids(node_ids)
+    return {
+        node_id: node.canonical_name_zh or node_id
+        for node_id, node in nodes.items()
+    }
 
 
 async def _delete_neo4j_edges(edge_ids: List[str]) -> int:
@@ -281,23 +295,26 @@ class OrphanNodeChecker(Checker):
                 """
                 MATCH (n:IndustrialNode)
                 WHERE NOT (n)-[:INDUSTRIAL_FLOW|ONTOLOGY]-(:IndustrialNode)
-                RETURN n.node_id AS node_id, n.canonical_name_zh AS name
+                RETURN n.node_id AS node_id
                 ORDER BY node_id
                 """
             )
-            async for rec in result:
-                issues.append(
-                    CheckIssue(
-                        issue_id=f"{self.check_id}:{rec['node_id']}",
-                        check_id=self.check_id,
-                        severity=self.severity,
-                        title="孤立节点",
-                        summary=f"节点 `{rec['name'] or rec['node_id']}` 未连接到任何其他节点。",
-                        details={"node_id": rec["node_id"], "name": rec["name"]},
-                        affected_ids=[rec["node_id"]],
-                        fixable=False,
-                    )
+            node_ids = [rec["node_id"] async for rec in result]
+
+        name_map = await _pg_node_name_map(node_ids)
+        for node_id in node_ids:
+            issues.append(
+                CheckIssue(
+                    issue_id=f"{self.check_id}:{node_id}",
+                    check_id=self.check_id,
+                    severity=self.severity,
+                    title="孤立节点",
+                    summary=f"节点 `{name_map.get(node_id, node_id)}` 未连接到任何其他节点。",
+                    details={"node_id": node_id, "name": name_map.get(node_id)},
+                    affected_ids=[node_id],
+                    fixable=False,
                 )
+            )
         return issues
 
 
@@ -361,42 +378,41 @@ class MissingNodePropertyChecker(Checker):
     fixable = False
 
     async def run(self) -> List[CheckIssue]:
-        driver = get_async_driver()
+        pool = await get_postgres_pool()
+        if pool is None:
+            return []
         issues: List[CheckIssue] = []
-        async with driver.session() as s:
-            result = await s.run(
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(
                 """
-                MATCH (n:IndustrialNode)
-                WHERE n.canonical_name_zh IS NULL OR trim(n.canonical_name_zh) = ''
-                   OR n.definition IS NULL OR trim(n.definition) = ''
-                   OR n.entity_type IS NULL OR trim(n.entity_type) = ''
-                RETURN n.node_id AS node_id,
-                       n.canonical_name_zh AS name,
-                       n.definition AS definition,
-                       n.entity_type AS entity_type
+                SELECT node_id, canonical_name_zh AS name, definition, entity_type
+                FROM industrial_nodes
+                WHERE canonical_name_zh IS NULL OR trim(canonical_name_zh) = ''
+                   OR definition IS NULL OR trim(definition) = ''
+                   OR entity_type IS NULL OR trim(entity_type) = ''
                 ORDER BY node_id
                 """
             )
-            async for rec in result:
-                missing = []
-                if not rec.get("name"):
-                    missing.append("canonical_name_zh")
-                if not rec.get("definition"):
-                    missing.append("definition")
-                if not rec.get("entity_type"):
-                    missing.append("entity_type")
-                issues.append(
-                    CheckIssue(
-                        issue_id=f"{self.check_id}:{rec['node_id']}",
-                        check_id=self.check_id,
-                        severity=self.severity,
-                        title="节点关键属性缺失",
-                        summary=f"节点 `{rec['node_id']}` 缺少关键属性：{', '.join(missing)}。",
-                        details={"node_id": rec["node_id"], "missing": missing},
-                        affected_ids=[rec["node_id"]],
-                        fixable=False,
-                    )
+        for rec in rows:
+            missing = []
+            if not rec.get("name"):
+                missing.append("canonical_name_zh")
+            if not rec.get("definition"):
+                missing.append("definition")
+            if not rec.get("entity_type"):
+                missing.append("entity_type")
+            issues.append(
+                CheckIssue(
+                    issue_id=f"{self.check_id}:{rec['node_id']}",
+                    check_id=self.check_id,
+                    severity=self.severity,
+                    title="节点关键属性缺失",
+                    summary=f"节点 `{rec['node_id']}` 缺少关键属性：{', '.join(missing)}。",
+                    details={"node_id": rec["node_id"], "missing": missing},
+                    affected_ids=[rec["node_id"]],
+                    fixable=False,
                 )
+            )
         return issues
 
 
@@ -411,33 +427,35 @@ class DuplicateNodeNameChecker(Checker):
     fixable = False
 
     async def run(self) -> List[CheckIssue]:
-        driver = get_async_driver()
+        pool = await get_postgres_pool()
+        if pool is None:
+            return []
         issues: List[CheckIssue] = []
-        async with driver.session() as s:
-            result = await s.run(
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(
                 """
-                MATCH (n:IndustrialNode)
-                WHERE n.canonical_name_zh IS NOT NULL AND trim(n.canonical_name_zh) <> ''
-                  AND NOT n.node_id STARTS WITH 'draft_'
-                WITH n.canonical_name_zh AS name, collect(n.node_id) AS ids
-                WHERE size(ids) > 1
-                RETURN name, ids
-                ORDER BY name
+                SELECT canonical_name_zh AS name, array_agg(node_id) AS ids
+                FROM industrial_nodes
+                WHERE canonical_name_zh IS NOT NULL AND trim(canonical_name_zh) <> ''
+                  AND NOT node_id LIKE 'draft_%'
+                GROUP BY canonical_name_zh
+                HAVING count(*) > 1
+                ORDER BY canonical_name_zh
                 """
             )
-            async for rec in result:
-                issues.append(
-                    CheckIssue(
-                        issue_id=f"{self.check_id}:{rec['name']}",
-                        check_id=self.check_id,
-                        severity=self.severity,
-                        title="重复节点中文名",
-                        summary=f"中文名 `{rec['name']}` 被 {len(rec['ids'])} 个节点共用。",
-                        details={"name": rec["name"], "node_ids": rec["ids"]},
-                        affected_ids=rec["ids"],
-                        fixable=False,
-                    )
+        for rec in rows:
+            issues.append(
+                CheckIssue(
+                    issue_id=f"{self.check_id}:{rec['name']}",
+                    check_id=self.check_id,
+                    severity=self.severity,
+                    title="重复节点中文名",
+                    summary=f"中文名 `{rec['name']}` 被 {len(rec['ids'])} 个节点共用。",
+                    details={"name": rec["name"], "node_ids": rec["ids"]},
+                    affected_ids=rec["ids"],
+                    fixable=False,
                 )
+            )
         return issues
 
 
@@ -660,18 +678,21 @@ class HighConfidenceMissingEvidenceChecker(Checker):
     async def run(self) -> List[CheckIssue]:
         driver = get_async_driver()
         issues: List[CheckIssue] = []
-        async with driver.session() as s:
-            # nodes
-            node_result = await s.run(
-                """
-                MATCH (n:IndustrialNode)
-                WHERE n.confidence = 'HIGH'
-                  AND (n.evidence IS NULL OR n.evidence = '' OR n.evidence = '[]')
-                RETURN n.node_id AS node_id, n.canonical_name_zh AS name
-                ORDER BY node_id
-                """
-            )
-            async for rec in node_result:
+
+        # Nodes: metadata in PostgreSQL
+        pool = await get_postgres_pool()
+        if pool is not None:
+            async with pool.acquire() as conn:
+                node_rows = await conn.fetch(
+                    """
+                    SELECT node_id, canonical_name_zh AS name
+                    FROM industrial_nodes
+                    WHERE confidence = 'HIGH'
+                      AND (evidence IS NULL OR evidence = '[]' OR evidence::text = '[]')
+                    ORDER BY node_id
+                    """
+                )
+            for rec in node_rows:
                 issues.append(
                     CheckIssue(
                         issue_id=f"{self.check_id}:node:{rec['node_id']}",
@@ -685,7 +706,8 @@ class HighConfidenceMissingEvidenceChecker(Checker):
                     )
                 )
 
-            # edges
+        # edges
+        async with driver.session() as s:
             edge_result = await s.run(
                 """
                 MATCH (a:IndustrialNode)-[r:INDUSTRIAL_FLOW|ONTOLOGY]->(b:IndustrialNode)
@@ -732,31 +754,33 @@ class ActiveStatusMissingEvidenceChecker(Checker):
     fixable = False
 
     async def run(self) -> List[CheckIssue]:
-        driver = get_async_driver()
+        pool = await get_postgres_pool()
+        if pool is None:
+            return []
         issues: List[CheckIssue] = []
-        async with driver.session() as s:
-            node_result = await s.run(
+        async with pool.acquire() as conn:
+            node_rows = await conn.fetch(
                 """
-                MATCH (n:IndustrialNode)
-                WHERE n.status = 'ACTIVE'
-                  AND (n.evidence IS NULL OR n.evidence = '' OR n.evidence = '[]')
-                RETURN n.node_id AS node_id, n.canonical_name_zh AS name
+                SELECT node_id, canonical_name_zh AS name
+                FROM industrial_nodes
+                WHERE status = 'ACTIVE'
+                  AND (evidence IS NULL OR evidence = '[]' OR evidence::text = '[]')
                 ORDER BY node_id
                 """
             )
-            async for rec in node_result:
-                issues.append(
-                    CheckIssue(
-                        issue_id=f"{self.check_id}:node:{rec['node_id']}",
-                        check_id=self.check_id,
-                        severity=self.severity,
-                        title="ACTIVE 节点缺少证据",
-                        summary=f"节点 `{rec['name'] or rec['node_id']}` 为 ACTIVE 但缺少证据。",
-                        details={"node_id": rec["node_id"], "name": rec["name"]},
-                        affected_ids=[rec["node_id"]],
-                        fixable=False,
-                    )
+        for rec in node_rows:
+            issues.append(
+                CheckIssue(
+                    issue_id=f"{self.check_id}:node:{rec['node_id']}",
+                    check_id=self.check_id,
+                    severity=self.severity,
+                    title="ACTIVE 节点缺少证据",
+                    summary=f"节点 `{rec['name'] or rec['node_id']}` 为 ACTIVE 但缺少证据。",
+                    details={"node_id": rec["node_id"], "name": rec["name"]},
+                    affected_ids=[rec["node_id"]],
+                    fixable=False,
                 )
+            )
         return issues
 
 
@@ -919,30 +943,32 @@ class UnknownEntityTypeChecker(Checker):
     fixable = False
 
     async def run(self) -> List[CheckIssue]:
-        driver = get_async_driver()
+        pool = await get_postgres_pool()
+        if pool is None:
+            return []
         issues: List[CheckIssue] = []
-        async with driver.session() as s:
-            result = await s.run(
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(
                 """
-                MATCH (n:IndustrialNode)
-                WHERE n.entity_type IS NULL OR trim(n.entity_type) = '' OR n.entity_type = 'unknown'
-                RETURN n.node_id AS node_id, n.canonical_name_zh AS name, n.entity_type AS entity_type
+                SELECT node_id, canonical_name_zh AS name, entity_type
+                FROM industrial_nodes
+                WHERE entity_type IS NULL OR trim(entity_type) = '' OR entity_type = 'unknown'
                 ORDER BY node_id
                 """
             )
-            async for rec in result:
-                issues.append(
-                    CheckIssue(
-                        issue_id=f"{self.check_id}:{rec['node_id']}",
-                        check_id=self.check_id,
-                        severity=self.severity,
-                        title="未知实体类型",
-                        summary=f"节点 `{rec['name'] or rec['node_id']}` 的 entity_type 为 `{rec['entity_type'] or '空'}`。",
-                        details={"node_id": rec["node_id"], "name": rec["name"], "entity_type": rec["entity_type"]},
-                        affected_ids=[rec["node_id"]],
-                        fixable=False,
-                    )
+        for rec in rows:
+            issues.append(
+                CheckIssue(
+                    issue_id=f"{self.check_id}:{rec['node_id']}",
+                    check_id=self.check_id,
+                    severity=self.severity,
+                    title="未知实体类型",
+                    summary=f"节点 `{rec['name'] or rec['node_id']}` 的 entity_type 为 `{rec['entity_type'] or '空'}`。",
+                    details={"node_id": rec["node_id"], "name": rec["name"], "entity_type": rec["entity_type"]},
+                    affected_ids=[rec["node_id"]],
+                    fixable=False,
                 )
+            )
         return issues
 
 
@@ -981,48 +1007,53 @@ class InputToProductDirectEdgeChecker(Checker):
             result = await s.run(
                 """
                 MATCH (a:IndustrialNode)-[r:INDUSTRIAL_FLOW]->(b:IndustrialNode)
-                WHERE a.entity_type IN $input_types
-                  AND b.entity_type IN $product_types
-                  AND r.edge_type IN $edge_types
+                WHERE r.edge_type IN $edge_types
                 RETURN elementId(r) AS rel_id, r.edge_id AS edge_id,
-                       a.node_id AS from_node, a.canonical_name_zh AS from_name, a.entity_type AS from_type,
-                       b.node_id AS to_node, b.canonical_name_zh AS to_name, b.entity_type AS to_type,
-                       r.edge_type AS et
+                       a.node_id AS from_node, b.node_id AS to_node, r.edge_type AS et
                 ORDER BY edge_id
                 """,
-                {
-                    "input_types": list(self.INPUT_TYPES),
-                    "product_types": list(self.PRODUCT_TYPES),
-                    "edge_types": list(self.EDGE_TYPES),
-                },
+                {"edge_types": list(self.EDGE_TYPES)},
             )
-            async for rec in result:
-                issues.append(
-                    CheckIssue(
-                        issue_id=f"{self.check_id}:{rec['rel_id']}",
-                        check_id=self.check_id,
-                        severity=self.severity,
-                        title="输入物/设备/能力直接指向产品",
-                        summary=(
-                            f"`{rec['from_name'] or rec['from_node']}` ({rec['from_type']}) "
-                            f"通过 `{rec['et']}` 直接指向产品 "
-                            f"`{rec['to_name'] or rec['to_node']}` ({rec['to_type']})。"
-                        ),
-                        details={
-                            "rel_id": rec["rel_id"],
-                            "edge_id": rec["edge_id"],
-                            "from_node": rec["from_node"],
-                            "from_name": rec["from_name"],
-                            "from_type": rec["from_type"],
-                            "to_node": rec["to_node"],
-                            "to_name": rec["to_name"],
-                            "to_type": rec["to_type"],
-                            "edge_type": rec["et"],
-                        },
-                        affected_ids=[rec["edge_id"] or rec["rel_id"], rec["from_node"], rec["to_node"]],
-                        fixable=False,
-                    )
+            edge_rows = [dict(rec) async for rec in result]
+
+        all_node_ids = list({r["from_node"] for r in edge_rows} | {r["to_node"] for r in edge_rows})
+        node_map = await node_storage.get_nodes_by_ids(all_node_ids)
+
+        for rec in edge_rows:
+            from_node = node_map.get(rec["from_node"])
+            to_node = node_map.get(rec["to_node"])
+            if from_node is None or to_node is None:
+                continue
+            from_type = from_node.entity_type.value if hasattr(from_node.entity_type, "value") else from_node.entity_type
+            to_type = to_node.entity_type.value if hasattr(to_node.entity_type, "value") else to_node.entity_type
+            if from_type not in self.INPUT_TYPES or to_type not in self.PRODUCT_TYPES:
+                continue
+            issues.append(
+                CheckIssue(
+                    issue_id=f"{self.check_id}:{rec['rel_id']}",
+                    check_id=self.check_id,
+                    severity=self.severity,
+                    title="输入物/设备/能力直接指向产品",
+                    summary=(
+                        f"`{from_node.canonical_name_zh or rec['from_node']}` ({from_type}) "
+                        f"通过 `{rec['et']}` 直接指向产品 "
+                        f"`{to_node.canonical_name_zh or rec['to_node']}` ({to_type})。"
+                    ),
+                    details={
+                        "rel_id": rec["rel_id"],
+                        "edge_id": rec["edge_id"],
+                        "from_node": rec["from_node"],
+                        "from_name": from_node.canonical_name_zh,
+                        "from_type": from_type,
+                        "to_node": rec["to_node"],
+                        "to_name": to_node.canonical_name_zh,
+                        "to_type": to_type,
+                        "edge_type": rec["et"],
+                    },
+                    affected_ids=[rec["edge_id"] or rec["rel_id"], rec["from_node"], rec["to_node"]],
+                    fixable=False,
                 )
+            )
         return issues
 
 

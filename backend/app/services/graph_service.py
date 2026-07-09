@@ -506,6 +506,8 @@ async def get_incomplete_items(limit: int = 100) -> dict:
 
     Returns a summary plus ranked lists of nodes and edges with issue tags.
     """
+    from app.services import node_storage
+
     driver = neo4j_storage.get_async_driver()
     summary = {
         "draft_nodes": 0,
@@ -520,28 +522,25 @@ async def get_incomplete_items(limit: int = 100) -> dict:
     node_issues = []
     edge_issues = []
 
-    async with driver.session() as session:
-        # Nodes with various incompleteness flags
-        result = await session.run(
-            """
-            MATCH (n:IndustrialNode)
-            RETURN n.node_id AS node_id,
-                   n.canonical_name_zh AS name_zh,
-                   n.canonical_name_en AS name_en,
-                   n.status AS status,
-                   n.entity_type AS entity_type,
-                   n.definition AS definition,
-                   n.confidence AS confidence,
-                   n.node_id STARTS WITH 'draft_' AS is_draft,
-                   n.status = 'PENDING' AS is_pending,
-                   n.entity_type = 'unknown' AS is_unknown_type,
-                   n.definition IS NULL OR n.definition = '' OR n.definition = '（定义待补充）' AS is_missing_definition
-            ORDER BY n.updated_at DESC
-            LIMIT $limit
-            """,
-            limit=limit,
-        )
-        async for rec in result:
+    # Nodes with various incompleteness flags (metadata from PostgreSQL)
+    pool = await get_postgres_pool()
+    if pool is not None:
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT node_id, canonical_name_zh AS name_zh, canonical_name_en AS name_en,
+                       status, entity_type, definition, confidence,
+                       node_id LIKE 'draft_%' AS is_draft,
+                       status = 'PENDING' AS is_pending,
+                       entity_type = 'unknown' AS is_unknown_type,
+                       definition IS NULL OR definition = '' OR definition = '（定义待补充）' AS is_missing_definition
+                FROM industrial_nodes
+                ORDER BY updated_at DESC
+                LIMIT $1
+                """,
+                limit,
+            )
+        for rec in rows:
             issues = []
             if rec["is_draft"]:
                 issues.append("draft_id")
@@ -566,6 +565,7 @@ async def get_incomplete_items(limit: int = 100) -> dict:
                     "issues": issues,
                 })
 
+    async with driver.session() as session:
         # Edges with incompleteness flags
         result2 = await session.run(
             """
@@ -608,33 +608,34 @@ async def get_incomplete_items(limit: int = 100) -> dict:
                     "issues": issues,
                 })
 
-        # Isolated nodes
+        # Isolated nodes (Neo4j for topology, PostgreSQL for metadata)
         result3 = await session.run(
             """
             MATCH (n:IndustrialNode)
             WHERE NOT (n)-[:INDUSTRIAL_FLOW|ONTOLOGY]-()
-            RETURN n.node_id AS node_id,
-                   n.canonical_name_zh AS name_zh,
-                   n.canonical_name_en AS name_en
+            RETURN n.node_id AS node_id
             LIMIT $limit
             """,
             limit=limit,
         )
-        async for rec in result3:
+        isolated_ids = [rec["node_id"] async for rec in result3]
+        isolated_name_map = await node_storage.get_nodes_by_ids(isolated_ids)
+        for node_id in isolated_ids:
             summary["isolated_nodes"] += 1
+            node = isolated_name_map.get(node_id)
             # Add isolated issue to existing node entry if present, else append
-            existing = next((x for x in node_issues if x["node_id"] == rec["node_id"]), None)
+            existing = next((x for x in node_issues if x["node_id"] == node_id), None)
             if existing:
                 if "isolated" not in existing["issues"]:
                     existing["issues"].append("isolated")
             else:
                 node_issues.append({
-                    "node_id": rec["node_id"],
-                    "name_zh": rec["name_zh"],
-                    "name_en": rec["name_en"],
-                    "status": None,
-                    "entity_type": None,
-                    "confidence": None,
+                    "node_id": node_id,
+                    "name_zh": node.canonical_name_zh if node else node_id,
+                    "name_en": node.canonical_name_en if node else None,
+                    "status": node.status.value if node else None,
+                    "entity_type": node.entity_type.value if node else None,
+                    "confidence": node.confidence.value if node else None,
                     "issues": ["isolated"],
                 })
 

@@ -81,12 +81,8 @@ async def init_db():
                 FOR ()-[r:ONTOLOGY]-() REQUIRE r.edge_id IS UNIQUE
                 """
             )
-            await session.run(
-                """
-                CREATE INDEX node_name_zh IF NOT EXISTS
-                FOR (n:IndustrialNode) ON (n.canonical_name_zh)
-                """
-            )
+            # Node metadata (canonical_name_zh, etc.) now lives in PostgreSQL.
+            # Neo4j only keeps the node_id + label for relationship storage.
     except Exception:
         # Neo4j not available, using memory storage fallback
         pass

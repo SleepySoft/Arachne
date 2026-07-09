@@ -416,4 +416,68 @@ async def init_postgres_tables() -> None:
             """
         )
 
+        # Industrial Nodes (metadata moved from Neo4j to PostgreSQL)
+        await conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS industrial_nodes (
+                node_id            VARCHAR(64) PRIMARY KEY,
+                node_uuid          UUID NOT NULL DEFAULT gen_random_uuid(),
+                canonical_name_zh  VARCHAR(256) NOT NULL,
+                canonical_name_en  VARCHAR(256),
+                aliases            TEXT[] NOT NULL DEFAULT '{}',
+                definition         TEXT NOT NULL DEFAULT '',
+                entity_type        VARCHAR(64) NOT NULL,
+                evidence           JSONB NOT NULL DEFAULT '[]',
+                confidence         VARCHAR(16) NOT NULL DEFAULT 'LOW',
+                status             VARCHAR(16) NOT NULL DEFAULT 'PENDING',
+                notes              TEXT,
+                is_test            BOOLEAN NOT NULL DEFAULT FALSE,
+                created_at         TIMESTAMPTZ DEFAULT NOW(),
+                updated_at         TIMESTAMPTZ DEFAULT NOW()
+            )
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_industrial_nodes_is_test
+            ON industrial_nodes(is_test)
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_industrial_nodes_entity_type
+            ON industrial_nodes(entity_type)
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_industrial_nodes_status
+            ON industrial_nodes(status)
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_industrial_nodes_confidence
+            ON industrial_nodes(confidence)
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_industrial_nodes_name_zh
+            ON industrial_nodes(canonical_name_zh)
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_industrial_nodes_name_en
+            ON industrial_nodes(canonical_name_en)
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_industrial_nodes_aliases
+            ON industrial_nodes USING GIN (aliases)
+            """
+        )
+
 

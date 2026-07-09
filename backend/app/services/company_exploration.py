@@ -14,6 +14,7 @@ from typing import List
 
 from app.database import get_async_driver
 from app.database_postgres import get_postgres_pool
+from app.services import node_storage
 
 
 async def get_exploration_graph(company_id: str) -> dict:
@@ -67,30 +68,18 @@ async def get_exploration_graph(company_id: str) -> dict:
 
     exposed_node_ids = [r["node_id"] for r in exposure_rows]
 
-    driver = get_async_driver()
-
-    # 3. Fetch material nodes details from Neo4j
-    material_nodes: List[dict] = []
-    async with driver.session() as session:
-        result = await session.run(
-            """
-            MATCH (n:IndustrialNode)
-            WHERE n.node_id IN $node_ids
-            RETURN n.node_id AS id, n.canonical_name_zh AS label, n.node_type AS node_type
-            ORDER BY n.canonical_name_zh
-            """,
-            node_ids=exposed_node_ids,
-        )
-        records = await result.data()
-        material_nodes = [
-            {
-                "id": r["id"],
-                "type": "material",
-                "label": r["label"] or r["id"],
-                "node_type": r["node_type"] or "unknown",
-            }
-            for r in records
-        ]
+    # 3. Fetch material node metadata from PostgreSQL
+    nodes_map = await node_storage.get_nodes_by_ids(exposed_node_ids)
+    material_nodes = [
+        {
+            "id": node.node_id,
+            "type": "material",
+            "label": node.canonical_name_zh or node.node_id,
+            "node_type": node.entity_type.value if hasattr(node.entity_type, "value") else node.entity_type,
+        }
+        for node in nodes_map.values()
+    ]
+    material_nodes.sort(key=lambda x: x["label"])
 
     # Build activity_type map for exposure edges
     activity_map = {r["node_id"]: r["activity_type"] for r in exposure_rows}
@@ -128,8 +117,6 @@ async def get_material_companies(node_id: str, exclude_company_id: str | None = 
     if pool is None:
         raise RuntimeError("PostgreSQL not available")
 
-    driver = get_async_driver()
-
     # Peer companies
     async with pool.acquire() as conn:
         peer_rows = await conn.fetch(
@@ -156,31 +143,39 @@ async def get_material_companies(node_id: str, exclude_company_id: str | None = 
         for r in peer_rows
     ]
 
-    # Upstream nodes from Neo4j
-    upstream_nodes: List[dict] = []
-    downstream_nodes: List[dict] = []
+    # Upstream/downstream node IDs from Neo4j; names from PostgreSQL
+    driver = get_async_driver()
+    upstream_node_ids: List[str] = []
+    downstream_node_ids: List[str] = []
     async with driver.session() as session:
         up_result = await session.run(
             """
             MATCH (up:IndustrialNode)-[r:INDUSTRIAL_FLOW]->(n:IndustrialNode {node_id: $node_id})
             WHERE r.edge_type <> 'derived_from'
-            RETURN up.node_id AS node_id, up.canonical_name_zh AS name
-            ORDER BY up.canonical_name_zh
+            RETURN up.node_id AS node_id
             """,
             node_id=node_id,
         )
-        upstream_nodes = await up_result.data()
+        upstream_node_ids = [r["node_id"] async for r in up_result]
 
         down_result = await session.run(
             """
             MATCH (n:IndustrialNode {node_id: $node_id})-[r:INDUSTRIAL_FLOW]->(down:IndustrialNode)
             WHERE r.edge_type <> 'derived_from'
-            RETURN down.node_id AS node_id, down.canonical_name_zh AS name
-            ORDER BY down.canonical_name_zh
+            RETURN down.node_id AS node_id
             """,
             node_id=node_id,
         )
-        downstream_nodes = await down_result.data()
+        downstream_node_ids = [r["node_id"] async for r in down_result]
+
+    upstream_nodes = [
+        {"node_id": nid, "name": node.canonical_name_zh or nid}
+        for nid, node in (await node_storage.get_nodes_by_ids(upstream_node_ids)).items()
+    ]
+    downstream_nodes = [
+        {"node_id": nid, "name": node.canonical_name_zh or nid}
+        for nid, node in (await node_storage.get_nodes_by_ids(downstream_node_ids)).items()
+    ]
 
     # Upstream companies (companies exposing upstream nodes)
     upstream_companies: List[dict] = []
@@ -248,18 +243,13 @@ async def get_material_companies(node_id: str, exclude_company_id: str | None = 
 
     return {
         "node_id": node_id,
-        "node_name": await _get_node_name(driver, node_id),
+        "node_name": await _get_node_name(node_id),
         "peers": peers,
         "upstream": upstream_companies,
         "downstream": downstream_companies,
     }
 
 
-async def _get_node_name(driver, node_id: str) -> str:
-    async with driver.session() as session:
-        result = await session.run(
-            "MATCH (n:IndustrialNode {node_id: $node_id}) RETURN n.canonical_name_zh AS name",
-            node_id=node_id,
-        )
-        record = await result.single()
-        return record["name"] if record else node_id
+async def _get_node_name(node_id: str) -> str:
+    node = await node_storage.get_node(node_id)
+    return node.canonical_name_zh if node else node_id

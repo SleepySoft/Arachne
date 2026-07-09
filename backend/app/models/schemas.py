@@ -342,6 +342,14 @@ class EntityType(str, Enum):
     - 设备运行数据集
     """
 
+    USAGE = "usage"
+    """
+    PROV-style 使用动作节点（Usage）。
+
+    用于物化“某个工艺执行使用了某个技术/方法”这一关系。
+    典型连接：process_execution --uses--> usage --technology--> process_technology。
+    """
+
     UNKNOWN = "unknown"
     """
     暂无法稳定分类的实体类型。
@@ -365,6 +373,8 @@ class IndustrialFlowType(str, Enum):
     STRUCTURAL_COMPOSITION = "structural_composition"     # 结构组成
     SUPPLY_RELATION = "supply_relation"                   # 供应关系（摘要级上下游、缺少明确中间工艺、产业链层级）
     DERIVED_FROM = "derived_from"                         # 直接物料派生（显式、人工、默认隐藏）
+    USES = "uses"                                         # 工艺执行 → 使用动作（Usage 节点）
+    TECHNOLOGY = "technology"                             # 使用动作 → 被使用的技术/方法
     UNKNOWN = "unknown"                                   # 未知/待分类
 
 
@@ -384,6 +394,8 @@ EDGE_TYPE_LABELS: dict[str, str] = {
     "structural_composition": "结构组成",
     "supply_relation": "供应关系",
     "derived_from": "派生自",
+    "uses": "使用",
+    "technology": "技术",
     "unknown": "未知关系",
     # OntologyType
     "alias_of": "别名/同义",

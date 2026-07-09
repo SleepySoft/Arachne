@@ -38,20 +38,16 @@ async def _get_company_name(pool, company_id: str) -> str:
     return row["name_zh"] if row else company_id
 
 
-async def _get_node_names(driver, node_ids: List[str]) -> dict:
+async def _get_node_names(node_ids: List[str]) -> dict:
     if not node_ids:
         return {}
-    async with driver.session() as session:
-        result = await session.run(
-            """
-            MATCH (n:IndustrialNode)
-            WHERE n.node_id IN $node_ids
-            RETURN n.node_id AS node_id, n.canonical_name_zh AS name
-            """,
-            node_ids=node_ids,
-        )
-        records = await result.data()
-    return {r["node_id"]: r["name"] or r["node_id"] for r in records}
+    from app.services import node_storage
+
+    nodes_map = await node_storage.get_nodes_by_ids(node_ids)
+    return {
+        node_id: node.canonical_name_zh or node_id
+        for node_id, node in nodes_map.items()
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -95,7 +91,7 @@ async def explore_company_industrial_context(company_id: str):
         }
 
     exposed_node_ids = [r["node_id"] for r in exposure_rows]
-    node_name_map = await _get_node_names(get_async_driver(), exposed_node_ids)
+    node_name_map = await _get_node_names(exposed_node_ids)
 
     # 2. Query upstream/downstream for each node from Neo4j
     driver = get_async_driver()
@@ -108,22 +104,23 @@ async def explore_company_industrial_context(company_id: str):
             up_result = await session.run(
                 """
                 MATCH (up:IndustrialNode)-[:INDUSTRIAL_FLOW]->(n:IndustrialNode {node_id: $node_id})
-                RETURN up.node_id AS node_id, up.canonical_name_zh AS name
-                ORDER BY up.canonical_name_zh
+                RETURN up.node_id AS node_id
                 """,
                 node_id=node_id,
             )
-            upstream = await up_result.data()
+            upstream_ids = [r["node_id"] async for r in up_result]
 
             down_result = await session.run(
                 """
                 MATCH (n:IndustrialNode {node_id: $node_id})-[:INDUSTRIAL_FLOW]->(down:IndustrialNode)
-                RETURN down.node_id AS node_id, down.canonical_name_zh AS name
-                ORDER BY down.canonical_name_zh
+                RETURN down.node_id AS node_id
                 """,
                 node_id=node_id,
             )
-            downstream = await down_result.data()
+            downstream_ids = [r["node_id"] async for r in down_result]
+
+        up_name_map = await _get_node_names(upstream_ids)
+        down_name_map = await _get_node_names(downstream_ids)
 
         exposures.append({
             "node_id": node_id,
@@ -133,12 +130,12 @@ async def explore_company_industrial_context(company_id: str):
             "role": exp["role"],
             "domain": "industrial",
             "upstream": [
-                {"node_id": r["node_id"], "node_name": r["name"] or r["node_id"], "domain": "industrial"}
-                for r in upstream
+                {"node_id": nid, "node_name": up_name_map.get(nid, nid), "domain": "industrial"}
+                for nid in upstream_ids
             ],
             "downstream": [
-                {"node_id": r["node_id"], "node_name": r["name"] or r["node_id"], "domain": "industrial"}
-                for r in downstream
+                {"node_id": nid, "node_name": down_name_map.get(nid, nid), "domain": "industrial"}
+                for nid in downstream_ids
             ],
         })
 
@@ -172,7 +169,7 @@ async def explore_node_ecosystem(
     driver = get_async_driver()
 
     # Node name
-    node_name_map = await _get_node_names(driver, [node_id])
+    node_name_map = await _get_node_names([node_id])
     node_name = node_name_map.get(node_id, node_id)
 
     # 1. Directly exposing companies
@@ -404,7 +401,7 @@ async def explore_person_industrial_footprint(person_id: str):
 
     # Node names
     all_node_ids = list({r["node_id"] for r in exp_rows})
-    node_name_map = await _get_node_names(get_async_driver(), all_node_ids)
+    node_name_map = await _get_node_names(all_node_ids)
 
     companies = []
     for cid in company_ids:

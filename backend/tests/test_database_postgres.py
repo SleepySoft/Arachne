@@ -43,7 +43,11 @@ async def test_init_tables_creates_schema():
                 'industries',
                 'industry_node_mappings',
                 'companies',
-                'company_node_exposures'
+                'company_node_exposures',
+                'computation_jobs',
+                'persons',
+                'factual_relations',
+                'industrial_nodes'
             )
             ORDER BY table_name
             """
@@ -53,6 +57,10 @@ async def test_init_tables_creates_schema():
         assert "industry_node_mappings" in names
         assert "companies" in names
         assert "company_node_exposures" in names
+        assert "computation_jobs" in names
+        assert "persons" in names
+        assert "factual_relations" in names
+        assert "industrial_nodes" in names
 
 
 async def test_pool_acquisition_and_close():

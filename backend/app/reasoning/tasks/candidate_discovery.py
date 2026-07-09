@@ -110,25 +110,38 @@ async def _find_under_specified_nodes(
     {where_source}
     WITH n, size([(n)-[:INDUSTRIAL_FLOW|ONTOLOGY]-() | 1]) AS degree
     WHERE degree >= $min_degree
-      AND (n.entity_type = 'unknown' OR n.definition IS NULL OR n.definition = '')
-    RETURN n.node_id AS node_id,
-           n.canonical_name_zh AS name,
-           n.entity_type AS entity_type,
-           degree
+    RETURN n.node_id AS node_id, degree
     ORDER BY degree DESC
     LIMIT $limit
     """
 
-    nodes: List[Dict[str, Any]] = []
+    node_ids_with_degree: List[Dict[str, Any]] = []
     async with driver.session() as session:
         result = await session.run(cypher, **params)
         async for record in result:
-            nodes.append({
+            node_ids_with_degree.append({
                 "node_id": record["node_id"],
-                "name": record["name"] or record["node_id"],
-                "entity_type": record["entity_type"],
                 "degree": record["degree"],
             })
+
+    node_ids = [item["node_id"] for item in node_ids_with_degree]
+    node_map = await fetch_nodes_by_ids(node_ids)
+
+    nodes: List[Dict[str, Any]] = []
+    for item in node_ids_with_degree:
+        node = node_map.get(item["node_id"])
+        if node is None:
+            continue
+        entity_type = node.entity_type.value if hasattr(node.entity_type, "value") else node.entity_type
+        definition = node.definition or ""
+        if entity_type != "unknown" and definition:
+            continue
+        nodes.append({
+            "node_id": node.node_id,
+            "name": node.canonical_name_zh or node.node_id,
+            "entity_type": entity_type,
+            "degree": item["degree"],
+        })
     return nodes
 
 

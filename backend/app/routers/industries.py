@@ -4,9 +4,9 @@ from fastapi import APIRouter, HTTPException, Query
 
 from app.models.industry_schema import Industry, IndustryNodeMapping
 from app.models.schemas import EDGE_TYPE_LABELS, IndustrialNode, GraphEdge
-from app.services import industry_storage
-from app.services.neo4j_storage import _to_datetime, _evidence_from_db
 from app.database import get_async_driver
+from app.services import industry_storage, node_storage
+from app.services.neo4j_storage import _to_datetime, _evidence_from_db
 
 router = APIRouter()
 
@@ -140,26 +140,9 @@ async def get_industry_nodes(industry_id: str):
     if not node_ids:
         return []
 
-    # Query Neo4j for the actual nodes
-    driver = get_async_driver()
-    async with driver.session() as session:
-        result = await session.run(
-            """
-            MATCH (n:IndustrialNode)
-            WHERE n.node_id IN $node_ids
-            RETURN n
-            """,
-            node_ids=node_ids,
-        )
-        records = await result.data()
-        nodes = []
-        for record in records:
-            props = dict(record["n"])
-            props["created_at"] = _to_datetime(props.get("created_at"))
-            props["updated_at"] = _to_datetime(props.get("updated_at"))
-            props["evidence"] = _evidence_from_db(props.get("evidence"))
-            nodes.append(IndustrialNode(**props))
-        return nodes
+    # Fetch node metadata from PostgreSQL
+    nodes_map = await node_storage.get_nodes_by_ids(node_ids)
+    return [nodes_map[nid] for nid in node_ids if nid in nodes_map]
 
 
 @router.get("/{industry_id}/subgraph", response_model=dict)
@@ -174,26 +157,12 @@ async def get_industry_subgraph(industry_id: str):
     if not node_ids:
         return {"nodes": [], "edges": []}
 
+    # Fetch node metadata from PostgreSQL
+    nodes_map = await node_storage.get_nodes_by_ids(node_ids)
+    nodes = [nodes_map[nid] for nid in node_ids if nid in nodes_map]
+
     driver = get_async_driver()
     async with driver.session() as session:
-        # Fetch nodes
-        node_result = await session.run(
-            """
-            MATCH (n:IndustrialNode)
-            WHERE n.node_id IN $node_ids
-            RETURN n
-            """,
-            node_ids=node_ids,
-        )
-        node_records = await node_result.data()
-        nodes = []
-        for record in node_records:
-            props = dict(record["n"])
-            props["created_at"] = _to_datetime(props.get("created_at"))
-            props["updated_at"] = _to_datetime(props.get("updated_at"))
-            props["evidence"] = _evidence_from_db(props.get("evidence"))
-            nodes.append(IndustrialNode(**props))
-
         # Fetch edges between mapped nodes (include both industrial flow and ontology relations)
         edge_result = await session.run(
             """

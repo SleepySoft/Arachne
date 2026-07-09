@@ -1,9 +1,11 @@
 import json
 from datetime import datetime
 from typing import List, Optional
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from app.database import get_async_driver
+from app.database_postgres import get_postgres_pool
+from app.services import node_storage
 from app.models.schemas import (
     Evidence,
     GraphEdge,
@@ -72,43 +74,6 @@ def _to_datetime(value):
     return value
 
 
-def _node_from_record(record) -> IndustrialNode:
-    props = dict(record["n"])
-    evidence = _evidence_from_db(props.get("evidence", []))
-    confidence = props.get("confidence", "LOW")
-    status = props.get("status", "PENDING")
-
-    # Tolerate old data that violates current validation rules
-    if not evidence:
-        if confidence == "HIGH":
-            confidence = "MEDIUM"
-        if status == "ACTIVE":
-            status = "PENDING"
-
-    node_uuid = props.get("node_uuid")
-    if node_uuid is None:
-        node_uuid = uuid4()
-    elif isinstance(node_uuid, str):
-        node_uuid = UUID(node_uuid)
-
-    return IndustrialNode(
-        node_uuid=node_uuid,
-        node_id=props["node_id"],
-        canonical_name_zh=props.get("canonical_name_zh") or props.get("node_id", "unknown"),
-        canonical_name_en=props.get("canonical_name_en"),
-        aliases=props.get("aliases", []),
-        definition=props.get("definition", "（定义待补充）"),
-        entity_type=props.get("entity_type", "unknown"),
-        evidence=evidence,
-        confidence=confidence,
-        status=status,
-        notes=props.get("notes"),
-        is_test=props.get("is_test", False),
-        created_at=_to_datetime(props.get("created_at")),
-        updated_at=_to_datetime(props.get("updated_at")),
-    )
-
-
 def _edge_from_record(record) -> GraphEdge:
     rel = dict(record["r"])
     start = record["start_node"]
@@ -162,104 +127,49 @@ def _edge_from_record(record) -> GraphEdge:
 # ---------------------------------------------------------------------------
 
 async def create_node(node: IndustrialNode) -> IndustrialNode:
+    """Create a skeleton node in Neo4j and persist metadata in PostgreSQL."""
     driver = get_async_driver()
-    now = datetime.utcnow()
     async with driver.session() as session:
-        result = await session.run(
-            """
-            CREATE (n:IndustrialNode {
-                node_uuid: $node_uuid,
-                node_id: $node_id,
-                canonical_name_zh: $canonical_name_zh,
-                canonical_name_en: $canonical_name_en,
-                aliases: $aliases,
-                definition: $definition,
-                entity_type: $entity_type,
-                evidence: $evidence,
-                confidence: $confidence,
-                status: $status,
-                notes: $notes,
-                is_test: $is_test,
-                created_at: $now,
-                updated_at: $now
-            })
-            RETURN n
-            """,
-            node_uuid=str(node.node_uuid),
+        await session.run(
+            "CREATE (n:IndustrialNode {node_id: $node_id})",
             node_id=node.node_id,
-            canonical_name_zh=node.canonical_name_zh,
-            canonical_name_en=node.canonical_name_en,
-            aliases=node.aliases,
-            definition=node.definition,
-            entity_type=node.entity_type.value,
-            evidence=_evidence_to_db(node.evidence),
-            confidence=node.confidence.value,
-            status=node.status.value,
-            notes=node.notes,
-            is_test=node.is_test,
-            now=now,
         )
-        record = await result.single()
-        return _node_from_record(record)
+    try:
+        return await node_storage.create_node(node)
+    except Exception:
+        # Rollback Neo4j skeleton if PG write fails
+        async with driver.session() as session:
+            await session.run(
+                "MATCH (n:IndustrialNode {node_id: $node_id}) DELETE n",
+                node_id=node.node_id,
+            )
+        raise
 
 
 async def get_node(node_id: str) -> Optional[IndustrialNode]:
-    driver = get_async_driver()
-    async with driver.session() as session:
-        result = await session.run(
-            "MATCH (n:IndustrialNode {node_id: $node_id}) RETURN n",
-            node_id=node_id,
-        )
-        record = await result.single()
-        if record is None:
-            return None
-        return _node_from_record(record)
+    """Node metadata now lives in PostgreSQL."""
+    return await node_storage.get_node(node_id)
 
 
 async def update_node(node_id: str, data: dict) -> Optional[IndustrialNode]:
-    driver = get_async_driver()
-    now = datetime.utcnow()
-    # Build dynamic SET clauses
-    set_clauses = ["n.updated_at = $now"]
-    params = {"node_id": node_id, "now": now}
-    for key, value in data.items():
-        if value is None:
-            continue
-        if key == "evidence":
-            params[key] = _evidence_to_db(value)
-        elif key in ("confidence", "status", "entity_type"):
-            params[key] = value.value if hasattr(value, "value") else value
-        else:
-            params[key] = value
-        set_clauses.append(f"n.{key} = ${key}")
-
-    cypher = f"""
-        MATCH (n:IndustrialNode {{node_id: $node_id}})
-        SET {', '.join(set_clauses)}
-        RETURN n
-    """
-    async with driver.session() as session:
-        result = await session.run(cypher, **params)
-        record = await result.single()
-        if record is None:
-            return None
-        return _node_from_record(record)
+    """Update node metadata in PostgreSQL. Neo4j skeleton only holds node_id."""
+    return await node_storage.update_node(node_id, data)
 
 
 async def delete_node(node_id: str) -> bool:
+    """Delete metadata from PostgreSQL and skeleton from Neo4j."""
+    pg_deleted = await node_storage.delete_node(node_id)
     driver = get_async_driver()
     async with driver.session() as session:
-        result = await session.run(
+        await session.run(
             """
             MATCH (n:IndustrialNode {node_id: $node_id})
             OPTIONAL MATCH (n)-[r]-()
             DELETE r, n
-            RETURN count(n) AS deleted
             """,
             node_id=node_id,
         )
-        record = await result.single()
-        return record["deleted"] > 0
+    return pg_deleted
 
 
 async def list_nodes(
@@ -270,66 +180,15 @@ async def list_nodes(
     search: Optional[str] = None,
     draft_only: Optional[bool] = None,
 ) -> tuple[List[IndustrialNode], int]:
-    driver = get_async_driver()
-    where_parts = ["1=1"]
-    params: dict = {"skip": skip, "limit": limit}
-
-    if entity_type:
-        where_parts.append("n.entity_type = $entity_type")
-        params["entity_type"] = entity_type
-    if status:
-        where_parts.append("n.status = $status")
-        params["status"] = status
-    if search:
-        where_parts.append(
-            "(n.canonical_name_zh CONTAINS $search OR n.canonical_name_en CONTAINS $search "
-            "OR n.node_id CONTAINS $search OR ANY(a IN n.aliases WHERE a CONTAINS $search))"
-        )
-        params["search"] = search
-    if draft_only:
-        where_parts.append(
-            "(n.node_id STARTS WITH 'draft_' OR n.status = 'PENDING' OR n.entity_type = 'unknown' OR n.definition IS NULL OR n.definition = '')"
-        )
-
-    where_clause = " AND ".join(where_parts)
-
-    async with driver.session() as session:
-        count_result = await session.run(
-            f"MATCH (n:IndustrialNode) WHERE {where_clause} RETURN count(n) AS total",
-            **{k: v for k, v in params.items() if k not in ("skip", "limit")},
-        )
-        count_record = await count_result.single()
-        total = count_record["total"]
-
-        if search:
-            # Boost exact matches, then prefix matches, then substring matches.
-            result = await session.run(
-                f"""
-                MATCH (n:IndustrialNode) WHERE {where_clause}
-                WITH n,
-                  CASE
-                    WHEN n.canonical_name_zh = $search OR n.canonical_name_en = $search
-                      OR n.node_id = $search OR ANY(a IN n.aliases WHERE a = $search) THEN 3
-                    WHEN n.canonical_name_zh STARTS WITH $search OR n.canonical_name_en STARTS WITH $search
-                      OR n.node_id STARTS WITH $search OR ANY(a IN n.aliases WHERE a STARTS WITH $search) THEN 2
-                    ELSE 1
-                  END AS score
-                RETURN n ORDER BY score DESC, n.canonical_name_zh
-                SKIP $skip LIMIT $limit
-                """,
-                **params,
-            )
-        else:
-            result = await session.run(
-                f"""
-                MATCH (n:IndustrialNode) WHERE {where_clause}
-                RETURN n ORDER BY n.canonical_name_zh
-                SKIP $skip LIMIT $limit
-                """,
-                **params,
-            )
-        items = [_node_from_record(r) async for r in result]
-        return items, total
+    """Node metadata now lives in PostgreSQL."""
+    return await node_storage.list_nodes(
+        skip=skip,
+        limit=limit,
+        entity_type=entity_type,
+        status=status,
+        search=search,
+        draft_only=draft_only,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -642,11 +501,13 @@ async def get_subgraph(node_id: str, depth: int = 2) -> tuple[List[IndustrialNod
             OPTIONAL MATCH (n)-[*1..{depth}]-(m:IndustrialNode)
             WITH collect(DISTINCT n) + collect(DISTINCT m) AS nodes
             UNWIND nodes AS node
-            RETURN DISTINCT node AS n
+            RETURN DISTINCT node.node_id AS node_id
             """,
             node_id=node_id,
         )
-        nodes = [_node_from_record(r) async for r in node_result]
+        node_ids = [r["node_id"] async for r in node_result]
+        node_map = await node_storage.get_nodes_by_ids(node_ids)
+        nodes = [node_map[nid] for nid in node_ids if nid in node_map]
 
         edge_result = await session.run(
             f"""
@@ -673,11 +534,13 @@ async def get_neighbors(node_id: str) -> tuple[List[IndustrialNode], List[GraphE
         node_result = await session.run(
             """
             MATCH (n:IndustrialNode {node_id: $node_id})-[r]-(m:IndustrialNode)
-            RETURN DISTINCT m AS n
+            RETURN DISTINCT m.node_id AS node_id
             """,
             node_id=node_id,
         )
-        nodes = [_node_from_record(r) async for r in node_result]
+        neighbor_ids = [r["node_id"] async for r in node_result]
+        node_map = await node_storage.get_nodes_by_ids(neighbor_ids)
+        nodes = [node_map[nid] for nid in neighbor_ids if nid in node_map]
 
         edge_result = await session.run(
             """
@@ -739,14 +602,6 @@ async def get_stats() -> GraphStats:
         if rec2:
             total_edges = rec2["c"]
 
-        # distributions
-        node_type_dist = {}
-        r3 = await session.run(
-            "MATCH (n:IndustrialNode) RETURN n.entity_type AS t, count(n) AS c"
-        )
-        async for rec in r3:
-            node_type_dist[rec["t"]] = rec["c"]
-
         edge_ns_dist = {}
         r4 = await session.run(
             "MATCH ()-[r:INDUSTRIAL_FLOW]->() RETURN 'industrial_flow' AS t, count(r) AS c"
@@ -768,26 +623,38 @@ async def get_stats() -> GraphStats:
         async for rec in r6:
             edge_type_dist[rec["t"]] = rec["c"]
 
-        status_dist = {}
-        r7 = await session.run(
-            "MATCH (n:IndustrialNode) RETURN n.status AS t, count(n) AS c"
-        )
-        async for rec in r7:
-            status_dist[rec["t"]] = rec["c"]
+    # Node metadata distributions now come from PostgreSQL
+    node_type_dist = {}
+    status_dist = {}
+    confidence_dist = {}
 
-        confidence_dist = {}
-        r8 = await session.run(
-            "MATCH (n:IndustrialNode) RETURN n.confidence AS t, count(n) AS c"
-        )
-        async for rec in r8:
-            confidence_dist[rec["t"]] = rec["c"]
+    pool = await get_postgres_pool()
+    if pool is not None:
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT entity_type, COUNT(*) AS c FROM industrial_nodes GROUP BY entity_type"
+            )
+            for row in rows:
+                node_type_dist[row["entity_type"]] = row["c"]
 
-        return GraphStats(
-            total_nodes=total_nodes,
-            total_edges=total_edges,
-            node_type_distribution=node_type_dist,
-            edge_namespace_distribution=edge_ns_dist,
-            edge_type_distribution=edge_type_dist,
-            status_distribution=status_dist,
-            confidence_distribution=confidence_dist,
-        )
+            rows = await conn.fetch(
+                "SELECT status, COUNT(*) AS c FROM industrial_nodes GROUP BY status"
+            )
+            for row in rows:
+                status_dist[row["status"]] = row["c"]
+
+            rows = await conn.fetch(
+                "SELECT confidence, COUNT(*) AS c FROM industrial_nodes GROUP BY confidence"
+            )
+            for row in rows:
+                confidence_dist[row["confidence"]] = row["c"]
+
+    return GraphStats(
+        total_nodes=total_nodes,
+        total_edges=total_edges,
+        node_type_distribution=node_type_dist,
+        edge_namespace_distribution=edge_ns_dist,
+        edge_type_distribution=edge_type_dist,
+        status_distribution=status_dist,
+        confidence_distribution=confidence_dist,
+    )

@@ -29,6 +29,17 @@ async def cleanup_test_data(dry_run: bool = False) -> Dict[str, Any]:
     # Neo4j: delete test edges first, then test nodes (relationships cascade)
     # ------------------------------------------------------------------
     driver = get_async_driver()
+
+    # IndustrialNode is_test metadata is now in PostgreSQL.
+    pool = await get_postgres_pool()
+    test_node_ids: list[str] = []
+    if pool is not None:
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT node_id FROM industrial_nodes WHERE is_test = true"
+            )
+            test_node_ids = [r["node_id"] for r in rows]
+
     async with driver.session() as session:
         edge_count_result = await session.run(
             """
@@ -40,14 +51,7 @@ async def cleanup_test_data(dry_run: bool = False) -> Dict[str, Any]:
         edge_count = (await edge_count_result.single())["total"]
         result["neo4j"]["industrial_edges"] = edge_count
 
-        node_count_result = await session.run(
-            """
-            MATCH (n:IndustrialNode)
-            WHERE n.is_test = true
-            RETURN count(n) AS total
-            """
-        )
-        node_count = (await node_count_result.single())["total"]
+        node_count = len(test_node_ids)
         result["neo4j"]["industrial_nodes"] = node_count
 
         # Factual graph nodes/edges
@@ -79,13 +83,15 @@ async def cleanup_test_data(dry_run: bool = False) -> Dict[str, Any]:
                 DELETE r
                 """
             )
-            await session.run(
-                """
-                MATCH (n:IndustrialNode)
-                WHERE n.is_test = true
-                DETACH DELETE n
-                """
-            )
+            if test_node_ids:
+                await session.run(
+                    """
+                    MATCH (n:IndustrialNode)
+                    WHERE n.node_id IN $node_ids
+                    DETACH DELETE n
+                    """,
+                    node_ids=test_node_ids,
+                )
             await session.run(
                 """
                 MATCH ()-[r]->()
@@ -115,6 +121,7 @@ async def cleanup_test_data(dry_run: bool = False) -> Dict[str, Any]:
         ("company_node_exposures", "exposure_id"),
         ("industry_node_mappings", "mapping_id"),
         ("factual_relations", "relation_id"),
+        ("industrial_nodes", "node_id"),
         ("companies", "company_id"),
         ("industries", "industry_id"),
         ("persons", "person_id"),
