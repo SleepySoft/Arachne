@@ -20,7 +20,7 @@ import sys
 from datetime import datetime
 from uuid import UUID
 
-sys.path.insert(0, "..")
+sys.path.insert(0, ".")
 
 from app.database import get_async_driver, close_async_driver
 from app.database_postgres import (
