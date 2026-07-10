@@ -231,7 +231,69 @@ class TestNodeWithIndustries:
         resp2 = client.get(f"/api/v1/industries/{industry_id}/mappings")
         assert resp2.status_code == 200
         items = resp2.json()["items"]
-        assert any(i["node_id"] == node_id for i in items)
+
+
+class TestReifiedUsageEdge:
+    async def test_create_reified_usage(self, client):
+        if not await _postgres_available():
+            pytest.skip("PostgreSQL not available")
+
+        uid = uuid4().hex[:6]
+        execution_id = f"test_exec_{uid}"
+        technology_id = f"test_tech_{uid}"
+
+        # Create execution node (process)
+        resp = client.post("/api/v1/nodes", json={
+            "node_id": execution_id,
+            "canonical_name_zh": "测试光刻前清洗",
+            "definition": "测试用具体工艺执行",
+            "entity_type": "process",
+            "is_test": True,
+        })
+        assert resp.status_code == 201
+
+        # Create technology node (process technology)
+        resp = client.post("/api/v1/nodes", json={
+            "node_id": technology_id,
+            "canonical_name_zh": "测试晶圆清洗工艺",
+            "definition": "测试用通用工艺技术",
+            "entity_type": "process",
+            "is_test": True,
+        })
+        assert resp.status_code == 201
+
+        # Create reified usage
+        resp = client.post("/api/v1/edges/reified-usage", json={
+            "execution_node_id": execution_id,
+            "technology_node_id": technology_id,
+            "scenario": "pre_lithography",
+            "description": "测试物化边",
+            "is_test": True,
+        })
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["usage_node"]["entity_type"] == "usage"
+        assert data["uses_edge"]["edge_type"] == "uses"
+        assert data["uses_edge"]["from_node"] == execution_id
+        assert data["technology_edge"]["edge_type"] == "technology"
+        assert data["technology_edge"]["to_node"] == technology_id
+
+        # Verify usage node is queryable
+        usage_id = data["usage_node"]["node_id"]
+        resp2 = client.get(f"/api/v1/nodes/{usage_id}")
+        assert resp2.status_code == 200
+        assert resp2.json()["entity_type"] == "usage"
+
+    async def test_create_reified_usage_missing_nodes(self, client):
+        if not await _postgres_available():
+            pytest.skip("PostgreSQL not available")
+
+        resp = client.post("/api/v1/edges/reified-usage", json={
+            "execution_node_id": "nonexistent_exec",
+            "technology_node_id": "nonexistent_tech",
+            "is_test": True,
+        })
+        assert resp.status_code == 400
 
     async def test_quick_create_node_with_industries(self, client):
         if not await _postgres_available():

@@ -797,6 +797,56 @@ class IndustrialFlowEdgeUpdate(BaseModel):
 
 
 # ============================================================
+# Reified Edge (PROV-style Usage)
+# ============================================================
+
+class ReifiedUsageCreate(BaseModel):
+    """物化边：创建 Usage 节点来表达 process_execution --uses--> technology。"""
+    execution_node_id: str = Field(
+        ...,
+        pattern=r"^[a-z][a-z0-9_]*$",
+        description="执行工艺节点 ID（如 pre_lithography_wafer_cleaning）",
+    )
+    technology_node_id: str = Field(
+        ...,
+        pattern=r"^[a-z][a-z0-9_]*$",
+        description="被使用的通用技术/方法节点 ID（如 wafer_cleaning_process）",
+    )
+    scenario: Optional[str] = Field(
+        default=None,
+        description="使用场景，用于区分同一对执行-技术的不同用法",
+    )
+    role: Optional[str] = Field(
+        default=None,
+        description="在该场景下扮演的角色",
+    )
+    description: Optional[str] = Field(
+        default=None,
+        description="Usage 节点描述；留空自动生成",
+    )
+    evidence: List[Evidence] = Field(default_factory=list)
+    confidence: Confidence = Confidence.LOW
+    status: NodeStatus = NodeStatus.PENDING
+    notes: Optional[str] = None
+    is_test: Optional[bool] = Field(default=False, description="标记是否为测试数据")
+
+    @model_validator(mode="after")
+    def validate_policy(self) -> "ReifiedUsageCreate":
+        if self.execution_node_id == self.technology_node_id:
+            raise ValueError("execution_node_id and technology_node_id must be different")
+        if self.confidence == Confidence.HIGH and not self.evidence:
+            raise ValueError("HIGH confidence reified usage must have evidence")
+        return self
+
+
+class ReifiedUsageResult(BaseModel):
+    """物化边创建结果：Usage 节点 + 两条边。"""
+    usage_node: IndustrialNode
+    uses_edge: IndustrialFlowEdge
+    technology_edge: IndustrialFlowEdge
+
+
+# ============================================================
 # Ontology Edge
 # ============================================================
 

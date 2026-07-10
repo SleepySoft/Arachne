@@ -12,6 +12,8 @@ from app.models.schemas import (
     OntologyEdgeCreate,
     OntologyEdgeUpdate,
     PaginatedEdges,
+    ReifiedUsageCreate,
+    ReifiedUsageResult,
 )
 from app.services import graph_service
 
@@ -31,6 +33,15 @@ async def quick_create_edge(data: IndustrialFlowEdgeQuickCreate):
     """快速创建产业流关系。只需提供 from_node 和 to_node，系统自动生成 edge_id 和描述。"""
     try:
         return await graph_service.quick_create_edge(data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/reified-usage", response_model=ReifiedUsageResult, status_code=201)
+async def create_reified_usage(data: ReifiedUsageCreate):
+    """创建物化边：process_execution --uses--> usage --technology--> process_technology。"""
+    try:
+        return await graph_service.create_reified_usage(data)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

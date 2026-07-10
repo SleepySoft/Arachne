@@ -1,12 +1,15 @@
 from typing import List, Optional
 
 from app.models.schemas import (
+    Confidence,
+    EntityType,
     GraphEdge,
     GraphRegistrationBatch,
     GraphStats,
     IndustrialFlowEdge,
     IndustrialFlowEdgeCreate,
     IndustrialFlowEdgeQuickCreate,
+    IndustrialFlowType,
     IndustryNodeAssociation,
     IndustrialNode,
     IndustrialNodeCreate,
@@ -15,6 +18,8 @@ from app.models.schemas import (
     OntologyEdge,
     OntologyEdgeCreate,
     RejectedOrPendingItem,
+    ReifiedUsageCreate,
+    ReifiedUsageResult,
 )
 from app.models.industry_schema import IndustryNodeMapping
 from app.models.company_schema import BusinessRegistrationBatch
@@ -271,6 +276,108 @@ async def list_edges(
     to_node: Optional[str] = None,
 ):
     return await neo4j_storage.list_edges(skip, limit, edge_namespace, edge_type, from_node, to_node)
+
+
+# ---------------------------------------------------------------------------
+# Reified Edge (PROV-style Usage)
+# ---------------------------------------------------------------------------
+
+async def create_reified_usage(data: ReifiedUsageCreate) -> ReifiedUsageResult:
+    """Create a Usage node that reifies 'execution uses technology'.
+
+    Result topology:
+        execution_node --[uses]--> usage_node --[technology]--> technology_node
+    """
+    from uuid import uuid4
+    import hashlib
+
+    execution = await neo4j_storage.get_node(data.execution_node_id)
+    if execution is None:
+        raise ValueError(f"execution_node_id '{data.execution_node_id}' does not exist")
+    technology = await neo4j_storage.get_node(data.technology_node_id)
+    if technology is None:
+        raise ValueError(f"technology_node_id '{data.technology_node_id}' does not exist")
+
+    # Deterministic usage node id based on execution + technology + scenario
+    base = f"{data.execution_node_id}_{data.technology_node_id}_{data.scenario or ''}"
+    if len(base) > 50:
+        base = hashlib.md5(base.encode()).hexdigest()[:16]
+    usage_id = f"usage_{base}"
+    if len(usage_id) > 64:
+        usage_id = f"usage_{hashlib.md5(base.encode()).hexdigest()[:16]}"
+
+    existing_usage = await neo4j_storage.get_node(usage_id)
+    if existing_usage is not None:
+        raise ValueError(f"reified usage '{usage_id}' already exists")
+
+    execution_label = execution.canonical_name_zh or data.execution_node_id
+    technology_label = technology.canonical_name_zh or data.technology_node_id
+    scenario_text = f"（{data.scenario}）" if data.scenario else ""
+    description = data.description or (
+        f"{execution_label}{scenario_text} 使用 {technology_label} 技术/方法"
+    )
+
+    usage_node = IndustrialNode(
+        node_id=usage_id,
+        canonical_name_zh=f"{execution_label} 使用 {technology_label}{scenario_text}",
+        canonical_name_en=None,
+        aliases=[],
+        definition=description,
+        entity_type=EntityType.USAGE,
+        evidence=data.evidence,
+        confidence=data.confidence,
+        status=data.status,
+        notes=data.notes,
+        is_test=data.is_test or False,
+    )
+    await neo4j_storage.create_node(usage_node)
+
+    uses_edge_id = f"{data.execution_node_id}_uses_{usage_id}"
+    if len(uses_edge_id) > 64:
+        uses_edge_id = f"uses_{hashlib.md5(uses_edge_id.encode()).hexdigest()[:16]}"
+    technology_edge_id = f"{usage_id}_technology_{data.technology_node_id}"
+    if len(technology_edge_id) > 64:
+        technology_edge_id = f"technology_{hashlib.md5(technology_edge_id.encode()).hexdigest()[:16]}"
+
+    # Avoid duplicate edge ids
+    if await neo4j_storage.get_edge(uses_edge_id):
+        uses_edge_id = f"uses_{uuid4().hex[:12]}"
+    if await neo4j_storage.get_edge(technology_edge_id):
+        technology_edge_id = f"technology_{uuid4().hex[:12]}"
+
+    uses_edge = IndustrialFlowEdge(
+        edge_id=uses_edge_id,
+        from_node=data.execution_node_id,
+        to_node=usage_id,
+        edge_namespace="industrial_flow",
+        edge_type=IndustrialFlowType.USES,
+        description=f"{execution_label} 使用 {technology_label}{scenario_text}",
+        evidence=data.evidence,
+        confidence=data.confidence,
+        notes=data.notes,
+        is_test=data.is_test or False,
+    )
+    technology_edge = IndustrialFlowEdge(
+        edge_id=technology_edge_id,
+        from_node=usage_id,
+        to_node=data.technology_node_id,
+        edge_namespace="industrial_flow",
+        edge_type=IndustrialFlowType.TECHNOLOGY,
+        description=f"{execution_label} 使用 {technology_label}{scenario_text}",
+        evidence=data.evidence,
+        confidence=data.confidence,
+        notes=data.notes,
+        is_test=data.is_test or False,
+    )
+
+    created_uses = await neo4j_storage.create_industrial_flow_edge(uses_edge)
+    created_technology = await neo4j_storage.create_industrial_flow_edge(technology_edge)
+
+    return ReifiedUsageResult(
+        usage_node=usage_node,
+        uses_edge=created_uses,
+        technology_edge=created_technology,
+    )
 
 
 # ---------------------------------------------------------------------------
