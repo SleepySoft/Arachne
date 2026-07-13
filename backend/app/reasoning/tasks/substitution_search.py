@@ -65,7 +65,7 @@ async def _get_direct_neighbors(
                 continue
             ns = record["ns"]
             et = record["et"]
-            if ns == "ontology" or et in ("is_a", "part_of", "variant_of", "related_term", "alias_of"):
+            if ns == "ontology" or et in ("is_a", "part_of", "variant_of", "alias_of"):
                 ontology[nid].add(mid)
             else:
                 if record["dir"] == "out":

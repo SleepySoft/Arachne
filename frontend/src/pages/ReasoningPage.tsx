@@ -713,7 +713,7 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
                     onChange={() => setExpandOntology((v) => !v)}
                     className="h-3 w-3 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-0"
                   />
-                  通过本体关系扩展起点（is_a / part_of / related_term）
+                  通过本体关系扩展起点（is_a / part_of）
                 </label>
               </FormField>
 

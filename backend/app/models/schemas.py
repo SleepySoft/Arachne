@@ -453,7 +453,15 @@ class OntologyType(str, Enum):
     # ============================================================
     ALIAS_OF = "alias_of"                               # 别名/同义   → skos:altLabel / owl:sameAs-ish
     VARIANT_OF = "variant_of"                           # 变体        → skos:closeMatch / variant label
-    RELATED_TERM = "related_term"                       # 相关术语    → skos:related
+
+    # ============================================================
+    # Group D: Deprecated
+    # related_term is deprecated. Existing edges are kept for backward
+    # compatibility, but new edges should not be created. Use more specific
+    # relations (is_a, part_of, variant_of, alias_of, or industrial_flow
+    # edges) instead.
+    # ============================================================
+    RELATED_TERM = "related_term"                       # [DEPRECATED] 相关术语 → skos:related
 
 
 class ReviewAction(str, Enum):

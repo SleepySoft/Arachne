@@ -34,6 +34,7 @@ export type OntologyType =
   | "is_a"
   | "part_of"
   | "variant_of"
+  /** @deprecated `related_term` is deprecated; keep for backward compatibility only. */
   | "related_term";
 
 export type EdgeNamespace = "industrial_flow" | "ontology";
@@ -514,7 +515,8 @@ export const EDGE_TYPE_LABELS: Record<string, string> = {
   is_a: "是一种",
   part_of: "组成部分",
   variant_of: "变体",
-  related_term: "相关术语",
+  // Deprecated ontology type — kept for backward compatibility with existing edges.
+  related_term: "相关术语（已废弃）",
 };
 
 

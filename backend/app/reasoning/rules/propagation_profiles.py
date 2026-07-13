@@ -108,7 +108,6 @@ PROPAGATION_PROFILES: Dict[str, PropagationProfile] = {
             "service_provision",
             "is_a",
             "part_of",
-            "related_term",
         ],
         edge_weights={
             "capability_enablement": 0.85,
@@ -117,7 +116,6 @@ PROPAGATION_PROFILES: Dict[str, PropagationProfile] = {
             "service_provision": 0.5,
             "is_a": 0.4,
             "part_of": 0.35,
-            "related_term": 0.2,
         },
         decay_method="depth_decay",
         decay_factor=0.85,

@@ -20,9 +20,8 @@ Semantics:
   limit whole -> parts to a small hop count because real process flows attach
   to sub-nodes and the entry/exit structure is not explicitly modelled.
 
-* ``related_term``: intentionally excluded from automatic expansion. It is
-  defined in the skill as an undetermined/temporary relation that should be
-  upgraded or removed.
+* ``related_term``: deprecated. It is no longer included in automatic
+  expansion and should not be used for new edges.
 """
 
 from __future__ import annotations
@@ -34,7 +33,7 @@ from app.database import get_async_driver
 ALIAS_EDGE_TYPE = "alias_of"
 TAXONOMIC_EDGE_TYPES = {"is_a", "variant_of"}
 PART_OF_EDGE_TYPE = "part_of"
-ALL_TOPOLOGY_EDGE_TYPES = {ALIAS_EDGE_TYPE, *TAXONOMIC_EDGE_TYPES, PART_OF_EDGE_TYPE, "related_term"}
+ALL_TOPOLOGY_EDGE_TYPES = {ALIAS_EDGE_TYPE, *TAXONOMIC_EDGE_TYPES, PART_OF_EDGE_TYPE}
 
 
 async def _query_direct_neighbors(
@@ -201,7 +200,7 @@ async def resolve_sources_topologically(
 
     Always performs alias normalization. When ``expand_ontology`` is true,
     also expands ``is_a`` / ``variant_of`` and ``part_of``. ``related_term``
-    is intentionally excluded from automatic expansion.
+    is deprecated and excluded from automatic expansion.
 
     Returns:
         - Effective source node IDs for flow traversal.

@@ -585,6 +585,7 @@ function applyFilters(
       });
     }
 
+    // `related_term` is deprecated but kept here so legacy edges are still hidden by default.
     const weakOntologyTypes = new Set(["alias_of", "related_term", "variant_of"]);
     cy.edges().forEach((edge) => {
       const ns = edge.data("edge_namespace");
