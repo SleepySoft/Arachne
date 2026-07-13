@@ -335,15 +335,15 @@ async def create_reified_usage(data: ReifiedUsageCreate) -> ReifiedUsageResult:
     uses_edge_id = f"{data.execution_node_id}_uses_{usage_id}"
     if len(uses_edge_id) > 64:
         uses_edge_id = f"uses_{hashlib.md5(uses_edge_id.encode()).hexdigest()[:16]}"
-    technology_edge_id = f"{usage_id}_technology_{data.technology_node_id}"
-    if len(technology_edge_id) > 64:
-        technology_edge_id = f"technology_{hashlib.md5(technology_edge_id.encode()).hexdigest()[:16]}"
+    adopts_edge_id = f"{usage_id}_adopts_{data.technology_node_id}"
+    if len(adopts_edge_id) > 64:
+        adopts_edge_id = f"adopts_{hashlib.md5(adopts_edge_id.encode()).hexdigest()[:16]}"
 
     # Avoid duplicate edge ids
     if await neo4j_storage.get_edge(uses_edge_id):
         uses_edge_id = f"uses_{uuid4().hex[:12]}"
-    if await neo4j_storage.get_edge(technology_edge_id):
-        technology_edge_id = f"technology_{uuid4().hex[:12]}"
+    if await neo4j_storage.get_edge(adopts_edge_id):
+        adopts_edge_id = f"adopts_{uuid4().hex[:12]}"
 
     uses_edge = IndustrialFlowEdge(
         edge_id=uses_edge_id,
@@ -357,13 +357,13 @@ async def create_reified_usage(data: ReifiedUsageCreate) -> ReifiedUsageResult:
         notes=data.notes,
         is_test=data.is_test or False,
     )
-    technology_edge = IndustrialFlowEdge(
-        edge_id=technology_edge_id,
+    adopts_edge = IndustrialFlowEdge(
+        edge_id=adopts_edge_id,
         from_node=usage_id,
         to_node=data.technology_node_id,
         edge_namespace="industrial_flow",
-        edge_type=IndustrialFlowType.TECHNOLOGY,
-        description=f"{execution_label} 使用 {technology_label}{scenario_text}",
+        edge_type=IndustrialFlowType.ADOPTS,
+        description=f"{execution_label} 采用 {technology_label}{scenario_text}",
         evidence=data.evidence,
         confidence=data.confidence,
         notes=data.notes,
@@ -371,12 +371,12 @@ async def create_reified_usage(data: ReifiedUsageCreate) -> ReifiedUsageResult:
     )
 
     created_uses = await neo4j_storage.create_industrial_flow_edge(uses_edge)
-    created_technology = await neo4j_storage.create_industrial_flow_edge(technology_edge)
+    created_adopts = await neo4j_storage.create_industrial_flow_edge(adopts_edge)
 
     return ReifiedUsageResult(
         usage_node=usage_node,
         uses_edge=created_uses,
-        technology_edge=created_technology,
+        adopts_edge=created_adopts,
     )
 
 

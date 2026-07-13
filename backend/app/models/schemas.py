@@ -388,13 +388,16 @@ class IndustrialFlowType(str, Enum):
     DERIVED_FROM = "derived_from"                         # 直接物料派生 → PROV prov:wasDerivedFrom
 
     # ============================================================
+    # ============================================================
     # Group D: Reified Usage (Arachne v2 extension)
     # PROV does not have a native "Usage" node, but prov:used can be reified
     # via prov:Usage to attach extra attributes. Arachne materializes the
-    # relationship as: execution --uses--> Usage --technology--> technology.
+    # relationship as: execution --uses--> Usage --adopts--> process_technology.
+    # `adopts` means the Usage node adopts/realizes a general process/technology
+    # in a specific scenario.
     # ============================================================
     USES = "uses"                                         # 工艺执行 → 使用动作（Usage 节点）
-    TECHNOLOGY = "technology"                             # 使用动作 → 被使用的技术/方法
+    ADOPTS = "adopts"                                     # Usage 节点 → 采用的通用工艺/技术
 
     # ============================================================
     # Group E: Domain-specific / summary relations (NOT direct PROV)
@@ -426,7 +429,7 @@ EDGE_TYPE_LABELS: dict[str, str] = {
     "supply_relation": "供应关系",
     "derived_from": "派生自",
     "uses": "使用",
-    "technology": "使用技术",
+    "adopts": "采用",
     "unknown": "未知关系",
     # OntologyType
     "alias_of": "别名/同义",
@@ -893,7 +896,7 @@ class ReifiedUsageResult(BaseModel):
     """物化边创建结果：Usage 节点 + 两条边。"""
     usage_node: IndustrialNode
     uses_edge: IndustrialFlowEdge
-    technology_edge: IndustrialFlowEdge
+    adopts_edge: IndustrialFlowEdge
 
 
 # ============================================================

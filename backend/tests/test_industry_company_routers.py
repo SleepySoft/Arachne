@@ -275,8 +275,8 @@ class TestReifiedUsageEdge:
         assert data["usage_node"]["entity_type"] == "usage"
         assert data["uses_edge"]["edge_type"] == "uses"
         assert data["uses_edge"]["from_node"] == execution_id
-        assert data["technology_edge"]["edge_type"] == "technology"
-        assert data["technology_edge"]["to_node"] == technology_id
+        assert data["adopts_edge"]["edge_type"] == "adopts"
+        assert data["adopts_edge"]["to_node"] == technology_id
 
         # Verify usage node is queryable
         usage_id = data["usage_node"]["node_id"]
