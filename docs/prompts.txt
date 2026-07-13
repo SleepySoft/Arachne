@@ -193,12 +193,11 @@ for NNN from 51 to 55:
     "is_a": "是一种",
     "part_of": "组成部分",
     "variant_of": "变体",
-    "related_term": "相关术语",
 ```
 alias_of：原则上说，所有关系应该连到 alias_of 的下游节点上，上游节点仅为别名，不承担任何关系。故如果起始节点是 alias_of 的上游节点，需要从它的下游节点开始推理。
 is_a：这是一种逻辑上的派生关系（不是derived_from，而是类似C++一样的子类和父类关系），通用的流程和物料连接到 is_a 的下游节点，而具体流程中的上下游才会连接到其上游节点。
 part_of：如果一个节点是part_of的上游节点，可以直接其part_of的下游节点作为一个整体进行推理（但我们没解决一个问题：即一个group的入口和出口，至少工艺流程实际还是连接在组的子节点上）。
-variant_of，related_term：不确定，有点像alias_of，又有点像is_a。
+variant_of：A 是 B 的技术变体，推理时可按 is_a 类似处理。
 
 
 

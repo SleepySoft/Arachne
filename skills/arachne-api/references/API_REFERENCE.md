@@ -396,7 +396,7 @@ http://localhost:8000/api/v1
 | 命名空间 | 类型 |
 |---|---|
 | `industrial_flow` | `material_flow`, `composition`, `energy_flow`, `information_flow`, `capability_supply`, `service_flow` |
-| `ontology` | `alias_of`, `is_a`, `variant_of`, `related_term` |
+| `ontology` | `alias_of`, `is_a`, `variant_of` |
 
 ### Status / Confidence
 

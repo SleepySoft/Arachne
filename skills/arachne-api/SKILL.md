@@ -611,7 +611,7 @@ python cli/arachne_cli.py industry list --search 智能驾驶
 | `entity_type` | `material`, `part`, `device`, `equipment`, `system`, `software`, `infrastructure`, `process`, `service`, `technology_capability`, `platform`, `standard`, `data_asset`, `unknown` |
 | `edge_namespace` | `industrial_flow`, `ontology` |
 | `industrial_flow` 的 `edge_type` | `material_input`, `energy_input`, `information_input`, `equipment_enablement`, `process_output`, `service_provision`, `capability_enablement`, `structural_composition`, `supply_relation`, `unknown` |
-| `ontology` 的 `edge_type` | `alias_of`, `is_a`, `variant_of`, `related_term` |
+| `ontology` 的 `edge_type` | `alias_of`, `is_a`, `variant_of` |
 | `status` | `ACTIVE`, `PENDING`, `REJECTED`, `ARCHIVED` |
 | `confidence` | `HIGH`, `MEDIUM`, `LOW` |
 | `industry_type` | `formal_industry`, `curated_view`, `theme_view` |

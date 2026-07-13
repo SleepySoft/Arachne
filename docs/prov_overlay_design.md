@@ -264,7 +264,7 @@ process_output:    wafer_manufacturing → wafer
 │   ├── derived_from            # PROV: wasDerivedFrom（显式、人工、默认隐藏）
 │   ├── equipment_enablement    # PROV: used
 │   └── ...
-├── ontology                    # is_a / part_of / related_term
+├── ontology                    # is_a / part_of
 └── material_trace              # key_input_for / enables（关键原料/使能关系）
 
 PROV 覆盖层（只读/校验）

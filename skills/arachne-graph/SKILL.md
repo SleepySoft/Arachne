@@ -190,7 +190,6 @@ A → B = A 为 B 提供某种输入
 | `alias_of` | A 是 B 的别名/缩写/译名 | Radar alias_of 雷达 |
 | `is_a` | A 是 B 的稳定子类 | 相控阵雷达 is_a 无线电雷达 |
 | `variant_of` | A 是 B 的技术变体 | 固态激光雷达 variant_of 激光雷达 |
-| `related_term` | A 与 B 语义相关但关系未定 | 临时关系，应尽量升级或删除 |
 
 ## PROV 声明规范
 

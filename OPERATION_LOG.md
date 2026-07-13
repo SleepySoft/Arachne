@@ -63,7 +63,7 @@
 - **实体提取范围**：材料、部件、器件、模块、系统、平台、服务
 - **关系提取**：
   - 6 类产业流关系（material_flow, composition, energy_flow, information_flow, capability_supply, service_flow）
-  - 4 类本体关系（alias_of, is_a, variant_of, related_term）
+  - 3 类本体关系（alias_of, is_a, variant_of）
 - **输出格式**：标准 GraphRegistrationBatch JSON
 
 ### 2.3 提交方式 Prompt（`prompts/submission.md`）
