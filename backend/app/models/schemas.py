@@ -426,7 +426,7 @@ EDGE_TYPE_LABELS: dict[str, str] = {
     "supply_relation": "供应关系",
     "derived_from": "派生自",
     "uses": "使用",
-    "technology": "技术",
+    "technology": "使用技术",
     "unknown": "未知关系",
     # OntologyType
     "alias_of": "别名/同义",
