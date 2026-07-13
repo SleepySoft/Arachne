@@ -363,18 +363,49 @@ class EntityType(str, Enum):
 
 
 class IndustrialFlowType(str, Enum):
-    MATERIAL_INPUT = "material_input"                     # 物料输入
-    ENERGY_INPUT = "energy_input"                         # 能量输入
-    INFORMATION_INPUT = "information_input"               # 信息输入
-    EQUIPMENT_ENABLEMENT = "equipment_enablement"         # 设备使能
-    PROCESS_OUTPUT = "process_output"                     # 工艺产出
-    SERVICE_PROVISION = "service_provision"               # 服务提供
-    CAPABILITY_ENABLEMENT = "capability_enablement"       # 能力使能
-    STRUCTURAL_COMPOSITION = "structural_composition"     # 结构组成
-    SUPPLY_RELATION = "supply_relation"                   # 供应关系（摘要级上下游、缺少明确中间工艺、产业链层级）
-    DERIVED_FROM = "derived_from"                         # 直接物料派生（显式、人工、默认隐藏）
+    # ============================================================
+    # Group A: Activity-Entity input/output (closest to PROV)
+    # In PROV terms: Activity prov:used Entity; Entity prov:wasGeneratedBy Activity.
+    # Arachne direction: input goes INTO the process; output goes OUT OF the process.
+    # ============================================================
+    MATERIAL_INPUT = "material_input"                     # 物料输入  → PROV prov:used (Activity used Entity)
+    ENERGY_INPUT = "energy_input"                         # 能量输入  → PROV prov:used
+    INFORMATION_INPUT = "information_input"               # 信息输入  → PROV prov:used
+    EQUIPMENT_ENABLEMENT = "equipment_enablement"         # 设备使能  → PROV prov:used (non-consumable resource)
+    PROCESS_OUTPUT = "process_output"                     # 工艺产出  → PROV prov:wasGeneratedBy (reverse: Activity generated Entity)
+
+    # ============================================================
+    # Group B: Activity-Entity association / soft enablement
+    # PROV analogy: prov:wasAssociatedWith or prov:wasInformedBy (loose coupling).
+    # ============================================================
+    SERVICE_PROVISION = "service_provision"               # 服务提供  → PROV prov:wasAssociatedWith (service provider)
+    CAPABILITY_ENABLEMENT = "capability_enablement"       # 能力使能  → PROV prov:wasAssociatedWith (capability/role)
+
+    # ============================================================
+    # Group C: Entity-Entity derivation
+    # PROV analogy: prov:wasDerivedFrom.
+    # ============================================================
+    DERIVED_FROM = "derived_from"                         # 直接物料派生 → PROV prov:wasDerivedFrom
+
+    # ============================================================
+    # Group D: Reified Usage (Arachne v2 extension)
+    # PROV does not have a native "Usage" node, but prov:used can be reified
+    # via prov:Usage to attach extra attributes. Arachne materializes the
+    # relationship as: execution --uses--> Usage --technology--> technology.
+    # ============================================================
     USES = "uses"                                         # 工艺执行 → 使用动作（Usage 节点）
     TECHNOLOGY = "technology"                             # 使用动作 → 被使用的技术/方法
+
+    # ============================================================
+    # Group E: Domain-specific / summary relations (NOT direct PROV)
+    # These are convenience edges for industrial-domain modeling.
+    # ============================================================
+    STRUCTURAL_COMPOSITION = "structural_composition"     # 结构组成（BOM 式，如 部件-整机）
+    SUPPLY_RELATION = "supply_relation"                   # 供应关系（摘要级上下游、缺少明确中间工艺、产业链层级）
+
+    # ============================================================
+    # Group F: Fallback
+    # ============================================================
     UNKNOWN = "unknown"                                   # 未知/待分类
 
 
@@ -407,11 +438,22 @@ EDGE_TYPE_LABELS: dict[str, str] = {
 
 
 class OntologyType(str, Enum):
-    ALIAS_OF = "alias_of"
-    IS_A = "is_a"
-    PART_OF = "part_of"
-    VARIANT_OF = "variant_of"
-    RELATED_TERM = "related_term"
+    # ============================================================
+    # Group H: Hierarchical / taxonomic relations
+    # Not PROV; these are ontology/KOS relations.
+    # is_a  ≈ rdfs:subClassOf / skos:broaderTransitive
+    # part_of ≈ meronomy / mereology (component-whole)
+    # ============================================================
+    IS_A = "is_a"                                       # 是一种      → rdfs:subClassOf / skos:broader
+    PART_OF = "part_of"                                 # 组成部分    → meronomy (component-whole)
+
+    # ============================================================
+    # Group L: Lexical / terminological relations
+    # These map loosely to SKOS label/association relations, not PROV.
+    # ============================================================
+    ALIAS_OF = "alias_of"                               # 别名/同义   → skos:altLabel / owl:sameAs-ish
+    VARIANT_OF = "variant_of"                           # 变体        → skos:closeMatch / variant label
+    RELATED_TERM = "related_term"                       # 相关术语    → skos:related
 
 
 class ReviewAction(str, Enum):

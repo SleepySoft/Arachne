@@ -18,6 +18,7 @@ export interface IndustrialFiltersState {
   status: string[];
   confidence: string[];
   showIsA: boolean;
+  showPartOf: boolean;
   showWeakOntology: boolean;
   showDerivedFrom: boolean;
 }

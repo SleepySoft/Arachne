@@ -348,6 +348,7 @@ interface GraphCanvasProps {
     status: string[];
     confidence: string[];
     showIsA: boolean;
+    showPartOf: boolean;
     showWeakOntology: boolean;
     showDerivedFrom?: boolean;
   };
@@ -589,6 +590,7 @@ function applyFilters(
       const ns = edge.data("edge_namespace");
       const et = edge.data("edge_type");
       const isIsA = ns === "ontology" && et === "is_a";
+      const isPartOf = ns === "ontology" && et === "part_of";
       const isWeakOntology = ns === "ontology" && weakOntologyTypes.has(et);
       // 展开 process group 后，不显示父节点到子节点的 part_of 边，关系已用复合节点表达
       const isInternalPartOf =
@@ -602,6 +604,7 @@ function applyFilters(
         (edgeNsSet.size === 0 || edgeNsSet.has(ns)) &&
         (edgeTypeSet.size === 0 || edgeTypeSet.has(et)) &&
         (!isIsA || filters.showIsA) &&
+        (!isPartOf || filters.showPartOf) &&
         (!isWeakOntology || filters.showWeakOntology) &&
         (!isDerivedFrom || filters.showDerivedFrom) &&
         !isInternalPartOf;

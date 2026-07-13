@@ -13,6 +13,7 @@ interface FilterState {
   status: string[];
   confidence: string[];
   showIsA: boolean;
+  showPartOf: boolean;
   showWeakOntology: boolean;
   showDerivedFrom: boolean;
 }
@@ -68,6 +69,20 @@ export function FilterPanel({ filters, onChange }: FilterPanelProps) {
           />
           <span className={filters.edgeNamespaces.includes("ontology") ? "" : "opacity-40"}>
             显示 is_a 层级关系
+          </span>
+        </label>
+        <label className="ml-4 flex items-center gap-2 text-xs text-slate-500">
+          <input
+            type="checkbox"
+            checked={filters.showPartOf}
+            disabled={!filters.edgeNamespaces.includes("ontology")}
+            onChange={() =>
+              onChange({ ...filters, showPartOf: !filters.showPartOf })
+            }
+            className="h-3 w-3 rounded border-slate-600 bg-slate-800 text-cyan-500 disabled:opacity-40"
+          />
+          <span className={filters.edgeNamespaces.includes("ontology") ? "" : "opacity-40"}>
+            显示 part_of 组成关系
           </span>
         </label>
         <label className="ml-4 flex items-center gap-2 text-xs text-slate-500">

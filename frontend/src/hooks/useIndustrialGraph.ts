@@ -60,6 +60,7 @@ export function useIndustrialGraph() {
     status: [] as string[],
     confidence: [] as string[],
     showIsA: true,
+    showPartOf: true,
     showWeakOntology: false,
     showDerivedFrom: false,
   });
