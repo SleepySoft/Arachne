@@ -2096,6 +2096,19 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
                 },
               },
             },
+            // adopts 边（Usage -> general process/technology）：弱化显示，避免和主产业流混淆
+            {
+              selector: 'edge[edge_type = "adopts"]',
+              style: {
+                width: 1,
+                "line-style": "dotted",
+                "line-color": "#64748b",
+                "target-arrow-color": "#64748b",
+                color: "#64748b",
+                "font-size": "7px",
+                opacity: 0.45,
+              },
+            },
             // 6. external（顺藤摸瓜拉入的外部节点/边）
             {
               selector: ".external",
