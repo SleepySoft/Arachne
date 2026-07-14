@@ -16,7 +16,7 @@ RESOURCE : 可被生产、加工、组合、拆分、提供、使用或评价的
 
 ACTION : 封闭的语义操作符。对输入 RESOURCE 与输出 RESOURCE 之间语义关系的有限分类。ACTION 是跨领域的稳定关系原语，不描述具体实现方式。
 
-METHOD : 开放的领域过程词汇。实现某种 ACTION 的通用过程、方法、技术、程序、算法或自然机制。METHOD 描述“如何实现”，但不表示某次具体执行。
+METHOD : 开放的领域过程词汇。实现某种 ACTION 的通用过程、工艺、方法、技术、程序、算法或自然机制。METHOD 描述“如何实现”，但不表示某次具体执行。
 
 它们在图上是三类并列的节点。
 ```
@@ -81,29 +81,35 @@ METHOD : 开放的领域过程词汇。实现某种 ACTION 的通用过程、方
 
 ```
 
+在些基础之上，提供Flow机制打包常用的METHOD流程。
+
 
 ## 基本拓扑
+
+#### 通常流程
 
 ```
 RESOURCE
     ---input_role--->
-Action (Ref: Craft) | Flow
-    ----- next ----->
-Action (Ref: Craft) | Flow
+Action (Ref: METHOD) | Flow
+    ------next------>
+Action (Ref: METHOD) | Flow
     ---output_role--->
 RESOURCE
 ```
 
+#### 这个Flow
+
 ```
-Action (Ref: Craft) | Flow
-    ----- next ----->
-Action (Ref: Craft) | Flow
+Action (Ref: METHOD) | Flow
+    ------next------>
+Action (Ref: METHOD) | Flow
 ```
 
 ```
 RESOURCE
     ---input_role--->
-RESOURCE (craft)
+METHOD
     ---output_role--->
 RESOURCE
 ```
@@ -171,7 +177,7 @@ input_role:
   # 加入主体资源并通常进入输出，但不是主要加工对象。
 
 # ------------------------------------------------------------
-# 工艺参与
+# PROCESS参与
 # ------------------------------------------------------------
 
 - process_material
@@ -313,15 +319,59 @@ output_role:
   # 确定为 Action 输出，但暂时无法归入以上角色的结果。
 
 
+## 特殊关系
+
+#### next
+
+METHOD间表示顺关系，使用next可以在不定义中间产物的情况下编排多个METHOD。
 
 
+#### topology
+
+具体的topology在本体系之外定义，仅表示逻辑关系，不表示产业关系，比如：
+
+```
+    "alias_of": "别名/同义",
+    "is_a": "是一种",
+    "part_of": "组成部分（group）",
+    "variant_of": "变体",
+```
 
 
+## 文件格式
+
+arachne-flow文件采用yaml格式存储，定义如下：
 
 
+```
+schema: arachne-flow/v0.1
 
+include:
+  - <引用的flow名>
 
+local:
+  - <本文件临时使用的RESOURCE名>: <显示名>
 
+edges:
+  - [<RESOURCE ID-1>, <input_role>, <ACTION-1>]
+    [<ACTION-1>, 'ref', <METHOD-1>]
+    [<ACTION-1>, 'next', <ACTION-2>]
+    [<ACTION-2>, 'ref', <METHOD-2>]
+  - [<ACTION-2>, <output_role>, <RESOURCE ID-2>]
+```
+
+说明：
+    文件描述的是边，每个边固定是三元组。
+    三元组的组合只可能是以下情况：
+        - [<RESOURCE>, <input_role>, <ACTION>]
+        - [<ACTION>, <output_role>, <RESOURCE>]
+        - [<ACTION>, 'next', <ACTION>]
+        - [<ACTION>, 'ref', <METHOD>]
+    载入文件时分析关系并建立上下游，遇到以下情况报错：
+        - 形成多于1个的图
+        - 形成环
+    对于Flow，根据ACTION的上下游自动判断输入和输出节点（引用Flow时，外界必然连接到ACTION而非RESOURCE）
+    引擎会从pg数据库中检索RESOURCE ID并提取metadata，如果RESOURCE ID无数据且未在local中定义，给出警告，不影响显示（pg中没有则不显示metadata）。
 
 
 
