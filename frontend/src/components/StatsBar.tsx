@@ -2,13 +2,21 @@ import { useQuery } from "@tanstack/react-query";
 import { Activity, Brain, Database, GitBranch, Layers, Network } from "lucide-react";
 import { getHealth, getStats } from "@/services/api";
 export type MainView = "industrial_graph" | "company_graph" | "flow_graph" | "db_checks" | "reasoning";
+export type GraphEngine = "legacy" | "arachne_flow";
 
 interface StatsBarProps {
   mainView: MainView;
   onChangeMainView: (view: MainView) => void;
+  graphEngine?: GraphEngine;
+  onChangeGraphEngine?: (engine: GraphEngine) => void;
 }
 
-export function StatsBar({ mainView, onChangeMainView }: StatsBarProps) {
+export function StatsBar({
+  mainView,
+  onChangeMainView,
+  graphEngine = "legacy",
+  onChangeGraphEngine,
+}: StatsBarProps) {
   const { data: graphStats } = useQuery({
     queryKey: ["stats"],
     queryFn: getStats,
@@ -34,8 +42,20 @@ export function StatsBar({ mainView, onChangeMainView }: StatsBarProps) {
           <span className="ml-1 text-xs font-medium text-slate-500">产业本体图</span>
         </div>
 
+        {/* Engine selector */}
+        <div className="ml-4 flex items-center">
+          <select
+            value={graphEngine}
+            onChange={(e) => onChangeGraphEngine?.(e.target.value as GraphEngine)}
+            className="h-8 rounded-md border border-slate-700 bg-slate-900 px-2 text-sm text-slate-200 outline-none focus:border-cyan-500"
+          >
+            <option value="legacy">legacy 引擎</option>
+            <option value="arachne_flow">arachne_flow 引擎</option>
+          </select>
+        </div>
+
         {/* Main View Switcher */}
-        <div className="ml-4 flex items-center rounded-lg border border-slate-700 bg-slate-800 p-0.5">
+        <div className="ml-3 flex items-center rounded-lg border border-slate-700 bg-slate-800 p-0.5">
           <ViewTab
             active={mainView === "industrial_graph"}
             onClick={() => onChangeMainView("industrial_graph")}

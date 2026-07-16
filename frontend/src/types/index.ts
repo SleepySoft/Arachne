@@ -626,6 +626,15 @@ export interface FlowSummary {
   compiled_at?: string;
 }
 
+export interface FlowCompileResult {
+  flow_id: string;
+  resources: number;
+  actions: number;
+  methods: number;
+  edges: number;
+  dual: number;
+}
+
 // Company network node type used for canvas
 export interface CompanyNetworkNode {
   company_id: string;

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { StatsBar, MainView } from "@/components/StatsBar";
+import { StatsBar, MainView, GraphEngine } from "@/components/StatsBar";
 import { FlowGraphPage } from "@/components/FlowGraphPage";
 import { DbChecksPage } from "@/pages/DbChecksPage";
 import { ReasoningPage } from "@/pages/ReasoningPage";
@@ -43,6 +43,7 @@ import { IndustrialViewState, CompanyViewState, SavedView } from "@/types/view";
 
 export default function App() {
   const [mainView, setMainView] = useState<MainView>("industrial_graph");
+  const [graphEngine, setGraphEngine] = useState<GraphEngine>("legacy");
 
   const industrial = useIndustrialGraph();
   const company = useCompanyGraph();
@@ -68,7 +69,19 @@ export default function App() {
 
   const handleChangeMainView = useCallback((view: MainView) => {
     setMainView(view);
+    setGraphEngine(view === "flow_graph" ? "arachne_flow" : "legacy");
     viewHistory.reset(view === "company_graph" ? "company" : "industrial");
+  }, [viewHistory.reset]);
+
+  const handleChangeGraphEngine = useCallback((engine: GraphEngine) => {
+    setGraphEngine(engine);
+    if (engine === "arachne_flow") {
+      setMainView("flow_graph");
+      viewHistory.reset("industrial");
+    } else {
+      setMainView("industrial_graph");
+      viewHistory.reset("industrial");
+    }
   }, [viewHistory.reset]);
 
   useEffect(() => {
@@ -835,7 +848,12 @@ export default function App() {
   return (
     <div className="flex h-screen w-full flex-col bg-slate-950">
       <div className="h-14 shrink-0 border-b border-slate-800 bg-slate-900">
-        <StatsBar mainView={mainView} onChangeMainView={handleChangeMainView} />
+        <StatsBar
+          mainView={mainView}
+          onChangeMainView={handleChangeMainView}
+          graphEngine={graphEngine}
+          onChangeGraphEngine={handleChangeGraphEngine}
+        />
       </div>
 
       <div className="relative flex-1 overflow-hidden">

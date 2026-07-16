@@ -6,6 +6,7 @@ import {
   DbCheckMeta,
   DbCheckResult,
   DbFixResult,
+  FlowCompileResult,
   FlowSummary,
   GraphEdge,
   GraphNode,
@@ -282,6 +283,24 @@ export const getFlowSubgraph = async (
   const res = await client.get(`/query/subgraph/${flowId}`, {
     params: { depth, engine: "arachne_flow" },
   });
+  return res.data;
+};
+
+export const getFlowsSubgraph = async (
+  flowIds: string[],
+  depth = 3
+): Promise<{ center_node_id: string; depth: number; nodes: GraphNode[]; edges: GraphEdge[] }> => {
+  const res = await client.post("/flows/subgraph", { flow_ids: flowIds, depth });
+  return res.data;
+};
+
+export const compileFlow = async (flowId: string): Promise<FlowCompileResult> => {
+  const res = await client.post(`/flows/${flowId}/compile`);
+  return res.data;
+};
+
+export const compileFlows = async (flowIds: string[]): Promise<FlowCompileResult[]> => {
+  const res = await client.post("/flows/compile", { flow_ids: flowIds });
   return res.data;
 };
 
