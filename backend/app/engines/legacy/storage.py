@@ -6,7 +6,7 @@ from uuid import UUID
 from app.database import get_async_driver
 from app.database_postgres import get_postgres_pool
 from app.services import node_storage
-from app.models.schemas import (
+from app.engines.legacy.schemas import (
     Evidence,
     GraphEdge,
     GraphStats,

@@ -7,7 +7,7 @@ import json
 import pytest
 
 from app.models.prov_schema import ProvStatement, ProvRelation, ProvRole
-from app.models.schemas import Evidence, Confidence
+from app.models.core import Confidence, Evidence
 from app.services import prov_storage
 
 pytestmark = pytest.mark.asyncio

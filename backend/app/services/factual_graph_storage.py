@@ -35,7 +35,7 @@ from app.models.factual_graph_schema import (
     PersonCreate,
     PersonUpdate,
 )
-from app.models.schemas import Evidence
+from app.models.core import Evidence
 
 
 # ---------------------------------------------------------------------------

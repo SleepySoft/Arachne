@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from app.models.schemas import Confidence, Evidence
+from app.models.core import Confidence, Evidence
 
 
 # ============================================================================

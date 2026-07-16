@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from app.models.schemas import Confidence, GraphEdge, IndustrialNode
+from app.engines.legacy.schemas import GraphEdge, IndustrialNode
+from app.models.core import Confidence
 from app.reasoning.schemas import (
     CompanyExposureInfo,
     CompanyExposuresOutput,

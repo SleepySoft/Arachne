@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List
 
-from app.models.schemas import GraphEdge, IndustrialNode
+from app.engines.legacy.schemas import GraphEdge, IndustrialNode
 from app.reasoning.schemas import ReasoningDiagnostics
 
 

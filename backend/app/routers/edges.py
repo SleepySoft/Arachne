@@ -2,7 +2,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Body, HTTPException, Query
 
-from app.models.schemas import (
+from app.engines.legacy.schemas import (
     GraphEdge,
     GraphEdgeCreate,
     IndustrialFlowEdge,

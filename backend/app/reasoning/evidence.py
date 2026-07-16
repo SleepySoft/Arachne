@@ -5,7 +5,8 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-from app.models.schemas import Evidence, IndustrialNode
+from app.engines.legacy.schemas import IndustrialNode
+from app.models.core import Evidence
 from app.reasoning.schemas import EvidenceChain, EvidenceCompleteness, EvidenceRef, EvidenceSupports, ReasoningPath
 
 

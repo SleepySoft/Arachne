@@ -11,7 +11,7 @@ import uuid
 import pytest
 import pytest_asyncio
 
-from app.models.schemas import (
+from app.engines.legacy.schemas import (
     Confidence,
     EntityType,
     Evidence,
@@ -20,8 +20,8 @@ from app.models.schemas import (
     IndustrialNode,
     OntologyEdge,
     OntologyType,
-    RecordStatus,
 )
+from app.models.core import RecordStatus
 from app.reasoning.schemas import OutputType, ReasoningConstraints, ReasoningTask, TaskType
 from app.reasoning.tasks.association import run_association
 from app.reasoning.tasks.bottleneck_detection import run_bottleneck_detection

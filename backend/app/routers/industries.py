@@ -3,7 +3,7 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
 
 from app.models.industry_schema import Industry, IndustryNodeMapping
-from app.models.schemas import EDGE_TYPE_LABELS, IndustrialNode, GraphEdge
+from app.engines.legacy.schemas import EDGE_TYPE_LABELS, GraphEdge, IndustrialNode
 from app.database import get_async_driver
 from app.services import industry_storage, node_storage
 from app.services.neo4j_storage import _to_datetime, _evidence_from_db

@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from app.config import get_settings
 from app.database import close_async_driver, init_db
 from app.database_postgres import close_postgres_pool, init_postgres_tables
-from app.engines.legacy import LegacyEngine
+from app.engines.legacy.engine import LegacyEngine
 from app.services.engine_registry import UnknownEngineError, register_engine
 from app.routers import (
     admin,

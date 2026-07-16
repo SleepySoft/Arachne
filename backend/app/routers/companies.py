@@ -4,7 +4,7 @@ from fastapi import APIRouter, Body, HTTPException, Query
 from pydantic import BaseModel
 
 from app.models.company_schema import Company, CompanyNodeExposure
-from app.models.schemas import EDGE_TYPE_LABELS, IndustrialNode
+from app.engines.legacy.schemas import EDGE_TYPE_LABELS, IndustrialNode
 from app.database import get_async_driver
 from app.services import company_storage, node_storage
 from app.services.neo4j_storage import _to_datetime, _evidence_from_db

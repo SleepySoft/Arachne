@@ -18,7 +18,7 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from app.models.schemas import Evidence, Confidence, RecordStatus
+from app.models.core import Confidence, Evidence, RecordStatus
 
 
 class ProvRole(str, Enum):

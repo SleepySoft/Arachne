@@ -13,7 +13,8 @@ from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
 
 from app.database_postgres import get_postgres_pool
-from app.models.schemas import Evidence, IndustrialNode
+from app.engines.legacy.schemas import IndustrialNode
+from app.models.core import Evidence
 
 
 # ---------------------------------------------------------------------------

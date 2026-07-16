@@ -2,7 +2,7 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from app.models.schemas import GraphRegistrationBatch
+from app.engines.legacy.schemas import GraphRegistrationBatch
 from app.services import graph_service
 
 router = APIRouter()

@@ -8,7 +8,7 @@ industries, and companies.
 
 from typing import List, Optional
 
-from app.models.schemas import (
+from app.engines.legacy.schemas import (
     Confidence,
     EntityType,
     GraphEdge,

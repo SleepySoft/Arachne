@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import List, Optional
 
-from app.models.schemas import (
+from app.engines.legacy.schemas import (
     GraphEdge,
     GraphStats,
     IndustrialFlowEdge,
@@ -28,7 +28,7 @@ def _evidence_to_db(evidence_list):
 
 
 def _evidence_from_db(raw: list):
-    from app.models.schemas import Evidence
+    from app.models.core import Evidence
     out = []
     for item in raw or []:
         if not item:

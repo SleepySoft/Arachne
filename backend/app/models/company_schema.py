@@ -80,7 +80,7 @@ from datetime import datetime, date
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from app.models.schemas import Evidence, Confidence, RecordStatus
+from app.models.core import Confidence, Evidence, RecordStatus
 from app.models.industry_schema import Industry, IndustryNodeMapping
 
 

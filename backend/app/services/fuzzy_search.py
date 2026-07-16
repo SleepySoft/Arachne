@@ -12,7 +12,7 @@ Approach:
 from difflib import SequenceMatcher
 from typing import List, Optional
 
-from app.models.schemas import IndustrialNode
+from app.engines.legacy.schemas import IndustrialNode
 from app.services import neo4j_storage
 
 
