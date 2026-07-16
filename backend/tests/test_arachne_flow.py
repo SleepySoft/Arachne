@@ -17,7 +17,7 @@ FLOW_DIR = Path(__file__).resolve().parents[2] / "data" / "flows" / "semiconduct
 
 
 # ---------------------------------------------------------------------------
-# Parser tests
+# Parser tests (synchronous)
 # ---------------------------------------------------------------------------
 
 
@@ -28,16 +28,12 @@ def test_parse_smartphone_flow():
     assert parsed.root_product == "smartphone"
     assert len(parsed.resources) > 0
     assert len(parsed.actions) > 0
-    assert len(parsed.triples) == 39  # from manifest
-
-    # Check well-known nodes were classified correctly.
-    assert "smartphone" in parsed.resources
-    assert "wafer_manufacturing" in parsed.actions
-    assert "electronics_system_integration" in parsed.actions
-    # chip_design is used both as an action and as an information input,
-    # so it appears in both dictionaries (dual-role node).
-    assert "chip_design" in parsed.resources
-    assert "chip_design" in parsed.actions
+    # chip_design is now a METHOD, not a RESOURCE/ACTION dual node.
+    assert "chip_design" in parsed.methods
+    assert "chip_design" not in parsed.resources
+    assert "chip_design" not in parsed.actions
+    # The synthetic output resource is declared in local.
+    assert "chip_design_output" in parsed.locals
 
 
 def test_parse_photovoltaic_inverter_flow():
@@ -45,31 +41,30 @@ def test_parse_photovoltaic_inverter_flow():
     assert parsed.flow_id == "photovoltaic_inverter"
     assert len(parsed.resources) == 2
     assert len(parsed.actions) == 1
-    assert len(parsed.triples) == 2
+    assert len(parsed.methods) == 1
+    assert len(parsed.triples) == 3
+
+
+def test_parse_all_flows_are_valid():
+    """All generated semiconductor flows must parse without structural errors."""
+    for path in sorted(FLOW_DIR.glob("*.yaml")):
+        if path.name == "manifest.yaml":
+            continue
+        parsed = parse_flow_file(path)
+        assert parsed.triples
 
 
 def test_parse_rejects_cycle():
-    doc = FlowDocument(
-        title="cycle",
-        root_product="a",
-        edges=[
-            [["a", "feedstock", "act1"], ["act1", "primary_result", "b"]],
-            [["b", "feedstock", "act2"], ["act2", "primary_result", "a"]],
-        ],
-    )
-    # pydantic model is not a file; exercise parser internals indirectly by
-    # building from raw YAML would require temp file. Use internal validation.
     from app.engines.arachne_flow.parser import _normalize_and_validate
     from app.engines.arachne_flow.schemas import ParsedFlow
 
     parsed = ParsedFlow(
-        schema="arachne-flow/v0.1",
+        schema_version="arachne-flow/v0.1",
         title="cycle",
         root_product="a",
         flow_id="cycle_test",
         triples=[],
     )
-    # Manually add triples
     parsed.triples = [
         FlowTriple(source="a", predicate="feedstock", target="act1"),
         FlowTriple(source="act1", predicate="primary_result", target="b"),
@@ -85,7 +80,7 @@ def test_parse_rejects_disconnected_graph():
     from app.engines.arachne_flow.schemas import ParsedFlow
 
     parsed = ParsedFlow(
-        schema="arachne-flow/v0.1",
+        schema_version="arachne-flow/v0.1",
         title="disconnected",
         flow_id="disconnected_test",
         triples=[],
@@ -115,18 +110,22 @@ async def test_compile_and_read_photovoltaic_flow():
 
     assert counts["resources"] == 2
     assert counts["actions"] == 1
-    assert counts["edges"] == 2
+    assert counts["methods"] == 1
+    assert counts["edges"] == 3
+    assert counts["dual"] == 0
 
-    # Verify nodes exist
     resource = await storage.get_flow_node("photovoltaic_inverter")
     assert resource is not None
     assert resource.entity_type == "arachne_flow:resource"
 
-    action = await storage.get_flow_node(storage.namespaced_action_id(flow_id, "integrate_photovoltaic_inverter"))
+    action = await storage.get_flow_node(storage.namespaced_action_id(flow_id, "act_integrate_photovoltaic_inverter"))
     assert action is not None
     assert action.entity_type == "arachne_flow:action"
 
-    # Verify an edge exists
+    method = await storage.get_flow_node("integration_of_photovoltaic_inverter")
+    assert method is not None
+    assert method.entity_type == "arachne_flow:method"
+
     edges, total = await storage.list_flow_edges(from_node="power_semiconductor")
     assert total == 1
     assert edges[0].edge_type == "feedstock"
@@ -143,11 +142,10 @@ async def test_compile_smartphone_flow():
     counts = await storage.compile_parsed_flow(parsed, clear_existing=True)
     assert counts["resources"] > 0
     assert counts["actions"] > 0
-    assert counts["edges"] == 39
+    assert counts["dual"] == 0
 
-    # Stats (dual-role nodes are counted once in Neo4j but in both dicts)
     stats = await storage.get_flow_stats()
-    expected_nodes = counts["resources"] + counts["actions"] - counts["dual"]
+    expected_nodes = counts["resources"] + counts["actions"] + counts["methods"] - counts["dual"]
     assert stats.total_nodes == expected_nodes
     assert stats.total_edges == counts["edges"]
     assert "arachne_flow" in stats.edge_namespace_distribution
