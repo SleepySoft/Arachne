@@ -480,10 +480,30 @@ Historical batch construction logs list these as future work; none are implement
 - `docs/think-01.md`, `docs/think-02.md` — Historical design thinking
 - `docs/prompts.txt` — Prompt history
 - `docs/ui_architecture_refactor_2026-05-24.md` — Current UI architecture and future extension directions
+- `docs/arachne_engine_refactor_design.md` — Engine subsystem refactor: dual Neo4j instances, shared metadata, pluggable engines (legacy + arachne-flow)
 
 ---
 
-## 8. Agent Skills
+## 8. Pending Architecture Work
+
+### Engine Subsystem Refactor (planned)
+
+Goal: transform the single Neo4j graph engine into a pluggable subsystem so that the existing industrial graph and the new `arachne-flow` engine can coexist without changing core API contracts or frontend rendering logic.
+
+Key decisions:
+- **Dual Neo4j instances**: Community Edition does not support multiple databases, so we will run two Neo4j processes on different ports (main: `7687`, flow: `7688`).
+- **Shared metadata**: `industrial_nodes` in PostgreSQL remains the single source of node metadata for both engines; entity IDs are shared.
+- **Engine abstraction**: introduce `app/engines/base.py` (`GraphEngine` ABC), `app/services/engine_registry.py`, and move existing implementation to `app/engines/legacy/`.
+- **Core models generic**: `app/models/core.py` defines `GraphNode`, `GraphEdge`, `SubgraphResult`, `GraphStats`; engine-specific enums/schemas live under `app/engines/<name>/schemas.py`.
+- **arachne-flow engine**: read-only engine under `app/engines/arachne_flow/`, compiles YAML triples into the second Neo4j instance via `:ARACHNE_FLOW` relationships.
+- **Reasoning is core-led, engine-enabled**: core owns task contracts, dispatching, and generic graph algorithms; each engine provides a `ReasoningAdapter` to expose its edge-type semantics and can register engine-specific task handlers.
+- **Ontology/topology moves to core**: `alias_of` / `is_a` / `part_of` / `variant_of` semantics and expansion algorithms become a shared `TopologyService`; ontology data lives in the main Neo4j instance and is shared across engines.
+
+See `docs/arachne_engine_refactor_design.md` for full boundary analysis, dry-run scenarios, reasoning architecture, and implementation phases.
+
+---
+
+## 9. Agent Skills
 
 项目级 agent skills 位于根目录 `skills/` 下，提供针对本系统的程序化操作指引：
 
@@ -494,4 +514,4 @@ Historical batch construction logs list these as future work; none are implement
 
 ---
 
-*Last updated: 2026-06-29 10:30 CST*
+*Last updated: 2026-07-16 11:15 CST*

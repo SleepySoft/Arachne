@@ -360,7 +360,7 @@ edges:
   - [<ACTION-2>, <output_role>, <RESOURCE ID-2>]
 ```
 
-说明：
+arachne-flow --> neo4j引擎实现说明：
     文件描述的是边，每个边固定是三元组。
     三元组的组合只可能是以下情况：
         - [<RESOURCE>, <input_role>, <ACTION>]
@@ -372,6 +372,7 @@ edges:
         - 形成环
     对于Flow，根据ACTION的上下游自动判断输入和输出节点（引用Flow时，外界必然连接到ACTION而非RESOURCE）
     引擎会从pg数据库中检索RESOURCE ID并提取metadata，如果RESOURCE ID无数据且未在local中定义，给出警告，不影响显示（pg中没有则不显示metadata）。
+    对于每个ACTION声明都需要一个独立节点，而METHOD不需要创建多个实例。RESOURCE可以选择分开或合并显示（不知道具体效果）。
 
 
 
