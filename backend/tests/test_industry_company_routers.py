@@ -23,6 +23,13 @@ async def _postgres_available() -> bool:
         return False
 
 
+@pytest.fixture(autouse=True, scope="session")
+def register_legacy_engine():
+    from app.engines.legacy.engine import LegacyEngine
+    from app.services.engine_registry import register_engine
+    register_engine(LegacyEngine())
+
+
 @pytest.fixture
 def client():
     from app.main import app

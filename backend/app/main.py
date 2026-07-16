@@ -7,6 +7,8 @@ from fastapi.responses import JSONResponse
 from app.config import get_settings
 from app.database import close_async_driver, init_db
 from app.database_postgres import close_postgres_pool, init_postgres_tables
+from app.engines.legacy import LegacyEngine
+from app.services.engine_registry import UnknownEngineError, register_engine
 from app.routers import (
     admin,
     admin_checks,
@@ -31,6 +33,7 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    register_engine(LegacyEngine())
     await init_db()
     await init_postgres_tables()
     yield
@@ -55,6 +58,11 @@ async def connection_error_handler(_request: Request, exc: Exception):
         status_code=503,
         content={"detail": "Database connection was reset, please retry."},
     )
+
+
+@app.exception_handler(UnknownEngineError)
+async def unknown_engine_handler(_request: Request, exc: UnknownEngineError):
+    return JSONResponse(status_code=400, content={"detail": str(exc)})
 
 try:
     from neo4j.exceptions import ServiceUnavailable, SessionExpired

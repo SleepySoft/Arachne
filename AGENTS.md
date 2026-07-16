@@ -71,14 +71,22 @@ backend/
 │   ├── database.py                # Neo4j async driver
 │   ├── database_postgres.py       # asyncpg pool + table init (8 tables)
 │   ├── models/
+│   │   ├── core.py                # Engine-agnostic graph models (GraphNode, GraphEdge, GraphStats)
 │   │   ├── schemas.py             # Core graph models (Node, Edge, Evidence, RecordStatus)
 │   │   ├── industry_schema.py     # Industry, IndustryNodeMapping, IndustryType
 │   │   ├── company_schema.py      # Company, CompanyNodeExposure, CompanyActivityType, CompanyType, BusinessRegistrationBatch
 │   │   └── factual_graph_schema.py # Person, FactualRelation, three relation types
+│   ├── engines/
+│   │   ├── base.py                # GraphEngine abstract base class
+│   │   └── legacy/
+│   │       ├── engine.py          # LegacyEngine implementation (Neo4j topology + PG metadata)
+│   │       ├── storage.py         # Neo4j/PG storage helpers migrated from neo4j_storage.py
+│   │       └── schemas.py         # Legacy engine schemas (currently re-export of app.models.schemas)
 │   ├── services/
-│   │   ├── neo4j_storage.py       # Neo4j relationship CRUD + skeleton node ops
+│   │   ├── engine_registry.py     # Engine registration and get_engine() resolver
+│   │   ├── neo4j_storage.py       # Compatibility shim re-exporting engines.legacy.storage
 │   │   ├── node_storage.py        # PostgreSQL CRUD for IndustrialNode metadata
-│   │   ├── graph_service.py       # Business logic: nodes, edges, batches, conflicts, business batch processing
+│   │   ├── graph_service.py       # Thin orchestration layer: delegates node/edge/query ops to the active engine
 │   │   ├── industry_storage.py    # PostgreSQL CRUD for industries + mappings
 │   │   ├── company_storage.py     # PostgreSQL CRUD for companies + exposures
 │   │   ├── factual_graph_storage.py # PG + Neo4j for Factual Graph
@@ -300,6 +308,7 @@ backend/
 - **Neo4j deployment**: local Windows install (Docker blocked by Zscaler)
 
 ### Recent Changes
+- **Pluggable graph-engine refactor (legacy-only)**: Introduced an engine subsystem so the Neo4j-backed implementation can be replaced without changing routers or core models. Added `app/models/core.py` (engine-agnostic models), `app/engines/base.py` (`GraphEngine` ABC), `app/services/engine_registry.py`, and `app/engines/legacy/` (`engine.py`, `storage.py`, `schemas.py`). Migrated the original `neo4j_storage.py` logic into `engines/legacy/storage.py` and turned `graph_service.py` into a thin pass-through layer. `app/services/neo4j_storage.py` remains as a compatibility shim. Routers (`nodes.py`, `edges.py`, `query.py`) now accept an optional `?engine=` query parameter and forward it to `graph_service`; omitting it keeps legacy behavior. `LegacyEngine` is registered in `app.main:lifespan`. Added `UnknownEngineError` and a 400 exception handler for invalid engine names. All 50 backend tests pass and the frontend production build succeeds.
 - **HBM advanced packaging Usage refactor**: Corrected the HBM advanced packaging flow so the generic `advanced_packaging` technology node stays abstract and is not overloaded with a hard-coded HBM-specific process sequence. Deleted the HBM-specific intermediate state nodes (`hbm_tsv_memory_wafer`, `hbm_bumped_die`, `hbm_stacked_die`, `hbm_integrated_module`) and removed their connecting process-chain edges (`memory_wafer -> tsv_interconnection`, `memory_die -> die_stacking`, `underfill_process -> usage_hbm_advanced_packaging`). The flow is now `memory_wafer --material_input--> usage_hbm_advanced_packaging --process_output--> hbm`, with `usage_hbm_advanced_packaging --adopts--> advanced_packaging`. The `advanced_packaging` subprocesses (`tsv_interconnection`, `bumping_process`, `die_stacking`, `silicon_interposer_integration`, `underfill_process`) remain as `part_of` components describing what advanced packaging is composed of, but no longer encode a fixed execution order. The generic `memory_wafer --material_input--> memory_die` link is preserved; the `memory_die -> die_stacking` shortcut is removed because it was an HBM-specific conflation of wafer-dicing and die-stacking. Also fixed two data-quality issues introduced by the manual Neo4j-only migration: (1) confidence/status values were written in lowercase (`high`/`active`) instead of the enum-required uppercase (`HIGH`/`ACTIVE`), causing `GET /api/v1/query/neighbors/hbm` to return HTTP 500; (2) evidence JSON used `source`/`description` keys instead of the schema-required `source_title`/`quote`, causing neighbor queries on `usage_hbm_advanced_packaging` to fail validation. Cleaned up the corresponding orphan `industrial_nodes` rows in PostgreSQL. Verified `reverse_industrial_flow` remains at 0; 50 backend tests pass.
 - **Remove standalone `memory_die` node**: Since `memory_die` had no downstream industrial-flow edges and its semantics are already covered by the generic `chip_die` path (`memory_wafer is_a wafer -> wafer_dicing -> chip_die -> die_bonding -> ...`), it was an isolated dead-end node in the graph. Deleted `memory_die` and its only edge `memory_wafer -> memory_die` from both Neo4j and PostgreSQL. Verified 50 backend tests pass and `reverse_industrial_flow` remains at 0.
 - **v2 architecture: node metadata moved to PostgreSQL**: All IndustrialNode metadata now lives in the industrial_nodes PostgreSQL table. Neo4j :IndustrialNode skeletons only store 
@@ -498,8 +507,9 @@ Key decisions:
 - **arachne-flow engine**: read-only engine under `app/engines/arachne_flow/`, compiles YAML triples into the second Neo4j instance via `:ARACHNE_FLOW` relationships.
 - **Reasoning is core-led, engine-enabled**: core owns task contracts, dispatching, and generic graph algorithms; each engine provides a `ReasoningAdapter` to expose its edge-type semantics and can register engine-specific task handlers.
 - **Ontology/topology moves to core**: `alias_of` / `is_a` / `part_of` / `variant_of` semantics and expansion algorithms become a shared `TopologyService`; ontology data lives in the main Neo4j instance and is shared across engines.
+- **Pass-through subsystem APIs**: in addition to the unified `/api/v1/*?engine=x` endpoints, each engine exposes its own router under `/api/v1/engines/{engine_name}/*` for engine-specific operations (e.g., arachne-flow compile/validate/status). Routers are discovered and registered dynamically.
 
-See `docs/arachne_engine_refactor_design.md` for full boundary analysis, dry-run scenarios, reasoning architecture, and implementation phases.
+See `docs/arachne_engine_refactor_design.md` for full boundary analysis, dry-run scenarios, reasoning architecture, pass-through API design, and implementation phases.
 
 ---
 

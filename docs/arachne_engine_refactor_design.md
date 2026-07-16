@@ -743,3 +743,291 @@ async def run_association(task, engine):
 ---
 
 *设计文档更新完毕。下一步可进入 Phase 1 实施。*
+
+
+## 15. 子系统直达 API（Pass-through API）
+
+### 15.1 为什么需要直达机制
+
+通用 API（如 `GET /api/v1/nodes?engine=arachne_flow`）只能返回统一的 `GraphNode` / `GraphEdge` 模型。但子系统经常需要暴露一些**不适合也不应该被硬塞进通用接口**的定制化信息。
+
+例如 arachne-flow：
+
+- 编译状态：`/engines/arachne_flow/status`
+- 触发编译：`POST /engines/arachne_flow/compile`
+- 文件列表：`/engines/arachne_flow/files`
+- 校验结果：`/engines/arachne_flow/validate/{flow_name}`
+- 编译 diff：`/engines/arachne_flow/diff`
+
+例如 legacy 引擎未来可能的专属诊断：
+
+- `/engines/legacy/reverse-flow-report`
+- `/engines/legacy/process-group-analysis`
+
+这些信息用 `GraphNode` / `GraphEdge` 表达会很别扭，应该由子系统自己定义 endpoints。
+
+### 15.2 URL 约定
+
+```
+/api/v1/nodes?engine=legacy              ← 通用 API
+/api/v1/edges?engine=arachne_flow        ← 通用 API
+/api/v1/query/subgraph/{id}?engine=x     ← 通用 API
+
+/api/v1/engines/legacy/xxx               ← legacy 专属 API
+/api/v1/engines/arachne_flow/xxx         ← arachne-flow 专属 API
+/api/v1/engines/{engine_name}/{path}     ← 任意子系统专属 API
+```
+
+### 15.3 后端设计
+
+#### 目录结构
+
+```
+backend/app/engines/
+├── legacy/
+│   ├── __init__.py
+│   ├── engine.py
+│   ├── storage.py
+│   ├── schemas.py
+│   ├── reasoning_adapter.py
+│   └── router.py              # 子系统专属 endpoints
+└── arachne_flow/
+    ├── __init__.py
+    ├── engine.py
+    ├── storage.py
+    ├── parser.py
+    ├── compiler.py
+    ├── schemas.py
+    ├── reasoning_adapter.py
+    └── router.py              # 子系统专属 endpoints
+```
+
+#### 动态注册（利用 Python 动态特性）
+
+不硬编码每个引擎的 router，而是在 `app/engines/__init__.py` 中动态扫描并注册：
+
+```python
+# app/engines/__init__.py
+import importlib
+import pkgutil
+from fastapi import APIRouter
+
+ENGINE_ROUTERS: dict[str, APIRouter] = {}
+
+for module_info in pkgutil.iter_modules(__path__):
+    module_name = module_info.name
+    try:
+        module = importlib.import_module(f"app.engines.{module_name}.router")
+        router = getattr(module, "router", None)
+        if isinstance(router, APIRouter):
+            ENGINE_ROUTERS[module_name] = router
+    except ImportError:
+        continue
+
+
+def register_engine_routers(app, api_v1_prefix: str):
+    for engine_name, router in ENGINE_ROUTERS.items():
+        app.include_router(
+            router,
+            prefix=f"{api_v1_prefix}/engines/{engine_name}",
+            tags=[f"Engine: {engine_name}"],
+        )
+```
+
+这样新增一个引擎时，只要创建 `engines/<name>/router.py` 并导出 `router`，无需修改 `main.py`。
+
+#### main.py 挂载
+
+```python
+# app/main.py
+from app.engines import register_engine_routers
+
+# ... 其他 include_router ...
+
+register_engine_routers(app, settings.API_V1_STR)
+```
+
+#### arachne-flow router 示例
+
+```python
+# app/engines/arachne_flow/router.py
+from fastapi import APIRouter
+
+router = APIRouter()
+
+
+@router.get("/status")
+async def get_status():
+    """返回当前编译状态、文件 MD5、是否 stale。"""
+    ...
+
+
+@router.post("/compile")
+async def compile_flows():
+    """重新编译所有 flow 文件到 flow Neo4j 实例。"""
+    ...
+
+
+@router.get("/files")
+async def list_files():
+    """列出扫描到的 flow 文件。"""
+    ...
+
+
+@router.post("/validate/{flow_name}")
+async def validate_flow(flow_name: str):
+    """校验单个 flow 文件。"""
+    ...
+```
+
+#### legacy router 示例
+
+```python
+# app/engines/legacy/router.py
+from fastapi import APIRouter
+
+router = APIRouter()
+
+
+@router.get("/reverse-flow-report")
+async def reverse_flow_report():
+    """返回当前图中反向工业流的统计。"""
+    ...
+
+
+@router.get("/process-group-analysis")
+async def process_group_analysis():
+    """分析 process 节点群的结构。"""
+    ...
+```
+
+### 15.4 前端设计
+
+#### 目录结构
+
+```
+frontend/src/
+├── services/
+│   ├── api.ts                 # 通用 API
+│   └── engines/
+│       ├── legacy.ts          # legacy 专属 API
+│       └── arachneFlow.ts     # arachne-flow 专属 API
+├── components/
+│   ├── common/                # 通用组件
+│   └── engines/
+│       ├── legacy/            # legacy 专属 UI
+│       └── arachneFlow/       # arachne-flow 专属 UI
+```
+
+#### 动态发现引擎专属服务（利用 JS 动态特性）
+
+```typescript
+// frontend/src/services/engines/index.ts
+const engineServices: Record<string, () => Promise<Record<string, any>>> = {
+  legacy: () => import("./legacy"),
+  arachne_flow: () => import("./arachneFlow"),
+};
+
+export async function getEngineService(engine: string) {
+  const loader = engineServices[engine];
+  if (!loader) return null;
+  return loader();
+}
+```
+
+#### 前端服务示例
+
+```typescript
+// frontend/src/services/engines/arachneFlow.ts
+import axios from "axios";
+
+const BASE = "/api/v1/engines/arachne_flow";
+
+export const getStatus = async () => {
+  const res = await axios.get(`${BASE}/status`);
+  return res.data;
+};
+
+export const compileFlows = async () => {
+  const res = await axios.post(`${BASE}/compile`);
+  return res.data;
+};
+
+export const listFiles = async () => {
+  const res = await axios.get(`${BASE}/files`);
+  return res.data;
+};
+```
+
+#### UI 组件示例
+
+```tsx
+// frontend/src/components/engines/arachneFlow/FlowCompilerPanel.tsx
+import { useEngine } from "@/contexts/EngineContext";
+import * as arachneFlowApi from "@/services/engines/arachneFlow";
+
+export function FlowCompilerPanel() {
+  const { engine } = useEngine();
+  if (engine !== "arachne_flow") return null;
+
+  return (
+    <div>
+      <h3>Arachne Flow 编译状态</h3>
+      <StatusDisplay />
+      <button onClick={arachneFlowApi.compileFlows}>重新编译</button>
+    </div>
+  );
+}
+```
+
+### 15.5 边界划分
+
+| 进通用 API | 进专属 API |
+|---|---|
+| 节点/边的 CRUD 和查询 | 引擎的配置、状态、编译、校验 |
+| 子图/邻居/路径/统计 | 引擎的诊断报告、分析报告 |
+| 跨图上下文（公司/行业） | 引擎的导入/导出/迁移工具 |
+| 推理任务执行（核心契约） | 引擎的自定义可视化数据 |
+| fuzzy search / incomplete items | 引擎的批量管理操作 |
+
+判断标准：
+
+> **如果信息可以用 `GraphNode` / `GraphEdge` / `SubgraphResult` 等通用模型表达，进通用 API；否则进专属 API。**
+
+### 15.6 安全与权限
+
+1. **统一中间件**：所有 `/api/v1/engines/*` 都走同一套认证/权限中间件。
+2. **能力声明**：引擎在 `/api/v1/engine/config` 中声明自己支持哪些专属操作，前端据此显示按钮。
+3. **只读引擎限制**：arachne-flow 提供 `/compile` 但不提供直接修改编译后图数据的接口。
+
+### 15.7 与通用 API 的关系
+
+```
+                    ┌─────────────────────────────┐
+                    │         前端 UI              │
+                    │  通用组件 + 引擎专属组件      │
+                    └───────────┬─────────────────┘
+                                │
+           ┌────────────────────┼────────────────────┐
+           │                    │                    │
+           ▼                    ▼                    ▼
+   /api/v1/nodes?engine=x   /api/v1/query/...   /api/v1/engines/{name}/...
+           │                    │                    │
+           └────────────────────┼────────────────────┘
+                                │
+                    ┌───────────▼───────────┐
+                    │    EngineRegistry     │
+                    │  （通用 API 路由用）    │
+                    └───────────────────────┘
+                                │
+                    ┌───────────┴───────────┐
+                    ▼                       ▼
+            engines/legacy/          engines/arachne_flow/
+            engine.py + router.py     engine.py + router.py
+```
+
+通用 API 通过 `engine_registry.get_engine(name)` 选择引擎；专属 API 直接由子系统自己的 router 处理。
+
+---
+
+*设计文档已补充子系统直达 API 章节。*
