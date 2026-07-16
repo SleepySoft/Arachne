@@ -6,7 +6,9 @@ from fastapi.responses import JSONResponse
 
 from app.config import get_settings
 from app.database import close_async_driver, init_db
+from app.database_flow import close_flow_async_driver, init_flow_db
 from app.database_postgres import close_postgres_pool, init_postgres_tables
+from app.engines.arachne_flow.engine import ArachneFlowEngine, ReadOnlyEngineError
 from app.engines.legacy.engine import LegacyEngine
 from app.services.engine_registry import UnknownEngineError, register_engine
 from app.routers import (
@@ -34,10 +36,13 @@ settings = get_settings()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     register_engine(LegacyEngine())
+    register_engine(ArachneFlowEngine())
     await init_db()
+    await init_flow_db()
     await init_postgres_tables()
     yield
     await close_async_driver()
+    await close_flow_async_driver()
     await close_postgres_pool()
 
 
@@ -63,6 +68,11 @@ async def connection_error_handler(_request: Request, exc: Exception):
 @app.exception_handler(UnknownEngineError)
 async def unknown_engine_handler(_request: Request, exc: UnknownEngineError):
     return JSONResponse(status_code=400, content={"detail": str(exc)})
+
+
+@app.exception_handler(ReadOnlyEngineError)
+async def read_only_engine_handler(_request: Request, exc: ReadOnlyEngineError):
+    return JSONResponse(status_code=405, content={"detail": str(exc)})
 
 try:
     from neo4j.exceptions import ServiceUnavailable, SessionExpired

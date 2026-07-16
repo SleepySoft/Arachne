@@ -416,6 +416,42 @@ async def init_postgres_tables() -> None:
             """
         )
 
+        # Arachne-flow compiled files
+        await conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS arachne_flow_files (
+                flow_id        VARCHAR(128) PRIMARY KEY,
+                file_path      TEXT,
+                md5            VARCHAR(32),
+                status         VARCHAR(32) NOT NULL DEFAULT 'PENDING',
+                error_message  TEXT,
+                node_count     INTEGER NOT NULL DEFAULT 0,
+                edge_count     INTEGER NOT NULL DEFAULT 0,
+                is_test        BOOLEAN NOT NULL DEFAULT FALSE,
+                compiled_at    TIMESTAMPTZ,
+                created_at     TIMESTAMPTZ DEFAULT NOW(),
+                updated_at     TIMESTAMPTZ DEFAULT NOW()
+            )
+            """
+        )
+        await conn.execute(
+            """
+            ALTER TABLE arachne_flow_files ADD COLUMN IF NOT EXISTS is_test BOOLEAN NOT NULL DEFAULT FALSE
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_arachne_flow_files_is_test
+            ON arachne_flow_files(is_test)
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_arachne_flow_files_status
+            ON arachne_flow_files(status)
+            """
+        )
+
         # Industrial Nodes (metadata moved from Neo4j to PostgreSQL)
         await conn.execute(
             """
