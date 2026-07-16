@@ -14,6 +14,9 @@ export type EntityType =
   | "platform"
   | "standard"
   | "data_asset"
+  | "arachne_flow:resource"
+  | "arachne_flow:action"
+  | "arachne_flow:method"
   | "unknown";
 
 export type IndustrialFlowType =
@@ -37,7 +40,7 @@ export type OntologyType =
   /** @deprecated `related_term` is deprecated; keep for backward compatibility only. */
   | "related_term";
 
-export type EdgeNamespace = "industrial_flow" | "ontology";
+export type EdgeNamespace = "industrial_flow" | "ontology" | "arachne_flow";
 
 export type ProvRole = "entity" | "activity" | "agent";
 
@@ -168,7 +171,31 @@ export interface OntologyEdge extends BaseEdge {
   edge_type: OntologyType;
 }
 
-export type GraphEdge = IndustrialFlowEdge | OntologyEdge;
+export interface ArachneFlowEdge extends BaseEdge {
+  edge_namespace: "arachne_flow";
+  edge_type: string;
+}
+
+export type GraphEdge = IndustrialFlowEdge | OntologyEdge | ArachneFlowEdge;
+
+export interface GraphNode {
+  node_id: string;
+  label: string;
+  entity_type: EntityType;
+  node_uuid?: string;
+  canonical_name_zh?: string;
+  canonical_name_en?: string;
+  aliases?: string[];
+  definition?: string;
+  evidence?: Evidence[];
+  confidence?: string;
+  status?: string;
+  notes?: string;
+  is_test?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  properties?: Record<string, unknown>;
+}
 
 export interface IndustrialFlowEdgeCreate {
   edge_namespace: "industrial_flow";
@@ -480,6 +507,9 @@ export const ENTITY_TYPE_COLORS: Record<EntityType, string> = {
   platform: "#60a5fa",
   standard: "#a78bfa",
   data_asset: "#2dd4bf",
+  "arachne_flow:resource": "#34d399",
+  "arachne_flow:action": "#fbbf24",
+  "arachne_flow:method": "#a78bfa",
   unknown: "#64748b",
 };
 
@@ -489,6 +519,7 @@ export const EDGE_NAMESPACE_STYLES: Record<
 > = {
   industrial_flow: { color: "#22d3ee", lineStyle: "solid" },
   ontology: { color: "#fbbf24", lineStyle: "dashed" },
+  arachne_flow: { color: "#34d399", lineStyle: "solid" },
 };
 
 export const CONFIDENCE_OPACITY: Record<Confidence, number> = {
@@ -583,6 +614,17 @@ export type PanelType =
   | "node-industries"
   | "node-prov"
   | "company-relation-detail";
+
+export interface FlowSummary {
+  flow_id: string;
+  title: string;
+  root_product: string;
+  file: string;
+  triples: number;
+  status?: string;
+  md5?: string;
+  compiled_at?: string;
+}
 
 // Company network node type used for canvas
 export interface CompanyNetworkNode {

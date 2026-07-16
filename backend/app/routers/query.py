@@ -2,7 +2,7 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from app.engines.legacy.schemas import GraphStats, SubgraphResult
+from app.models.core import GraphStats, SubgraphResult
 from app.services import graph_service
 
 router = APIRouter()
@@ -14,8 +14,7 @@ async def get_subgraph(
     depth: int = Query(2, ge=1, le=5),
     engine: Optional[str] = Query(None, description="图引擎名称，默认 legacy"),
 ):
-    result = await graph_service.get_subgraph(node_id, depth, engine=engine)
-    return result
+    return await graph_service.get_subgraph(node_id, depth, engine=engine)
 
 
 @router.get("/neighbors/{node_id}")

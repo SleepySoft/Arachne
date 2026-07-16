@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+import pytest_asyncio
 
 from app.engines.arachne_flow.engine import ArachneFlowEngine
 from app.engines.arachne_flow.parser import FlowParseError, FlowValidationError, parse_flow_file
@@ -14,6 +15,18 @@ from app.services.engine_registry import get_engine, register_engine
 
 
 FLOW_DIR = Path(__file__).resolve().parents[2] / "data" / "flows" / "semiconductor"
+
+
+@pytest_asyncio.fixture(scope="session", autouse=True)
+async def _wipe_flow_test_data():
+    """Ensure arachne-flow tests start from an empty flow graph."""
+    from app.database_flow import get_flow_async_driver
+
+    driver = get_flow_async_driver()
+    async with driver.session() as session:
+        await session.run("MATCH ()-[r:ARACHNE_FLOW]->() DELETE r")
+        await session.run("MATCH (n:ArachneFlowNode) DELETE n")
+    yield
 
 
 # ---------------------------------------------------------------------------

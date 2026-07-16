@@ -67,23 +67,10 @@ async def compile_parsed_flow(parsed: ParsedFlow, clear_existing: bool = False) 
     driver = get_flow_async_driver()
     flow_id = parsed.flow_id
 
-    async with driver.session() as session:
-        if clear_existing:
-            await session.run(
-                """
-                MATCH ()-[r:ARACHNE_FLOW {flow_id: $flow_id}]->()
-                DELETE r
-                """,
-                {"flow_id": flow_id},
-            )
-            await session.run(
-                """
-                MATCH (n:ArachneFlowNode {flow_id: $flow_id})
-                DELETE n
-                """,
-                {"flow_id": flow_id},
-            )
+    if clear_existing:
+        await clear_flow(flow_id)
 
+    async with driver.session() as session:
         resource_ids = set(parsed.resources.keys())
         action_ids = set(parsed.actions.keys())
         dual_ids = resource_ids & action_ids
@@ -269,7 +256,11 @@ def _make_edge_id(flow_id: str, src: str, pred: str, tgt: str, idx: int) -> str:
 
 
 async def clear_flow(flow_id: str) -> None:
-    """Remove all nodes and edges belonging to a given flow_id."""
+    """Remove all edges and orphan nodes belonging to a given flow_id.
+
+    Resource/method nodes are shared across flows, so nodes that still have
+    relationships after their flow's edges are removed are kept.
+    """
     driver = get_flow_async_driver()
     async with driver.session() as session:
         await session.run(
@@ -282,6 +273,7 @@ async def clear_flow(flow_id: str) -> None:
         await session.run(
             """
             MATCH (n:ArachneFlowNode {flow_id: $flow_id})
+            WHERE NOT (n)-[:ARACHNE_FLOW]-()
             DELETE n
             """,
             {"flow_id": flow_id},
@@ -310,6 +302,26 @@ async def _enrich_resource(node: GraphNode) -> GraphNode:
     return node
 
 
+def _to_datetime(value):
+    if value is None:
+        return None
+    if hasattr(value, "to_native"):
+        return value.to_native()
+    return value
+
+
+def _serialize_property_value(value):
+    if value is None:
+        return None
+    if hasattr(value, "to_native"):
+        return value.to_native()
+    if isinstance(value, list):
+        return [_serialize_property_value(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _serialize_property_value(v) for k, v in value.items()}
+    return value
+
+
 def _neo4j_node_to_graph_node(record: Dict[str, Any]) -> GraphNode:
     n = record["n"]
     node_id = n["node_id"]
@@ -330,7 +342,11 @@ def _neo4j_node_to_graph_node(record: Dict[str, Any]) -> GraphNode:
         entity_type = "arachne_flow:unknown"
         label = node_id
 
-    properties = {k: v for k, v in dict(n).items() if v is not None}
+    properties = {
+        k: _serialize_property_value(v)
+        for k, v in dict(n).items()
+        if v is not None
+    }
     return GraphNode(
         node_id=node_id,
         label=label,
@@ -347,7 +363,11 @@ def _neo4j_edge_to_graph_edge(record: Dict[str, Any]) -> GraphEdge:
         to_node=record["to_id"],
         edge_namespace="arachne_flow",
         edge_type=r.get("edge_type", "unknown"),
-        properties={k: v for k, v in dict(r).items() if v is not None},
+        properties={
+            k: _serialize_property_value(v)
+            for k, v in dict(r).items()
+            if v is not None
+        },
     )
 
 
@@ -507,7 +527,11 @@ async def get_flow_subgraph(node_id: str, depth: int = 2) -> Tuple[List[GraphNod
                         to_node=r.end_node["node_id"],
                         edge_namespace="arachne_flow",
                         edge_type=r.get("edge_type", "unknown"),
-                        properties={k: v for k, v in dict(r).items() if v is not None},
+                        properties={
+                            k: _serialize_property_value(v)
+                            for k, v in dict(r).items()
+                            if v is not None
+                        },
                     )
         # Include the center itself even if it has no neighbors.
         if not node_map:

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { StatsBar, MainView } from "@/components/StatsBar";
+import { FlowGraphPage } from "@/components/FlowGraphPage";
 import { DbChecksPage } from "@/pages/DbChecksPage";
 import { ReasoningPage } from "@/pages/ReasoningPage";
 import { Layout } from "@/components/Layout";
@@ -851,6 +852,11 @@ export default function App() {
         {/* Reasoning page — mounted but hidden when not active */}
         <div className={`absolute inset-0 ${mainView === "reasoning" ? "" : "hidden"}`}>
           <ReasoningPage />
+        </div>
+
+        {/* Flow graph page */}
+        <div className={`absolute inset-0 ${mainView === "flow_graph" ? "" : "hidden"}`}>
+          <FlowGraphPage />
         </div>
       </div>
 

@@ -6,7 +6,9 @@ import {
   DbCheckMeta,
   DbCheckResult,
   DbFixResult,
+  FlowSummary,
   GraphEdge,
+  GraphNode,
   ObjectQueryRequest,
   ObjectQueryResult,
   ReasoningTask,
@@ -264,6 +266,22 @@ export const getStats = async (): Promise<GraphStats> => {
 
 export const getHealth = async (): Promise<{ status: string; neo4j: string; postgres: string }> => {
   const res = await client.get("/query/health");
+  return res.data;
+};
+
+// Flows
+export const listFlows = async (): Promise<FlowSummary[]> => {
+  const res = await client.get("/flows");
+  return res.data;
+};
+
+export const getFlowSubgraph = async (
+  flowId: string,
+  depth = 3
+): Promise<{ center_node_id: string; depth: number; nodes: GraphNode[]; edges: GraphEdge[] }> => {
+  const res = await client.get(`/query/subgraph/${flowId}`, {
+    params: { depth, engine: "arachne_flow" },
+  });
   return res.data;
 };
 
