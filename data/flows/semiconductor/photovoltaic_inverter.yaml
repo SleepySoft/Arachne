@@ -1,0 +1,9 @@
+schema: arachne-flow/v0.1
+title: 'Semiconductor flow: photovoltaic_inverter'
+root_product: photovoltaic_inverter
+include: []
+local: {}
+edges:
+- [power_semiconductor, feedstock, act_integrate_photovoltaic_inverter]
+- [act_integrate_photovoltaic_inverter, ref, integration_of_photovoltaic_inverter]
+- [act_integrate_photovoltaic_inverter, primary_result, photovoltaic_inverter]

@@ -1,0 +1,9 @@
+schema: arachne-flow/v0.1
+title: 'Semiconductor flow: ssd'
+root_product: ssd
+include: []
+local: {}
+edges:
+- [nand_flash_chip, component, act_integrate_ssd]
+- [act_integrate_ssd, ref, integration_of_ssd]
+- [act_integrate_ssd, primary_result, ssd]

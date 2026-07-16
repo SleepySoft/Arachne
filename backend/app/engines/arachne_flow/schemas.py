@@ -169,26 +169,19 @@ class FlowDocument(BaseModel):
     root_product: Optional[str] = None
     include: List[str] = Field(default_factory=list)
     local: Dict[str, str] = Field(default_factory=dict)
-    edges: List[List[List[str]]] = Field(default_factory=list)
+    edges: List[List[str]] = Field(default_factory=list)
 
     @field_validator("edges")
     @classmethod
-    def validate_triples(cls, v: List[List[List[str]]]) -> List[List[List[str]]]:
+    def validate_triples(cls, v: List[List[str]]) -> List[List[str]]:
         if not v:
             return v
-        for group_idx, group in enumerate(v):
-            if not group:
-                raise ValueError(f"edge group {group_idx} is empty")
-            for triple_idx, triple in enumerate(group):
-                if not isinstance(triple, (list, tuple)) or len(triple) != 3:
-                    raise ValueError(
-                        f"edge group {group_idx}, triple {triple_idx}: must be a 3-element list"
-                    )
-                source, predicate, target = triple
-                if not source or not target:
-                    raise ValueError(
-                        f"edge group {group_idx}, triple {triple_idx}: source/target cannot be empty"
-                    )
+        for idx, triple in enumerate(v):
+            if not isinstance(triple, (list, tuple)) or len(triple) != 3:
+                raise ValueError(f"edge {idx}: must be a 3-element list")
+            source, predicate, target = triple
+            if not source or not target:
+                raise ValueError(f"edge {idx}: source/target cannot be empty")
         return v
 
     @model_validator(mode="after")

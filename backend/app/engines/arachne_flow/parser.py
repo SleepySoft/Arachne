@@ -111,11 +111,10 @@ def parse_flow_file(path: Path, base_dir: Optional[Path] = None, _seen: Optional
 
     # Add this file's own locals and triples.
     parsed.locals.update(doc.local)
-    for group in doc.edges:
-        for raw_triple in group:
-            parsed.triples.append(
-                FlowTriple(source=raw_triple[0], predicate=raw_triple[1], target=raw_triple[2])
-            )
+    for raw_triple in doc.edges:
+        parsed.triples.append(
+            FlowTriple(source=raw_triple[0], predicate=raw_triple[1], target=raw_triple[2])
+        )
 
     _normalize_and_validate(parsed)
     return parsed

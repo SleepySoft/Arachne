@@ -1,0 +1,48 @@
+schema: arachne-flow/v0.1
+note: Standalone product flows for the semiconductor industry. Each file traces one
+  product from raw materials and processes to the final product. Process/usage nodes
+  from the legacy graph become arachne-flow METHODs; each METHOD occurrence gets a
+  unique ACTION with a [ref] triple.
+files:
+- product: smartphone
+  file: smartphone.yaml
+  triples: 50
+- product: personal_computer
+  file: personal_computer.yaml
+  triples: 53
+- product: server
+  file: server.yaml
+  triples: 64
+- product: data_center
+  file: data_center.yaml
+  triples: 70
+- product: automotive_electronics
+  file: automotive_electronics.yaml
+  triples: 53
+- product: consumer_electronics
+  file: consumer_electronics.yaml
+  triples: 48
+- product: industrial_electronics
+  file: industrial_electronics.yaml
+  triples: 48
+- product: ar_vr_system
+  file: ar_vr_system.yaml
+  triples: 42
+- product: base_station_5g
+  file: base_station_5g.yaml
+  triples: 42
+- product: photovoltaic_inverter
+  file: photovoltaic_inverter.yaml
+  triples: 3
+- product: new_energy_vehicle
+  file: new_energy_vehicle.yaml
+  triples: 48
+- product: electric_vehicle
+  file: electric_vehicle.yaml
+  triples: 42
+- product: ssd
+  file: ssd.yaml
+  triples: 3
+- product: metrology_data
+  file: metrology_data.yaml
+  triples: 103
