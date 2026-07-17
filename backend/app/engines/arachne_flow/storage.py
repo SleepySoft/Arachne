@@ -580,16 +580,33 @@ async def list_flow_edges(
 # ---------------------------------------------------------------------------
 
 
-async def get_flow_subgraph(node_id: str, depth: int = 2) -> Tuple[List[GraphNode], List[GraphEdge]]:
+async def get_flow_subgraph(
+    node_id: str,
+    depth: int = 2,
+    flow_id: Optional[str] = None,
+) -> Tuple[List[GraphNode], List[GraphEdge]]:
+    """Return the subgraph around a node.
+
+    When ``flow_id`` is given, traversal only follows edges belonging to that
+    flow, so per-flow views do not pull in other flows' occurrences via shared
+    resource nodes (e.g. every product flow's packaging/testing actions into
+    ``chip``). When omitted, the whole cross-flow ecosystem is traversed.
+    """
     driver = get_flow_async_driver()
+    flow_filter = (
+        "WHERE ALL(rel IN relationships(path) WHERE rel.flow_id = $flow_id)"
+        if flow_id
+        else ""
+    )
     async with driver.session() as session:
         result = await session.run(
             f"""
             MATCH path = (center:ArachneFlowNode {{node_id: $node_id}})-[r:ARACHNE_FLOW*1..{depth}]-(n:ArachneFlowNode)
+            {flow_filter}
             RETURN center, nodes(path) AS nodes, relationships(path) AS rels
             LIMIT 1000
             """,
-            {"node_id": node_id},
+            {"node_id": node_id, "flow_id": flow_id},
         )
         node_map: Dict[str, GraphNode] = {}
         edge_map: Dict[str, GraphEdge] = {}

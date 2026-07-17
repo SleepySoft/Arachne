@@ -196,6 +196,42 @@ async def test_engine_subgraph():
 
 
 @pytest.mark.asyncio(loop_scope="session")
+async def test_flow_subgraph_filtered_by_flow_id():
+    """Per-flow subgraph must not pull in other flows' occurrences via shared nodes.
+
+    smartphone and personal_computer both have packaging/testing actions
+    producing the shared `chip` resource. Filtering by flow_id=smartphone must
+    exclude personal_computer's actions while keeping smartphone's own.
+    """
+    for fid in ("smartphone", "personal_computer"):
+        parsed = parse_flow_file(FLOW_DIR / f"{fid}.yaml")
+        await storage.compile_parsed_flow(parsed, clear_existing=True)
+
+    try:
+        nodes, edges = await storage.get_flow_subgraph("smartphone", 3, flow_id="smartphone")
+        node_ids = {n.node_id for n in nodes}
+        edge_flows = {(e.properties or {}).get("flow_id") for e in edges}
+
+        # 只包含 smartphone 自己的边
+        assert edge_flows == {"smartphone"}
+        # 不包含其它流程的动作节点
+        assert not any(nid.startswith("personal_computer:") for nid in node_ids)
+        # smartphone 自己的封测/测试动作仍在（chip 通过 smartphone 的边连通）
+        assert "smartphone:act_chip_testing" in node_ids
+        assert "smartphone:act_chip_packaging_and_testing" in node_ids
+        # 共享资源节点仍然出现
+        assert "chip" in node_ids
+
+        # 不过滤时（生态视角）应包含其它流程的动作
+        nodes_all, _ = await storage.get_flow_subgraph("smartphone", 3)
+        node_ids_all = {n.node_id for n in nodes_all}
+        assert any(nid.startswith("personal_computer:") for nid in node_ids_all)
+    finally:
+        await storage.clear_flow("smartphone")
+        await storage.clear_flow("personal_computer")
+
+
+@pytest.mark.asyncio(loop_scope="session")
 async def test_engine_neighbors():
     flow_id = "photovoltaic_inverter"
     parsed = parse_flow_file(FLOW_DIR / f"{flow_id}.yaml")

@@ -181,7 +181,8 @@ async def get_flows_subgraph(request: FlowSubgraphRequest):
         file_path = FLOW_DIR / f"{flow_id}.yaml"
         if not file_path.exists():
             raise HTTPException(status_code=404, detail=f"flow file not found: {flow_id}")
-        nodes, edges = await storage.get_flow_subgraph(flow_id, request.depth)
+        # 按流程过滤边：避免共享资源节点把其它流程的封测/测试等动作拉进当前视图
+        nodes, edges = await storage.get_flow_subgraph(flow_id, request.depth, flow_id=flow_id)
         for node in nodes:
             node_map[node.node_id] = node
         for edge in edges:
