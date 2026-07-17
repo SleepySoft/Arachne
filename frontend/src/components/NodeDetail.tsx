@@ -1,6 +1,14 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Edit2, Layers, Trash2, X } from "lucide-react";
-import { IndustrialNode, Company, Industry, GraphEdge } from "@/types";
+import {
+  ARACHNE_FLOW_ACTION_TYPE_LABELS,
+  ARACHNE_FLOW_ENTITY_TYPE_LABELS,
+  ARACHNE_FLOW_RESOURCE_TYPE_LABELS,
+  IndustrialNode,
+  Company,
+  Industry,
+  GraphEdge,
+} from "@/types";
 import { deleteNode, listEdges, listProvStatementsByNode } from "@/services/api";
 import { NodeAssociations } from "./NodeAssociations";
 
@@ -17,6 +25,8 @@ interface NodeDetailProps {
   onSelectIndustry?: (industry: Industry) => void;
   isProcessExpanded?: boolean;
   onToggleProcessExpansion?: () => void;
+  /** 只读模式：隐藏编辑/删除按钮、草稿提示与 legacy 关联操作，用于只读引擎（如 arachne_flow）。 */
+  readOnly?: boolean;
 }
 
 export function NodeDetail({
@@ -32,6 +42,7 @@ export function NodeDetail({
   onSelectIndustry,
   isProcessExpanded = false,
   onToggleProcessExpansion,
+  readOnly = false,
 }: NodeDetailProps) {
   const deleteMutation = useMutation({
     mutationFn: deleteNode,
@@ -45,6 +56,7 @@ export function NodeDetail({
     queryKey: ["part-of-children", node.node_id],
     queryFn: () => listEdges(1, 100, "ontology", "part_of", undefined, node.node_id),
     staleTime: 60_000,
+    enabled: !readOnly,
   });
   const childCount = childrenEdges?.items.length ?? 0;
 
@@ -52,30 +64,37 @@ export function NodeDetail({
     queryKey: ["node-prov", node.node_id],
     queryFn: () => listProvStatementsByNode(node.node_id, 1, 100),
     staleTime: 60_000,
+    enabled: !readOnly,
   });
   const provItems = provData?.items ?? [];
+
+  const entityTypeLabel = ARACHNE_FLOW_ENTITY_TYPE_LABELS[node.entity_type] ?? node.entity_type;
 
   return (
     <div className="space-y-4 p-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-200">节点详情</h3>
         <div className="flex items-center gap-1">
-          <button
-            onClick={onEdit}
-            className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-cyan-400"
-          >
-            <Edit2 className="h-3.5 w-3.5" />
-          </button>
-          <button
-            onClick={() => {
-              if (confirm("确定删除此节点？关联的关系也会被删除。")) {
-                deleteMutation.mutate(node.node_id);
-              }
-            }}
-            className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-red-400"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+          {!readOnly && (
+            <>
+              <button
+                onClick={onEdit}
+                className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-cyan-400"
+              >
+                <Edit2 className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => {
+                  if (confirm("确定删除此节点？关联的关系也会被删除。")) {
+                    deleteMutation.mutate(node.node_id);
+                  }
+                }}
+                className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-red-400"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </>
+          )}
           <button
             onClick={onClose}
             className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
@@ -85,7 +104,7 @@ export function NodeDetail({
         </div>
       </div>
 
-      {isDraftNode(node) && (
+      {!readOnly && isDraftNode(node) && (
         <div className="rounded border border-amber-700/50 bg-amber-900/20 px-3 py-2">
           <div className="text-xs font-medium text-amber-400">⚠️ 草稿节点 / 待完善</div>
           <div className="mt-0.5 text-[10px] text-amber-300/80">
@@ -98,13 +117,13 @@ export function NodeDetail({
         <Field label="node_id" value={node.node_id} mono />
         <Field label="中文名" value={node.canonical_name_zh} />
         <Field label="英文名" value={node.canonical_name_en || "—"} />
-        <Field label="类型" value={node.entity_type} badge />
+        <Field label="类型" value={entityTypeLabel} badge />
         <Field label="状态" value={node.status} badge />
         <Field label="置信度" value={node.confidence} badge />
 
         <div>
           <div className="text-[10px] font-semibold uppercase text-slate-500">定义</div>
-          <div className="mt-1 text-sm leading-relaxed text-slate-300">{node.definition}</div>
+          <div className="mt-1 text-sm leading-relaxed text-slate-300">{node.definition || "—"}</div>
         </div>
 
         {node.aliases.length > 0 && (
@@ -152,6 +171,8 @@ export function NodeDetail({
             <div className="mt-1 text-xs text-slate-400">{node.notes}</div>
           </div>
         )}
+
+        <FlowProperties node={node} />
 
         {provItems.length > 0 && (
           <div>
@@ -201,18 +222,58 @@ export function NodeDetail({
           </button>
         )}
 
-        {/* Associations: relationships, companies, industries */}
-        <div className="border-t border-slate-800 pt-3">
-          <NodeAssociations
-            node={node}
-            onEdgeCreated={onEdgeCreated}
-            onEdgeUpdated={onEdgeUpdated}
-            onEdgeDeleted={onEdgeDeleted}
-            onSelectNode={onSelectNode}
-            onSelectCompany={onSelectCompany}
-            onSelectIndustry={onSelectIndustry}
-          />
-        </div>
+        {/* Associations: relationships, companies, industries（legacy 引擎专属） */}
+        {!readOnly && (
+          <div className="border-t border-slate-800 pt-3">
+            <NodeAssociations
+              node={node}
+              onEdgeCreated={onEdgeCreated}
+              onEdgeUpdated={onEdgeUpdated}
+              onEdgeDeleted={onEdgeDeleted}
+              onSelectNode={onSelectNode}
+              onSelectCompany={onSelectCompany}
+              onSelectIndustry={onSelectIndustry}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const FLOW_PROPERTY_LABELS: Record<string, string> = {
+  flow_id: "所属流程",
+  resource_type: "资源类型",
+  action_type: "动作类型",
+  method_ref: "引用方法",
+  method_name: "方法名称",
+  local_name: "局部名称",
+};
+
+function FlowProperties({ node }: { node: IndustrialNode }) {
+  const props = node.properties;
+  if (!props || Object.keys(props).length === 0) return null;
+
+  const formatValue = (key: string, value: unknown): string => {
+    const v = String(value);
+    if (key === "resource_type") return ARACHNE_FLOW_RESOURCE_TYPE_LABELS[v] ?? v;
+    if (key === "action_type") return ARACHNE_FLOW_ACTION_TYPE_LABELS[v] ?? v;
+    return v;
+  };
+
+  const entries = Object.entries(props).filter(([, v]) => v !== null && v !== undefined && v !== "");
+  if (entries.length === 0) return null;
+
+  return (
+    <div>
+      <div className="text-[10px] font-semibold uppercase text-slate-500">引擎属性</div>
+      <div className="mt-1 space-y-1">
+        {entries.map(([key, value]) => (
+          <div key={key} className="flex items-baseline gap-2 text-xs">
+            <span className="shrink-0 text-slate-500">{FLOW_PROPERTY_LABELS[key] ?? key}:</span>
+            <span className="text-slate-300 break-all">{formatValue(key, value)}</span>
+          </div>
+        ))}
       </div>
     </div>
   );

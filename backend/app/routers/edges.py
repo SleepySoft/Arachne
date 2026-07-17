@@ -11,7 +11,6 @@ from app.engines.legacy.schemas import (
     IndustrialFlowEdgeUpdate,
     OntologyEdgeCreate,
     OntologyEdgeUpdate,
-    PaginatedEdges,
     ReifiedUsageCreate,
     ReifiedUsageResult,
 )
@@ -55,7 +54,7 @@ async def create_reified_usage(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("", response_model=PaginatedEdges)
+@router.get("")
 async def list_edges(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=1000),
@@ -65,18 +64,24 @@ async def list_edges(
     to_node: Optional[str] = None,
     engine: Optional[str] = Query(None, description="图引擎名称，默认 legacy"),
 ):
+    """列出关系。
+
+    不绑定 legacy 响应模型：不同引擎返回各自的边形状（legacy 为
+    IndustrialFlowEdge/OntologyEdge，arachne_flow 为 GraphEdge）。
+    """
     skip = (page - 1) * page_size
     items, total = await graph_service.list_edges(
         skip, page_size, edge_namespace, edge_type, from_node, to_node, engine=engine
     )
-    return PaginatedEdges(total=total, page=page, page_size=page_size, items=items)
+    return {"total": total, "page": page, "page_size": page_size, "items": items}
 
 
-@router.get("/{edge_id}", response_model=GraphEdge)
+@router.get("/{edge_id}")
 async def get_edge(
     edge_id: str,
     engine: Optional[str] = Query(None, description="图引擎名称，默认 legacy"),
 ):
+    """获取单条关系。响应形状由引擎决定（legacy: GraphEdge union，flow: GraphEdge）。"""
     edge = await graph_service.get_edge(edge_id, engine=engine)
     if not edge:
         raise HTTPException(status_code=404, detail="Edge not found")

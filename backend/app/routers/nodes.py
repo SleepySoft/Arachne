@@ -7,7 +7,6 @@ from app.engines.legacy.schemas import (
     IndustrialNodeCreate,
     IndustrialNodeQuickCreate,
     IndustrialNodeUpdate,
-    PaginatedNodes,
 )
 from app.services import fuzzy_search, graph_service
 
@@ -61,7 +60,7 @@ async def fuzzy_search_nodes(
     }
 
 
-@router.get("", response_model=PaginatedNodes)
+@router.get("")
 async def list_nodes(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=1000),
@@ -71,18 +70,24 @@ async def list_nodes(
     draft_only: Optional[bool] = Query(None, description="仅返回草稿/待完善节点"),
     engine: Optional[str] = Query(None, description="图引擎名称，默认 legacy"),
 ):
+    """列出节点。
+
+    不绑定 legacy 响应模型：不同引擎返回各自的节点形状（legacy 为
+    IndustrialNode，arachne_flow 为 GraphNode），前端按字段自适应。
+    """
     skip = (page - 1) * page_size
     items, total = await graph_service.list_nodes(
         skip, page_size, entity_type, status, search, draft_only, engine=engine
     )
-    return PaginatedNodes(total=total, page=page, page_size=page_size, items=items)
+    return {"total": total, "page": page, "page_size": page_size, "items": items}
 
 
-@router.get("/{node_id}", response_model=IndustrialNode)
+@router.get("/{node_id}")
 async def get_node(
     node_id: str,
     engine: Optional[str] = Query(None, description="图引擎名称，默认 legacy"),
 ):
+    """获取单个节点。响应形状由引擎决定（legacy: IndustrialNode，flow: GraphNode）。"""
     node = await graph_service.get_node(node_id, engine=engine)
     if not node:
         raise HTTPException(status_code=404, detail="Node not found")

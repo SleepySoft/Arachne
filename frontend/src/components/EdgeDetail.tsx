@@ -18,6 +18,7 @@ const FIELD_LABELS: Record<string, string> = {
 const NAMESPACE_LABELS: Record<string, string> = {
   industrial_flow: "产业流",
   ontology: "本体",
+  arachne_flow: "流程",
 };
 
 const CONFIDENCE_LABELS: Record<string, string> = {
@@ -32,19 +33,33 @@ interface EdgeDetailProps {
   onClose: () => void;
   onEdgeDeleted?: (edgeId: string) => void;
   onSelectNode?: (node: IndustrialNode) => void;
+  /** 只读模式：隐藏编辑/删除按钮，用于只读引擎（如 arachne_flow）。 */
+  readOnly?: boolean;
+  /** 引擎名称；非 legacy 时通过 ?engine= 获取端点节点。 */
+  engine?: string;
 }
 
-export function EdgeDetail({ edge, onEdit, onClose, onEdgeDeleted, onSelectNode }: EdgeDetailProps) {
-  const { data: fromNode } = useQuery({
-    queryKey: ["node", edge.from_node],
-    queryFn: () => getNode(edge.from_node),
+export function EdgeDetail({
+  edge,
+  onEdit,
+  onClose,
+  onEdgeDeleted,
+  onSelectNode,
+  readOnly = false,
+  engine,
+}: EdgeDetailProps) {
+  const { data: fromNodeRaw } = useQuery({
+    queryKey: ["node", engine ?? "legacy", edge.from_node],
+    queryFn: () => getNode(edge.from_node, engine),
     enabled: !!edge.from_node,
   });
-  const { data: toNode } = useQuery({
-    queryKey: ["node", edge.to_node],
-    queryFn: () => getNode(edge.to_node),
+  const { data: toNodeRaw } = useQuery({
+    queryKey: ["node", engine ?? "legacy", edge.to_node],
+    queryFn: () => getNode(edge.to_node, engine),
     enabled: !!edge.to_node,
   });
+  const fromNode = toEndpointNode(fromNodeRaw);
+  const toNode = toEndpointNode(toNodeRaw);
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteEdge(edge.edge_id),
@@ -59,22 +74,26 @@ export function EdgeDetail({ edge, onEdit, onClose, onEdgeDeleted, onSelectNode 
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-200">关系详情</h3>
         <div className="flex items-center gap-1">
-          <button
-            onClick={onEdit}
-            className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-cyan-400"
-          >
-            <Edit2 className="h-3.5 w-3.5" />
-          </button>
-          <button
-            onClick={() => {
-              if (confirm("确定删除此关系？")) {
-                deleteMutation.mutate();
-              }
-            }}
-            className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-red-400"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+          {!readOnly && (
+            <>
+              <button
+                onClick={onEdit}
+                className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-cyan-400"
+              >
+                <Edit2 className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => {
+                  if (confirm("确定删除此关系？")) {
+                    deleteMutation.mutate();
+                  }
+                }}
+                className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-red-400"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </>
+          )}
           <button
             onClick={onClose}
             className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
@@ -115,7 +134,7 @@ export function EdgeDetail({ edge, onEdit, onClose, onEdgeDeleted, onSelectNode 
 
         <div>
           <div className="text-[10px] font-semibold uppercase text-slate-500">{FIELD_LABELS.description}</div>
-          <div className="mt-1 text-sm leading-relaxed text-slate-300">{edge.description}</div>
+          <div className="mt-1 text-sm leading-relaxed text-slate-300">{edge.description || "—"}</div>
         </div>
 
         {edge.evidence.length > 0 && (
@@ -153,6 +172,17 @@ export function EdgeDetail({ edge, onEdit, onClose, onEdgeDeleted, onSelectNode 
       </div>
     </div>
   );
+}
+
+/** 将任意引擎返回的节点统一成端点卡片所需的形状（补全 canonical_name_zh）。 */
+function toEndpointNode(node: any): IndustrialNode | undefined {
+  if (!node) return undefined;
+  return {
+    ...node,
+    canonical_name_zh: node.canonical_name_zh ?? node.label ?? node.node_id,
+    aliases: node.aliases ?? [],
+    evidence: node.evidence ?? [],
+  };
 }
 
 function NodeEndpointCard({

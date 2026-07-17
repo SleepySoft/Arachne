@@ -64,8 +64,10 @@ export const listNodes = async (
   return res.data;
 };
 
-export const getNode = async (nodeId: string): Promise<IndustrialNode> => {
-  const res = await client.get(`/nodes/${nodeId}`);
+export const getNode = async (nodeId: string, engine?: string): Promise<IndustrialNode> => {
+  const res = await client.get(`/nodes/${nodeId}`, {
+    params: engine ? { engine } : undefined,
+  });
   return res.data;
 };
 
@@ -147,8 +149,10 @@ export const listEdges = async (
   return res.data;
 };
 
-export const getEdge = async (edgeId: string): Promise<GraphEdge> => {
-  const res = await client.get(`/edges/${edgeId}`);
+export const getEdge = async (edgeId: string, engine?: string): Promise<GraphEdge> => {
+  const res = await client.get(`/edges/${edgeId}`, {
+    params: engine ? { engine } : undefined,
+  });
   return res.data;
 };
 

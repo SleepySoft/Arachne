@@ -4,16 +4,15 @@ import { GitBranch, Layers, RotateCcw, Eye } from "lucide-react";
 
 import { GraphCanvas, GraphCanvasRef } from "@/components/GraphCanvas";
 import { Layout } from "@/components/Layout";
+import { NodeDetail } from "@/components/NodeDetail";
+import { EdgeDetail } from "@/components/EdgeDetail";
 import {
   compileFlows,
   getFlowsSubgraph,
   listFlows,
 } from "@/services/api";
 import {
-  ARACHNE_FLOW_ACTION_TYPE_LABELS,
-  ARACHNE_FLOW_NODE_TYPE_LABELS,
   ARACHNE_FLOW_PREDICATES,
-  ARACHNE_FLOW_RESOURCE_TYPE_LABELS,
   ArachneFlowEdge,
   Confidence,
   EDGE_TYPE_LABELS,
@@ -41,11 +40,13 @@ function adaptFlowNode(node: GraphNode): IndustrialNode {
     definition: node.definition ?? (props.definition as string | undefined) ?? "",
     entity_type: node.entity_type as EntityType,
     evidence: [],
-    confidence: (node.confidence ?? (props.confidence as string | undefined) ?? "LOW") as Confidence,
-    status: (node.status ?? (props.status as string | undefined) ?? "PENDING") as NodeStatus,
+    // 编译产物默认视为已生效；引擎未记录置信度时用 MEDIUM 展示。
+    confidence: (node.confidence ?? (props.confidence as string | undefined) ?? "MEDIUM") as Confidence,
+    status: (node.status ?? (props.status as string | undefined) ?? "ACTIVE") as NodeStatus,
     notes: node.notes ?? (props.notes as string | undefined) ?? undefined,
     created_at: node.created_at ?? undefined,
     updated_at: node.updated_at ?? undefined,
+    properties: props,
   };
 }
 
@@ -58,7 +59,7 @@ function adaptFlowEdge(edge: GraphEdge): GraphEdge {
     to_node: e.to_node,
     description: e.description ?? "",
     evidence: [],
-    confidence: (e.confidence ?? "LOW") as Confidence,
+    confidence: (e.confidence ?? "MEDIUM") as Confidence,
     notes: e.notes ?? undefined,
     created_at: e.created_at ?? undefined,
     updated_at: e.updated_at ?? undefined,
@@ -73,6 +74,7 @@ export function FlowGraphPage() {
   const queryClient = useQueryClient();
   const [selectedFlowIds, setSelectedFlowIds] = useState<string[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [subgraphQueryKey, setSubgraphQueryKey] = useState<string>("");
   const [canvasVersion, setCanvasVersion] = useState(0);
 
@@ -103,6 +105,11 @@ export function FlowGraphPage() {
     return subgraph.nodes.find((n) => n.node_id === selectedNodeId) || null;
   }, [subgraph, selectedNodeId]);
 
+  const selectedEdge = useMemo(() => {
+    if (!subgraph || !selectedEdgeId) return null;
+    return subgraph.edges.find((e) => e.edge_id === selectedEdgeId) || null;
+  }, [subgraph, selectedEdgeId]);
+
   const adaptedData = useMemo(() => {
     if (!subgraph) return undefined;
     return {
@@ -120,6 +127,7 @@ export function FlowGraphPage() {
   const viewSelected = () => {
     if (selectedFlowIds.length === 0) return;
     setSelectedNodeId(null);
+    setSelectedEdgeId(null);
     setSubgraphQueryKey(selectedFlowIds.join(","));
     // Force GraphCanvas remount so a new selection always reloads the canvas.
     setCanvasVersion((v) => v + 1);
@@ -212,9 +220,18 @@ export function FlowGraphPage() {
           ref={canvasRef}
           sourceData={adaptedData}
           filters={filters}
-          onNodeClick={(node) => setSelectedNodeId(node.node_id)}
-          onEdgeClick={() => {}}
-          onClearSelection={() => setSelectedNodeId(null)}
+          onNodeClick={(node) => {
+            setSelectedNodeId(node.node_id);
+            setSelectedEdgeId(null);
+          }}
+          onEdgeClick={(edge) => {
+            setSelectedEdgeId(edge.edge_id);
+            setSelectedNodeId(null);
+          }}
+          onClearSelection={() => {
+            setSelectedNodeId(null);
+            setSelectedEdgeId(null);
+          }}
           onBeforeDragStart={() => {}}
           onBeforeManualLayout={() => {}}
           onBeforeCameraChange={() => {}}
@@ -223,14 +240,29 @@ export function FlowGraphPage() {
     </>
   );
 
-  const rightPanel = selectedNode ? (
-    <div className="p-4">
-      <h3 className="text-sm font-semibold text-slate-100 mb-3">节点详情</h3>
-      <FlowNodeDetail node={selectedNode} />
-    </div>
+  const rightPanel = selectedEdge ? (
+    <EdgeDetail
+      edge={adaptFlowEdge(selectedEdge)}
+      readOnly
+      engine="arachne_flow"
+      onEdit={() => {}}
+      onClose={() => setSelectedEdgeId(null)}
+      onSelectNode={(node) => {
+        setSelectedNodeId(node.node_id);
+        setSelectedEdgeId(null);
+      }}
+    />
+  ) : selectedNode ? (
+    <NodeDetail
+      node={adaptFlowNode(selectedNode)}
+      readOnly
+      onEdit={() => {}}
+      onClose={() => setSelectedNodeId(null)}
+      onSelectNode={(node) => setSelectedNodeId(node.node_id)}
+    />
   ) : (
     <div className="p-4 text-sm text-slate-500">
-      <p>点击画布上的节点查看详情。</p>
+      <p>点击画布上的节点或关系查看详情。</p>
       <p className="mt-2">左侧可多选流程文件，然后“查看子图”合并渲染；修改 YAML 后可用“重新编译”。</p>
     </div>
   );
@@ -307,51 +339,4 @@ function LoadingState() {
   );
 }
 
-function FlowNodeDetail({ node }: { node: GraphNode }) {
-  const kind = node.entity_type.replace("arachne_flow:", "");
-  const kindLabel = ARACHNE_FLOW_NODE_TYPE_LABELS[kind] ?? kind;
-  const props = (node.properties || {}) as Record<string, any>;
-  const resourceType = props.resource_type ? String(props.resource_type) : undefined;
-  const actionType = props.action_type ? String(props.action_type) : undefined;
-  return (
-    <div className="space-y-2 text-sm">
-      <div className="flex items-center gap-2">
-        <span className="text-xs px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">{kindLabel}</span>
-      </div>
-      <div>
-        <span className="text-slate-500">ID:</span>
-        <span className="ml-2 text-slate-200 break-all">{node.node_id}</span>
-      </div>
-      <div>
-        <span className="text-slate-500">名称:</span>
-        <span className="ml-2 text-slate-200">{node.label}</span>
-      </div>
-      {props.method_ref && (
-        <div>
-          <span className="text-slate-500">引用方法:</span>
-          <span className="ml-2 text-slate-200">{String(props.method_ref)}</span>
-        </div>
-      )}
-      {resourceType && (
-        <div>
-          <span className="text-slate-500">资源类型:</span>
-          <span className="ml-2 text-slate-200">
-            {ARACHNE_FLOW_RESOURCE_TYPE_LABELS[resourceType] ?? resourceType}
-          </span>
-        </div>
-      )}
-      {actionType && (
-        <div>
-          <span className="text-slate-500">动作类型:</span>
-          <span className="ml-2 text-slate-200">
-            {ARACHNE_FLOW_ACTION_TYPE_LABELS[actionType] ?? actionType}
-          </span>
-        </div>
-      )}
-      <div>
-        <span className="text-slate-500">类型标识:</span>
-        <span className="ml-2 text-slate-400 break-all">{node.entity_type}</span>
-      </div>
-    </div>
-  );
-}
+

@@ -96,6 +96,8 @@ export interface IndustrialNode {
   notes?: string;
   created_at?: string;
   updated_at?: string;
+  /** Engine-specific extension properties (e.g. arachne_flow resource_type / action_type). */
+  properties?: Record<string, any>;
 }
 
 export interface IndustryNodeAssociation {

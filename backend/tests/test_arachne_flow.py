@@ -215,3 +215,57 @@ async def test_engine_read_only_raises():
     engine = ArachneFlowEngine()
     with pytest.raises(Exception):  # ReadOnlyEngineError
         await engine.create_node(None)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_generic_node_and_edge_routes_support_flow_engine():
+    """Regression: /nodes/{id} and /edges/{id} must work with ?engine=arachne_flow.
+
+    The generic GET routes must not force legacy response models onto flow
+    nodes/edges, otherwise the shared detail sidebars cannot resolve flow
+    endpoints.
+    """
+    import httpx
+    from httpx import ASGITransport
+
+    from app.engines.legacy.engine import LegacyEngine
+    from app.main import app
+
+    flow_id = "photovoltaic_inverter"
+    parsed = parse_flow_file(FLOW_DIR / f"{flow_id}.yaml")
+    await storage.clear_flow(flow_id)
+    await storage.compile_parsed_flow(parsed, clear_existing=True)
+
+    register_engine(LegacyEngine())
+    register_engine(ArachneFlowEngine())
+
+    try:
+        async with httpx.AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            # Flow action node (namespaced id)
+            action_id = storage.namespaced_action_id(flow_id, "act_integrate_photovoltaic_inverter")
+            r = await client.get(f"/api/v1/nodes/{action_id}", params={"engine": "arachne_flow"})
+            assert r.status_code == 200, r.text
+            data = r.json()
+            assert data["node_id"] == action_id
+            assert data["entity_type"] == "arachne_flow:action"
+
+            # Flow edge
+            edges, total = await storage.list_flow_edges()
+            assert total > 0
+            edge_id = edges[0].edge_id
+            r = await client.get(f"/api/v1/edges/{edge_id}", params={"engine": "arachne_flow"})
+            assert r.status_code == 200, r.text
+            assert r.json()["edge_id"] == edge_id
+
+            # Flow node list
+            r = await client.get("/api/v1/nodes", params={"engine": "arachne_flow", "page_size": 5})
+            assert r.status_code == 200, r.text
+            assert r.json()["total"] > 0
+
+            # Legacy endpoints still return the legacy shape
+            r = await client.get("/api/v1/nodes", params={"page_size": 1})
+            assert r.status_code == 200, r.text
+    finally:
+        await storage.clear_flow(flow_id)
