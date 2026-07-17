@@ -169,6 +169,41 @@ export function EdgeDetail({
             <div className="mt-1 text-xs text-slate-400">{edge.notes}</div>
           </div>
         )}
+
+        <EngineEdgeProperties edge={edge} />
+      </div>
+    </div>
+  );
+}
+
+const ENGINE_PROPERTY_LABELS: Record<string, string> = {
+  flow_id: "所属流程",
+  predicate: "谓语角色",
+};
+
+/** 引擎扩展属性（如 arachne_flow 的 flow_id）。 */
+function EngineEdgeProperties({ edge }: { edge: GraphEdge }) {
+  const props = (edge as { properties?: Record<string, any> }).properties;
+  if (!props) return null;
+  const entries = Object.entries(props).filter(
+    ([k, v]) =>
+      v !== null &&
+      v !== undefined &&
+      v !== "" &&
+      // 这些字段已在上方主区块展示，不重复
+      !["edge_id", "edge_type", "edge_namespace", "from_node", "to_node", "description", "notes", "confidence", "created_at", "updated_at"].includes(k)
+  );
+  if (entries.length === 0) return null;
+  return (
+    <div>
+      <div className="text-[10px] font-semibold uppercase text-slate-500">引擎属性</div>
+      <div className="mt-1 space-y-1">
+        {entries.map(([key, value]) => (
+          <div key={key} className="flex items-baseline gap-2 text-xs">
+            <span className="shrink-0 text-slate-500">{ENGINE_PROPERTY_LABELS[key] ?? key}:</span>
+            <span className="text-slate-300 break-all">{String(value)}</span>
+          </div>
+        ))}
       </div>
     </div>
   );

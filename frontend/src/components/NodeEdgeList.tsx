@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Edit2, Trash2, Plus, ArrowUp, ArrowDown } from "lucide-react";
-import { GraphEdge, IndustrialNode } from "@/types";
+import { GraphEdge, GraphNode, IndustrialNode } from "@/types";
 import { listEdges, deleteEdge, listNodes, getNode } from "@/services/api";
+import { adaptFlowNode } from "@/lib/flowAdapters";
 import { EdgeForm } from "./EdgeForm";
 import { QuickEdgeForm } from "./QuickEdgeForm";
 
@@ -12,6 +13,12 @@ interface NodeEdgeListProps {
   onEdgeUpdated?: (edge: GraphEdge) => void;
   onEdgeDeleted?: (edgeId: string) => void;
   onSelectNode?: (node: IndustrialNode) => void;
+  /** 点击关系行（查看关系详情）；readOnly 模式下代替编辑入口。 */
+  onSelectEdge?: (edge: GraphEdge) => void;
+  /** 图引擎名称；数据加载与节点解析跟随引擎。 */
+  engine?: string;
+  /** 只读模式：隐藏编辑/删除/添加按钮。 */
+  readOnly?: boolean;
 }
 
 export function NodeEdgeList({
@@ -20,6 +27,9 @@ export function NodeEdgeList({
   onEdgeUpdated,
   onEdgeDeleted,
   onSelectNode,
+  onSelectEdge,
+  engine,
+  readOnly = false,
 }: NodeEdgeListProps) {
   const queryClient = useQueryClient();
   const [editingEdge, setEditingEdge] = useState<GraphEdge | null>(null);
@@ -33,28 +43,30 @@ export function NodeEdgeList({
     } | null>(null);
 
     const { data: outgoingData } = useQuery({
-      queryKey: ["edges-outgoing", nodeId],
-      queryFn: () => listEdges(1, 100, undefined, undefined, nodeId, undefined),
+      queryKey: ["edges-outgoing", engine ?? "legacy", nodeId],
+      queryFn: () => listEdges(1, 100, undefined, undefined, nodeId, undefined, engine),
     });
 
     const { data: incomingData } = useQuery({
-      queryKey: ["edges-incoming", nodeId],
-      queryFn: () => listEdges(1, 100, undefined, undefined, undefined, nodeId),
+      queryKey: ["edges-incoming", engine ?? "legacy", nodeId],
+      queryFn: () => listEdges(1, 100, undefined, undefined, undefined, nodeId, engine),
     });
 
     const { data: nodesData } = useQuery({
-      queryKey: ["all-nodes-for-edge-list"],
-      queryFn: () => listNodes(1, 1000),
+      queryKey: ["all-nodes-for-edge-list", engine ?? "legacy"],
+      queryFn: () => listNodes(1, 1000, undefined, undefined, undefined, undefined, engine),
       staleTime: 60_000,
     });
 
     const nodeMap = useMemo(() => {
       const map: Record<string, IndustrialNode> = {};
       nodesData?.items.forEach((n) => {
-        map[n.node_id] = n;
+        // arachne_flow 返回 GraphNode 形状，适配后取中文名
+        map[n.node_id] =
+          engine === "arachne_flow" ? adaptFlowNode(n as unknown as GraphNode) : n;
       });
       return map;
-    }, [nodesData]);
+    }, [nodesData, engine]);
 
     const deleteMutation = useMutation({
       mutationFn: deleteEdge,
@@ -91,8 +103,12 @@ export function NodeEdgeList({
         return;
       }
       try {
-        const fetched = await getNode(otherNodeId);
-        onSelectNode(fetched);
+        const fetched = await getNode(otherNodeId, engine);
+        onSelectNode(
+          engine === "arachne_flow"
+            ? adaptFlowNode(fetched as unknown as GraphNode)
+            : fetched
+        );
       } catch {
         // ignore fetch errors
       }
@@ -149,22 +165,36 @@ export function NodeEdgeList({
             </div>
           </div>
           <div className="flex items-center gap-0.5">
-            <button
-              onClick={() => setEditingEdge(edge)}
-              className="flex h-6 w-6 items-center justify-center rounded text-slate-500 hover:bg-slate-700 hover:text-cyan-400"
-              title="编辑"
-            >
-              <Edit2 className="h-3 w-3" />
-            </button>
-            <button
-              onClick={() => {
-                if (confirm(`确定删除关系 ${edge.edge_id}？`)) deleteMutation.mutate(edge.edge_id);
-              }}
-              className="flex h-6 w-6 items-center justify-center rounded text-slate-500 hover:bg-slate-700 hover:text-red-400"
-              title="删除"
-            >
-              <Trash2 className="h-3 w-3" />
-            </button>
+            {readOnly ? (
+              onSelectEdge && (
+                <button
+                  onClick={() => onSelectEdge(edge)}
+                  className="flex h-6 items-center rounded px-1.5 text-[10px] text-slate-500 hover:bg-slate-700 hover:text-cyan-400"
+                  title="查看关系详情"
+                >
+                  详情
+                </button>
+              )
+            ) : (
+              <>
+                <button
+                  onClick={() => setEditingEdge(edge)}
+                  className="flex h-6 w-6 items-center justify-center rounded text-slate-500 hover:bg-slate-700 hover:text-cyan-400"
+                  title="编辑"
+                >
+                  <Edit2 className="h-3 w-3" />
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm(`确定删除关系 ${edge.edge_id}？`)) deleteMutation.mutate(edge.edge_id);
+                  }}
+                  className="flex h-6 w-6 items-center justify-center rounded text-slate-500 hover:bg-slate-700 hover:text-red-400"
+                  title="删除"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </>
+            )}
           </div>
         </div>
       );
@@ -178,7 +208,7 @@ export function NodeEdgeList({
         <div className="flex items-center justify-between">
           <h4 className="text-xs font-semibold text-slate-300">关联关系</h4>
           <div className="flex items-center gap-1">
-            {!isAdding && (
+            {!readOnly && !isAdding && (
               <>
                 <button
                   onClick={() => setCreatingDirection("incoming")}
@@ -202,7 +232,7 @@ export function NodeEdgeList({
         </div>
 
         {/* Quick add form */}
-        {creatingDirection && (
+        {!readOnly && creatingDirection && (
           <QuickEdgeForm
             anchorNodeId={nodeId}
             direction={creatingDirection === "outgoing" ? "downstream" : "upstream"}
@@ -242,7 +272,7 @@ export function NodeEdgeList({
         )}
 
         {/* Edit Modal */}
-        {editingEdge && (
+        {!readOnly && editingEdge && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
             <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 shadow-2xl">
               <EdgeForm
@@ -256,7 +286,7 @@ export function NodeEdgeList({
         )}
 
         {/* Full create modal (expanded from quick draft) */}
-        {creatingDirection && quickDraft && (
+        {!readOnly && creatingDirection && quickDraft && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
             <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 shadow-2xl">
               <EdgeForm

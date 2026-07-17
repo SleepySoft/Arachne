@@ -150,6 +150,8 @@ export function RightPanel({
         isProcessExpanded={isProcessExpanded}
         onToggleProcessExpansion={onToggleProcessExpansion}
         readOnly={readOnly}
+        engine={engine}
+        onSelectEdge={(edge) => onPushPanel({ panel: "edge-detail", selectedEdge: edge })}
       />
     );
   }

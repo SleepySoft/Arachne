@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Search, Upload, Zap, AlertCircle } from "lucide-react";
-import { IndustrialNode } from "@/types";
+import { GraphNode, IndustrialNode } from "@/types";
 import { listNodes } from "@/services/api";
+import { adaptFlowNode } from "@/lib/flowAdapters";
 import { QuickNodeForm } from "./QuickNodeForm";
 
 interface SearchPanelProps {
@@ -42,6 +43,16 @@ export function SearchPanel({
 
   const hasDrafts = (draftData?.items.length ?? 0) > 0;
 
+  // arachne_flow 返回 GraphNode 形状；选择前适配为 IndustrialNode，保证详情面板字段完整
+  const adaptIfNeeded = (node: IndustrialNode): IndustrialNode =>
+    engine === "arachne_flow" ? adaptFlowNode(node as unknown as GraphNode) : node;
+
+  const displayName = (node: IndustrialNode): string =>
+    ((node as unknown as GraphNode).label as string) ||
+    node.canonical_name_zh ||
+    node.canonical_name_en ||
+    node.node_id;
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2">
@@ -66,7 +77,7 @@ export function SearchPanel({
                   <button
                     key={node.node_id}
                     onClick={() => {
-                      onSelectNode(node);
+                      onSelectNode(adaptIfNeeded(node));
                       setQuery("");
                       setShowQuickAdd(false);
                     }}
@@ -74,9 +85,9 @@ export function SearchPanel({
                   >
                     <span
                       className="min-w-0 flex-1 whitespace-normal break-all font-medium text-slate-200"
-                      title={node.canonical_name_zh || node.canonical_name_en}
+                      title={displayName(node)}
                     >
-                      {node.canonical_name_zh || node.canonical_name_en}
+                      {displayName(node)}
                     </span>
                     <span className="shrink-0 text-xs text-slate-500">{node.node_id}</span>
                     <span className="ml-2 shrink-0 rounded-full bg-slate-700 px-2 py-0.5 text-[10px] text-slate-400">
@@ -118,7 +129,7 @@ export function SearchPanel({
                   <button
                     key={node.node_id}
                     onClick={() => {
-                      onSelectNode(node);
+                      onSelectNode(adaptIfNeeded(node));
                       setShowDrafts(false);
                     }}
                     className="flex w-full min-w-0 flex-col gap-0.5 border-b border-slate-800 px-3 py-2 text-left text-sm hover:bg-slate-700 last:border-b-0"
@@ -126,8 +137,8 @@ export function SearchPanel({
                     <div className="flex w-full min-w-0 items-start gap-2">
                       <span
                         className="min-w-0 flex-1 whitespace-normal break-all font-medium text-slate-200"
-                        title={node.canonical_name_zh || node.canonical_name_en}
-                      >{node.canonical_name_zh || node.canonical_name_en}</span>
+                        title={displayName(node)}
+                      >{displayName(node)}</span>
                       <span className="shrink-0 text-[10px] text-slate-500">{node.node_id}</span>
                     </div>
                     <div className="flex w-full min-w-0 items-center gap-2 whitespace-nowrap text-[10px] text-slate-500">

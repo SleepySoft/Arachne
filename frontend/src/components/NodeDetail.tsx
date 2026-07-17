@@ -11,6 +11,7 @@ import {
 } from "@/types";
 import { deleteNode, listEdges, listProvStatementsByNode } from "@/services/api";
 import { NodeAssociations } from "./NodeAssociations";
+import { NodeEdgeList } from "./NodeEdgeList";
 
 interface NodeDetailProps {
   node: IndustrialNode;
@@ -27,6 +28,10 @@ interface NodeDetailProps {
   onToggleProcessExpansion?: () => void;
   /** 只读模式：隐藏编辑/删除按钮、草稿提示与 legacy 关联操作，用于只读引擎（如 arachne_flow）。 */
   readOnly?: boolean;
+  /** 图引擎名称；readOnly 模式下用于加载该引擎的关系列表。 */
+  engine?: string;
+  /** 点击关系列表中的关系时打开关系详情。 */
+  onSelectEdge?: (edge: GraphEdge) => void;
 }
 
 export function NodeDetail({
@@ -43,6 +48,8 @@ export function NodeDetail({
   isProcessExpanded = false,
   onToggleProcessExpansion,
   readOnly = false,
+  engine,
+  onSelectEdge,
 }: NodeDetailProps) {
   const deleteMutation = useMutation({
     mutationFn: deleteNode,
@@ -236,6 +243,19 @@ export function NodeDetail({
             />
           </div>
         )}
+
+        {/* 只读引擎：仍展示关系列表（只读，不含公司/行业等 legacy 领域数据） */}
+        {readOnly && (
+          <div className="border-t border-slate-800 pt-3">
+            <NodeEdgeList
+              nodeId={node.node_id}
+              engine={engine}
+              readOnly
+              onSelectNode={onSelectNode}
+              onSelectEdge={onSelectEdge}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -247,8 +267,25 @@ const FLOW_PROPERTY_LABELS: Record<string, string> = {
   action_type: "动作类型",
   method_ref: "引用方法",
   method_name: "方法名称",
+  method_name_zh: "方法中文名",
+  method_name_en: "方法英文名",
   local_name: "局部名称",
+  original_action_id: "原始动作ID",
 };
+
+// 主区块已展示的字段，引擎属性区不再重复
+const FLOW_PROPERTY_SKIP = new Set([
+  "canonical_name_zh",
+  "canonical_name_en",
+  "aliases",
+  "definition",
+  "confidence",
+  "status",
+  "created_at",
+  "updated_at",
+  "node_id",
+  "node_kind",
+]);
 
 function FlowProperties({ node }: { node: IndustrialNode }) {
   const props = node.properties;
@@ -261,7 +298,9 @@ function FlowProperties({ node }: { node: IndustrialNode }) {
     return v;
   };
 
-  const entries = Object.entries(props).filter(([, v]) => v !== null && v !== undefined && v !== "");
+  const entries = Object.entries(props).filter(
+    ([k, v]) => v !== null && v !== undefined && v !== "" && !FLOW_PROPERTY_SKIP.has(k)
+  );
   if (entries.length === 0) return null;
 
   return (

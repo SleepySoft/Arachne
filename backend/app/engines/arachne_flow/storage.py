@@ -212,6 +212,11 @@ async def compile_parsed_flow(parsed: ParsedFlow, clear_existing: bool = False) 
                 )
             edge_count += 1
 
+    # Post-pass: stamp Chinese canonical names from the shared PG metadata layer
+    # onto resource/dual/method nodes so search and display work in Chinese
+    # without per-read PG lookups.
+    await _stamp_canonical_names(driver, parsed)
+
     dual_count = len(set(parsed.resources.keys()) & set(parsed.actions.keys()))
     return {
         "resources": len(parsed.resources),
@@ -220,6 +225,35 @@ async def compile_parsed_flow(parsed: ParsedFlow, clear_existing: bool = False) 
         "dual": dual_count,
         "edges": len(parsed.triples),
     }
+
+
+async def _stamp_canonical_names(driver, parsed: ParsedFlow) -> None:
+    """Write canonical_name_zh/en from PG industrial_nodes onto flow nodes."""
+    candidate_ids = list(
+        (set(parsed.resources.keys()) | set(parsed.methods.keys()))
+    )
+    if not candidate_ids:
+        return
+    try:
+        meta_map = await node_storage.get_nodes_by_ids(candidate_ids)
+    except Exception:
+        return  # PG unavailable; names stay raw, read-time enrichment still applies
+    rows = [
+        {"node_id": nid, "zh": meta.canonical_name_zh, "en": meta.canonical_name_en}
+        for nid, meta in meta_map.items()
+        if meta.canonical_name_zh or meta.canonical_name_en
+    ]
+    if not rows:
+        return
+    async with driver.session() as session:
+        await session.run(
+            """
+            UNWIND $rows AS row
+            MATCH (n:ArachneFlowNode {node_id: row.node_id})
+            SET n.canonical_name_zh = row.zh, n.canonical_name_en = row.en
+            """,
+            {"rows": rows},
+        )
 
 
 def _resolve_node_ids(
@@ -302,6 +336,52 @@ async def _enrich_resource(node: GraphNode) -> GraphNode:
     return node
 
 
+async def _enrich_method(node: GraphNode) -> GraphNode:
+    """Merge PostgreSQL metadata into a METHOD node (method_id == industrial node id)."""
+    if node.entity_type != "arachne_flow:method":
+        return node
+    meta = await node_storage.get_node(node.node_id)
+    if meta is None:
+        return node
+    node.label = meta.canonical_name_zh or meta.canonical_name_en or node.label or node.node_id
+    node.properties["canonical_name_zh"] = meta.canonical_name_zh
+    node.properties["canonical_name_en"] = meta.canonical_name_en
+    node.properties["definition"] = meta.definition
+    node.properties["aliases"] = meta.aliases
+    return node
+
+
+async def _enrich_action(node: GraphNode) -> GraphNode:
+    """Merge method metadata into an ACTION node via its method_ref.
+
+    Actions are per-flow occurrences with synthetic English ids (act_xxx).
+    When they reference a METHOD that maps to an industrial node, borrow its
+    Chinese name and definition so details panels read like legacy nodes.
+    """
+    if node.entity_type != "arachne_flow:action":
+        return node
+    method_ref = node.properties.get("method_ref")
+    if not method_ref:
+        return node
+    meta = await node_storage.get_node(str(method_ref))
+    if meta is None:
+        return node
+    node.label = meta.canonical_name_zh or meta.canonical_name_en or node.label or node.node_id
+    node.properties["method_name_zh"] = meta.canonical_name_zh
+    node.properties["method_name_en"] = meta.canonical_name_en
+    if not node.properties.get("definition"):
+        node.properties["definition"] = meta.definition
+    return node
+
+
+async def _enrich_node(node: GraphNode) -> GraphNode:
+    """Dispatch metadata enrichment by node kind (resource/dual/method/action)."""
+    node = await _enrich_resource(node)
+    node = await _enrich_method(node)
+    node = await _enrich_action(node)
+    return node
+
+
 def _to_datetime(value):
     if value is None:
         return None
@@ -328,16 +408,16 @@ def _neo4j_node_to_graph_node(record: Dict[str, Any]) -> GraphNode:
     kind = n.get("node_kind", "resource")
     if kind == "dual":
         entity_type = "arachne_flow:dual"
-        label = n.get("local_name") or n.get("original_action_id") or node_id
+        label = n.get("canonical_name_zh") or n.get("local_name") or n.get("original_action_id") or node_id
     elif kind == "resource":
         entity_type = "arachne_flow:resource"
-        label = n.get("local_name") or node_id
+        label = n.get("canonical_name_zh") or n.get("local_name") or node_id
     elif kind == "action":
         entity_type = "arachne_flow:action"
         label = n.get("original_action_id") or node_id
     elif kind == "method":
         entity_type = "arachne_flow:method"
-        label = n.get("method_name") or node_id
+        label = n.get("canonical_name_zh") or n.get("method_name") or node_id
     else:
         entity_type = "arachne_flow:unknown"
         label = node_id
@@ -382,7 +462,7 @@ async def get_flow_node(node_id: str) -> Optional[GraphNode]:
         if record is None:
             return None
         node = _neo4j_node_to_graph_node(record)
-        return await _enrich_resource(node)
+        return await _enrich_node(node)
 
 
 async def list_flow_nodes(
@@ -404,7 +484,7 @@ async def list_flow_nodes(
 
     if search:
         where_clauses.append(
-            "(n.node_id CONTAINS $search OR n.local_name CONTAINS $search OR n.method_name CONTAINS $search OR n.original_action_id CONTAINS $search)"
+            "(n.node_id CONTAINS $search OR n.local_name CONTAINS $search OR n.method_name CONTAINS $search OR n.original_action_id CONTAINS $search OR n.canonical_name_zh CONTAINS $search OR n.canonical_name_en CONTAINS $search)"
         )
         params["search"] = search
 
@@ -426,10 +506,10 @@ async def list_flow_nodes(
         )
         nodes = [_neo4j_node_to_graph_node(record) async for record in items_result]
 
-    # Enrich resources in parallel
+    # Enrich nodes (resources/methods/actions) with PG metadata
     enriched = []
     for node in nodes:
-        enriched.append(await _enrich_resource(node))
+        enriched.append(await _enrich_node(node))
     return enriched, total
 
 
@@ -540,7 +620,7 @@ async def get_flow_subgraph(node_id: str, depth: int = 2) -> Tuple[List[GraphNod
                 node_map[node_id] = center
 
     nodes = list(node_map.values())
-    enriched = [await _enrich_resource(n) for n in nodes]
+    enriched = [await _enrich_node(n) for n in nodes]
     return enriched, list(edge_map.values())
 
 

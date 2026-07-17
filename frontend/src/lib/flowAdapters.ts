@@ -58,5 +58,6 @@ export function adaptFlowEdge(edge: GraphEdge): GraphEdge {
     edge_namespace: "arachne_flow",
     edge_type: e.edge_type,
     edge_type_label: EDGE_TYPE_LABELS[e.edge_type] ?? e.edge_type,
+    properties: (e as unknown as { properties?: Record<string, any> }).properties ?? {},
   } as GraphEdge;
 }

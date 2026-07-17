@@ -161,6 +161,8 @@ export interface BaseEdge {
   created_at?: string;
   updated_at?: string;
   edge_type_label?: string;
+  /** Engine-specific extension properties (e.g. arachne_flow flow_id). */
+  properties?: Record<string, any>;
 }
 
 export interface IndustrialFlowEdge extends BaseEdge {
