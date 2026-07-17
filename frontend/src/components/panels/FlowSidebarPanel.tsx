@@ -87,6 +87,25 @@ export function FlowSidebarPanel({
         </CollapsibleSection>
       </div>
 
+      {/* Edge role legend */}
+      <div className="border-t border-slate-800 px-3 py-2 space-y-1">
+        <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+          边颜色与流向
+        </div>
+        <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+          <span className="inline-block h-0.5 w-4 rounded" style={{ backgroundColor: "#38bdf8" }} />
+          输入：原料/部件/工具等（资源 → 动作）
+        </div>
+        <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+          <span className="inline-block h-0.5 w-4 rounded" style={{ backgroundColor: "#34d399" }} />
+          输出：主产物/中间产物（动作 → 资源）
+        </div>
+        <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+          <span className="inline-block h-0.5 w-4 rounded" style={{ backgroundColor: "#a78bfa" }} />
+          引用方法 / 顺序（ref / next）
+        </div>
+      </div>
+
       {/* Recompile action */}
       <div className="border-t border-slate-800 p-3 space-y-2">
         <button

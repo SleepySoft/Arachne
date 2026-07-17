@@ -2,6 +2,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useSta
 import cytoscape from "cytoscape";
 import dagre from "cytoscape-dagre";
 import {
+  arachneFlowEdgeColor,
   CONFIDENCE_OPACITY,
   EDGE_NAMESPACE_STYLES,
   ENTITY_TYPE_COLORS,
@@ -371,6 +372,18 @@ interface GraphCanvasProps {
   onBeforeCameraChange?: () => void;
   /** 图引擎名称；缺省为 legacy。用于全图初始化时的数据加载。 */
   engine?: string;
+}
+
+/** 边线条/箭头颜色：arachne_flow 按角色（输入/输出/引用）着色，其余按命名空间。 */
+function edgeVisualColor(ele: cytoscape.EdgeSingular): string {
+  const ns = ele.data("edge_namespace") as string;
+  if (ns === "arachne_flow") {
+    const roleColor = arachneFlowEdgeColor(ele.data("edge_type") as string);
+    if (roleColor) return roleColor;
+  }
+  return (
+    EDGE_NAMESPACE_STYLES[ns as keyof typeof EDGE_NAMESPACE_STYLES]?.color || "#94a3b8"
+  );
 }
 
 function suppressInternalPartOfEdges(
@@ -2087,10 +2100,8 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
               selector: "edge",
               style: {
                 selectable: false,
-                "line-color": (ele: cytoscape.EdgeSingular) =>
-                  EDGE_NAMESPACE_STYLES[ele.data("edge_namespace") as keyof typeof EDGE_NAMESPACE_STYLES]?.color || "#94a3b8",
-                "target-arrow-color": (ele: cytoscape.EdgeSingular) =>
-                  EDGE_NAMESPACE_STYLES[ele.data("edge_namespace") as keyof typeof EDGE_NAMESPACE_STYLES]?.color || "#94a3b8",
+                "line-color": (ele: cytoscape.EdgeSingular) => edgeVisualColor(ele),
+                "target-arrow-color": (ele: cytoscape.EdgeSingular) => edgeVisualColor(ele),
                 "target-arrow-shape": "triangle",
                 "arrow-scale": 0.8,
                 width: 1.5,
@@ -2099,7 +2110,10 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
                   (EDGE_NAMESPACE_STYLES[ele.data("edge_namespace") as keyof typeof EDGE_NAMESPACE_STYLES]?.lineStyle || "solid") as cytoscape.Css.LineStyle,
                 label: "data(label)",
                 "font-size": "8px",
-                color: "#94a3b8",
+                color: (ele: cytoscape.EdgeSingular) =>
+                  ele.data("edge_namespace") === "arachne_flow"
+                    ? edgeVisualColor(ele)
+                    : "#94a3b8",
                 "text-background-color": "#0f172a",
                 "text-background-opacity": 0.85,
                 "text-background-padding": "1px 3px",

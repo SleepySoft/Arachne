@@ -644,6 +644,46 @@ export const ARACHNE_FLOW_ACTION_TYPE_LABELS: Record<string, string> = {
   other: "其他",
 };
 
+/** Arachne-flow 输入角色（资源 → 动作）。 */
+const ARACHNE_FLOW_INPUT_ROLES = new Set([
+  "feedstock",
+  "component",
+  "additive",
+  "process_material",
+  "catalyst",
+  "energy",
+  "carrier",
+  "tool",
+  "packaging",
+  "subject",
+  "basis",
+  "requirement",
+]);
+
+/** Arachne-flow 输出角色（动作 → 资源）。 */
+const ARACHNE_FLOW_OUTPUT_ROLES = new Set([
+  "primary_result",
+  "co_result",
+  "intermediate",
+  "byproduct",
+  "scrap",
+  "waste",
+  "emission",
+  "recovered_resource",
+]);
+
+/**
+ * 按边角色为 arachne_flow 边着色，让流向一眼可辨：
+ * 输入边（资源→动作）天蓝，输出边（动作→资源）翠绿，ref/next 紫色。
+ */
+export function arachneFlowEdgeColor(edgeType: string): string | undefined {
+  if (ARACHNE_FLOW_INPUT_ROLES.has(edgeType)) return "#38bdf8";
+  if (ARACHNE_FLOW_OUTPUT_ROLES.has(edgeType)) return "#34d399";
+  if (edgeType === "ref" || edgeType === "next") return "#a78bfa";
+  if (edgeType === "other") return "#94a3b8";
+  return undefined;
+}
+
 
 // Database check types
 export type CheckSeverity = "ERROR" | "WARNING" | "INFO";
