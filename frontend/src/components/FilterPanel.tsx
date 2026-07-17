@@ -1,5 +1,6 @@
 import { Filter } from "lucide-react";
 import {
+  ARACHNE_FLOW_ENTITY_TYPE_LABELS,
   CONFIDENCE_OPACITY,
   EdgeNamespace,
   ENTITY_TYPE_COLORS,
@@ -23,12 +24,21 @@ type ArrayFilterKey = "edgeNamespaces" | "edgeTypes" | "entityTypes" | "status" 
 interface FilterPanelProps {
   filters: FilterState;
   onChange: (filters: FilterState) => void;
+  /** 图引擎名称；影响命名空间与实体类型可选项。缺省 legacy。 */
+  engine?: string;
 }
 
 const STATUSES = ["ACTIVE", "PENDING", "REJECTED"];
 const CONFIDENCES = ["HIGH", "MEDIUM", "LOW"];
 
-export function FilterPanel({ filters, onChange }: FilterPanelProps) {
+const FLOW_ENTITY_TYPES: EntityType[] = [
+  "arachne_flow:resource",
+  "arachne_flow:action",
+  "arachne_flow:method",
+];
+
+export function FilterPanel({ filters, onChange, engine }: FilterPanelProps) {
+  const isFlowEngine = engine === "arachne_flow";
   const toggle = (key: ArrayFilterKey, value: string) => {
     const arr = filters[key];
     const next = arr.includes(value)
@@ -46,59 +56,78 @@ export function FilterPanel({ filters, onChange }: FilterPanelProps) {
 
       {/* Edge Namespace */}
       <FilterGroup title="关系命名空间">
-        {(["industrial_flow", "ontology"] as EdgeNamespace[]).map((ns) => (
-          <label key={ns} className="flex items-center gap-2 text-xs text-slate-400">
+        {isFlowEngine ? (
+          <label className="flex items-center gap-2 text-xs text-slate-400">
             <input
               type="checkbox"
-              checked={filters.edgeNamespaces.includes(ns)}
-              onChange={() => toggle("edgeNamespaces", ns)}
+              checked={filters.edgeNamespaces.includes("arachne_flow")}
+              onChange={() => toggle("edgeNamespaces", "arachne_flow")}
               className="h-3 w-3 rounded border-slate-600 bg-slate-800 text-cyan-500"
             />
-            <span>{ns === "industrial_flow" ? "产业流" : "本体"}</span>
+            <span>流程</span>
           </label>
-        ))}
-        <label className="ml-4 flex items-center gap-2 text-xs text-slate-500">
-          <input
-            type="checkbox"
-            checked={filters.showIsA}
-            disabled={!filters.edgeNamespaces.includes("ontology")}
-            onChange={() =>
-              onChange({ ...filters, showIsA: !filters.showIsA })
-            }
-            className="h-3 w-3 rounded border-slate-600 bg-slate-800 text-cyan-500 disabled:opacity-40"
-          />
-          <span className={filters.edgeNamespaces.includes("ontology") ? "" : "opacity-40"}>
-            显示 is_a 层级关系
-          </span>
-        </label>
-        <label className="ml-4 flex items-center gap-2 text-xs text-slate-500">
-          <input
-            type="checkbox"
-            checked={filters.showPartOf}
-            disabled={!filters.edgeNamespaces.includes("ontology")}
-            onChange={() =>
-              onChange({ ...filters, showPartOf: !filters.showPartOf })
-            }
-            className="h-3 w-3 rounded border-slate-600 bg-slate-800 text-cyan-500 disabled:opacity-40"
-          />
-          <span className={filters.edgeNamespaces.includes("ontology") ? "" : "opacity-40"}>
-            显示 part_of 组成关系
-          </span>
-        </label>
-        <label className="ml-4 flex items-center gap-2 text-xs text-slate-500">
-          <input
-            type="checkbox"
-            checked={filters.showWeakOntology}
-            disabled={!filters.edgeNamespaces.includes("ontology")}
-            onChange={() =>
-              onChange({ ...filters, showWeakOntology: !filters.showWeakOntology })
-            }
-            className="h-3 w-3 rounded border-slate-600 bg-slate-800 text-cyan-500 disabled:opacity-40"
-          />
-          <span className={filters.edgeNamespaces.includes("ontology") ? "" : "opacity-40"}>
-            显示弱本体关系（别名/相关/变体）
-          </span>
-        </label>
+        ) : (
+          <>
+            {(["industrial_flow", "ontology"] as EdgeNamespace[]).map((ns) => (
+              <label key={ns} className="flex items-center gap-2 text-xs text-slate-400">
+                <input
+                  type="checkbox"
+                  checked={filters.edgeNamespaces.includes(ns)}
+                  onChange={() => toggle("edgeNamespaces", ns)}
+                  className="h-3 w-3 rounded border-slate-600 bg-slate-800 text-cyan-500"
+                />
+                <span>{ns === "industrial_flow" ? "产业流" : "本体"}</span>
+              </label>
+            ))}
+          </>
+        )}
+        {!isFlowEngine && (
+          <>
+            <label className="ml-4 flex items-center gap-2 text-xs text-slate-500">
+              <input
+                type="checkbox"
+                checked={filters.showIsA}
+                disabled={!filters.edgeNamespaces.includes("ontology")}
+                onChange={() =>
+                  onChange({ ...filters, showIsA: !filters.showIsA })
+                }
+                className="h-3 w-3 rounded border-slate-600 bg-slate-800 text-cyan-500 disabled:opacity-40"
+              />
+              <span className={filters.edgeNamespaces.includes("ontology") ? "" : "opacity-40"}>
+                显示 is_a 层级关系
+              </span>
+            </label>
+            <label className="ml-4 flex items-center gap-2 text-xs text-slate-500">
+              <input
+                type="checkbox"
+                checked={filters.showPartOf}
+                disabled={!filters.edgeNamespaces.includes("ontology")}
+                onChange={() =>
+                  onChange({ ...filters, showPartOf: !filters.showPartOf })
+                }
+                className="h-3 w-3 rounded border-slate-600 bg-slate-800 text-cyan-500 disabled:opacity-40"
+              />
+              <span className={filters.edgeNamespaces.includes("ontology") ? "" : "opacity-40"}>
+                显示 part_of 组成关系
+              </span>
+            </label>
+            <label className="ml-4 flex items-center gap-2 text-xs text-slate-500">
+              <input
+                type="checkbox"
+                checked={filters.showWeakOntology}
+                disabled={!filters.edgeNamespaces.includes("ontology")}
+                onChange={() =>
+                  onChange({ ...filters, showWeakOntology: !filters.showWeakOntology })
+                }
+                className="h-3 w-3 rounded border-slate-600 bg-slate-800 text-cyan-500 disabled:opacity-40"
+              />
+              <span className={filters.edgeNamespaces.includes("ontology") ? "" : "opacity-40"}>
+                显示弱本体关系（别名/相关/变体）
+              </span>
+            </label>
+          </>
+        )}
+        {!isFlowEngine && (
         <label className="ml-4 flex items-center gap-2 text-xs text-slate-500">
           <input
             type="checkbox"
@@ -113,11 +142,15 @@ export function FilterPanel({ filters, onChange }: FilterPanelProps) {
             显示物料派生边（derived_from）
           </span>
         </label>
+        )}
       </FilterGroup>
 
       {/* Entity Type */}
       <FilterGroup title="实体类型">
-        {(Object.keys(ENTITY_TYPE_COLORS) as EntityType[]).map((t) => (
+        {(isFlowEngine
+          ? FLOW_ENTITY_TYPES
+          : (Object.keys(ENTITY_TYPE_COLORS) as EntityType[])
+        ).map((t) => (
           <label key={t} className="flex items-center gap-2 text-xs text-slate-400">
             <input
               type="checkbox"
@@ -129,7 +162,7 @@ export function FilterPanel({ filters, onChange }: FilterPanelProps) {
               className="inline-block h-2 w-2 rounded-full"
               style={{ backgroundColor: ENTITY_TYPE_COLORS[t] }}
             />
-            <span>{t}</span>
+            <span>{ARACHNE_FLOW_ENTITY_TYPE_LABELS[t] ?? t}</span>
           </label>
         ))}
       </FilterGroup>

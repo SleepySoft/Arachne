@@ -53,13 +53,15 @@ export const listNodes = async (
   entityType?: string,
   status?: string,
   search?: string,
-  draftOnly?: boolean
+  draftOnly?: boolean,
+  engine?: string
 ): Promise<PaginatedNodes> => {
   const params: Record<string, unknown> = { page, page_size: pageSize };
   if (entityType) params.entity_type = entityType;
   if (status) params.status = status;
   if (search) params.search = search;
   if (draftOnly) params.draft_only = true;
+  if (engine) params.engine = engine;
   const res = await client.get("/nodes", { params });
   return res.data;
 };
@@ -138,13 +140,15 @@ export const listEdges = async (
   edgeNamespace?: string,
   edgeType?: string,
   fromNode?: string,
-  toNode?: string
+  toNode?: string,
+  engine?: string
 ): Promise<PaginatedEdges> => {
   const params: Record<string, unknown> = { page, page_size: pageSize };
   if (edgeNamespace) params.edge_namespace = edgeNamespace;
   if (edgeType) params.edge_type = edgeType;
   if (fromNode) params.from_node = fromNode;
   if (toNode) params.to_node = toNode;
+  if (engine) params.engine = engine;
   const res = await client.get("/edges", { params });
   return res.data;
 };

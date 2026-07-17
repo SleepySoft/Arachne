@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Activity, Brain, Database, GitBranch, Layers, Network } from "lucide-react";
 import { getHealth, getStats, listEngines } from "@/services/api";
-export type MainView = "industrial_graph" | "company_graph" | "flow_graph" | "db_checks" | "reasoning";
+export type MainView = "industrial_graph" | "company_graph" | "db_checks" | "reasoning";
 export type GraphEngine = string;
 
 interface StatsBarProps {
@@ -83,12 +83,6 @@ export function StatsBar({
             onClick={() => onChangeMainView("db_checks")}
             icon={<Database className="h-3 w-3" />}
             label="数据检查"
-          />
-          <ViewTab
-            active={mainView === "flow_graph"}
-            onClick={() => onChangeMainView("flow_graph")}
-            icon={<Layers className="h-3 w-3" />}
-            label="流程图"
           />
           <ViewTab
             active={mainView === "reasoning"}

@@ -6,10 +6,12 @@ import {
   EDGE_NAMESPACE_STYLES,
   ENTITY_TYPE_COLORS,
   GraphEdge,
+  GraphNode,
   IndustrialNode,
 } from "@/types";
 import { FocusState, FocusStep, HideState } from "@/types/view";
 import { getNeighbors, getNode, listEdges, listNodes } from "@/services/api";
+import { adaptFlowEdge, adaptFlowNode } from "@/lib/flowAdapters";
 
 cytoscape.use(dagre);
 
@@ -367,6 +369,8 @@ interface GraphCanvasProps {
   onBeforeDragStart?: () => void;
   onBeforeManualLayout?: () => void;
   onBeforeCameraChange?: () => void;
+  /** 图引擎名称；缺省为 legacy。用于全图初始化时的数据加载。 */
+  engine?: string;
 }
 
 function suppressInternalPartOfEdges(
@@ -737,6 +741,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     onBeforeDragStart,
     onBeforeManualLayout,
     onBeforeCameraChange,
+    engine,
   },
   ref
 ) {
@@ -1986,10 +1991,22 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
           nodesData = { items: sourceData.nodes };
           edgesData = { items: sourceData.edges };
         } else {
-          [nodesData, edgesData] = await Promise.all([
-            listNodes(1, 1000),
-            listEdges(1, 1000),
+          const [rawNodes, rawEdges] = await Promise.all([
+            listNodes(1, 1000, undefined, undefined, undefined, undefined, engine),
+            listEdges(1, 1000, undefined, undefined, undefined, undefined, engine),
           ]);
+          // arachne_flow 引擎返回 GraphNode/GraphEdge 通用形状，需适配为画布形状
+          if (engine === "arachne_flow") {
+            nodesData = {
+              items: rawNodes.items.map((n) => adaptFlowNode(n as unknown as GraphNode)),
+            };
+            edgesData = {
+              items: rawEdges.items.map((e) => adaptFlowEdge(e as unknown as GraphEdge)),
+            };
+          } else {
+            nodesData = rawNodes;
+            edgesData = rawEdges;
+          }
         }
         if (!mounted) return;
         if (!containerRef.current) return;

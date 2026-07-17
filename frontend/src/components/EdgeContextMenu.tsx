@@ -4,7 +4,8 @@ import { useLayoutEffect, useRef } from "react";
 interface EdgeContextMenuProps {
   x: number;
   y: number;
-  onDelete: () => void;
+  /** 删除连线；只读引擎下不传入即隐藏该项。 */
+  onDelete?: () => void;
   onPull?: () => void;
   onClose: () => void;
 }
@@ -47,16 +48,18 @@ export function EdgeContextMenu({ x, y, onDelete, onPull, onClose }: EdgeContext
           拉近节点
         </button>
       )}
-      <button
-        onClick={() => {
-          onDelete();
-          onClose();
-        }}
-        className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-red-300 hover:bg-slate-800"
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-        删除连线
-      </button>
+      {onDelete && (
+        <button
+          onClick={() => {
+            onDelete();
+            onClose();
+          }}
+          className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-red-300 hover:bg-slate-800"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          删除连线
+        </button>
+      )}
     </div>
   );
 }

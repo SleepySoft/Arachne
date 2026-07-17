@@ -14,6 +14,10 @@ interface IndustrialSearchPanelProps {
   onUploadBatch: () => void;
   hasActiveSelection: boolean;
   onResetSelection: () => void;
+  /** 图引擎名称；搜索范围跟随当前引擎。 */
+  engine?: string;
+  /** 只读引擎：隐藏创建类按钮。 */
+  readOnly?: boolean;
 }
 
 export function IndustrialSearchPanel({
@@ -27,6 +31,8 @@ export function IndustrialSearchPanel({
   onUploadBatch,
   hasActiveSelection,
   onResetSelection,
+  engine,
+  readOnly = false,
 }: IndustrialSearchPanelProps) {
   return (
     <div className="flex items-center gap-2">
@@ -47,6 +53,8 @@ export function IndustrialSearchPanel({
         onCreateNode={onCreateNode}
         onCreateEdge={onCreateEdge}
         onUploadBatch={onUploadBatch}
+        engine={engine}
+        readOnly={readOnly}
       />
       {hasActiveSelection && (
         <button

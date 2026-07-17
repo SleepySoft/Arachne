@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { StatsBar, MainView, GraphEngine } from "@/components/StatsBar";
-import { FlowGraphPage } from "@/components/FlowGraphPage";
 import { DbChecksPage } from "@/pages/DbChecksPage";
 import { ReasoningPage } from "@/pages/ReasoningPage";
 import { Layout } from "@/components/Layout";
@@ -25,6 +24,7 @@ import { QuickNodeForm } from "@/components/QuickNodeForm";
 import { deleteEdge, listCompanies, listEngines, listIndustries, listProvStatementsByNode } from "@/services/api";
 import type { EngineInfo } from "@/types";
 import { IndustrialSidebar } from "@/components/panels/IndustrialSidebar";
+import { FlowSidebarPanel } from "@/components/panels/FlowSidebarPanel";
 import { IndustrialSearchPanel } from "@/components/panels/IndustrialSearchPanel";
 import { CompanySidebarPanel } from "@/components/panels/CompanySidebarPanel";
 import { CompanySearchPanel } from "@/components/panels/CompanySearchPanel";
@@ -69,7 +69,11 @@ export default function App() {
     [engineList]
   );
 
-  const industrial = useIndustrialGraph();
+  const currentEngineInfo = getEngineInfo(graphEngine);
+  const isReadOnlyEngine = currentEngineInfo?.is_read_only ?? false;
+  const isFlowEngine = currentEngineInfo?.supports_flows ?? graphEngine === "arachne_flow";
+
+  const industrial = useIndustrialGraph(graphEngine);
   const company = useCompanyGraph();
   const graphCanvasRef = useRef<GraphCanvasRef>(null);
   const companyNetworkCanvasRef = useRef<CompanyNetworkCanvasRef>(null);
@@ -94,24 +98,23 @@ export default function App() {
   const handleChangeMainView = useCallback(
     (view: MainView) => {
       setMainView(view);
-      // When switching to a view that belongs to a specific engine, align the engine selector.
-      const flowEngine = engineList.find((e) => e.supports_flows)?.name;
-      const engineName = view === "flow_graph" ? (flowEngine ?? defaultEngine) : defaultEngine;
-      setGraphEngine(engineName);
       viewHistory.reset(view === "company_graph" ? "company" : "industrial");
     },
-    [defaultEngine, engineList, viewHistory.reset]
+    [viewHistory.reset]
   );
 
   const handleChangeGraphEngine = useCallback(
     (engine: GraphEngine) => {
+      if (engine === graphEngine) return;
       setGraphEngine(engine);
-      const info = getEngineInfo(engine);
-      const nextView = (info?.default_view as MainView) ?? "industrial_graph";
-      setMainView(nextView);
-      viewHistory.reset(nextView === "company_graph" ? "company" : "industrial");
+      // 主界面保持不变，只切换数据源；选择/过滤/子图重置为该引擎默认状态。
+      industrial.switchEngine(engine);
+      // 引擎切换后回到图工作区，方便看到新引擎的图。
+      setMainView((view) => (view === "company_graph" ? view : "industrial_graph"));
+      viewHistory.reset("industrial");
     },
-    [getEngineInfo, viewHistory.reset]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [graphEngine, industrial.switchEngine, viewHistory.reset]
   );
 
   useEffect(() => {
@@ -361,6 +364,7 @@ export default function App() {
         {
           setSelectedIndustries: industrial.setSelectedIndustries,
           setSelectedCompanies: industrial.setSelectedCompanies,
+          setSelectedFlowIds: industrial.setSelectedFlowIds,
           setActiveFilters: industrial.setActiveFilters,
           setExpandedProcessParents: industrial.setExpandedProcessParents,
           setFocusState: industrial.setFocusState,
@@ -382,6 +386,7 @@ export default function App() {
     captureCompanyState,
     industrial.setSelectedIndustries,
     industrial.setSelectedCompanies,
+    industrial.setSelectedFlowIds,
     industrial.setActiveFilters,
     industrial.setExpandedProcessParents,
     industrial.setFocusState,
@@ -517,33 +522,53 @@ export default function App() {
             industrial.toggleProcessParent(industrial.selectedNode.node_id);
           }
         }}
+        readOnly={isReadOnlyEngine}
+        engine={graphEngine}
       />
     ) : null;
 
   const industrialWorkspace = (
     <Layout
       leftSidebar={
-        <IndustrialSidebar
-          selectedIndustries={industrial.selectedIndustries}
-          selectedCompanies={industrial.selectedCompanies}
-          activeFilters={industrial.activeFilters}
-          onToggleIndustry={(industry) => {
-            viewHistory.reset("industrial");
-            industrial.handleToggleIndustry(industry);
-          }}
-          onSelectIndustry={industrial.handleSelectIndustryDetail}
-          onToggleCompany={(company) => {
-            viewHistory.reset("industrial");
-            industrial.handleToggleCompany(company);
-          }}
-          onSelectCompany={industrial.handleSelectCompanyDetail}
-          onCreateIndustry={() => industrial.pushPanel({ panel: "industry-create" })}
-          onCreateCompany={() => industrial.pushPanel({ panel: "company-create" })}
-          onChangeFilters={(filters) => {
-            viewHistory.reset("industrial");
-            industrial.setActiveFilters(filters);
-          }}
-        />
+        isFlowEngine ? (
+          <FlowSidebarPanel
+            selectedFlowIds={industrial.selectedFlowIds}
+            onToggleFlow={(flowId) => {
+              viewHistory.reset("industrial");
+              industrial.toggleFlowId(flowId);
+            }}
+            onRecompile={industrial.recompileSelectedFlows}
+            recompiling={industrial.recompilingFlows}
+            activeFilters={industrial.activeFilters}
+            onChangeFilters={(filters) => {
+              viewHistory.reset("industrial");
+              industrial.setActiveFilters(filters);
+            }}
+            engine={graphEngine}
+          />
+        ) : (
+          <IndustrialSidebar
+            selectedIndustries={industrial.selectedIndustries}
+            selectedCompanies={industrial.selectedCompanies}
+            activeFilters={industrial.activeFilters}
+            onToggleIndustry={(industry) => {
+              viewHistory.reset("industrial");
+              industrial.handleToggleIndustry(industry);
+            }}
+            onSelectIndustry={industrial.handleSelectIndustryDetail}
+            onToggleCompany={(company) => {
+              viewHistory.reset("industrial");
+              industrial.handleToggleCompany(company);
+            }}
+            onSelectCompany={industrial.handleSelectCompanyDetail}
+            onCreateIndustry={() => industrial.pushPanel({ panel: "industry-create" })}
+            onCreateCompany={() => industrial.pushPanel({ panel: "company-create" })}
+            onChangeFilters={(filters) => {
+              viewHistory.reset("industrial");
+              industrial.setActiveFilters(filters);
+            }}
+          />
+        )
       }
       centerCanvas={
         <div className="relative h-full w-full">
@@ -557,6 +582,7 @@ export default function App() {
             onMultiNodeContextMenu={industrial.handleMultiNodeContextMenu}
             onCanvasContextMenu={industrial.handleCanvasContextMenu}
             onEdgeDelete={(edge) => {
+              if (isReadOnlyEngine) return;
               deleteEdge(edge.edge_id).then(() => {
                 graphCanvasRef.current?.removeEdge(edge.edge_id);
                 if (industrial.selectedEdge?.edge_id === edge.edge_id) {
@@ -587,6 +613,7 @@ export default function App() {
             hideState={industrial.hideState}
             onBeforeDragStart={() => pushIndustrialHistory(true)}
             onBeforeManualLayout={() => pushIndustrialHistory(true)}
+            engine={graphEngine}
           />
           <FocusControlPanel
             graphCanvasRef={graphCanvasRef}
@@ -602,6 +629,8 @@ export default function App() {
             onSaveView={(name) =>
               buildIndustrialSnapshot(
                 {
+                  engine: graphEngine,
+                  selectedFlowIds: industrial.selectedFlowIds,
                   selectedIndustries: industrial.selectedIndustries,
                   selectedCompanies: industrial.selectedCompanies,
                   activeFilters: industrial.activeFilters,
@@ -621,12 +650,20 @@ export default function App() {
             onLoadView={(view) => {
               viewHistory.reset("industrial");
               setLoadedIndustrialView(view);
+              // 视图记录了自己的引擎；与当前不一致时先切换引擎（重置工作区），
+              // 再应用视图状态（后面的 setter 会覆盖重置结果）。
+              const viewEngine = view.industrial?.engine ?? "legacy";
+              if (viewEngine !== graphEngine) {
+                setGraphEngine(viewEngine);
+                industrial.switchEngine(viewEngine);
+              }
               const containerSize = graphCanvasRef.current?.getContainerSize();
               const result = applyIndustrialSnapshot(
                 view,
                 {
                   setSelectedIndustries: industrial.setSelectedIndustries,
                   setSelectedCompanies: industrial.setSelectedCompanies,
+                  setSelectedFlowIds: industrial.setSelectedFlowIds,
                   setActiveFilters: industrial.setActiveFilters,
                   setExpandedProcessParents: industrial.setExpandedProcessParents,
                   setFocusState: industrial.setFocusState,
@@ -669,9 +706,12 @@ export default function App() {
           onCreateNode={() => industrial.pushPanel({ panel: "node-create" })}
           onCreateEdge={() => industrial.pushPanel({ panel: "edge-create" })}
           onUploadBatch={() => industrial.pushPanel({ panel: "batch-upload" })}
+          engine={graphEngine}
+          readOnly={isReadOnlyEngine}
           hasActiveSelection={
             industrial.selectedIndustries.length > 0 ||
             industrial.selectedCompanies.length > 0 ||
+            industrial.selectedFlowIds.length > 0 ||
             industrial.focusState.active ||
             industrial.hideState.active ||
             !!industrial.subgraphData ||
@@ -901,11 +941,6 @@ export default function App() {
         <div className={`absolute inset-0 ${mainView === "reasoning" ? "" : "hidden"}`}>
           <ReasoningPage />
         </div>
-
-        {/* Flow graph page */}
-        <div className={`absolute inset-0 ${mainView === "flow_graph" ? "" : "hidden"}`}>
-          <FlowGraphPage />
-        </div>
       </div>
 
       {mainView === "industrial_graph" &&
@@ -1017,16 +1052,20 @@ export default function App() {
               if (node) graphCanvasRef.current?.revealInternal(node.node_id);
             }}
             onExitFocus={() => graphCanvasRef.current?.exitFocus()}
-            onConnect={() => {
-              const node = industrial.contextMenu.node;
-              if (!node) return;
-              industrial.setEditMode("connect");
-              industrial.handleConnectSourceSelect(node, {
-                x: industrial.contextMenu.x,
-                y: industrial.contextMenu.y,
-              });
-              industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
-            }}
+            onConnect={
+              isReadOnlyEngine
+                ? undefined
+                : () => {
+                    const node = industrial.contextMenu.node;
+                    if (!node) return;
+                    industrial.setEditMode("connect");
+                    industrial.handleConnectSourceSelect(node, {
+                      x: industrial.contextMenu.x,
+                      y: industrial.contextMenu.y,
+                    });
+                    industrial.setContextMenu((prev) => ({ ...prev, visible: false }));
+                  }
+            }
             onClose={() =>
               industrial.setContextMenu((prev) => ({ ...prev, visible: false }))
             }
@@ -1094,7 +1133,7 @@ export default function App() {
         />
       )}
 
-      {mainView === "industrial_graph" && industrial.canvasMenu.visible && (
+      {mainView === "industrial_graph" && industrial.canvasMenu.visible && !isReadOnlyEngine && (
         <CanvasContextMenu
           x={industrial.canvasMenu.x}
           y={industrial.canvasMenu.y}
@@ -1121,18 +1160,22 @@ export default function App() {
           <EdgeContextMenu
             x={industrial.edgeMenu.x}
             y={industrial.edgeMenu.y}
-            onDelete={() => {
-              const edge = industrial.edgeMenu.edge;
-              if (edge) {
-                deleteEdge(edge.edge_id).then(() => {
-                  graphCanvasRef.current?.removeEdge(edge.edge_id);
-                  if (industrial.selectedEdge?.edge_id === edge.edge_id) {
-                    industrial.closePanel();
+            onDelete={
+              isReadOnlyEngine
+                ? undefined
+                : () => {
+                    const edge = industrial.edgeMenu.edge;
+                    if (edge) {
+                      deleteEdge(edge.edge_id).then(() => {
+                        graphCanvasRef.current?.removeEdge(edge.edge_id);
+                        if (industrial.selectedEdge?.edge_id === edge.edge_id) {
+                          industrial.closePanel();
+                        }
+                      });
+                    }
+                    industrial.handleCloseEdgeMenu();
                   }
-                });
-              }
-              industrial.handleCloseEdgeMenu();
-            }}
+            }
             onPull={() => {
               const edge = industrial.edgeMenu.edge;
               if (edge) {
@@ -1146,6 +1189,7 @@ export default function App() {
         )}
 
       {mainView === "industrial_graph" &&
+        !isReadOnlyEngine &&
         industrial.editMode === "connect" &&
         industrial.connectSource &&
         industrial.connectTarget && (
@@ -1237,12 +1281,19 @@ export default function App() {
             if (viewManagerWorkspace === "industrial") {
               viewHistory.reset("industrial");
               setLoadedIndustrialView(view);
+              // 与工具栏加载视图一致：视图记录的引擎与当前不一致时先切换引擎。
+              const viewEngine = view.industrial?.engine ?? "legacy";
+              if (viewEngine !== graphEngine) {
+                setGraphEngine(viewEngine);
+                industrial.switchEngine(viewEngine);
+              }
               const containerSize = graphCanvasRef.current?.getContainerSize();
               const result = applyIndustrialSnapshot(
                 view,
                 {
                   setSelectedIndustries: industrial.setSelectedIndustries,
                   setSelectedCompanies: industrial.setSelectedCompanies,
+                  setSelectedFlowIds: industrial.setSelectedFlowIds,
                   setActiveFilters: industrial.setActiveFilters,
                   setExpandedProcessParents: industrial.setExpandedProcessParents,
                   setFocusState: industrial.setFocusState,

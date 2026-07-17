@@ -10,6 +10,10 @@ interface SearchPanelProps {
   onCreateNode: () => void;
   onCreateEdge: () => void;
   onUploadBatch: () => void;
+  /** 图引擎名称；搜索范围跟随当前引擎。 */
+  engine?: string;
+  /** 只读引擎：隐藏创建/草稿相关按钮。 */
+  readOnly?: boolean;
 }
 
 export function SearchPanel({
@@ -17,21 +21,23 @@ export function SearchPanel({
   onCreateNode,
   onCreateEdge,
   onUploadBatch,
+  engine,
+  readOnly = false,
 }: SearchPanelProps) {
   const [query, setQuery] = useState("");
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [showDrafts, setShowDrafts] = useState(false);
 
   const { data: searchData } = useQuery({
-    queryKey: ["nodes", 1, 10, undefined, undefined, query],
-    queryFn: () => listNodes(1, 10, undefined, undefined, query),
+    queryKey: ["nodes", engine ?? "legacy", 1, 10, undefined, undefined, query],
+    queryFn: () => listNodes(1, 10, undefined, undefined, query, undefined, engine),
     enabled: query.length >= 1,
   });
 
   const { data: draftData, refetch: refetchDrafts } = useQuery({
-    queryKey: ["nodes", 1, 50, undefined, undefined, undefined, true],
-    queryFn: () => listNodes(1, 50, undefined, undefined, undefined, true),
-    enabled: showDrafts,
+    queryKey: ["nodes", engine ?? "legacy", 1, 50, undefined, undefined, undefined, true],
+    queryFn: () => listNodes(1, 50, undefined, undefined, undefined, true, engine),
+    enabled: showDrafts && !readOnly,
   });
 
   const hasDrafts = (draftData?.items.length ?? 0) > 0;
@@ -79,7 +85,7 @@ export function SearchPanel({
                   </button>
                 ))
               )}
-              {searchData.items.length === 0 && (
+              {searchData.items.length === 0 && !readOnly && (
                 <button
                   onClick={() => setShowQuickAdd(true)}
                   className="flex w-full items-center gap-1 border-t border-slate-700 px-3 py-2 text-left text-sm text-cyan-400 hover:bg-slate-700"
@@ -137,6 +143,7 @@ export function SearchPanel({
           )}
         </div>
 
+        {!readOnly && (
         <button
           onClick={() => {
             setShowQuickAdd((v) => !v);
@@ -152,7 +159,9 @@ export function SearchPanel({
         >
           <Zap className="h-4 w-4" />
         </button>
+        )}
 
+        {!readOnly && (
         <button
           onClick={() => {
             setShowDrafts((v) => !v);
@@ -174,31 +183,36 @@ export function SearchPanel({
             </span>
           )}
         </button>
+        )}
 
-        <button
-          onClick={onCreateNode}
-          title="完整创建节点"
-          className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-700 bg-slate-800 text-slate-400 hover:border-emerald-600 hover:text-emerald-400"
-        >
-          <Plus className="h-4 w-4" />
-        </button>
-        <button
-          onClick={onCreateEdge}
-          title="创建关系"
-          className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-700 bg-slate-800 text-slate-400 hover:border-cyan-600 hover:text-cyan-400"
-        >
-          <Plus className="h-4 w-4 rotate-45" />
-        </button>
-        <button
-          onClick={onUploadBatch}
-          title="批量上传"
-          className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-700 bg-slate-800 text-slate-400 hover:border-amber-600 hover:text-amber-400"
-        >
-          <Upload className="h-4 w-4" />
-        </button>
+        {!readOnly && (
+          <>
+            <button
+              onClick={onCreateNode}
+              title="完整创建节点"
+              className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-700 bg-slate-800 text-slate-400 hover:border-emerald-600 hover:text-emerald-400"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+            <button
+              onClick={onCreateEdge}
+              title="创建关系"
+              className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-700 bg-slate-800 text-slate-400 hover:border-cyan-600 hover:text-cyan-400"
+            >
+              <Plus className="h-4 w-4 rotate-45" />
+            </button>
+            <button
+              onClick={onUploadBatch}
+              title="批量上传"
+              className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-700 bg-slate-800 text-slate-400 hover:border-amber-600 hover:text-amber-400"
+            >
+              <Upload className="h-4 w-4" />
+            </button>
+          </>
+        )}
       </div>
 
-      {showQuickAdd && (
+      {showQuickAdd && !readOnly && (
         <QuickNodeForm
           initialName={query}
           onSuccess={(node) => {

@@ -48,6 +48,8 @@ function scaleStateToContainer(
 }
 
 export interface IndustrialSnapshotDeps {
+  engine?: string;
+  selectedFlowIds?: string[];
   selectedIndustries: Industry[];
   selectedCompanies: Company[];
   activeFilters: IndustrialViewState["activeFilters"];
@@ -60,6 +62,7 @@ export interface IndustrialSnapshotDeps {
 export interface IndustrialRestoreDeps {
   setSelectedIndustries: (industries: Industry[]) => void;
   setSelectedCompanies: (companies: Company[]) => void;
+  setSelectedFlowIds: (ids: string[]) => void;
   setActiveFilters: (filters: IndustrialViewState["activeFilters"]) => void;
   setExpandedProcessParents: (ids: string[]) => void;
   setGraphKey: (fn: (k: number) => number) => void;
@@ -109,6 +112,8 @@ export function buildIndustrialSnapshot(
     name,
     workspace: "industrial",
     industrial: {
+      engine: deps.engine,
+      selectedFlowIds: deps.selectedFlowIds ? [...deps.selectedFlowIds] : undefined,
       selectedIndustryIds: deps.selectedIndustries.map((i) => i.industry_id),
       selectedCompanyIds: deps.selectedCompanies.map((c) => c.company_id),
       activeFilters: { ...deps.activeFilters },
@@ -138,7 +143,7 @@ export function applyIndustrialSnapshot(
   view: SavedView,
   deps: IndustrialRestoreDeps,
   toContainerSize?: { width: number; height: number }
-): { restored: boolean; missingIndustryIds: string[]; missingCompanyIds: string[] } {
+): { restored: boolean; missingIndustryIds: string[]; missingCompanyIds: string[]; engine?: string } {
   if (view.workspace !== "industrial" || !view.industrial) {
     return { restored: false, missingIndustryIds: [], missingCompanyIds: [] };
   }
@@ -171,6 +176,7 @@ export function applyIndustrialSnapshot(
   deps.setExpandedProcessParents([...state.expandedProcessParentIds]);
   deps.setSelectedIndustries(foundIndustries);
   deps.setSelectedCompanies(foundCompanies);
+  deps.setSelectedFlowIds([...(state.selectedFlowIds ?? [])]);
 
   // Restore focus state, filtering out missing node IDs
   if (state.focus?.active) {
@@ -222,6 +228,7 @@ export function applyIndustrialSnapshot(
     restored: true,
     missingIndustryIds,
     missingCompanyIds,
+    engine: state.engine,
   };
 }
 

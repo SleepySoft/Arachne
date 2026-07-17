@@ -66,6 +66,10 @@ interface RightPanelProps {
   onFocusInGraph?: (companyId: string) => void;
   onOpenMaterialModal?: () => void;
   onAddExposure?: () => void;
+  /** 只读引擎：节点/关系详情隐藏编辑操作，创建/编辑面板不渲染。 */
+  readOnly?: boolean;
+  /** 图引擎名称；关系详情用于按引擎解析端点节点。 */
+  engine?: string;
 }
 
 export function RightPanel({
@@ -104,7 +108,32 @@ export function RightPanel({
   onFocusInGraph,
   onOpenMaterialModal,
   onAddExposure,
+  readOnly = false,
+  engine,
 }: RightPanelProps) {
+  // 只读引擎不允许进入创建/编辑类面板
+  if (
+    readOnly &&
+    (panel === "node-create" ||
+      panel === "node-edit" ||
+      panel === "edge-create" ||
+      panel === "edge-edit" ||
+      panel === "batch-upload")
+  ) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center bg-slate-900 text-slate-400">
+        <p className="text-sm">当前引擎为只读模式</p>
+        <p className="mt-1 text-xs">请修改流程文件后重新编译</p>
+        <button
+          onClick={onBackPanel}
+          className="mt-3 rounded bg-slate-800 px-3 py-1 text-xs hover:bg-slate-700"
+        >
+          关闭
+        </button>
+      </div>
+    );
+  }
+
   if (panel === "node-detail" && selectedNode) {
     return (
       <NodeDetail
@@ -120,6 +149,7 @@ export function RightPanel({
         onSelectIndustry={onSelectIndustry}
         isProcessExpanded={isProcessExpanded}
         onToggleProcessExpansion={onToggleProcessExpansion}
+        readOnly={readOnly}
       />
     );
   }
@@ -132,6 +162,8 @@ export function RightPanel({
         onClose={onBackPanel}
         onEdgeDeleted={onEdgeDeleted}
         onSelectNode={onSelectNode}
+        readOnly={readOnly}
+        engine={engine}
       />
     );
   }

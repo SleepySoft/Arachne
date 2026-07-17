@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   GraphEdge,
   IndustrialNode,
@@ -8,19 +9,51 @@ import {
 } from "@/types";
 import { EditMode } from "@/components/GraphCanvas";
 
-import { HideState } from "@/types/view";
+import { HideState, IndustrialFiltersState } from "@/types/view";
 import {
+  compileFlows,
   getCompanySubgraph,
+  getFlowsSubgraph,
   getIndustrySubgraph,
   listNodes,
   listEdges,
 } from "@/services/api";
+import { adaptFlowEdge, adaptFlowNode } from "@/lib/flowAdapters";
 import type { GraphCanvasRef } from "@/components/GraphCanvas";
 import { useNodeNavigation } from "./useNodeNavigation";
 import { PanelState, usePanelStack } from "./usePanelStack";
 
-export function useIndustrialGraph() {
+/** 引擎对应的默认画布过滤器。布局/视图与引擎无关，只有默认过滤内容不同。 */
+export function defaultFiltersForEngine(engine: string): IndustrialFiltersState {
+  if (engine === "arachne_flow") {
+    return {
+      edgeNamespaces: ["arachne_flow"],
+      edgeTypes: [],
+      entityTypes: [],
+      status: [],
+      confidence: [],
+      showIsA: false,
+      showPartOf: false,
+      showWeakOntology: false,
+      showDerivedFrom: false,
+    };
+  }
+  return {
+    edgeNamespaces: ["industrial_flow", "ontology"],
+    edgeTypes: [],
+    entityTypes: [],
+    status: [],
+    confidence: [],
+    showIsA: true,
+    showPartOf: true,
+    showWeakOntology: false,
+    showDerivedFrom: false,
+  };
+}
+
+export function useIndustrialGraph(engine: string = "legacy") {
   const ps = usePanelStack();
+  const queryClient = useQueryClient();
   const panel = ps.panel;
   const selectedNode = ps.selectedNode;
   const selectedEdge = ps.selectedEdge;
@@ -53,17 +86,11 @@ export function useIndustrialGraph() {
     y: number;
     node: IndustrialNode | null;
   }>({ visible: false, x: 0, y: 0, node: null });
-  const [activeFilters, setActiveFilters] = useState({
-    edgeNamespaces: ["industrial_flow", "ontology"] as string[],
-    edgeTypes: [] as string[],
-    entityTypes: [] as string[],
-    status: [] as string[],
-    confidence: [] as string[],
-    showIsA: true,
-    showPartOf: true,
-    showWeakOntology: false,
-    showDerivedFrom: false,
-  });
+  const [activeFilters, setActiveFilters] = useState<IndustrialFiltersState>(() =>
+    defaultFiltersForEngine(engine)
+  );
+  const [selectedFlowIds, setSelectedFlowIds] = useState<string[]>([]);
+  const [recompilingFlows, setRecompilingFlows] = useState(false);
   const [graphKey, setGraphKey] = useState(0);
   const [editMode, setEditMode] = useState<EditMode>("default");
   const [connectSource, setConnectSource] = useState<IndustrialNode | null>(null);
@@ -366,10 +393,19 @@ export function useIndustrialGraph() {
       const canvas = canvasRef.current;
       if (!canvas) return;
 
-      const [{ items: allNodes }, { items: allEdges }] = await Promise.all([
-        listNodes(1, 1000),
-        listEdges(1, 1000),
+      const [{ items: rawNodes }, { items: rawEdges }] = await Promise.all([
+        listNodes(1, 1000, undefined, undefined, undefined, undefined, engine),
+        listEdges(1, 1000, undefined, undefined, undefined, undefined, engine),
       ]);
+      // arachne_flow 引擎返回 GraphNode/GraphEdge 通用形状，需适配为画布形状
+      const allNodes: IndustrialNode[] =
+        engine === "arachne_flow"
+          ? rawNodes.map((n) => adaptFlowNode(n as unknown as import("@/types").GraphNode))
+          : rawNodes;
+      const allEdges: GraphEdge[] =
+        engine === "arachne_flow"
+          ? rawEdges.map((e) => adaptFlowEdge(e as unknown as GraphEdge))
+          : rawEdges;
 
       const currentPositions = canvas.getNodePositions();
       const currentNodeIds = new Set(Object.keys(currentPositions));
@@ -480,11 +516,12 @@ export function useIndustrialGraph() {
       // 同步工艺组：把 part_of 子节点移入 compound parent
       canvas.syncProcessGroups();
     },
-    []
+    [engine]
   );
 
-  // Load merged subgraph whenever selected industries/companies change
+  // Load merged subgraph whenever selected industries/companies change（legacy 引擎）
   useEffect(() => {
+    if (engine !== "legacy") return;
     async function loadMergedSubgraph() {
       if (selectedIndustries.length === 0 && selectedCompanies.length === 0) {
         setSubgraphData(undefined);
@@ -515,7 +552,58 @@ export function useIndustrialGraph() {
       }
     }
     loadMergedSubgraph();
-  }, [selectedIndustries, selectedCompanies]);
+  }, [engine, selectedIndustries, selectedCompanies]);
+
+  // Load merged flow subgraph whenever selected flow files change（arachne_flow 引擎）
+  useEffect(() => {
+    if (engine !== "arachne_flow") return;
+    if (selectedFlowIds.length === 0) {
+      setSubgraphData(undefined);
+      return;
+    }
+    let cancelled = false;
+    getFlowsSubgraph(selectedFlowIds, 3)
+      .then((sg) => {
+        if (cancelled) return;
+        setSubgraphData({
+          nodes: sg.nodes.map(adaptFlowNode),
+          edges: sg.edges.map(adaptFlowEdge),
+        });
+        setGraphKey((k) => k + 1);
+      })
+      .catch(() => {
+        // Silently ignore
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [engine, selectedFlowIds]);
+
+  const toggleFlowId = useCallback((flowId: string) => {
+    setSelectedFlowIds((prev) =>
+      prev.includes(flowId) ? prev.filter((id) => id !== flowId) : [...prev, flowId]
+    );
+  }, []);
+
+  /** 重新编译选中的流程文件并刷新当前子图。 */
+  const recompileSelectedFlows = useCallback(async () => {
+    if (engine !== "arachne_flow" || selectedFlowIds.length === 0) return;
+    setRecompilingFlows(true);
+    try {
+      await compileFlows(selectedFlowIds);
+      await queryClient.invalidateQueries({ queryKey: ["flows"] });
+      const sg = await getFlowsSubgraph(selectedFlowIds, 3);
+      setSubgraphData({
+        nodes: sg.nodes.map(adaptFlowNode),
+        edges: sg.edges.map(adaptFlowEdge),
+      });
+      setGraphKey((k) => k + 1);
+    } finally {
+      setRecompilingFlows(false);
+    }
+  }, [engine, selectedFlowIds, queryClient]);
+
+
 
   // ===== Edit mode helpers =====
   const toggleEditMode = useCallback(() => {
@@ -633,6 +721,25 @@ export function useIndustrialGraph() {
     setPendingEdgePrefill(null);
   }, []);
 
+  /** 切换引擎时重置工作区：选择、过滤、子图、编辑模式全部回到该引擎默认状态。 */
+  const switchEngine = useCallback(
+    (nextEngine: string) => {
+      setSelectedIndustries([]);
+      setSelectedCompanies([]);
+      setSelectedFlowIds([]);
+      setSubgraphData(undefined);
+      setHighlightNodeIds(undefined);
+      clearFocusState();
+      clearHideState();
+      exitEditMode();
+      closePanel();
+      setCompanyFilter({ visible: false, nodes: [], checkedNodeIds: [] });
+      setActiveFilters(defaultFiltersForEngine(nextEngine));
+      setGraphKey((k) => k + 1);
+    },
+    [clearFocusState, clearHideState, exitEditMode, closePanel]
+  );
+
   return {
     selectedNode,
     setSelectedNode,
@@ -658,6 +765,13 @@ export function useIndustrialGraph() {
     setContextMenu,
     activeFilters,
     setActiveFilters,
+    engine,
+    selectedFlowIds,
+    setSelectedFlowIds,
+    toggleFlowId,
+    recompileSelectedFlows,
+    recompilingFlows,
+    switchEngine,
     graphKey,
     setGraphKey,
     subgraphData,

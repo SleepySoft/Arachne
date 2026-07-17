@@ -43,6 +43,10 @@ export interface HideState {
 }
 
 export interface IndustrialViewState {
+  /** 创建视图时的图引擎；缺省视为 legacy（向后兼容旧视图）。 */
+  engine?: string;
+  /** arachne_flow 引擎：选中的流程文件 id 列表。 */
+  selectedFlowIds?: string[];
   selectedIndustryIds: string[];
   selectedCompanyIds: string[];
   activeFilters: IndustrialFiltersState;
