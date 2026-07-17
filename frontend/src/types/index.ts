@@ -548,6 +548,98 @@ export const EDGE_TYPE_LABELS: Record<string, string> = {
   variant_of: "变体",
   // Deprecated ontology type — kept for backward compatibility with existing edges.
   related_term: "相关术语（已废弃）",
+  // Arachne-flow input roles (输入角色)
+  feedstock: "原料",
+  component: "部件",
+  additive: "添加剂",
+  process_material: "过程物料",
+  catalyst: "催化剂",
+  energy: "能量",
+  carrier: "载体",
+  tool: "工具",
+  packaging: "包装",
+  subject: "作用对象",
+  basis: "依据",
+  requirement: "要求",
+  // Arachne-flow output roles (输出角色)
+  primary_result: "主产物",
+  co_result: "并列产物",
+  intermediate: "中间产物",
+  byproduct: "副产物",
+  scrap: "废料",
+  waste: "废弃物",
+  emission: "排放物",
+  recovered_resource: "回收资源",
+  // Arachne-flow special roles (特殊关系)
+  next: "下一步",
+  ref: "引用方法",
+  // Arachne-flow fallback
+  other: "其他",
+};
+
+/** All predicates defined by the arachne-flow schema (input/output/special roles). */
+export const ARACHNE_FLOW_PREDICATES: string[] = [
+  "feedstock",
+  "component",
+  "additive",
+  "process_material",
+  "catalyst",
+  "energy",
+  "carrier",
+  "tool",
+  "packaging",
+  "subject",
+  "basis",
+  "requirement",
+  "primary_result",
+  "co_result",
+  "intermediate",
+  "byproduct",
+  "scrap",
+  "waste",
+  "emission",
+  "recovered_resource",
+  "next",
+  "ref",
+  "other",
+];
+
+/** Chinese labels for arachne-flow node kinds (entity_type without prefix). */
+export const ARACHNE_FLOW_NODE_TYPE_LABELS: Record<string, string> = {
+  resource: "资源",
+  action: "动作",
+  method: "方法",
+  dual: "资源/动作",
+};
+
+/** Chinese labels for arachne-flow entity_type values (with prefix). */
+export const ARACHNE_FLOW_ENTITY_TYPE_LABELS: Record<string, string> = {
+  "arachne_flow:resource": "资源",
+  "arachne_flow:action": "动作",
+  "arachne_flow:method": "方法",
+  "arachne_flow:dual": "资源/动作",
+};
+
+/** Chinese labels for arachne-flow ResourceType values. */
+export const ARACHNE_FLOW_RESOURCE_TYPE_LABELS: Record<string, string> = {
+  material: "物料",
+  craft: "工艺",
+  service: "服务",
+  right: "权利",
+  information: "信息",
+  qualification: "资质",
+  other: "其他",
+};
+
+/** Chinese labels for arachne-flow ActionType values. */
+export const ARACHNE_FLOW_ACTION_TYPE_LABELS: Record<string, string> = {
+  transform: "转化",
+  combine: "组合",
+  separate: "分离",
+  modify: "改性",
+  deliver: "交付",
+  assess: "评估",
+  other: "其他",
 };
 
 

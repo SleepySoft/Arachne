@@ -10,8 +10,13 @@ import {
   listFlows,
 } from "@/services/api";
 import {
+  ARACHNE_FLOW_ACTION_TYPE_LABELS,
+  ARACHNE_FLOW_NODE_TYPE_LABELS,
+  ARACHNE_FLOW_PREDICATES,
+  ARACHNE_FLOW_RESOURCE_TYPE_LABELS,
   ArachneFlowEdge,
   Confidence,
+  EDGE_TYPE_LABELS,
   EntityType,
   FlowSummary,
   GraphEdge,
@@ -59,6 +64,7 @@ function adaptFlowEdge(edge: GraphEdge): GraphEdge {
     updated_at: e.updated_at ?? undefined,
     edge_namespace: "arachne_flow",
     edge_type: e.edge_type,
+    edge_type_label: EDGE_TYPE_LABELS[e.edge_type] ?? e.edge_type,
   } as GraphEdge;
 }
 
@@ -126,7 +132,7 @@ export function FlowGraphPage() {
 
   const filters = {
     edgeNamespaces: ["arachne_flow"],
-    edgeTypes: ["feedstock", "tool", "component", "subject", "primary_result", "intermediate", "ref", "next"],
+    edgeTypes: ARACHNE_FLOW_PREDICATES,
     entityTypes: ["arachne_flow:resource", "arachne_flow:action", "arachne_flow:method"],
     status: ["ACTIVE", "PENDING", "REJECTED"],
     confidence: ["HIGH", "MEDIUM", "LOW"],
@@ -303,11 +309,14 @@ function LoadingState() {
 
 function FlowNodeDetail({ node }: { node: GraphNode }) {
   const kind = node.entity_type.replace("arachne_flow:", "");
+  const kindLabel = ARACHNE_FLOW_NODE_TYPE_LABELS[kind] ?? kind;
   const props = (node.properties || {}) as Record<string, any>;
+  const resourceType = props.resource_type ? String(props.resource_type) : undefined;
+  const actionType = props.action_type ? String(props.action_type) : undefined;
   return (
     <div className="space-y-2 text-sm">
       <div className="flex items-center gap-2">
-        <span className="text-xs px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 uppercase">{kind}</span>
+        <span className="text-xs px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">{kindLabel}</span>
       </div>
       <div>
         <span className="text-slate-500">ID:</span>
@@ -323,12 +332,26 @@ function FlowNodeDetail({ node }: { node: GraphNode }) {
           <span className="ml-2 text-slate-200">{String(props.method_ref)}</span>
         </div>
       )}
-      {props.resource_type && (
+      {resourceType && (
         <div>
           <span className="text-slate-500">资源类型:</span>
-          <span className="ml-2 text-slate-200">{String(props.resource_type)}</span>
+          <span className="ml-2 text-slate-200">
+            {ARACHNE_FLOW_RESOURCE_TYPE_LABELS[resourceType] ?? resourceType}
+          </span>
         </div>
       )}
+      {actionType && (
+        <div>
+          <span className="text-slate-500">动作类型:</span>
+          <span className="ml-2 text-slate-200">
+            {ARACHNE_FLOW_ACTION_TYPE_LABELS[actionType] ?? actionType}
+          </span>
+        </div>
+      )}
+      <div>
+        <span className="text-slate-500">类型标识:</span>
+        <span className="ml-2 text-slate-400 break-all">{node.entity_type}</span>
+      </div>
     </div>
   );
 }
