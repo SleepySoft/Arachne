@@ -18,8 +18,8 @@ export function StatsBar({
   onChangeGraphEngine,
 }: StatsBarProps) {
   const { data: graphStats } = useQuery({
-    queryKey: ["stats"],
-    queryFn: getStats,
+    queryKey: ["stats", graphEngine],
+    queryFn: () => getStats(graphEngine),
     refetchInterval: 30000,
   });
 

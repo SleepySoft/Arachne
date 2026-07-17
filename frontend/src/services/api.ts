@@ -269,8 +269,10 @@ export const getPaths = async (
   return res.data;
 };
 
-export const getStats = async (): Promise<GraphStats> => {
-  const res = await client.get("/query/stats");
+export const getStats = async (engine?: string): Promise<GraphStats> => {
+  const res = await client.get("/query/stats", {
+    params: engine ? { engine } : undefined,
+  });
   return res.data;
 };
 

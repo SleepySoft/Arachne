@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   GraphEdge,
@@ -555,12 +555,20 @@ export function useIndustrialGraph(engine: string = "legacy") {
   }, [engine, selectedIndustries, selectedCompanies]);
 
   // Load merged flow subgraph whenever selected flow files change（arachne_flow 引擎）
+  const prevFlowCountRef = useRef(0);
   useEffect(() => {
     if (engine !== "arachne_flow") return;
     if (selectedFlowIds.length === 0) {
       setSubgraphData(undefined);
+      // 从有选择变为无选择时，强制重挂载画布以加载全量流程图；
+      // 否则 GraphCanvas（init 仅执行一次）会一直停留在旧子图。
+      if (prevFlowCountRef.current > 0) {
+        setGraphKey((k) => k + 1);
+      }
+      prevFlowCountRef.current = 0;
       return;
     }
+    prevFlowCountRef.current = selectedFlowIds.length;
     let cancelled = false;
     getFlowsSubgraph(selectedFlowIds, 3)
       .then((sg) => {
