@@ -68,6 +68,7 @@ export function FlowGraphPage() {
   const [selectedFlowIds, setSelectedFlowIds] = useState<string[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [subgraphQueryKey, setSubgraphQueryKey] = useState<string>("");
+  const [canvasVersion, setCanvasVersion] = useState(0);
 
   const { data: flows = [] } = useQuery({
     queryKey: ["flows"],
@@ -83,7 +84,11 @@ export function FlowGraphPage() {
   const compileMutation = useMutation({
     mutationFn: compileFlows,
     onSuccess: () => {
+      // Refresh flow compile status, force the current subgraph to refetch,
+      // and bump the canvas key so it re-renders even if the selection key is unchanged.
       queryClient.invalidateQueries({ queryKey: ["flows"] });
+      queryClient.invalidateQueries({ queryKey: ["flows-subgraph"] });
+      setCanvasVersion((v) => v + 1);
     },
   });
 
@@ -110,6 +115,8 @@ export function FlowGraphPage() {
     if (selectedFlowIds.length === 0) return;
     setSelectedNodeId(null);
     setSubgraphQueryKey(selectedFlowIds.join(","));
+    // Force GraphCanvas remount so a new selection always reloads the canvas.
+    setCanvasVersion((v) => v + 1);
   };
 
   const recompileSelected = () => {
@@ -165,6 +172,9 @@ export function FlowGraphPage() {
         {compileMutation.isPending && (
           <div className="text-xs text-slate-400">编译中...</div>
         )}
+        {compileMutation.isSuccess && (
+          <div className="text-xs text-emerald-400">编译完成，已刷新</div>
+        )}
         {compileMutation.error && (
           <div className="text-xs text-red-400">编译失败</div>
         )}
@@ -192,6 +202,7 @@ export function FlowGraphPage() {
       {selectedFlowIds.length > 0 && isLoading && <LoadingState />}
       {adaptedData && (
         <GraphCanvas
+          key={`${subgraphQueryKey}-${canvasVersion}`}
           ref={canvasRef}
           sourceData={adaptedData}
           filters={filters}
