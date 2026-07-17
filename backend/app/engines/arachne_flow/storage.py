@@ -645,6 +645,151 @@ async def get_flow_neighbors(node_id: str) -> Tuple[List[GraphNode], List[GraphE
     return await get_flow_subgraph(node_id, depth=1)
 
 
+async def get_flow_file_graph(flow_ids: List[str]) -> Tuple[List[GraphNode], List[GraphEdge]]:
+    """Return exactly the triples declared by the given flows.
+
+    Unlike a depth-limited traversal from the root product, this returns ALL
+    edges whose ``flow_id`` belongs to the selected files plus their endpoint
+    nodes — "what you see is what the file declares".
+    """
+    driver = get_flow_async_driver()
+    async with driver.session() as session:
+        result = await session.run(
+            """
+            MATCH (a:ArachneFlowNode)-[r:ARACHNE_FLOW]->(b:ArachneFlowNode)
+            WHERE r.flow_id IN $flow_ids
+            RETURN r, a, b
+            LIMIT 5000
+            """,
+            {"flow_ids": flow_ids},
+        )
+        node_map: Dict[str, GraphNode] = {}
+        edge_map: Dict[str, GraphEdge] = {}
+        async for record in result:
+            for key in ("a", "b"):
+                n = record[key]
+                nid = n["node_id"]
+                if nid not in node_map:
+                    node_map[nid] = _neo4j_node_to_graph_node({"n": n})
+            r = record["r"]
+            eid = r.get("edge_id")
+            if eid:
+                edge_map[eid] = GraphEdge(
+                    edge_id=eid,
+                    from_node=record["a"]["node_id"],
+                    to_node=record["b"]["node_id"],
+                    edge_namespace="arachne_flow",
+                    edge_type=r.get("edge_type", "unknown"),
+                    properties={
+                        k: _serialize_property_value(v)
+                        for k, v in dict(r).items()
+                        if v is not None
+                    },
+                )
+    nodes = [await _enrich_node(n) for n in node_map.values()]
+    return nodes, list(edge_map.values())
+
+
+def merged_action_id(merge_key: str) -> str:
+    """Node id for a view-layer action node merged across flows."""
+    return f"merged_action:{merge_key}"
+
+
+async def get_merged_flow_graph() -> Tuple[List[GraphNode], List[GraphEdge]]:
+    """Full flow graph with cross-flow occurrences merged for readability.
+
+    Merge rules:
+    - ACTION occurrences with the same ``method_ref`` (fallback:
+      ``original_action_id``) collapse into one action node; per-flow
+      provenance is kept in ``flow_ids`` / ``merged_from`` properties.
+    - Parallel edges between the same node pair with the same predicate
+      aggregate into one edge carrying ``flow_ids`` and ``count``.
+    - RESOURCE / METHOD nodes are already shared and pass through unchanged.
+    """
+    nodes, _ = await list_flow_nodes(skip=0, limit=10000)
+    all_edges, _ = await list_flow_edges(skip=0, limit=10000)
+
+    # 1) Merge action nodes by method_ref (fallback original_action_id)
+    method_labels: Dict[str, str] = {
+        n.node_id: n.label for n in nodes if n.entity_type == "arachne_flow:method"
+    }
+    action_merge_key: Dict[str, str] = {}
+    merged_actions: Dict[str, GraphNode] = {}
+    for n in nodes:
+        if n.entity_type != "arachne_flow:action":
+            continue
+        props = n.properties or {}
+        key = str(props.get("method_ref") or props.get("original_action_id") or n.node_id)
+        action_merge_key[n.node_id] = key
+        merged_id = merged_action_id(key)
+        existing = merged_actions.get(merged_id)
+        if existing is None:
+            merged_actions[merged_id] = GraphNode(
+                node_id=merged_id,
+                label=method_labels.get(key) or props.get("method_name_zh") or key,
+                entity_type="arachne_flow:action",
+                properties={
+                    "node_kind": "action",
+                    "method_ref": props.get("method_ref"),
+                    "original_action_id": props.get("original_action_id") or key,
+                    "action_type": props.get("action_type"),
+                    "canonical_name_zh": method_labels.get(key),
+                    "flow_ids": sorted({props.get("flow_id")} - {None}),
+                    "merged_from": [n.node_id],
+                },
+            )
+        else:
+            eprops = existing.properties
+            flow_ids = set(eprops.get("flow_ids") or [])
+            flow_id = props.get("flow_id")
+            if flow_id:
+                flow_ids.add(flow_id)
+            eprops["flow_ids"] = sorted(flow_ids)
+            eprops.setdefault("merged_from", []).append(n.node_id)
+
+    def map_node(nid: str) -> str:
+        key = action_merge_key.get(nid)
+        return merged_action_id(key) if key else nid
+
+    # 2) Remap edges and aggregate parallels
+    agg: Dict[Tuple[str, str, str], GraphEdge] = {}
+    for e in all_edges:
+        src = map_node(e.from_node)
+        tgt = map_node(e.to_node)
+        etype = e.edge_type
+        key = (src, tgt, etype)
+        flow_id = (e.properties or {}).get("flow_id")
+        existing = agg.get(key)
+        if existing is None:
+            edge_id = f"{src}->{tgt}:{etype}"
+            if len(edge_id) > 200:
+                edge_id = f"merged:{uuid4().hex[:16]}"
+            agg[key] = GraphEdge(
+                edge_id=edge_id,
+                from_node=src,
+                to_node=tgt,
+                edge_namespace="arachne_flow",
+                edge_type=etype,
+                properties={
+                    "flow_ids": sorted({flow_id} - {None}),
+                    "count": 1,
+                    "edge_type": etype,
+                },
+            )
+        else:
+            eprops = existing.properties
+            flow_ids = set(eprops.get("flow_ids") or [])
+            if flow_id:
+                flow_ids.add(flow_id)
+            eprops["flow_ids"] = sorted(flow_ids)
+            eprops["count"] = int(eprops.get("count") or 1) + 1
+
+    out_nodes: List[GraphNode] = [
+        n for n in nodes if n.entity_type != "arachne_flow:action"
+    ] + list(merged_actions.values())
+    return out_nodes, list(agg.values())
+
+
 async def get_flow_paths(
     from_node: str,
     to_node: str,

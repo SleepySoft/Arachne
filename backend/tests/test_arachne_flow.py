@@ -232,6 +232,71 @@ async def test_flow_subgraph_filtered_by_flow_id():
 
 
 @pytest.mark.asyncio(loop_scope="session")
+async def test_flow_file_graph_returns_exact_file_content():
+    """Per-file view must return exactly the triples declared by the files."""
+    parsed = parse_flow_file(FLOW_DIR / "smartphone.yaml")
+    await storage.compile_parsed_flow(parsed, clear_existing=True)
+
+    try:
+        nodes, edges = await storage.get_flow_file_graph(["smartphone"])
+        edge_flows = {(e.properties or {}).get("flow_id") for e in edges}
+        assert edge_flows == {"smartphone"}
+        # 文件声明的全部三元组都在（不只根产品 depth 内的后缀）
+        assert len(edges) == len(parsed.triples)
+        node_ids = {n.node_id for n in nodes}
+        # 上游段（晶圆切割/键合等）必须包含——之前 depth 遍历会截断
+        assert "wafer" in node_ids
+        assert "chip_die" in node_ids
+        assert "smartphone:act_wafer_dicing" in node_ids
+        # 不包含其它流程的边
+        assert not any(nid.startswith("personal_computer:") for nid in node_ids)
+    finally:
+        await storage.clear_flow("smartphone")
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_merged_flow_graph_merges_actions_and_edges():
+    """Merged full view: cross-flow same-method actions collapse; parallels aggregate."""
+    for fid in ("smartphone", "personal_computer"):
+        parsed = parse_flow_file(FLOW_DIR / f"{fid}.yaml")
+        await storage.compile_parsed_flow(parsed, clear_existing=True)
+
+    try:
+        nodes, edges = await storage.get_merged_flow_graph()
+        action_nodes = [n for n in nodes if n.entity_type == "arachne_flow:action"]
+        action_ids = {n.node_id for n in action_nodes}
+
+        # 两个流程的 act_chip_testing 合并为一个 merged_action 节点
+        assert storage.merged_action_id("chip_testing") in action_ids
+        assert not any(nid.endswith(":act_chip_testing") for nid in action_ids)
+
+        merged_testing = next(
+            n for n in action_nodes if n.node_id == storage.merged_action_id("chip_testing")
+        )
+        flow_ids = set(merged_testing.properties.get("flow_ids") or [])
+        assert {"smartphone", "personal_computer"} <= flow_ids
+        # 合并节点用方法中文名
+        assert merged_testing.label
+
+        # 平行边聚合：merged_testing -> chip 的 primary_result 聚成一条且 count >= 2
+        agg = [
+            e
+            for e in edges
+            if e.from_node == storage.merged_action_id("chip_testing")
+            and e.to_node == "chip"
+            and e.edge_type == "primary_result"
+        ]
+        assert len(agg) == 1
+        assert int(agg[0].properties.get("count") or 0) >= 2
+        assert {"smartphone", "personal_computer"} <= set(
+            agg[0].properties.get("flow_ids") or []
+        )
+    finally:
+        await storage.clear_flow("smartphone")
+        await storage.clear_flow("personal_computer")
+
+
+@pytest.mark.asyncio(loop_scope="session")
 async def test_engine_neighbors():
     flow_id = "photovoltaic_inverter"
     parsed = parse_flow_file(FLOW_DIR / f"{flow_id}.yaml")

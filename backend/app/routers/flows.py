@@ -47,6 +47,7 @@ class FlowCompileResult(BaseModel):
 
 class FlowSubgraphRequest(BaseModel):
     flow_ids: List[str]
+    # Deprecated: per-file view now returns exact file content; depth is ignored.
     depth: int = 3
 
 
@@ -163,37 +164,51 @@ async def compile_flow(flow_id: str):
 
 @router.post("/subgraph", response_model=SubgraphResult)
 async def get_flows_subgraph(request: FlowSubgraphRequest):
-    """Return the unioned subgraph of one or more compiled flows.
+    """Return the exact triples declared by the selected flow files.
 
-    This is an engine-specific pass-through endpoint: it talks directly to the
-    arachne-flow storage layer rather than going through the generic query
-    router, demonstrating how per-engine operations can be exposed.
+    Per-file view semantics: "what you see is what the file declares" — all
+    edges with ``flow_id`` in the selection plus their endpoint nodes, unioned
+    across the selection. Shared resource/method nodes deduplicate naturally.
     """
     if not request.flow_ids:
         raise HTTPException(status_code=400, detail="flow_ids cannot be empty")
-    if request.depth < 1 or request.depth > 5:
-        raise HTTPException(status_code=400, detail="depth must be between 1 and 5")
-
-    node_map: dict[str, GraphNode] = {}
-    edge_map: dict[str, GraphEdge] = {}
 
     for flow_id in request.flow_ids:
         file_path = FLOW_DIR / f"{flow_id}.yaml"
         if not file_path.exists():
             raise HTTPException(status_code=404, detail=f"flow file not found: {flow_id}")
-        # 按流程过滤边：避免共享资源节点把其它流程的封测/测试等动作拉进当前视图
-        nodes, edges = await storage.get_flow_subgraph(flow_id, request.depth, flow_id=flow_id)
-        for node in nodes:
-            node_map[node.node_id] = node
-        for edge in edges:
-            edge_map[edge.edge_id] = edge
 
+    nodes, edges = await storage.get_flow_file_graph(request.flow_ids)
     return SubgraphResult(
         center_node_id=request.flow_ids[0],
         depth=request.depth,
-        nodes=list(node_map.values()),
-        edges=list(edge_map.values()),
+        nodes=nodes,
+        edges=edges,
     )
+
+
+class MergedFlowGraphResult(BaseModel):
+    nodes: List[GraphNode]
+    edges: List[GraphEdge]
+    merge_mode: str
+
+
+@router.get("/graph", response_model=MergedFlowGraphResult)
+async def get_flow_graph(merge: str = "method"):
+    """Full flow graph for the no-selection view.
+
+    ``merge=method`` (default) collapses cross-flow action occurrences with the
+    same method into one action node and aggregates parallel edges (with
+    ``flow_ids``/``count`` provenance), so the full graph reads as a clean
+    shared backbone instead of per-flow duplication. ``merge=none`` returns the
+    raw graph.
+    """
+    if merge == "none":
+        nodes, _ = await storage.list_flow_nodes(skip=0, limit=10000)
+        edges, _ = await storage.list_flow_edges(skip=0, limit=10000)
+        return MergedFlowGraphResult(nodes=nodes, edges=edges, merge_mode="none")
+    nodes, edges = await storage.get_merged_flow_graph()
+    return MergedFlowGraphResult(nodes=nodes, edges=edges, merge_mode="method")
 
 
 @router.post("/compile", response_model=List[FlowCompileResult])

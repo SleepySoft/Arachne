@@ -44,6 +44,11 @@ export function adaptFlowNode(node: GraphNode): IndustrialNode {
 /** 将 arachne_flow 引擎返回的 GraphEdge 适配为画布/面板使用的 GraphEdge 形状。 */
 export function adaptFlowEdge(edge: GraphEdge): GraphEdge {
   const e = edge as ArachneFlowEdge;
+  const props = (e as unknown as { properties?: Record<string, any> }).properties ?? {};
+  const baseLabel = EDGE_TYPE_LABELS[e.edge_type] ?? e.edge_type;
+  // 合并视图中聚合边（count>1）在标签上体现数量
+  const count = typeof props.count === "number" ? props.count : 0;
+  const label = count > 1 ? `${baseLabel} ×${count}` : baseLabel;
   return {
     edge_uuid: e.edge_uuid ?? "",
     edge_id: e.edge_id,
@@ -57,7 +62,7 @@ export function adaptFlowEdge(edge: GraphEdge): GraphEdge {
     updated_at: e.updated_at ?? undefined,
     edge_namespace: "arachne_flow",
     edge_type: e.edge_type,
-    edge_type_label: EDGE_TYPE_LABELS[e.edge_type] ?? e.edge_type,
-    properties: (e as unknown as { properties?: Record<string, any> }).properties ?? {},
+    edge_type_label: label,
+    properties: props,
   } as GraphEdge;
 }

@@ -263,6 +263,9 @@ export function NodeDetail({
 
 const FLOW_PROPERTY_LABELS: Record<string, string> = {
   flow_id: "所属流程",
+  flow_ids: "涉及流程",
+  merged_from: "合并的动作实例",
+  count: "聚合边数",
   resource_type: "资源类型",
   action_type: "动作类型",
   method_ref: "引用方法",
@@ -292,6 +295,12 @@ function FlowProperties({ node }: { node: IndustrialNode }) {
   if (!props || Object.keys(props).length === 0) return null;
 
   const formatValue = (key: string, value: unknown): string => {
+    if (Array.isArray(value)) {
+      if (value.length > 8) {
+        return `${value.slice(0, 8).join(", ")} 等 ${value.length} 项`;
+      }
+      return value.join(", ");
+    }
     const v = String(value);
     if (key === "resource_type") return ARACHNE_FLOW_RESOURCE_TYPE_LABELS[v] ?? v;
     if (key === "action_type") return ARACHNE_FLOW_ACTION_TYPE_LABELS[v] ?? v;
@@ -299,7 +308,12 @@ function FlowProperties({ node }: { node: IndustrialNode }) {
   };
 
   const entries = Object.entries(props).filter(
-    ([k, v]) => v !== null && v !== undefined && v !== "" && !FLOW_PROPERTY_SKIP.has(k)
+    ([k, v]) =>
+      v !== null &&
+      v !== undefined &&
+      v !== "" &&
+      !(Array.isArray(v) && v.length === 0) &&
+      !FLOW_PROPERTY_SKIP.has(k)
   );
   if (entries.length === 0) return null;
 

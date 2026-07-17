@@ -7,11 +7,10 @@ import {
   EDGE_NAMESPACE_STYLES,
   ENTITY_TYPE_COLORS,
   GraphEdge,
-  GraphNode,
   IndustrialNode,
 } from "@/types";
 import { FocusState, FocusStep, HideState } from "@/types/view";
-import { getNeighbors, getNode, listEdges, listNodes } from "@/services/api";
+import { getFlowMergedGraph, getNeighbors, getNode, listEdges, listNodes } from "@/services/api";
 import { adaptFlowEdge, adaptFlowNode } from "@/lib/flowAdapters";
 
 cytoscape.use(dagre);
@@ -2003,23 +2002,16 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         if (sourceData) {
           nodesData = { items: sourceData.nodes };
           edgesData = { items: sourceData.edges };
+        } else if (engine === "arachne_flow") {
+          // flow 全图：使用合并视图（动作按方法合并、平行边聚合），更干净易读
+          const merged = await getFlowMergedGraph("method");
+          nodesData = { items: merged.nodes.map((n) => adaptFlowNode(n)) };
+          edgesData = { items: merged.edges.map((e) => adaptFlowEdge(e)) };
         } else {
-          const [rawNodes, rawEdges] = await Promise.all([
+          [nodesData, edgesData] = await Promise.all([
             listNodes(1, 1000, undefined, undefined, undefined, undefined, engine),
             listEdges(1, 1000, undefined, undefined, undefined, undefined, engine),
           ]);
-          // arachne_flow 引擎返回 GraphNode/GraphEdge 通用形状，需适配为画布形状
-          if (engine === "arachne_flow") {
-            nodesData = {
-              items: rawNodes.items.map((n) => adaptFlowNode(n as unknown as GraphNode)),
-            };
-            edgesData = {
-              items: rawEdges.items.map((e) => adaptFlowEdge(e as unknown as GraphEdge)),
-            };
-          } else {
-            nodesData = rawNodes;
-            edgesData = rawEdges;
-          }
         }
         if (!mounted) return;
         if (!containerRef.current) return;

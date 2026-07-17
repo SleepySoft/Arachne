@@ -321,6 +321,14 @@ export const compileFlows = async (flowIds: string[]): Promise<FlowCompileResult
   return res.data;
 };
 
+/** 全量流程图（merge=method 时按方法合并跨流程动作并聚合平行边）。 */
+export const getFlowMergedGraph = async (
+  merge: "method" | "none" = "method"
+): Promise<{ nodes: GraphNode[]; edges: GraphEdge[]; merge_mode: string }> => {
+  const res = await client.get("/flows/graph", { params: { merge } });
+  return res.data;
+};
+
 export const getConflicts = async (): Promise<unknown[]> => {
   const res = await client.get("/query/conflicts");
   return res.data;
