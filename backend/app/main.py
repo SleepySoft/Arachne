@@ -21,6 +21,7 @@ from app.routers import (
     company_material,
     computation_jobs,
     edges,
+    engines,
     explore,
     factual_graph,
     flows,
@@ -107,6 +108,7 @@ app.include_router(computation_jobs.router, prefix=f"{settings.API_V1_STR}/compu
 app.include_router(batches.router, prefix=f"{settings.API_V1_STR}/batches", tags=["Batches"])
 app.include_router(business_batches.router, prefix=f"{settings.API_V1_STR}/business-batches", tags=["Business Batches"])
 app.include_router(factual_graph.router, prefix=f"{settings.API_V1_STR}/factual-graph", tags=["Factual Graph"])
+app.include_router(engines.router, prefix=f"{settings.API_V1_STR}/engines", tags=["Engines"])
 app.include_router(flows.router, prefix=f"{settings.API_V1_STR}/flows", tags=["Flows"])
 app.include_router(explore.router, prefix=f"{settings.API_V1_STR}/explore", tags=["Explore"])
 app.include_router(query.router, prefix=f"{settings.API_V1_STR}/query", tags=["Query"])

@@ -635,6 +635,15 @@ export interface FlowCompileResult {
   dual: number;
 }
 
+export interface EngineInfo {
+  name: string;
+  label: string;
+  description?: string;
+  is_read_only?: boolean;
+  supports_flows?: boolean;
+  default_view?: string;
+}
+
 // Company network node type used for canvas
 export interface CompanyNetworkNode {
   company_id: string;

@@ -6,6 +6,7 @@ import {
   DbCheckMeta,
   DbCheckResult,
   DbFixResult,
+  EngineInfo,
   FlowCompileResult,
   FlowSummary,
   GraphEdge,
@@ -267,6 +268,12 @@ export const getStats = async (): Promise<GraphStats> => {
 
 export const getHealth = async (): Promise<{ status: string; neo4j: string; postgres: string }> => {
   const res = await client.get("/query/health");
+  return res.data;
+};
+
+// Engines
+export const listEngines = async (): Promise<{ engines: EngineInfo[]; default: string }> => {
+  const res = await client.get("/engines");
   return res.data;
 };
 

@@ -6,7 +6,7 @@ from typing import Any, List, Optional, Tuple
 
 from app.engines.arachne_flow import storage
 from app.engines.base import GraphEngine
-from app.models.core import GraphEdge, GraphNode, GraphStats, SubgraphResult
+from app.models.core import EngineMetadata, GraphEdge, GraphNode, GraphStats, SubgraphResult
 
 
 class ReadOnlyEngineError(Exception):
@@ -28,6 +28,17 @@ class ArachneFlowEngine(GraphEngine):
     @property
     def supports_write(self) -> bool:
         return False
+
+    @property
+    def metadata(self) -> EngineMetadata:
+        return EngineMetadata(
+            name="arachne_flow",
+            label="arachne_flow 引擎",
+            description="从 YAML 流程文件编译而来的只读流程图引擎",
+            is_read_only=True,
+            supports_flows=True,
+            default_view="flow_graph",
+        )
 
     # -----------------------------------------------------------------------
     # Nodes (read-only)

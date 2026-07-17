@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Activity, Brain, Database, GitBranch, Layers, Network } from "lucide-react";
-import { getHealth, getStats } from "@/services/api";
+import { getHealth, getStats, listEngines } from "@/services/api";
 export type MainView = "industrial_graph" | "company_graph" | "flow_graph" | "db_checks" | "reasoning";
-export type GraphEngine = "legacy" | "arachne_flow";
+export type GraphEngine = string;
 
 interface StatsBarProps {
   mainView: MainView;
@@ -30,6 +30,17 @@ export function StatsBar({
     retry: false,
   });
 
+  const { data: enginesData } = useQuery({
+    queryKey: ["engines"],
+    queryFn: listEngines,
+    staleTime: 60000,
+  });
+
+  const engineOptions = enginesData?.engines ?? [
+    { name: "legacy", label: "legacy 引擎" },
+    { name: "arachne_flow", label: "arachne_flow 引擎" },
+  ];
+
   const companyNetworkStats = { nodes: 0, edges: 0 };
 
   return (
@@ -46,11 +57,16 @@ export function StatsBar({
         <div className="ml-4 flex items-center">
           <select
             value={graphEngine}
-            onChange={(e) => onChangeGraphEngine?.(e.target.value as GraphEngine)}
-            className="h-8 rounded-md border border-slate-700 bg-slate-900 px-2 text-sm text-slate-200 outline-none focus:border-cyan-500"
+            title={engineOptions.find((e) => e.name === graphEngine)?.description}
+            onChange={(e) => onChangeGraphEngine?.(e.target.value)}
+            className="h-8 rounded-md border border-slate-700 bg-slate-900 px-2 text-sm text-slate-200 outline-none focus:border-cyan-500 disabled:opacity-50"
+            disabled={!enginesData}
           >
-            <option value="legacy">legacy 引擎</option>
-            <option value="arachne_flow">arachne_flow 引擎</option>
+            {engineOptions.map((engine) => (
+              <option key={engine.name} value={engine.name}>
+                {engine.label}
+              </option>
+            ))}
           </select>
         </div>
 

@@ -123,3 +123,19 @@ class GraphStats(BaseModel):
     edge_type_distribution: Dict[str, int] = Field(default_factory=dict)
     status_distribution: Dict[str, int] = Field(default_factory=dict)
     confidence_distribution: Dict[str, int] = Field(default_factory=dict)
+
+
+class EngineMetadata(BaseModel):
+    """Descriptive metadata for a registered graph engine."""
+
+    name: str = Field(..., description="引擎标识符，用于 URL 和注册表")
+    label: str = Field(..., description="前端展示名称")
+    description: str = Field(default="", description="简短说明")
+    is_read_only: bool = Field(default=False, description="是否只读引擎（禁止节点/边写操作）")
+    supports_flows: bool = Field(default=False, description="是否支持流程图视图")
+    default_view: str = Field(default="industrial_graph", description="切换到该引擎时的默认主视图")
+
+
+class EngineList(BaseModel):
+    engines: List[EngineMetadata]
+    default: str = Field(..., description="默认引擎名称")

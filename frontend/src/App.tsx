@@ -22,7 +22,8 @@ import { CanvasContextMenu } from "@/components/CanvasContextMenu";
 import { EdgeContextMenu } from "@/components/EdgeContextMenu";
 import { ConnectEdgePanel } from "@/components/ConnectEdgePanel";
 import { QuickNodeForm } from "@/components/QuickNodeForm";
-import { deleteEdge, listCompanies, listIndustries, listProvStatementsByNode } from "@/services/api";
+import { deleteEdge, listCompanies, listEngines, listIndustries, listProvStatementsByNode } from "@/services/api";
+import type { EngineInfo } from "@/types";
 import { IndustrialSidebar } from "@/components/panels/IndustrialSidebar";
 import { IndustrialSearchPanel } from "@/components/panels/IndustrialSearchPanel";
 import { CompanySidebarPanel } from "@/components/panels/CompanySidebarPanel";
@@ -44,6 +45,29 @@ import { IndustrialViewState, CompanyViewState, SavedView } from "@/types/view";
 export default function App() {
   const [mainView, setMainView] = useState<MainView>("industrial_graph");
   const [graphEngine, setGraphEngine] = useState<GraphEngine>("legacy");
+
+  const { data: enginesData } = useQuery({
+    queryKey: ["engines"],
+    queryFn: listEngines,
+    staleTime: 60000,
+  });
+
+  const engineList = enginesData?.engines ?? [];
+  const defaultEngine = enginesData?.default ?? "legacy";
+
+  // Sync the initial engine to the backend-reported default once it loads.
+  useEffect(() => {
+    if (!enginesData) return;
+    setGraphEngine((current) => {
+      const exists = engineList.some((e) => e.name === current);
+      return exists ? current : defaultEngine;
+    });
+  }, [enginesData, defaultEngine, engineList]);
+
+  const getEngineInfo = useCallback(
+    (name: string): EngineInfo | undefined => engineList.find((e) => e.name === name),
+    [engineList]
+  );
 
   const industrial = useIndustrialGraph();
   const company = useCompanyGraph();
@@ -67,22 +91,28 @@ export default function App() {
   const savedViews = useSavedViews();
   const viewHistory = useViewStateHistory();
 
-  const handleChangeMainView = useCallback((view: MainView) => {
-    setMainView(view);
-    setGraphEngine(view === "flow_graph" ? "arachne_flow" : "legacy");
-    viewHistory.reset(view === "company_graph" ? "company" : "industrial");
-  }, [viewHistory.reset]);
+  const handleChangeMainView = useCallback(
+    (view: MainView) => {
+      setMainView(view);
+      // When switching to a view that belongs to a specific engine, align the engine selector.
+      const flowEngine = engineList.find((e) => e.supports_flows)?.name;
+      const engineName = view === "flow_graph" ? (flowEngine ?? defaultEngine) : defaultEngine;
+      setGraphEngine(engineName);
+      viewHistory.reset(view === "company_graph" ? "company" : "industrial");
+    },
+    [defaultEngine, engineList, viewHistory.reset]
+  );
 
-  const handleChangeGraphEngine = useCallback((engine: GraphEngine) => {
-    setGraphEngine(engine);
-    if (engine === "arachne_flow") {
-      setMainView("flow_graph");
-      viewHistory.reset("industrial");
-    } else {
-      setMainView("industrial_graph");
-      viewHistory.reset("industrial");
-    }
-  }, [viewHistory.reset]);
+  const handleChangeGraphEngine = useCallback(
+    (engine: GraphEngine) => {
+      setGraphEngine(engine);
+      const info = getEngineInfo(engine);
+      const nextView = (info?.default_view as MainView) ?? "industrial_graph";
+      setMainView(nextView);
+      viewHistory.reset(nextView === "company_graph" ? "company" : "industrial");
+    },
+    [getEngineInfo, viewHistory.reset]
+  );
 
   useEffect(() => {
     let cancelled = false;

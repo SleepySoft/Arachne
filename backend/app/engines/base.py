@@ -11,7 +11,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Tuple
 
-from app.models.core import GraphEdge, GraphNode, GraphStats, SubgraphResult
+from app.models.core import EngineMetadata, GraphEdge, GraphNode, GraphStats, SubgraphResult
 
 
 class GraphEngine(ABC):
@@ -22,6 +22,22 @@ class GraphEngine(ABC):
     def name(self) -> str:
         """Unique engine identifier used in URLs and registry."""
         ...
+
+    @property
+    def metadata(self) -> EngineMetadata:
+        """Return descriptive metadata for the engine.
+
+        Subclasses should override this to expose engine-specific capabilities
+        and default views to the frontend.
+        """
+        return EngineMetadata(
+            name=self.name,
+            label=self.name,
+            description="",
+            is_read_only=False,
+            supports_flows=False,
+            default_view="industrial_graph",
+        )
 
     # -----------------------------------------------------------------------
     # Node topology operations

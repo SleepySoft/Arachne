@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from app.database_postgres import get_postgres_pool
 from app.engines.base import GraphEngine
+from app.models.core import EngineMetadata
 from app.engines.legacy import schemas as legacy_schemas
 from app.engines.legacy.storage import (
     create_industrial_flow_edge,
@@ -37,6 +38,17 @@ class LegacyEngine(GraphEngine):
     @property
     def name(self) -> str:
         return "legacy"
+
+    @property
+    def metadata(self) -> EngineMetadata:
+        return EngineMetadata(
+            name="legacy",
+            label="legacy 引擎",
+            description="原始产业图引擎，支持完整的节点/关系读写",
+            is_read_only=False,
+            supports_flows=False,
+            default_view="industrial_graph",
+        )
 
     # -----------------------------------------------------------------------
     # Helpers
