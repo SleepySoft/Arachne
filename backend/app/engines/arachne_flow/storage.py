@@ -898,18 +898,33 @@ async def get_merged_flow_graph() -> Tuple[List[GraphNode], List[GraphEdge]]:
     nodes, _ = await list_flow_nodes(skip=0, limit=10000)
     all_edges, _ = await list_flow_edges(skip=0, limit=10000)
 
-    # 1) Merge action nodes by method_ref (fallback original_action_id)
+    # 1) Determine merge keys for action nodes, but only actually merge when
+    # the same method/action is used by more than one flow. Singleton actions
+    # keep their original namespaced id so product-specific stubs don't create
+    # confusing merged_action:xxx nodes.
     method_labels: Dict[str, str] = {
         n.node_id: n.label for n in nodes if n.entity_type == "arachne_flow:method"
     }
     action_merge_key: Dict[str, str] = {}
-    merged_actions: Dict[str, GraphNode] = {}
+    key_counts: Dict[str, int] = {}
     for n in nodes:
         if n.entity_type != "arachne_flow:action":
             continue
         props = n.properties or {}
         key = str(props.get("method_ref") or props.get("original_action_id") or n.node_id)
         action_merge_key[n.node_id] = key
+        key_counts[key] = key_counts.get(key, 0) + 1
+
+    merged_actions: Dict[str, GraphNode] = {}
+    singleton_action_ids: Set[str] = set()
+    for n in nodes:
+        if n.entity_type != "arachne_flow:action":
+            continue
+        props = n.properties or {}
+        key = action_merge_key[n.node_id]
+        if key_counts.get(key, 0) <= 1:
+            singleton_action_ids.add(n.node_id)
+            continue
         merged_id = merged_action_id(key)
         existing = merged_actions.get(merged_id)
         if existing is None:
@@ -938,7 +953,9 @@ async def get_merged_flow_graph() -> Tuple[List[GraphNode], List[GraphEdge]]:
 
     def map_node(nid: str) -> str:
         key = action_merge_key.get(nid)
-        return merged_action_id(key) if key else nid
+        if key and key_counts.get(key, 0) > 1:
+            return merged_action_id(key)
+        return nid
 
     # 2) Remap edges and aggregate parallels
     agg: Dict[Tuple[str, str, str], GraphEdge] = {}
@@ -976,6 +993,11 @@ async def get_merged_flow_graph() -> Tuple[List[GraphNode], List[GraphEdge]]:
     out_nodes: List[GraphNode] = [
         n for n in nodes if n.entity_type != "arachne_flow:action"
     ] + list(merged_actions.values())
+    # Singleton actions are not merged; keep them as-is.
+    out_nodes.extend(
+        n for n in nodes
+        if n.entity_type == "arachne_flow:action" and n.node_id in singleton_action_ids
+    )
     return out_nodes, list(agg.values())
 
 

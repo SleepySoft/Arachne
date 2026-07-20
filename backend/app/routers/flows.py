@@ -7,7 +7,7 @@ the backend to (re)compile a flow into the Neo4j flow graph.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional, Set
 
 import yaml
 from fastapi import APIRouter, HTTPException
@@ -49,6 +49,9 @@ class FlowSubgraphRequest(BaseModel):
     flow_ids: List[str]
     # Deprecated: per-file view now returns exact file content; depth is ignored.
     depth: int = 3
+    # "declared" (default): only triples written in the selected files.
+    # "effective": selected files plus all transitively included flows.
+    mode: str = "declared"
 
 
 class FlowCompileBatchRequest(BaseModel):
@@ -164,11 +167,13 @@ async def compile_flow(flow_id: str):
 
 @router.post("/subgraph", response_model=SubgraphResult)
 async def get_flows_subgraph(request: FlowSubgraphRequest):
-    """Return the exact triples declared by the selected flow files.
+    """Return a subgraph for the selected flow files.
 
-    Per-file view semantics: "what you see is what the file declares" — all
-    edges with ``flow_id`` in the selection plus their endpoint nodes, unioned
-    across the selection. Shared resource/method nodes deduplicate naturally.
+    ``mode="declared"`` (default): only the triples written in the selected
+    files — "what you see is what the file declares".
+
+    ``mode="effective"``: selected files plus all transitively included flows,
+    so upstream chains through shared resources are preserved for tracing.
     """
     if not request.flow_ids:
         raise HTTPException(status_code=400, detail="flow_ids cannot be empty")
@@ -178,13 +183,57 @@ async def get_flows_subgraph(request: FlowSubgraphRequest):
         if not file_path.exists():
             raise HTTPException(status_code=404, detail=f"flow file not found: {flow_id}")
 
-    nodes, edges = await storage.get_flow_file_graph(request.flow_ids)
+    flow_ids = request.flow_ids
+    if request.mode == "effective":
+        flow_ids = _resolve_effective_flow_ids(request.flow_ids)
+
+    nodes, edges = await storage.get_flow_file_graph(flow_ids)
     return SubgraphResult(
         center_node_id=request.flow_ids[0],
         depth=request.depth,
         nodes=nodes,
         edges=edges,
     )
+
+
+_include_graph_cache: Optional[Dict[str, List[str]]] = None
+
+
+def _get_include_graph() -> Dict[str, List[str]]:
+    """Parse all flow files once to build the include dependency graph."""
+    global _include_graph_cache
+    if _include_graph_cache is not None:
+        return _include_graph_cache
+    graph: Dict[str, List[str]] = {}
+    for path in sorted(FLOW_DIR.glob("*.yaml")):
+        if path.name == "manifest.yaml":
+            continue
+        try:
+            parsed = parse_flow_file(path)
+            graph[parsed.flow_id] = [Path(name).stem for name in parsed.includes]
+        except FlowParseError:
+            graph[path.stem] = []
+    _include_graph_cache = graph
+    return graph
+
+
+def _resolve_effective_flow_ids(flow_ids: List[str]) -> List[str]:
+    """Expand selected flows to include all transitively included flows."""
+    graph = _get_include_graph()
+    seen: Set[str] = set()
+    order: List[str] = []
+
+    def visit(fid: str) -> None:
+        if fid in seen:
+            return
+        seen.add(fid)
+        order.append(fid)
+        for dep in graph.get(fid, []):
+            visit(dep)
+
+    for fid in flow_ids:
+        visit(fid)
+    return order
 
 
 class MergedFlowGraphResult(BaseModel):

@@ -41,26 +41,21 @@ class FlowValidationError(Exception):
 
 
 def parse_flow_file(path: Path, base_dir: Optional[Path] = None, _seen: Optional[Set[Path]] = None) -> ParsedFlow:
-    """Parse a flow YAML file, recursively inlining included flows.
+    """Parse a flow YAML file.
+
+    ``include`` is a **dependency declaration**, not textual inclusion: the
+    current file only parses its own ``edges``, and the builder resolves
+    cross-file references through globally shared RESOURCE/METHOD nodes.
 
     Args:
         path: Path to the YAML file.
-        base_dir: Directory used to resolve relative include paths. Defaults to
-            the parent directory of ``path``.
-        _seen: Internal set used to detect circular includes.
+        base_dir: Unused, kept for backward compatibility.
+        _seen: Unused, kept for backward compatibility.
 
     Returns:
         A normalized ParsedFlow object.
     """
     path = Path(path).resolve()
-    if base_dir is None:
-        base_dir = path.parent
-    if _seen is None:
-        _seen = set()
-
-    if path in _seen:
-        raise FlowParseError(f"circular include detected: {path}")
-    _seen.add(path)
 
     try:
         with path.open("r", encoding="utf-8") as f:
@@ -82,7 +77,7 @@ def parse_flow_file(path: Path, base_dir: Optional[Path] = None, _seen: Optional
         title=doc.title,
         root_product=doc.root_product,
         flow_id=flow_id,
-        includes=[],
+        includes=list(doc.include or []),
         locals=dict(doc.local),
         resources={},
         actions={},
@@ -90,27 +85,8 @@ def parse_flow_file(path: Path, base_dir: Optional[Path] = None, _seen: Optional
         triples=[],
     )
 
-    # Inline includes first so later triples can reference them.
-    for include_name in doc.include or []:
-        include_path = (base_dir / include_name).resolve()
-        if not include_path.exists():
-            raise FlowParseError(f"include file not found: {include_name} (looked in {base_dir})")
-        included = parse_flow_file(include_path, base_dir=base_dir, _seen=_seen)
-        parsed.includes.append(include_name)
-        # Merge locals and triples. ACTIONs from included flows keep their own
-        # flow_id namespace so they remain distinct occurrences.
-        parsed.locals.update(included.locals)
-        parsed.triples.extend(included.triples)
-        # Resources/methods are shared by ID; actions are namespaced below.
-        for res in included.resources.values():
-            parsed.resources.setdefault(res.resource_id, res)
-        for method in included.methods.values():
-            parsed.methods.setdefault(method.method_id, method)
-        for action in included.actions.values():
-            parsed.actions.setdefault(action.action_id, action)
-
-    # Add this file's own locals and triples.
-    parsed.locals.update(doc.local)
+    # Parse only this file's own triples. Included flows are dependencies,
+    # not text to inline.
     for raw_triple in doc.edges:
         parsed.triples.append(
             FlowTriple(source=raw_triple[0], predicate=raw_triple[1], target=raw_triple[2])

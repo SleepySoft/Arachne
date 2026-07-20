@@ -128,6 +128,8 @@ class FlowGraph:
     actions: Dict[str, FlowAction] = field(default_factory=dict)
     triples: List[Tuple[FlowTriple, str]] = field(default_factory=list)
     flow_ids: List[str] = field(default_factory=list)
+    # flow_id -> [included flow_id stems]; include is a dependency declaration
+    includes: Dict[str, List[str]] = field(default_factory=dict)
     warnings: List[str] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
 
@@ -166,6 +168,10 @@ class FlowGraphBuilder:
         """Incorporate one parsed flow into the global in-memory graph."""
         flow_id = parsed.flow_id
         self.graph.flow_ids.append(flow_id)
+        # include is a dependency declaration; normalize to flow_id stems.
+        self.graph.includes[flow_id] = [
+            Path(name).stem for name in (parsed.includes or [])
+        ]
 
         dual_ids = set(parsed.resources.keys()) & set(parsed.actions.keys())
 
@@ -247,6 +253,22 @@ class FlowGraphBuilder:
             target=resolve(triple.target, "target"),
         )
 
+    def effective_flow_ids(self, flow_id: str) -> List[str]:
+        """Return ``flow_id`` plus all transitively included flow ids."""
+        seen: Set[str] = set()
+        order: List[str] = []
+
+        def visit(fid: str) -> None:
+            if fid in seen:
+                return
+            seen.add(fid)
+            order.append(fid)
+            for dep in self.graph.includes.get(fid, []):
+                visit(dep)
+
+        visit(flow_id)
+        return order
+
     def validate_global(self) -> bool:
         """Run global consistency checks and populate ``self.graph.errors``."""
         self.graph.errors.clear()
@@ -270,6 +292,64 @@ class FlowGraphBuilder:
                 self.graph.errors.append(
                     f"action '{node_id}' collides with a RESOURCE node outside dual roles"
                 )
+
+        # Validate include graph: referenced flows must exist, no cycles.
+        include_graph = self.graph.includes
+        for flow_id, deps in include_graph.items():
+            for dep in deps:
+                if dep not in include_graph:
+                    self.graph.errors.append(
+                        f"flow '{flow_id}' includes unknown flow '{dep}'"
+                    )
+
+        def visit_include(fid: str, stack: List[str]) -> None:
+            if fid in stack:
+                cycle = " -> ".join(stack + [fid])
+                self.graph.errors.append(f"circular include detected: {cycle}")
+                return
+            for dep in include_graph.get(fid, []):
+                visit_include(dep, stack + [fid])
+
+        for fid in include_graph:
+            visit_include(fid, [])
+
+        # Producer/consumer analysis for RESOURCEs.
+        producers: Dict[str, Set[str]] = {}  # resource_id -> set of producing flows
+        for triple, flow_id in self.graph.triples:
+            if triple.predicate in {r.value for r in OutputRole}:
+                producers.setdefault(triple.target, set()).add(flow_id)
+
+        # Warn when the same RESOURCE is produced by multiple flows (ambiguous).
+        for rid, flows in producers.items():
+            if len(flows) > 1:
+                self.graph.warnings.append(
+                    f"resource '{rid}' is produced by multiple flows: {sorted(flows)}"
+                )
+
+        # Check that external inputs are either produced by an included flow or
+        # are genuine leaf inputs (not produced anywhere).
+        for flow_id in self.graph.flow_ids:
+            consumed: Set[str] = set()
+            produced: Set[str] = set()
+            for triple, fid in self.graph.triples:
+                if fid != flow_id:
+                    continue
+                if triple.predicate in {r.value for r in InputRole}:
+                    consumed.add(triple.source)
+                if triple.predicate in {r.value for r in OutputRole}:
+                    produced.add(triple.target)
+            external_inputs = consumed - produced
+            deps = set(self.effective_flow_ids(flow_id)) - {flow_id}
+            for rid in sorted(external_inputs):
+                if rid not in producers:
+                    # leaf input / raw material; allowed.
+                    continue
+                producer_flows = producers.get(rid, set())
+                if not producer_flows & deps:
+                    self.graph.warnings.append(
+                        f"flow '{flow_id}' consumes '{rid}' produced by {sorted(producer_flows)} "
+                        f"but does not include any of them"
+                    )
 
         return len(self.graph.errors) == 0
 
