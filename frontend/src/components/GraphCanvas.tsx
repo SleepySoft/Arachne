@@ -2138,6 +2138,17 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
                 opacity: 0.45,
               },
             },
+            // arachne-flow 引用方法边：语义上是“方法作为输入”，但数据里存为 action -> method，
+            // 所以把箭头反过来画，让方法看起来从上游指向动作。
+            {
+              selector: 'edge[edge_namespace = "arachne_flow"][edge_type = "ref"]',
+              style: {
+                "target-arrow-shape": "none",
+                "source-arrow-shape": "triangle",
+                "source-arrow-color": (ele: cytoscape.EdgeSingular) => edgeVisualColor(ele),
+                "target-arrow-color": "transparent",
+              },
+            },
             // 6. external（顺藤摸瓜拉入的外部节点/边）
             {
               selector: ".external",
