@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
 from app.database_flow import get_flow_async_driver
+from app.engines.arachne_flow.builder import FlowGraph
 from app.engines.arachne_flow.schemas import (
     ActionType,
     FlowAction,
@@ -84,15 +85,15 @@ async def compile_parsed_flow(parsed: ParsedFlow, clear_existing: bool = False) 
             await session.run(
                 """
                 MERGE (n:ArachneFlowNode:ArachneFlowResource:ArachneFlowAction {node_id: $node_id})
-                SET n.flow_id = $flow_id,
+                ON CREATE SET n.flow_id = $flow_id,
                     n.node_kind = 'dual',
                     n.also_resource = true,
                     n.resource_type = $resource_type,
                     n.action_type = $action_type,
                     n.local_name = $local_name,
                     n.original_action_id = $original_action_id,
-                    n.method_ref = $method_ref,
-                    n.updated_at = datetime()
+                    n.method_ref = $method_ref
+                SET n.updated_at = datetime()
                 """,
                 {
                     "node_id": node_id,
@@ -111,11 +112,11 @@ async def compile_parsed_flow(parsed: ParsedFlow, clear_existing: bool = False) 
             await session.run(
                 """
                 MERGE (n:ArachneFlowNode:ArachneFlowResource {node_id: $node_id})
-                SET n.flow_id = $flow_id,
+                ON CREATE SET n.flow_id = $flow_id,
                     n.node_kind = 'resource',
                     n.resource_type = $resource_type,
-                    n.local_name = $local_name,
-                    n.updated_at = datetime()
+                    n.local_name = $local_name
+                SET n.updated_at = datetime()
                 """,
                 {
                     "node_id": resource.resource_id,
@@ -153,10 +154,10 @@ async def compile_parsed_flow(parsed: ParsedFlow, clear_existing: bool = False) 
             await session.run(
                 """
                 MERGE (n:ArachneFlowNode:ArachneFlowMethod {node_id: $node_id})
-                SET n.flow_id = $flow_id,
+                ON CREATE SET n.flow_id = $flow_id,
                     n.node_kind = 'method',
-                    n.method_name = $method_name,
-                    n.updated_at = datetime()
+                    n.method_name = $method_name
+                SET n.updated_at = datetime()
                 """,
                 {
                     "node_id": method.method_id,
@@ -225,6 +226,195 @@ async def compile_parsed_flow(parsed: ParsedFlow, clear_existing: bool = False) 
         "dual": dual_count,
         "edges": len(parsed.triples),
     }
+
+
+async def compile_flow_graph(
+    graph: FlowGraph,
+    clear_existing: bool = True,
+) -> Dict[str, int]:
+    """Persist a unified in-memory flow graph to Neo4j.
+
+    This is the batch counterpart to ``compile_parsed_flow``: all files have
+    already been merged/deduplicated in memory, so we just write the final
+    node/edge set in one pass.
+    """
+    driver = get_flow_async_driver()
+
+    if clear_existing:
+        await _clear_all_flow_data(driver)
+
+    dual_ids = graph.dual_node_ids()
+
+    async with driver.session() as session:
+        # 1. Resource nodes (and dual-role nodes).
+        for node_id, resource in graph.resources.items():
+            if node_id in dual_ids:
+                action = graph.actions[node_id]
+                await session.run(
+                    """
+                    MERGE (n:ArachneFlowNode:ArachneFlowResource:ArachneFlowAction {node_id: $node_id})
+                    ON CREATE SET n.flow_id = $flow_id,
+                        n.node_kind = 'dual',
+                        n.also_resource = true,
+                        n.resource_type = $resource_type,
+                        n.action_type = $action_type,
+                        n.local_name = $local_name,
+                        n.original_action_id = $original_action_id,
+                        n.method_ref = $method_ref
+                    SET n.updated_at = datetime()
+                    """,
+                    {
+                        "node_id": node_id,
+                        "flow_id": action.flow_id,
+                        "resource_type": resource.resource_type.value,
+                        "action_type": action.action_type.value,
+                        "local_name": resource.local_name,
+                        "original_action_id": action.action_id,
+                        "method_ref": action.method_ref,
+                    },
+                )
+            else:
+                await session.run(
+                    """
+                    MERGE (n:ArachneFlowNode:ArachneFlowResource {node_id: $node_id})
+                    ON CREATE SET n.flow_id = $flow_id,
+                        n.node_kind = 'resource',
+                        n.resource_type = $resource_type,
+                        n.local_name = $local_name
+                    SET n.updated_at = datetime()
+                    """,
+                    {
+                        "node_id": node_id,
+                        "flow_id": "arachne_flow",
+                        "resource_type": resource.resource_type.value,
+                        "local_name": resource.local_name,
+                    },
+                )
+
+        # 2. Method nodes (global singletons).
+        for method in graph.methods.values():
+            await session.run(
+                """
+                MERGE (n:ArachneFlowNode:ArachneFlowMethod {node_id: $node_id})
+                ON CREATE SET n.flow_id = $flow_id,
+                    n.node_kind = 'method',
+                    n.method_name = $method_name
+                SET n.updated_at = datetime()
+                """,
+                {
+                    "node_id": method.method_id,
+                    "flow_id": "arachne_flow",
+                    "method_name": method.method_name or method.method_id,
+                },
+            )
+
+        # 3. Action-only nodes (namespaced per flow occurrence).
+        for node_id, action in graph.actions.items():
+            if node_id in dual_ids:
+                continue
+            await session.run(
+                """
+                CREATE (n:ArachneFlowNode:ArachneFlowAction {node_id: $node_id})
+                SET n.flow_id = $flow_id,
+                    n.node_kind = 'action',
+                    n.action_type = $action_type,
+                    n.original_action_id = $original_action_id,
+                    n.method_ref = $method_ref,
+                    n.updated_at = datetime()
+                """,
+                {
+                    "node_id": node_id,
+                    "flow_id": action.flow_id,
+                    "action_type": action.action_type.value,
+                    "original_action_id": action.action_id,
+                    "method_ref": action.method_ref,
+                },
+            )
+
+        # 4. Edges.
+        for idx, (triple, flow_id) in enumerate(graph.triples):
+            edge_id = _make_edge_id(
+                flow_id, triple.source, triple.predicate, triple.target, idx
+            )
+            if triple.predicate == SpecialRole.REF.value:
+                await session.run(
+                    """
+                    MATCH (a:ArachneFlowNode {node_id: $src})
+                    MATCH (b:ArachneFlowNode {node_id: $tgt})
+                    CREATE (a)-[r:ARACHNE_FLOW {edge_id: $edge_id, flow_id: $flow_id,
+                                                edge_namespace: 'arachne_flow',
+                                                edge_type: 'ref',
+                                                created_at: datetime()}]->(b)
+                    """,
+                    {
+                        "src": triple.source,
+                        "tgt": triple.target,
+                        "edge_id": edge_id,
+                        "flow_id": flow_id,
+                    },
+                )
+            else:
+                await session.run(
+                    """
+                    MATCH (a:ArachneFlowNode {node_id: $src})
+                    MATCH (b:ArachneFlowNode {node_id: $tgt})
+                    CREATE (a)-[r:ARACHNE_FLOW {edge_id: $edge_id, flow_id: $flow_id,
+                                                edge_namespace: 'arachne_flow',
+                                                edge_type: $edge_type,
+                                                created_at: datetime()}]->(b)
+                    """,
+                    {
+                        "src": triple.source,
+                        "tgt": triple.target,
+                        "edge_id": edge_id,
+                        "flow_id": flow_id,
+                        "edge_type": triple.predicate,
+                    },
+                )
+
+    await _stamp_canonical_names_for_graph(driver, graph)
+
+    return {
+        "resources": len(graph.resources),
+        "methods": len(graph.methods),
+        "actions": len(graph.actions),
+        "dual": len(dual_ids),
+        "edges": len(graph.triples),
+    }
+
+
+async def _clear_all_flow_data(driver) -> None:
+    """Remove every arachne-flow node and edge. Used by batch (re)loads."""
+    async with driver.session() as session:
+        await session.run("MATCH ()-[r:ARACHNE_FLOW]->() DELETE r")
+        await session.run("MATCH (n:ArachneFlowNode) DELETE n")
+
+
+async def _stamp_canonical_names_for_graph(driver, graph: FlowGraph) -> None:
+    """Write canonical_name_zh/en from PG industrial_nodes onto flow nodes."""
+    candidate_ids = list(set(graph.resources.keys()) | set(graph.methods.keys()))
+    if not candidate_ids:
+        return
+    try:
+        meta_map = await node_storage.get_nodes_by_ids(candidate_ids)
+    except Exception:
+        return
+    rows = [
+        {"node_id": nid, "zh": meta.canonical_name_zh, "en": meta.canonical_name_en}
+        for nid, meta in meta_map.items()
+        if meta.canonical_name_zh or meta.canonical_name_en
+    ]
+    if not rows:
+        return
+    async with driver.session() as session:
+        await session.run(
+            """
+            UNWIND $rows AS row
+            MATCH (n:ArachneFlowNode {node_id: row.node_id})
+            SET n.canonical_name_zh = row.zh, n.canonical_name_en = row.en
+            """,
+            {"rows": rows},
+        )
 
 
 async def _stamp_canonical_names(driver, parsed: ParsedFlow) -> None:
@@ -306,11 +496,10 @@ async def clear_flow(flow_id: str) -> None:
         )
         await session.run(
             """
-            MATCH (n:ArachneFlowNode {flow_id: $flow_id})
+            MATCH (n:ArachneFlowNode)
             WHERE NOT (n)-[:ARACHNE_FLOW]-()
             DELETE n
             """,
-            {"flow_id": flow_id},
         )
 
 
