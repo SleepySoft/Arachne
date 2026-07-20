@@ -2071,6 +2071,12 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
                 "border-color": "#1e293b",
                 width: 28,
                 height: 28,
+                shape: (ele: cytoscape.NodeSingular) => {
+                  const et = ele.data("entity_type");
+                  if (et === "arachne_flow:action") return "roundrectangle";
+                  if (et === "arachne_flow:method") return "hexagon";
+                  return "ellipse";
+                },
                 label: "data(label)",
                 "font-size": "10px",
                 "text-valign": "bottom",
