@@ -1,7 +1,8 @@
 schema: arachne-flow/v0.1
 title: 'Semiconductor flow: photovoltaic_inverter'
 root_product: photovoltaic_inverter
-include: []
+include:
+- power_semiconductor_manufacturing.yaml
 local: {}
 edges:
 - [power_semiconductor, feedstock, act_integrate_photovoltaic_inverter]

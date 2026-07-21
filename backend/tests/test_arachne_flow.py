@@ -57,11 +57,21 @@ def test_parse_chip_manufacturing_flow():
     assert parsed.root_product == "chip"
     assert len(parsed.resources) > 0
     assert len(parsed.actions) > 0
-    # chip_design is a METHOD, not a RESOURCE/ACTION dual node.
+    # Chip manufacturing now starts from wafer (produced by wafer_fabrication_processes).
+    assert "wafer_dicing" in parsed.methods
+    assert "chip_testing" in parsed.methods
+    assert "chip_packaging_and_testing" in parsed.methods
+    assert parsed.includes == ["wafer_fabrication_processes.yaml"]
+
+
+def test_parse_chip_design_flow():
+    parsed = parse_flow_file(FLOW_DIR / "chip_design.yaml")
+    assert parsed.schema_version == "arachne-flow/v0.1"
+    assert parsed.flow_id == "chip_design"
+    assert parsed.root_product == "chip_design_output"
     assert "chip_design" in parsed.methods
     assert "chip_design" not in parsed.resources
     assert "chip_design" not in parsed.actions
-    # The synthetic output resource is declared in local.
     assert "chip_design_output" in parsed.locals
 
 

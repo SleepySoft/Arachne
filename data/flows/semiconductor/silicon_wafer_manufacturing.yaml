@@ -1,0 +1,18 @@
+schema: arachne-flow/v0.1
+title: 'Semiconductor flow: silicon wafer manufacturing (shared)'
+root_product: silicon_wafer
+include: []
+local: {}
+edges:
+- [silicon, feedstock, act_silicon_purification]
+- [act_silicon_purification, ref, silicon_purification]
+- [act_silicon_purification, primary_result, polysilicon]
+- [polysilicon, feedstock, act_czochralski_growth]
+- [act_czochralski_growth, ref, czochralski_growth]
+- [act_czochralski_growth, primary_result, silicon_ingot]
+- [polysilicon, feedstock, act_float_zone_growth]
+- [act_float_zone_growth, ref, float_zone_growth]
+- [act_float_zone_growth, primary_result, silicon_ingot]
+- [silicon_ingot, feedstock, act_silicon_ingot_slicing]
+- [act_silicon_ingot_slicing, ref, silicon_ingot_slicing]
+- [act_silicon_ingot_slicing, primary_result, silicon_wafer]

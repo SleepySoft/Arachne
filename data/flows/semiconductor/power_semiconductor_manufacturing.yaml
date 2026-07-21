@@ -1,0 +1,20 @@
+schema: arachne-flow/v0.1
+title: 'Semiconductor flow: power semiconductor manufacturing (shared)'
+root_product: power_semiconductor
+include:
+- silicon_wafer_manufacturing.yaml
+local: {}
+edges:
+- [gallium, feedstock, act_gan_wafer_manufacturing]
+- [gallium_nitride, feedstock, act_gan_wafer_manufacturing]
+- [act_gan_wafer_manufacturing, ref, gan_wafer_manufacturing]
+- [act_gan_wafer_manufacturing, primary_result, gan_wafer]
+- [silicon_carbide, feedstock, act_sic_wafer_manufacturing]
+- [act_sic_wafer_manufacturing, ref, sic_wafer_manufacturing]
+- [act_sic_wafer_manufacturing, primary_result, sic_wafer]
+- [gan_wafer, feedstock, act_power_device_fabrication]
+- [sic_wafer, feedstock, act_power_device_fabrication]
+- [silicon_wafer, feedstock, act_power_device_fabrication]
+- [act_power_device_fabrication, ref, power_device_fabrication]
+- [act_power_device_fabrication, primary_result, power_device]
+- [act_power_device_fabrication, primary_result, power_semiconductor]

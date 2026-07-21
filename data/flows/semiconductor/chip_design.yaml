@@ -1,0 +1,12 @@
+schema: arachne-flow/v0.1
+title: 'Semiconductor flow: chip design (shared)'
+root_product: chip_design_output
+include: []
+local:
+  chip_design_output: process 产出
+edges:
+- [integrated_device_manufacturer, tool, act_chip_design]
+- [eda_software, tool, act_chip_design]
+- [ip_core, tool, act_chip_design]
+- [act_chip_design, ref, chip_design]
+- [act_chip_design, primary_result, chip_design_output]
