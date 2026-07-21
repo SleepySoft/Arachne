@@ -588,6 +588,37 @@ python cli/arachne_cli.py industry list --search 智能驾驶
 
 如果实体已存在，而用户只想补充关系，请使用 `add-mapping`、`add-exposure` 或批量接口，不要重复创建实体。
 
+## Arachne-flow 流程文件管理与编辑器
+
+Arachne-flow 是独立的流程图引擎，使用 `data/flows/semiconductor/*.yaml` 定义 RESOURCE / ACTION / METHOD 三元组。相关操作：
+
+### 后端 API
+
+- `GET /api/v1/flows` — 列出所有流程文件及编译状态
+- `GET /api/v1/flows/{flow_id}/content` — 读取流程文件的 YAML 内容
+- `POST /api/v1/flows/preview` — 预览 YAML 内容（不写库），返回节点/边/错误/警告/includes
+- `POST /api/v1/flows/format` — 将 YAML 重新序列化为紧凑三元组 `[a, b, c]` 形式
+- `PUT /api/v1/flows/{flow_id}` — 保存已有流程文件（校验 + 自动重新编译）
+- `POST /api/v1/flows` — 创建新流程文件（校验 flow_id 蛇形命名 + 自动编译）
+- `POST /api/v1/flows/{flow_id}/compile` — 重新编译单个流程
+- `POST /api/v1/flows/compile` — 批量重新编译
+- `POST /api/v1/flows/subgraph` — 查询流程子图（`mode="declared"` 仅当前文件，`mode="effective"` 含 include 的上游链）
+- `GET /api/v1/flows/graph?merge=method|none` — 全量流程图（merge=method 按方法合并跨流程动作）
+
+### 前端编辑器
+
+- **流程编辑器页**（顶栏「流程编辑器」）：左侧 YAML 编辑 + 右侧实时预览，语法错误红色横幅并保持最后一次正确图。
+- **主工作区右侧面板**（arachne_flow 引擎下左侧栏「编辑流程」按钮）：不跳转页面，在总图旁边直接编辑；编辑器与主图之间的分隔条可拖动；编辑时当前文件的节点会在主图上自动高亮。
+- **辅助录入**：可搜索的节点选择器、三元组快速插入、常用 predicate 一键骨架、`整理格式` 按钮（调用 `/flows/format`）。
+- **折叠 include**：把 include 的共享流程折叠成 `flow_folder:*` 文件夹节点，只保留与当前文件接口资源的连线；共享节点始终可见。
+
+### 流程文件编写要点
+
+- RESOURCE / METHOD 是全局共享节点（对应 PG `industrial_nodes`），ACTION 是 `{flow_id}:{action_id}` 的独立实例。
+- `include` 是**依赖声明**，不是复制粘贴：被 include 的流程独立编译，当前文件通过共享 RESOURCE 与它们连接。
+- 公共上游链应抽成共享流程文件（如 `semiconductor_chip_manufacturing.yaml`、`wafer_fabrication_processes.yaml`），产品流程只写自己的集成环节并 `include` 它们。
+- 使用 `POST /api/v1/flows/preview` 验证 YAML 后再保存；保存会自动重新编译。
+
 ## CLI 未直接覆盖的操作
 
 当前 `arachne_cli.py` 未提供以下操作的单独命令。推荐直接调用后端 API（参见 references/API_REFERENCE.md）：

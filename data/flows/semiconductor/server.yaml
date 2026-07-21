@@ -6,60 +6,22 @@ include:
 - printed_circuit_board_fabrication.yaml
 local: {}
 edges:
-- - ai_accelerator
-  - feedstock
-  - act_electronics_system_integration
-- - gpu
-  - feedstock
-  - act_electronics_system_integration
-- - ddr5
-  - feedstock
-  - act_electronics_system_integration
-- - nvme_ssd
-  - feedstock
-  - act_electronics_system_integration
-- - pcb_board
-  - feedstock
-  - act_electronics_system_integration
-- - act_electronics_system_integration
-  - ref
-  - electronics_system_integration
-- - act_electronics_system_integration
-  - primary_result
-  - server
-- - hbm
-  - component
-  - act_integrate_ai_accelerator
-- - act_integrate_ai_accelerator
-  - ref
-  - integration_of_ai_accelerator
-- - act_integrate_ai_accelerator
-  - primary_result
-  - ai_accelerator
-- - dram_chip
-  - component
-  - act_integrate_ddr5
-- - act_integrate_ddr5
-  - ref
-  - integration_of_ddr5
-- - act_integrate_ddr5
-  - primary_result
-  - ddr5
-- - hbm
-  - component
-  - act_integrate_gpu
-- - act_integrate_gpu
-  - ref
-  - integration_of_gpu
-- - act_integrate_gpu
-  - primary_result
-  - gpu
-- - memory_wafer
-  - feedstock
-  - act_usage_hbm_advanced_packaging
-- - act_usage_hbm_advanced_packaging
-  - ref
-  - usage_hbm_advanced_packaging
-- - act_usage_hbm_advanced_packaging
-  - primary_result
-  - hbm
+- [ai_accelerator, feedstock, act_electronics_system_integration]
+- [gpu, feedstock, act_electronics_system_integration]
+- [ddr5, feedstock, act_electronics_system_integration]
+- [nvme_ssd, feedstock, act_electronics_system_integration]
+- [pcb_board, feedstock, act_electronics_system_integration]
+- [act_electronics_system_integration, ref, electronics_system_integration]
+- [act_electronics_system_integration, primary_result, server]
+- [hbm, component, act_integrate_ai_accelerator]
+- [act_integrate_ai_accelerator, ref, integration_of_ai_accelerator]
+- [act_integrate_ai_accelerator, primary_result, ai_accelerator]
+- [dram_chip, component, act_integrate_ddr5]
+- [act_integrate_ddr5, ref, integration_of_ddr5]
+- [act_integrate_ddr5, primary_result, ddr5]
+- [hbm, component, act_integrate_gpu]
+- [act_integrate_gpu, ref, integration_of_gpu]
+- [act_integrate_gpu, primary_result, gpu]
+- [memory_wafer, feedstock, act_usage_hbm_advanced_packaging]
+- [act_usage_hbm_advanced_packaging, ref, usage_hbm_advanced_packaging]
+- [act_usage_hbm_advanced_packaging, primary_result, hbm]

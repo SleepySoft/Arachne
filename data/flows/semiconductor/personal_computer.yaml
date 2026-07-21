@@ -6,27 +6,11 @@ include:
 - printed_circuit_board_fabrication.yaml
 local: {}
 edges:
-- - ddr5
-  - feedstock
-  - act_electronics_system_integration
-- - consumer_ssd
-  - feedstock
-  - act_electronics_system_integration
-- - pcb_board
-  - feedstock
-  - act_electronics_system_integration
-- - act_electronics_system_integration
-  - ref
-  - electronics_system_integration
-- - act_electronics_system_integration
-  - primary_result
-  - personal_computer
-- - dram_chip
-  - component
-  - act_integrate_ddr5
-- - act_integrate_ddr5
-  - ref
-  - integration_of_ddr5
-- - act_integrate_ddr5
-  - primary_result
-  - ddr5
+- [ddr5, feedstock, act_electronics_system_integration]
+- [consumer_ssd, feedstock, act_electronics_system_integration]
+- [pcb_board, feedstock, act_electronics_system_integration]
+- [act_electronics_system_integration, ref, electronics_system_integration]
+- [act_electronics_system_integration, primary_result, personal_computer]
+- [dram_chip, component, act_integrate_ddr5]
+- [act_integrate_ddr5, ref, integration_of_ddr5]
+- [act_integrate_ddr5, primary_result, ddr5]
