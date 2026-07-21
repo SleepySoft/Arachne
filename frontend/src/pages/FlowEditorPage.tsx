@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { GraphCanvas } from "@/components/GraphCanvas";
+import { GraphCanvas, GraphCanvasRef } from "@/components/GraphCanvas";
 import { adaptFlowEdge, adaptFlowNode } from "@/lib/flowAdapters";
 import {
   getFlowContent,
@@ -142,6 +142,7 @@ export function FlowEditorPage() {
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const gutterRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<GraphCanvasRef>(null);
 
   // Load flow list
   useEffect(() => {
@@ -206,6 +207,15 @@ export function FlowEditorPage() {
       edges: active.edges.map(adaptFlowEdge),
     };
   }, [preview, lastGood]);
+
+  // Center the preview graph after each render.
+  useEffect(() => {
+    if (!graphData) return;
+    const timer = setTimeout(() => {
+      canvasRef.current?.fitToView(40);
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [graphData]);
 
   const lineCount = useMemo(() => content.split("\n").length, [content]);
   const lineNumbers = useMemo(
@@ -410,6 +420,7 @@ export function FlowEditorPage() {
       <div className="relative w-1/2">
         {graphData ? (
           <GraphCanvas
+            ref={canvasRef}
             key={selectedFlowId || "new"}
             onNodeClick={() => {}}
             onEdgeClick={() => {}}

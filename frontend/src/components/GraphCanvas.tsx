@@ -294,6 +294,8 @@ export interface GraphCanvasRef {
   updateEdge: (edge: GraphEdge) => void;
   getCamera: () => { pan: { x: number; y: number }; zoom: number } | null;
   setCamera: (camera: { pan: { x: number; y: number }; zoom: number }) => void;
+  /** Fit all visible elements into the viewport with optional padding. */
+  fitToView: (padding?: number) => void;
   getNodePositions: () => Record<string, { x: number; y: number }>;
   setNodePositions: (positions: Record<string, { x: number; y: number }>) => void;
   setNodePosition: (nodeId: string, position: { x: number; y: number }) => void;
@@ -1062,6 +1064,11 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
       } else {
         pendingCameraRef.current = camera;
       }
+    },
+    fitToView: (padding = 40) => {
+      const cy = cyRef.current;
+      if (!cy) return;
+      cy.fit(cy.elements(), padding);
     },
     getNodePositions: () => {
       const cy = cyRef.current;
