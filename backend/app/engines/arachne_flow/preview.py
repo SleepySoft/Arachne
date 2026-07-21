@@ -31,6 +31,9 @@ async def flow_graph_to_graph_elements(graph: FlowGraph) -> Tuple[List[GraphNode
 
     Labels are resolved from PostgreSQL ``industrial_nodes`` where available;
     ACTION nodes borrow their label from the referenced METHOD.
+
+    Each node carries a ``flow_ids`` property listing which flows reference it,
+    so the frontend can decide how to collapse/expand flow groups.
     """
     resource_ids = set(graph.resources.keys())
     method_ids = set(graph.methods.keys())
@@ -38,6 +41,12 @@ async def flow_graph_to_graph_elements(graph: FlowGraph) -> Tuple[List[GraphNode
     meta_map = await node_storage.get_nodes_by_ids(
         list(resource_ids | method_ids | action_method_refs)
     )
+
+    # Map each node id to the set of flow ids that reference it.
+    node_flow_ids: Dict[str, Set[str]] = {}
+    for triple, flow_id in graph.triples:
+        node_flow_ids.setdefault(triple.source, set()).add(flow_id)
+        node_flow_ids.setdefault(triple.target, set()).add(flow_id)
 
     nodes: List[GraphNode] = []
     dual_ids = graph.dual_node_ids()
@@ -57,6 +66,7 @@ async def flow_graph_to_graph_elements(graph: FlowGraph) -> Tuple[List[GraphNode
                         "node_kind": "folder",
                         "is_flow_folder": True,
                         "flow_id": folder_name,
+                        "flow_ids": [folder_name],
                     },
                 )
             )
@@ -76,6 +86,7 @@ async def flow_graph_to_graph_elements(graph: FlowGraph) -> Tuple[List[GraphNode
                         "original_action_id": action.action_id,
                         "method_ref": action.method_ref,
                         "flow_id": action.flow_id,
+                        "flow_ids": sorted(node_flow_ids.get(rid, [])),
                         "canonical_name_zh": meta.canonical_name_zh if meta else None,
                         "canonical_name_en": meta.canonical_name_en if meta else None,
                     },
@@ -91,6 +102,7 @@ async def flow_graph_to_graph_elements(graph: FlowGraph) -> Tuple[List[GraphNode
                         "node_kind": "resource",
                         "resource_type": res.resource_type.value,
                         "local_name": res.local_name,
+                        "flow_ids": sorted(node_flow_ids.get(rid, [])),
                         "canonical_name_zh": meta.canonical_name_zh if meta else None,
                         "canonical_name_en": meta.canonical_name_en if meta else None,
                     },
@@ -109,6 +121,7 @@ async def flow_graph_to_graph_elements(graph: FlowGraph) -> Tuple[List[GraphNode
                 properties={
                     "node_kind": "method",
                     "method_name": method.method_name or mid,
+                    "flow_ids": sorted(node_flow_ids.get(mid, [])),
                     "canonical_name_zh": meta.canonical_name_zh if meta else None,
                     "canonical_name_en": meta.canonical_name_en if meta else None,
                 },
@@ -133,6 +146,7 @@ async def flow_graph_to_graph_elements(graph: FlowGraph) -> Tuple[List[GraphNode
                     "original_action_id": action.action_id,
                     "method_ref": method_ref,
                     "flow_id": action.flow_id,
+                    "flow_ids": sorted(node_flow_ids.get(aid, [])),
                     "canonical_name_zh": meta.canonical_name_zh if meta else None,
                     "canonical_name_en": meta.canonical_name_en if meta else None,
                 },
@@ -180,84 +194,36 @@ def _add_with_includes(
         _add_with_includes(builder, included, seen, errors)
 
 
-def collapse_flow_graph_includes(graph: FlowGraph, root_flow_id: str) -> FlowGraph:
-    """Collapse included flows into per-flow folder nodes.
+def resolve_include_flow_ids(content: str, flow_id: str = "preview") -> List[str]:
+    """Parse YAML content and return the transitively included flow ids."""
+    try:
+        parsed = parse_flow_content(content, flow_id)
+    except FlowParseError:
+        return []
+    seen: Set[str] = set()
+    order: List[str] = []
 
-    Root flow triples are kept as-is. For each included flow we create a
-    ``flow_folder:{flow_id}`` resource node and connect it to the interface
-    nodes (nodes that also appear in the root flow's triples) based on whether
-    the included flow produces or consumes them.
-    """
-    collapsed = FlowGraph()
-    collapsed.flow_ids = [root_flow_id]
-
-    root_triples = [(t, fid) for t, fid in graph.triples if fid == root_flow_id]
-    collapsed.triples = list(root_triples)
-
-    interface_nodes: Set[str] = set()
-    for triple, _ in root_triples:
-        interface_nodes.add(triple.source)
-        interface_nodes.add(triple.target)
-
-    for nid in interface_nodes:
-        if nid in graph.resources:
-            collapsed.resources[nid] = graph.resources[nid]
-        if nid in graph.methods:
-            collapsed.methods[nid] = graph.methods[nid]
-        if nid in graph.actions:
-            collapsed.actions[nid] = graph.actions[nid]
-
-    included_flow_ids = sorted({fid for _, fid in graph.triples if fid != root_flow_id})
-    input_roles = {r.value for r in InputRole}
-    output_roles = {r.value for r in OutputRole}
-
-    for fid in included_flow_ids:
-        folder_id = f"flow_folder:{fid}"
-        collapsed.resources[folder_id] = FlowResource(
-            resource_id=folder_id,
-            resource_type=ResourceType.OTHER,
-            local_name=fid,
-        )
-        connected: Set[str] = set()
-        for triple, tfid in graph.triples:
-            if tfid != fid:
+    def visit(p) -> None:
+        if p.flow_id in seen:
+            return
+        seen.add(p.flow_id)
+        order.append(p.flow_id)
+        for name in p.includes:
+            include_path = FLOW_DIR / name
+            if not include_path.exists():
                 continue
-            if triple.source in interface_nodes:
-                connected.add(triple.source)
-            if triple.target in interface_nodes:
-                connected.add(triple.target)
-        for nid in sorted(connected):
-            produces = any(
-                t.target == nid and t.predicate in output_roles
-                for t, tfid in graph.triples
-                if tfid == fid
-            )
-            consumes = any(
-                t.source == nid and t.predicate in input_roles
-                for t, tfid in graph.triples
-                if tfid == fid
-            )
-            if produces:
-                collapsed.triples.append(
-                    (
-                        FlowTriple(source=folder_id, predicate="primary_result", target=nid),
-                        root_flow_id,
-                    )
-                )
-            elif consumes:
-                collapsed.triples.append(
-                    (
-                        FlowTriple(source=nid, predicate="feedstock", target=folder_id),
-                        root_flow_id,
-                    )
-                )
-    return collapsed
+            try:
+                visit(parse_flow_file(include_path))
+            except FlowParseError:
+                continue
+
+    visit(parsed)
+    return [fid for fid in order if fid != flow_id]
 
 
 async def preview_flow_graph(
     content: str,
     flow_id: str = "preview",
-    collapse_includes: bool = False,
 ) -> Tuple[List[GraphNode], List[GraphEdge], List[str], List[str]]:
     """Parse YAML content and return the rendered graph without persisting.
 
@@ -286,9 +252,5 @@ async def preview_flow_graph(
         errors.extend(builder.graph.errors)
         return [], [], errors, warnings
 
-    graph = builder.graph
-    if collapse_includes:
-        graph = collapse_flow_graph_includes(graph, flow_id)
-
-    nodes, edges = await flow_graph_to_graph_elements(graph)
+    nodes, edges = await flow_graph_to_graph_elements(builder.graph)
     return nodes, edges, errors, warnings

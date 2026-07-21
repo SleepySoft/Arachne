@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GraphCanvas, GraphCanvasRef } from "@/components/GraphCanvas";
 import { adaptFlowEdge, adaptFlowNode } from "@/lib/flowAdapters";
+import { collapsePreviewGraph } from "@/lib/flowCollapse";
 import {
   getFlowContent,
   listFlows,
@@ -192,7 +193,7 @@ export function FlowEditorPage() {
     const seq = ++previewSeqRef.current;
     const handle = setTimeout(() => {
       setPreviewing(true);
-      previewFlow(content, selectedFlowId || "preview", collapseIncludes)
+      previewFlow(content, selectedFlowId || "preview")
         .then((result) => {
           if (seq !== previewSeqRef.current) return;
           setPreviewing(false);
@@ -220,11 +221,20 @@ export function FlowEditorPage() {
   const graphData = useMemo(() => {
     const active = preview?.valid ? preview : lastGood;
     if (!active) return null;
+    const currentFlowId = selectedFlowId || "preview";
+    const display = collapseIncludes
+      ? collapsePreviewGraph(
+          active.nodes,
+          active.edges,
+          active.includes || [],
+          currentFlowId
+        )
+      : { nodes: active.nodes, edges: active.edges };
     return {
-      nodes: active.nodes.map(adaptFlowNode),
-      edges: active.edges.map(adaptFlowEdge),
+      nodes: display.nodes.map(adaptFlowNode),
+      edges: display.edges.map(adaptFlowEdge),
     };
-  }, [preview, lastGood]);
+  }, [preview, lastGood, collapseIncludes, selectedFlowId]);
 
   // Center the preview graph after each render.
   useEffect(() => {
@@ -450,7 +460,7 @@ export function FlowEditorPage() {
         {graphData ? (
           <GraphCanvas
             ref={canvasRef}
-            key={`preview-${previewVersion}`}
+            key={`preview-${previewVersion}-${collapseIncludes ? "collapsed" : "full"}`}
             onNodeClick={() => {}}
             onEdgeClick={() => {}}
             filters={EDITOR_FILTERS}

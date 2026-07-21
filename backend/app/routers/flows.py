@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from app.database_postgres import get_postgres_pool
 from app.engines.arachne_flow.parser import FlowParseError, parse_flow_file
-from app.engines.arachne_flow.preview import preview_flow_graph
+from app.engines.arachne_flow.preview import preview_flow_graph, resolve_include_flow_ids
 from app.engines.arachne_flow import storage
 from app.models.core import GraphEdge, GraphNode, SubgraphResult
 
@@ -62,7 +62,6 @@ class FlowCompileBatchRequest(BaseModel):
 class FlowPreviewRequest(BaseModel):
     content: str
     flow_id: str = "preview"
-    collapse_includes: bool = False
 
 
 class FlowPreviewResponse(BaseModel):
@@ -71,6 +70,7 @@ class FlowPreviewResponse(BaseModel):
     edges: List[GraphEdge] = []
     errors: List[str] = []
     warnings: List[str] = []
+    includes: List[str] = []
 
 
 class FlowContentResponse(BaseModel):
@@ -265,16 +265,16 @@ async def preview_flow(request: FlowPreviewRequest):
     list so the frontend can keep the last good graph.
     """
     nodes, edges, errors, warnings = await preview_flow_graph(
-        request.content,
-        flow_id=request.flow_id,
-        collapse_includes=request.collapse_includes,
+        request.content, flow_id=request.flow_id
     )
+    includes = resolve_include_flow_ids(request.content, flow_id=request.flow_id)
     return FlowPreviewResponse(
         valid=len(errors) == 0,
         nodes=nodes,
         edges=edges,
         errors=errors,
         warnings=warnings,
+        includes=includes,
     )
 
 

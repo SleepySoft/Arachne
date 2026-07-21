@@ -335,19 +335,15 @@ export interface FlowPreviewResult {
   edges: GraphEdge[];
   errors: string[];
   warnings: string[];
+  includes: string[];
 }
 
 /** 预览 arachne-flow YAML 内容（不写库）。 */
 export const previewFlow = async (
   content: string,
-  flowId = "preview",
-  collapseIncludes = false
+  flowId = "preview"
 ): Promise<FlowPreviewResult> => {
-  const res = await client.post("/flows/preview", {
-    content,
-    flow_id: flowId,
-    collapse_includes: collapseIncludes,
-  });
+  const res = await client.post("/flows/preview", { content, flow_id: flowId });
   return res.data;
 };
 
