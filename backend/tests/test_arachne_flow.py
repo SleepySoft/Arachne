@@ -41,7 +41,23 @@ def test_parse_smartphone_flow():
     assert parsed.root_product == "smartphone"
     assert len(parsed.resources) > 0
     assert len(parsed.actions) > 0
-    # chip_design is now a METHOD, not a RESOURCE/ACTION dual node.
+    # Product flow now only declares its own integration step.
+    assert "electronics_system_integration" in parsed.methods
+    assert "act_electronics_system_integration" in parsed.actions
+    assert parsed.includes == [
+        "semiconductor_chip_manufacturing.yaml",
+        "printed_circuit_board_fabrication.yaml",
+    ]
+
+
+def test_parse_chip_manufacturing_flow():
+    parsed = parse_flow_file(FLOW_DIR / "semiconductor_chip_manufacturing.yaml")
+    assert parsed.schema_version == "arachne-flow/v0.1"
+    assert parsed.flow_id == "semiconductor_chip_manufacturing"
+    assert parsed.root_product == "chip"
+    assert len(parsed.resources) > 0
+    assert len(parsed.actions) > 0
+    # chip_design is a METHOD, not a RESOURCE/ACTION dual node.
     assert "chip_design" in parsed.methods
     assert "chip_design" not in parsed.resources
     assert "chip_design" not in parsed.actions
@@ -199,9 +215,9 @@ async def test_engine_subgraph():
 async def test_flow_subgraph_filtered_by_flow_id():
     """Per-flow subgraph must not pull in other flows' occurrences via shared nodes.
 
-    smartphone and personal_computer both have packaging/testing actions
-    producing the shared `chip` resource. Filtering by flow_id=smartphone must
-    exclude personal_computer's actions while keeping smartphone's own.
+    smartphone and personal_computer both use shared resources like ``chip``
+    and ``pcb_board`` but have their own integration actions. Filtering by
+    flow_id=smartphone must exclude personal_computer's actions.
     """
     for fid in ("smartphone", "personal_computer"):
         parsed = parse_flow_file(FLOW_DIR / f"{fid}.yaml")
@@ -216,11 +232,11 @@ async def test_flow_subgraph_filtered_by_flow_id():
         assert edge_flows == {"smartphone"}
         # 不包含其它流程的动作节点
         assert not any(nid.startswith("personal_computer:") for nid in node_ids)
-        # smartphone 自己的封测/测试动作仍在（chip 通过 smartphone 的边连通）
-        assert "smartphone:act_chip_testing" in node_ids
-        assert "smartphone:act_chip_packaging_and_testing" in node_ids
+        # smartphone 自己的系统集成动作仍在
+        assert "smartphone:act_electronics_system_integration" in node_ids
         # 共享资源节点仍然出现
         assert "chip" in node_ids
+        assert "pcb_board" in node_ids
 
         # 不过滤时（生态视角）应包含其它流程的动作
         nodes_all, _ = await storage.get_flow_subgraph("smartphone", 3)
@@ -241,15 +257,18 @@ async def test_flow_file_graph_returns_exact_file_content():
         nodes, edges = await storage.get_flow_file_graph(["smartphone"])
         edge_flows = {(e.properties or {}).get("flow_id") for e in edges}
         assert edge_flows == {"smartphone"}
-        # 文件声明的全部三元组都在（不只根产品 depth 内的后缀）
+        # 文件声明的全部三元组都在
         assert len(edges) == len(parsed.triples)
         node_ids = {n.node_id for n in nodes}
-        # 上游段（晶圆切割/键合等）必须包含——之前 depth 遍历会截断
-        assert "wafer" in node_ids
-        assert "chip_die" in node_ids
-        assert "smartphone:act_wafer_dicing" in node_ids
-        # 不包含其它流程的边
+        # 只包含 smartphone 自己声明的节点
+        assert "chip" in node_ids
+        assert "pcb_board" in node_ids
+        assert "lpddr5" in node_ids
+        assert "smartphone:act_electronics_system_integration" in node_ids
+        assert "electronics_system_integration" in node_ids
+        # 不包含其它流程的边或节点
         assert not any(nid.startswith("personal_computer:") for nid in node_ids)
+        assert "wafer" not in node_ids
     finally:
         await storage.clear_flow("smartphone")
 
@@ -266,25 +285,24 @@ async def test_merged_flow_graph_merges_actions_and_edges():
         action_nodes = [n for n in nodes if n.entity_type == "arachne_flow:action"]
         action_ids = {n.node_id for n in action_nodes}
 
-        # 两个流程的 act_chip_testing 合并为一个 merged_action 节点
-        assert storage.merged_action_id("chip_testing") in action_ids
-        assert not any(nid.endswith(":act_chip_testing") for nid in action_ids)
+        # 两个流程的系统集成动作合并为一个 merged_action 节点
+        assert storage.merged_action_id("electronics_system_integration") in action_ids
+        assert not any(nid.endswith(":act_electronics_system_integration") for nid in action_ids)
 
-        merged_testing = next(
-            n for n in action_nodes if n.node_id == storage.merged_action_id("chip_testing")
+        merged_integration = next(
+            n for n in action_nodes if n.node_id == storage.merged_action_id("electronics_system_integration")
         )
-        flow_ids = set(merged_testing.properties.get("flow_ids") or [])
+        flow_ids = set(merged_integration.properties.get("flow_ids") or [])
         assert {"smartphone", "personal_computer"} <= flow_ids
-        # 合并节点用方法中文名
-        assert merged_testing.label
+        assert merged_integration.label
 
-        # 平行边聚合：merged_testing -> chip 的 primary_result 聚成一条且 count >= 2
+        # 平行边聚合：pcb_board -> merged_integration 的 feedstock 聚成一条且 count >= 2
         agg = [
             e
             for e in edges
-            if e.from_node == storage.merged_action_id("chip_testing")
-            and e.to_node == "chip"
-            and e.edge_type == "primary_result"
+            if e.from_node == "pcb_board"
+            and e.to_node == storage.merged_action_id("electronics_system_integration")
+            and e.edge_type == "feedstock"
         ]
         assert len(agg) == 1
         assert int(agg[0].properties.get("count") or 0) >= 2

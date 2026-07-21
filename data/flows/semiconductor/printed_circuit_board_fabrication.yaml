@@ -1,0 +1,25 @@
+schema: arachne-flow/v0.1
+title: 'Semiconductor flow: printed circuit board fabrication (shared)'
+root_product: pcb_board
+include:
+- semiconductor_chip_manufacturing.yaml
+local: {}
+edges:
+- - pcb_substrate
+  - feedstock
+  - act_printed_circuit_board_fabrication
+- - ceramic_capacitor
+  - feedstock
+  - act_printed_circuit_board_fabrication
+- - chip_resistor
+  - feedstock
+  - act_printed_circuit_board_fabrication
+- - chip
+  - feedstock
+  - act_printed_circuit_board_fabrication
+- - act_printed_circuit_board_fabrication
+  - ref
+  - printed_circuit_board_fabrication
+- - act_printed_circuit_board_fabrication
+  - primary_result
+  - pcb_board

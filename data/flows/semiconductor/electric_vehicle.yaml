@@ -1,49 +1,16 @@
 schema: arachne-flow/v0.1
 title: 'Semiconductor flow: electric_vehicle'
 root_product: electric_vehicle
-include: []
-local:
-  chip_design_output: process 产出
+include:
+- semiconductor_chip_manufacturing.yaml
+local: {}
 edges:
-- [integrated_device_manufacturer, tool, act_chip_design]
-- [eda_software, tool, act_chip_design]
-- [ip_core, tool, act_chip_design]
-- [act_chip_design, ref, chip_design]
-- [act_chip_design, primary_result, chip_design_output]
-- [wire_bonded_package, feedstock, act_chip_molding]
-- [act_chip_molding, ref, chip_molding]
-- [act_chip_molding, primary_result, molded_chip]
-- [osat, tool, act_chip_packaging_and_testing]
-- [integrated_device_manufacturer, tool, act_chip_packaging_and_testing]
-- [leadframe, feedstock, act_chip_packaging_and_testing]
-- [packaging_material, feedstock, act_chip_packaging_and_testing]
-- [act_chip_packaging_and_testing, ref, chip_packaging_and_testing]
-- [act_chip_packaging_and_testing, primary_result, tested_chip]
-- [act_chip_packaging_and_testing, primary_result, chip]
-- [test_equipment, tool, act_chip_testing]
-- [molded_chip, feedstock, act_chip_testing]
-- [probe_card, feedstock, act_chip_testing]
-- [act_chip_testing, ref, chip_testing]
-- [act_chip_testing, primary_result, tested_chip]
-- [act_chip_testing, primary_result, chip]
-- [chip_die, feedstock, act_die_bonding]
-- [packaging_substrate, feedstock, act_die_bonding]
-- [act_die_bonding, ref, die_bonding]
-- [act_die_bonding, primary_result, die_attached_substrate]
-- [chip, feedstock, act_integrate_electric_vehicle]
-- [act_integrate_electric_vehicle, ref, integration_of_electric_vehicle]
-- [act_integrate_electric_vehicle, primary_result, electric_vehicle]
-- [wafer, feedstock, act_wafer_dicing]
-- [act_wafer_dicing, ref, wafer_dicing]
-- [act_wafer_dicing, primary_result, chip_die]
-- [advanced_process_node, tool, act_wafer_manufacturing]
-- [material_handling_equipment, tool, act_wafer_manufacturing]
-- [foundry, tool, act_wafer_manufacturing]
-- [chip_design_output, subject, act_wafer_manufacturing]
-- [mature_process_node, tool, act_wafer_manufacturing]
-- [integrated_device_manufacturer, tool, act_wafer_manufacturing]
-- [act_wafer_manufacturing, ref, wafer_manufacturing]
-- [act_wafer_manufacturing, primary_result, wafer]
-- [die_attached_substrate, feedstock, act_wire_bonding]
-- [act_wire_bonding, ref, wire_bonding]
-- [act_wire_bonding, primary_result, wire_bonded_package]
+- - chip
+  - feedstock
+  - act_integrate_electric_vehicle
+- - act_integrate_electric_vehicle
+  - ref
+  - integration_of_electric_vehicle
+- - act_integrate_electric_vehicle
+  - primary_result
+  - electric_vehicle
