@@ -375,6 +375,13 @@ export function FlowEditorPage({
     }
   }, [selectedFlowId, content, extractRootProduct]);
 
+  // Auto-hide the save success message after a few seconds.
+  useEffect(() => {
+    if (!saveMessage) return;
+    const timer = setTimeout(() => setSaveMessage(null), 3000);
+    return () => clearTimeout(timer);
+  }, [saveMessage]);
+
   const handleFormat = useCallback(() => {
     formatFlow(content)
       .then((r) => {
@@ -436,9 +443,6 @@ export function FlowEditorPage({
           >
             {saving ? "保存中..." : "保存"}
           </button>
-          {saveMessage && (
-            <span className="text-xs text-emerald-400">{saveMessage}</span>
-          )}
           {loadingContent && (
             <span className="text-xs text-slate-500">加载文件...</span>
           )}
@@ -455,6 +459,13 @@ export function FlowEditorPage({
             </button>
           )}
         </div>
+
+        {/* Save success banner (auto-hides after 3s) */}
+        {saveMessage && (
+          <div className="border-b border-emerald-800 bg-emerald-950 px-3 py-2 text-xs text-emerald-200 transition-opacity duration-500">
+            {saveMessage}
+          </div>
+        )}
 
         {/* Error banner */}
         {error && (

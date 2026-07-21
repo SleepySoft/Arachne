@@ -783,12 +783,25 @@ export default function App() {
               }
               const includeSet = new Set(result.includes || []);
               const ids = new Set<string>();
+              // Map action node id -> method_ref so we can also highlight the
+              // merged_action node that represents this action in the total graph.
+              const actionMethodRef = new Map<string, string>();
+              for (const n of result.nodes) {
+                if (n.entity_type === "arachne_flow:action") {
+                  const methodRef = (n.properties?.method_ref as string) || "";
+                  if (methodRef) actionMethodRef.set(n.node_id, methodRef);
+                }
+              }
               for (const e of result.edges) {
                 const fid = (e.properties?.flow_id as string) || "";
                 // Current flow edges are those not belonging to included flows.
                 if (!includeSet.has(fid)) {
                   ids.add(e.from_node);
                   ids.add(e.to_node);
+                  const fromMethod = actionMethodRef.get(e.from_node);
+                  if (fromMethod) ids.add(`merged_action:${fromMethod}`);
+                  const toMethod = actionMethodRef.get(e.to_node);
+                  if (toMethod) ids.add(`merged_action:${toMethod}`);
                 }
               }
               setEditorHighlightIds(Array.from(ids));
