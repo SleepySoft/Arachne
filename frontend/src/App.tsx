@@ -43,9 +43,27 @@ import {
 } from "@/lib/viewSerializer";
 import { IndustrialViewState, CompanyViewState, SavedView } from "@/types/view";
 
+function getInitialMainView(): MainView {
+  const params = new URLSearchParams(window.location.search);
+  const view = params.get("view");
+  const valid: MainView[] = [
+    "industrial_graph",
+    "company_graph",
+    "db_checks",
+    "reasoning",
+    "flow_editor",
+  ];
+  return valid.includes(view as MainView) ? (view as MainView) : "industrial_graph";
+}
+
+function getInitialEngine(): GraphEngine {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("engine") || "legacy";
+}
+
 export default function App() {
-  const [mainView, setMainView] = useState<MainView>("industrial_graph");
-  const [graphEngine, setGraphEngine] = useState<GraphEngine>("legacy");
+  const [mainView, setMainView] = useState<MainView>(getInitialMainView);
+  const [graphEngine, setGraphEngine] = useState<GraphEngine>(getInitialEngine);
 
   const { data: enginesData } = useQuery({
     queryKey: ["engines"],
@@ -56,14 +74,26 @@ export default function App() {
   const engineList = enginesData?.engines ?? [];
   const defaultEngine = enginesData?.default ?? "legacy";
 
-  // Sync the initial engine to the backend-reported default once it loads.
+  // Sync the initial engine to the backend-reported default once it loads,
+  // but do not override an explicit ?engine= URL parameter.
   useEffect(() => {
     if (!enginesData) return;
+    const urlEngine = new URLSearchParams(window.location.search).get("engine");
+    if (urlEngine) return;
     setGraphEngine((current) => {
       const exists = engineList.some((e) => e.name === current);
       return exists ? current : defaultEngine;
     });
   }, [enginesData, defaultEngine, engineList]);
+
+  // Persist main view and engine selection to the URL for sharing/refresh.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    params.set("view", mainView);
+    params.set("engine", graphEngine);
+    const url = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState(null, "", url);
+  }, [mainView, graphEngine]);
 
   const getEngineInfo = useCallback(
     (name: string): EngineInfo | undefined => engineList.find((e) => e.name === name),
