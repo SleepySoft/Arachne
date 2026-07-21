@@ -165,6 +165,14 @@ export function FlowEditorPage() {
       .catch(() => setNodeOptions([]));
   }, []);
 
+  // Reset preview state when switching files so stale graphs don't linger.
+  useEffect(() => {
+    setPreview(null);
+    setLastGood(null);
+    setError(null);
+    setWarnings([]);
+  }, [selectedFlowId]);
+
   // Load selected file content
   useEffect(() => {
     if (!selectedFlowId) return;
@@ -175,12 +183,15 @@ export function FlowEditorPage() {
       .finally(() => setLoadingContent(false));
   }, [selectedFlowId]);
 
-  // Debounced live preview
+  // Debounced live preview. Only trigger on content changes; ignore stale responses.
+  const previewSeqRef = useRef(0);
   useEffect(() => {
+    const seq = ++previewSeqRef.current;
     const handle = setTimeout(() => {
       setPreviewing(true);
       previewFlow(content, selectedFlowId || "preview")
         .then((result) => {
+          if (seq !== previewSeqRef.current) return;
           setPreviewing(false);
           if (result.valid) {
             setPreview(result);
@@ -192,12 +203,14 @@ export function FlowEditorPage() {
           setWarnings(result.warnings || []);
         })
         .catch((e) => {
+          if (seq !== previewSeqRef.current) return;
           setPreviewing(false);
           setError(String(e));
         });
     }, 500);
     return () => clearTimeout(handle);
-  }, [content, selectedFlowId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [content]);
 
   const graphData = useMemo(() => {
     const active = preview?.valid ? preview : lastGood;
