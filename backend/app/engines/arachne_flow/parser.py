@@ -40,28 +40,24 @@ class FlowValidationError(Exception):
 # ---------------------------------------------------------------------------
 
 
-def parse_flow_file(path: Path, base_dir: Optional[Path] = None, _seen: Optional[Set[Path]] = None) -> ParsedFlow:
-    """Parse a flow YAML file.
+def parse_flow_content(content: str, flow_id: str) -> ParsedFlow:
+    """Parse a flow YAML document from a string.
 
     ``include`` is a **dependency declaration**, not textual inclusion: the
-    current file only parses its own ``edges``, and the builder resolves
+    current document only parses its own ``edges``, and the builder resolves
     cross-file references through globally shared RESOURCE/METHOD nodes.
 
     Args:
-        path: Path to the YAML file.
-        base_dir: Unused, kept for backward compatibility.
-        _seen: Unused, kept for backward compatibility.
+        content: YAML text of the flow document.
+        flow_id: Flow identifier used for namespacing ACTION occurrences.
 
     Returns:
         A normalized ParsedFlow object.
     """
-    path = Path(path).resolve()
-
     try:
-        with path.open("r", encoding="utf-8") as f:
-            raw = yaml.safe_load(f)
+        raw = yaml.safe_load(content)
     except Exception as exc:
-        raise FlowParseError(f"failed to load {path}: {exc}") from exc
+        raise FlowParseError(f"invalid YAML: {exc}") from exc
 
     if raw is None:
         raw = {}
@@ -69,9 +65,8 @@ def parse_flow_file(path: Path, base_dir: Optional[Path] = None, _seen: Optional
     try:
         doc = FlowDocument.model_validate(raw)
     except Exception as exc:
-        raise FlowParseError(f"invalid flow document {path}: {exc}") from exc
+        raise FlowParseError(f"invalid flow document: {exc}") from exc
 
-    flow_id = path.stem
     parsed = ParsedFlow(
         schema_version=doc.schema_version,
         title=doc.title,
@@ -85,7 +80,7 @@ def parse_flow_file(path: Path, base_dir: Optional[Path] = None, _seen: Optional
         triples=[],
     )
 
-    # Parse only this file's own triples. Included flows are dependencies,
+    # Parse only this document's own triples. Included flows are dependencies,
     # not text to inline.
     for raw_triple in doc.edges:
         parsed.triples.append(
@@ -94,6 +89,27 @@ def parse_flow_file(path: Path, base_dir: Optional[Path] = None, _seen: Optional
 
     _normalize_and_validate(parsed)
     return parsed
+
+
+def parse_flow_file(path: Path, base_dir: Optional[Path] = None, _seen: Optional[Set[Path]] = None) -> ParsedFlow:
+    """Parse a flow YAML file.
+
+    Args:
+        path: Path to the YAML file.
+        base_dir: Unused, kept for backward compatibility.
+        _seen: Unused, kept for backward compatibility.
+
+    Returns:
+        A normalized ParsedFlow object.
+    """
+    path = Path(path).resolve()
+
+    try:
+        content = path.read_text(encoding="utf-8")
+    except Exception as exc:
+        raise FlowParseError(f"failed to load {path}: {exc}") from exc
+
+    return parse_flow_content(content, flow_id=path.stem)
 
 
 # ---------------------------------------------------------------------------

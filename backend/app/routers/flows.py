@@ -15,6 +15,7 @@ from pydantic import BaseModel
 
 from app.database_postgres import get_postgres_pool
 from app.engines.arachne_flow.parser import FlowParseError, parse_flow_file
+from app.engines.arachne_flow.preview import preview_flow_graph
 from app.engines.arachne_flow import storage
 from app.models.core import GraphEdge, GraphNode, SubgraphResult
 
@@ -56,6 +57,24 @@ class FlowSubgraphRequest(BaseModel):
 
 class FlowCompileBatchRequest(BaseModel):
     flow_ids: List[str]
+
+
+class FlowPreviewRequest(BaseModel):
+    content: str
+    flow_id: str = "preview"
+
+
+class FlowPreviewResponse(BaseModel):
+    valid: bool
+    nodes: List[GraphNode] = []
+    edges: List[GraphEdge] = []
+    errors: List[str] = []
+    warnings: List[str] = []
+
+
+class FlowContentResponse(BaseModel):
+    flow_id: str
+    content: str
 
 
 async def _scan_flow_files() -> List[dict]:
@@ -234,6 +253,35 @@ def _resolve_effective_flow_ids(flow_ids: List[str]) -> List[str]:
     for fid in flow_ids:
         visit(fid)
     return order
+
+
+@router.post("/preview", response_model=FlowPreviewResponse)
+async def preview_flow(request: FlowPreviewRequest):
+    """Parse and render arachne-flow YAML content without persisting.
+
+    Returns the graph for the current document plus all transitively included
+    files. On parse/validation errors, returns ``valid=false`` and the error
+    list so the frontend can keep the last good graph.
+    """
+    nodes, edges, errors, warnings = await preview_flow_graph(
+        request.content, flow_id=request.flow_id
+    )
+    return FlowPreviewResponse(
+        valid=len(errors) == 0,
+        nodes=nodes,
+        edges=edges,
+        errors=errors,
+        warnings=warnings,
+    )
+
+
+@router.get("/{flow_id}/content", response_model=FlowContentResponse)
+async def get_flow_content(flow_id: str):
+    """Return the raw YAML content of a flow file."""
+    file_path = FLOW_DIR / f"{flow_id}.yaml"
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail=f"flow file not found: {flow_id}")
+    return FlowContentResponse(flow_id=flow_id, content=file_path.read_text(encoding="utf-8"))
 
 
 class MergedFlowGraphResult(BaseModel):

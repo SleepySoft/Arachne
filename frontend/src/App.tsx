@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { StatsBar, MainView, GraphEngine } from "@/components/StatsBar";
 import { DbChecksPage } from "@/pages/DbChecksPage";
+import { FlowEditorPage } from "@/pages/FlowEditorPage";
 import { ReasoningPage } from "@/pages/ReasoningPage";
 import { Layout } from "@/components/Layout";
 import { GraphCanvas, GraphCanvasRef } from "@/components/GraphCanvas";
@@ -940,6 +941,11 @@ export default function App() {
         {/* Reasoning page — mounted but hidden when not active */}
         <div className={`absolute inset-0 ${mainView === "reasoning" ? "" : "hidden"}`}>
           <ReasoningPage />
+        </div>
+
+        {/* Flow editor page — mounted but hidden when not active */}
+        <div className={`absolute inset-0 ${mainView === "flow_editor" ? "" : "hidden"}`}>
+          <FlowEditorPage />
         </div>
       </div>
 

@@ -329,6 +329,31 @@ export const getFlowMergedGraph = async (
   return res.data;
 };
 
+export interface FlowPreviewResult {
+  valid: boolean;
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  errors: string[];
+  warnings: string[];
+}
+
+/** 预览 arachne-flow YAML 内容（不写库）。 */
+export const previewFlow = async (
+  content: string,
+  flowId = "preview"
+): Promise<FlowPreviewResult> => {
+  const res = await client.post("/flows/preview", { content, flow_id: flowId });
+  return res.data;
+};
+
+/** 读取指定流程文件的 YAML 内容。 */
+export const getFlowContent = async (
+  flowId: string
+): Promise<{ flow_id: string; content: string }> => {
+  const res = await client.get(`/flows/${flowId}/content`);
+  return res.data;
+};
+
 export const getConflicts = async (): Promise<unknown[]> => {
   const res = await client.get("/query/conflicts");
   return res.data;

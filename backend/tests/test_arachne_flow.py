@@ -398,3 +398,138 @@ async def test_generic_node_and_edge_routes_support_flow_engine():
             assert r.status_code == 200, r.text
     finally:
         await storage.clear_flow(flow_id)
+
+
+# ---------------------------------------------------------------------------
+# Preview endpoint tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_flow_preview_valid_yaml():
+    import httpx
+    from httpx import ASGITransport
+
+    from app.engines.legacy.engine import LegacyEngine
+    from app.main import app
+
+    register_engine(LegacyEngine())
+    register_engine(ArachneFlowEngine())
+
+    content = """
+schema: arachne-flow/v0.1
+title: 'Preview test'
+root_product: widget
+include: []
+local: {}
+edges:
+- [steel, feedstock, act_make_widget]
+- [act_make_widget, ref, widget_making]
+- [act_make_widget, primary_result, widget]
+"""
+    async with httpx.AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        r = await client.post("/api/v1/flows/preview", json={"content": content})
+        assert r.status_code == 200, r.text
+        data = r.json()
+        assert data["valid"] is True
+        assert len(data["nodes"]) == 4
+        assert len(data["edges"]) == 3
+        node_ids = {n["node_id"] for n in data["nodes"]}
+        assert "steel" in node_ids
+        assert "widget" in node_ids
+        assert "preview:act_make_widget" in node_ids
+        assert "widget_making" in node_ids
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_flow_preview_syntax_error_keeps_valid_false():
+    import httpx
+    from httpx import ASGITransport
+
+    from app.engines.legacy.engine import LegacyEngine
+    from app.main import app
+
+    register_engine(LegacyEngine())
+    register_engine(ArachneFlowEngine())
+
+    content = "schema: [unclosed"
+    async with httpx.AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        r = await client.post("/api/v1/flows/preview", json={"content": content})
+        assert r.status_code == 200, r.text
+        data = r.json()
+        assert data["valid"] is False
+        assert data["errors"]
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_flow_preview_resolves_includes():
+    import httpx
+    from httpx import ASGITransport
+
+    from app.engines.legacy.engine import LegacyEngine
+    from app.main import app
+
+    register_engine(LegacyEngine())
+    register_engine(ArachneFlowEngine())
+
+    content = """
+schema: arachne-flow/v0.1
+title: 'Preview include test'
+root_product: smartphone
+include:
+- semiconductor_chip_manufacturing.yaml
+- printed_circuit_board_fabrication.yaml
+local: {}
+edges:
+- [chip, feedstock, act_electronics_system_integration]
+- [act_electronics_system_integration, ref, electronics_system_integration]
+- [act_electronics_system_integration, primary_result, smartphone]
+"""
+    async with httpx.AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        r = await client.post("/api/v1/flows/preview", json={"content": content})
+        assert r.status_code == 200, r.text
+        data = r.json()
+        assert data["valid"] is True
+        node_ids = {n["node_id"] for n in data["nodes"]}
+        # Included shared nodes should be present
+        assert "wafer" in node_ids
+        assert "chip" in node_ids
+        assert "pcb_board" in node_ids
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_flow_preview_does_not_write_to_db():
+    from app.database_flow import get_flow_async_driver
+    from app.engines.arachne_flow.preview import preview_flow_graph
+
+    content = """
+schema: arachne-flow/v0.1
+title: 'Preview no-write test'
+root_product: widget
+include: []
+local: {}
+edges:
+- [steel, feedstock, act_make_widget]
+- [act_make_widget, ref, widget_making]
+- [act_make_widget, primary_result, widget]
+"""
+    driver = get_flow_async_driver()
+    async with driver.session() as session:
+        before = await session.run("MATCH (n:ArachneFlowNode) RETURN count(n) AS c")
+        before_count = (await before.single())["c"]
+
+    nodes, edges, errors, warnings = await preview_flow_graph(content, flow_id="preview_nowrite")
+    assert not errors
+    assert len(nodes) == 4
+    assert len(edges) == 3
+
+    async with driver.session() as session:
+        after = await session.run("MATCH (n:ArachneFlowNode) RETURN count(n) AS c")
+        after_count = (await after.single())["c"]
+    assert after_count == before_count
