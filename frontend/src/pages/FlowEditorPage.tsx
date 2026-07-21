@@ -36,7 +36,9 @@ root_product: your_product
 include: []
 local: {}
 edges:
-# - [source, predicate, target]
+- [your_resource, feedstock, act_your_action]
+- [act_your_action, ref, your_method]
+- [act_your_action, primary_result, your_product]
 `;
 
 interface NodeOption {
