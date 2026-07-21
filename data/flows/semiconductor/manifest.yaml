@@ -24,6 +24,9 @@ files:
 - product: power_semiconductor_manufacturing
   file: power_semiconductor_manufacturing.yaml
   triples: 13
+- product: nand_flash_chip_manufacturing
+  file: nand_flash_chip_manufacturing.yaml
+  triples: 3
 - product: smartphone
   file: smartphone.yaml
   triples: 5

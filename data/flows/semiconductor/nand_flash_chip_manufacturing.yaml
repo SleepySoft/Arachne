@@ -1,0 +1,10 @@
+schema: arachne-flow/v0.1
+title: 'Semiconductor flow: NAND flash chip manufacturing (shared)'
+root_product: nand_flash_chip
+include:
+- semiconductor_chip_manufacturing.yaml
+local: {}
+edges:
+- [chip_die, feedstock, act_nand_flash_chip_packaging_and_testing]
+- [act_nand_flash_chip_packaging_and_testing, ref, chip_packaging_and_testing]
+- [act_nand_flash_chip_packaging_and_testing, primary_result, nand_flash_chip]

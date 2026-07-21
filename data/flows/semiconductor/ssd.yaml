@@ -1,7 +1,8 @@
 schema: arachne-flow/v0.1
 title: 'Semiconductor flow: ssd'
 root_product: ssd
-include: []
+include:
+- nand_flash_chip_manufacturing.yaml
 local: {}
 edges:
 - [nand_flash_chip, component, act_integrate_ssd]
