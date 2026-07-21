@@ -2082,6 +2082,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
                   const et = ele.data("entity_type");
                   if (et === "arachne_flow:action") return "roundrectangle";
                   if (et === "arachne_flow:method") return "hexagon";
+                  if (et === "arachne_flow:folder") return "tag";
                   return "ellipse";
                 },
                 label: "data(label)",

@@ -21,6 +21,7 @@ const EDITOR_FILTERS = {
     "arachne_flow:action",
     "arachne_flow:method",
     "arachne_flow:dual",
+    "arachne_flow:folder",
   ],
   status: ["ACTIVE", "PENDING"],
   confidence: ["HIGH", "MEDIUM", "LOW"],
@@ -134,6 +135,7 @@ export function FlowEditorPage() {
   const [loadingContent, setLoadingContent] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [previewVersion, setPreviewVersion] = useState(0);
+  const [collapseIncludes, setCollapseIncludes] = useState(false);
   const [nodeOptions, setNodeOptions] = useState<NodeOption[]>([]);
   const [tripleDraft, setTripleDraft] = useState({
     source: "",
@@ -190,7 +192,7 @@ export function FlowEditorPage() {
     const seq = ++previewSeqRef.current;
     const handle = setTimeout(() => {
       setPreviewing(true);
-      previewFlow(content, selectedFlowId || "preview")
+      previewFlow(content, selectedFlowId || "preview", collapseIncludes)
         .then((result) => {
           if (seq !== previewSeqRef.current) return;
           setPreviewing(false);
@@ -213,7 +215,7 @@ export function FlowEditorPage() {
     }, 500);
     return () => clearTimeout(handle);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [content]);
+  }, [content, collapseIncludes]);
 
   const graphData = useMemo(() => {
     const active = preview?.valid ? preview : lastGood;
@@ -326,6 +328,17 @@ export function FlowEditorPage() {
             className="h-8 rounded border border-slate-700 bg-slate-800 px-2 text-xs text-slate-300 hover:bg-slate-700"
           >
             整理格式
+          </button>
+          <button
+            onClick={() => setCollapseIncludes((v) => !v)}
+            className={`h-8 rounded border px-2 text-xs ${
+              collapseIncludes
+                ? "border-cyan-600 bg-cyan-900/40 text-cyan-200"
+                : "border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700"
+            }`}
+            title="将 include 的流程折叠成文件夹节点"
+          >
+            折叠 include
           </button>
           {loadingContent && (
             <span className="text-xs text-slate-500">加载文件...</span>

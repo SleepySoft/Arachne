@@ -17,6 +17,7 @@ export type EntityType =
   | "arachne_flow:resource"
   | "arachne_flow:action"
   | "arachne_flow:method"
+  | "arachne_flow:folder"
   | "unknown";
 
 export type IndustrialFlowType =
@@ -514,6 +515,7 @@ export const ENTITY_TYPE_COLORS: Record<EntityType, string> = {
   "arachne_flow:resource": "#34d399",
   "arachne_flow:action": "#fbbf24",
   "arachne_flow:method": "#a78bfa",
+  "arachne_flow:folder": "#f59e0b",
   unknown: "#64748b",
 };
 
@@ -621,6 +623,7 @@ export const ARACHNE_FLOW_ENTITY_TYPE_LABELS: Record<string, string> = {
   "arachne_flow:resource": "资源",
   "arachne_flow:action": "动作",
   "arachne_flow:method": "方法",
+  "arachne_flow:folder": "流程文件夹",
   "arachne_flow:dual": "资源/动作",
 };
 

@@ -340,9 +340,14 @@ export interface FlowPreviewResult {
 /** 预览 arachne-flow YAML 内容（不写库）。 */
 export const previewFlow = async (
   content: string,
-  flowId = "preview"
+  flowId = "preview",
+  collapseIncludes = false
 ): Promise<FlowPreviewResult> => {
-  const res = await client.post("/flows/preview", { content, flow_id: flowId });
+  const res = await client.post("/flows/preview", {
+    content,
+    flow_id: flowId,
+    collapse_includes: collapseIncludes,
+  });
   return res.data;
 };
 

@@ -62,6 +62,7 @@ class FlowCompileBatchRequest(BaseModel):
 class FlowPreviewRequest(BaseModel):
     content: str
     flow_id: str = "preview"
+    collapse_includes: bool = False
 
 
 class FlowPreviewResponse(BaseModel):
@@ -264,7 +265,9 @@ async def preview_flow(request: FlowPreviewRequest):
     list so the frontend can keep the last good graph.
     """
     nodes, edges, errors, warnings = await preview_flow_graph(
-        request.content, flow_id=request.flow_id
+        request.content,
+        flow_id=request.flow_id,
+        collapse_includes=request.collapse_includes,
     )
     return FlowPreviewResponse(
         valid=len(errors) == 0,
