@@ -373,6 +373,8 @@ interface GraphCanvasProps {
   onBeforeCameraChange?: () => void;
   /** 图引擎名称；缺省为 legacy。用于全图初始化时的数据加载。 */
   engine?: string;
+  /** arachne_flow 全图合并模式：method（按方法合并）或 none（原始图）。 */
+  flowMergeMode?: "method" | "none";
 }
 
 /** 边线条/箭头颜色：arachne_flow 按角色（输入/输出/引用）着色，其余按命名空间。 */
@@ -756,6 +758,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     onBeforeManualLayout,
     onBeforeCameraChange,
     engine,
+    flowMergeMode = "method",
   },
   ref
 ) {
@@ -2017,8 +2020,8 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
           nodesData = { items: sourceData.nodes };
           edgesData = { items: sourceData.edges };
         } else if (engine === "arachne_flow") {
-          // flow 全图：使用合并视图（动作按方法合并、平行边聚合），更干净易读
-          const merged = await getFlowMergedGraph("method");
+          // flow 全图：按 mergeMode 决定合并视图或原始图
+          const merged = await getFlowMergedGraph(flowMergeMode ?? "method");
           nodesData = { items: merged.nodes.map((n) => adaptFlowNode(n)) };
           edgesData = { items: merged.edges.map((e) => adaptFlowEdge(e)) };
         } else {

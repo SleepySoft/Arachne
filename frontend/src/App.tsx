@@ -123,6 +123,7 @@ export default function App() {
   const [flowEditorOpen, setFlowEditorOpen] = useState(false);
   const [flowEditorWidth, setFlowEditorWidth] = useState(384);
   const [editorHighlightIds, setEditorHighlightIds] = useState<string[]>([]);
+  const [flowMergeMode, setFlowMergeMode] = useState<"method" | "none">("method");
   const [viewManagerOpen, setViewManagerOpen] = useState(false);
   const [viewManagerWorkspace, setViewManagerWorkspace] = useState<import("@/types/view").WorkspaceType>("industrial");
   const [loadedIndustrialView, setLoadedIndustrialView] = useState<import("@/types/view").SavedView | null>(null);
@@ -583,6 +584,8 @@ export default function App() {
             }}
             engine={graphEngine}
             onOpenFlowEditor={() => setFlowEditorOpen(true)}
+            flowMergeMode={flowMergeMode}
+            onChangeMergeMode={setFlowMergeMode}
           />
         ) : (
           <IndustrialSidebar
@@ -612,7 +615,7 @@ export default function App() {
         <div className="relative h-full w-full">
           <GraphCanvas
             ref={graphCanvasRef}
-            key={industrial.graphKey}
+            key={`${industrial.graphKey}-${flowMergeMode}`}
             onNodeClick={industrial.handleNodeClick}
             onEdgeClick={industrial.handleEdgeClick}
             onNodeContextMenu={industrial.handleNodeContextMenu}
@@ -648,6 +651,7 @@ export default function App() {
               industrial.toggleProcessParent(nodeId);
             }}
             wheelSensitivity={industrial.wheelSensitivity}
+            flowMergeMode={flowMergeMode}
             restoredPositions={industrialViewToRestore?.nodePositions}
             restoredCamera={industrialViewToRestore?.camera}
             focusState={industrial.focusState}

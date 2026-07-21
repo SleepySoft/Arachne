@@ -15,6 +15,8 @@ interface FlowSidebarPanelProps {
   onChangeFilters: (filters: IndustrialFiltersState) => void;
   engine?: string;
   onOpenFlowEditor?: () => void;
+  flowMergeMode?: "method" | "none";
+  onChangeMergeMode?: (mode: "method" | "none") => void;
 }
 
 /**
@@ -30,6 +32,8 @@ export function FlowSidebarPanel({
   onChangeFilters,
   engine = "arachne_flow",
   onOpenFlowEditor,
+  flowMergeMode = "method",
+  onChangeMergeMode,
 }: FlowSidebarPanelProps) {
   const { data: flows = [], isLoading } = useQuery({
     queryKey: ["flows"],
@@ -140,6 +144,17 @@ export function FlowSidebarPanel({
         >
           编辑流程
         </button>
+        {onChangeMergeMode && (
+          <button
+            onClick={() =>
+              onChangeMergeMode(flowMergeMode === "method" ? "none" : "method")
+            }
+            className="flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-slate-700"
+            title="切换全图合并模式"
+          >
+            {flowMergeMode === "method" ? "原始视图" : "合并视图"}
+          </button>
+        )}
         <div className="text-[10px] text-slate-600">
           共 {flows.length} 个流程文件；勾选后自动加载合并子图
         </div>

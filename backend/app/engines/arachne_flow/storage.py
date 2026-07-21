@@ -899,21 +899,23 @@ async def get_merged_flow_graph() -> Tuple[List[GraphNode], List[GraphEdge]]:
     all_edges, _ = await list_flow_edges(skip=0, limit=10000)
 
     # 1) Determine merge keys for action nodes, but only actually merge when
-    # the same method/action is used by more than one flow. Singleton actions
-    # keep their original namespaced id so product-specific stubs don't create
-    # confusing merged_action:xxx nodes.
+    # the same method/action is used by actions from more than one distinct flow.
+    # Singleton actions and intra-flow repeated methods keep their original
+    # namespaced id so product-specific stubs and per-stage processes don't
+    # create confusing merged_action:xxx nodes.
     method_labels: Dict[str, str] = {
         n.node_id: n.label for n in nodes if n.entity_type == "arachne_flow:method"
     }
     action_merge_key: Dict[str, str] = {}
-    key_counts: Dict[str, int] = {}
+    key_flows: Dict[str, Set[str]] = {}
     for n in nodes:
         if n.entity_type != "arachne_flow:action":
             continue
         props = n.properties or {}
         key = str(props.get("method_ref") or props.get("original_action_id") or n.node_id)
         action_merge_key[n.node_id] = key
-        key_counts[key] = key_counts.get(key, 0) + 1
+        flow_id = str(props.get("flow_id") or "")
+        key_flows.setdefault(key, set()).add(flow_id)
 
     merged_actions: Dict[str, GraphNode] = {}
     singleton_action_ids: Set[str] = set()
@@ -922,7 +924,7 @@ async def get_merged_flow_graph() -> Tuple[List[GraphNode], List[GraphEdge]]:
             continue
         props = n.properties or {}
         key = action_merge_key[n.node_id]
-        if key_counts.get(key, 0) <= 1:
+        if len(key_flows.get(key, set())) <= 1:
             singleton_action_ids.add(n.node_id)
             continue
         merged_id = merged_action_id(key)
@@ -953,7 +955,7 @@ async def get_merged_flow_graph() -> Tuple[List[GraphNode], List[GraphEdge]]:
 
     def map_node(nid: str) -> str:
         key = action_merge_key.get(nid)
-        if key and key_counts.get(key, 0) > 1:
+        if key and len(key_flows.get(key, set())) > 1:
             return merged_action_id(key)
         return nid
 
