@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { StatsBar, MainView, GraphEngine } from "@/components/StatsBar";
 import { DbChecksPage } from "@/pages/DbChecksPage";
 import { FlowEditorPage } from "@/pages/FlowEditorPage";
+import { FlowEditorPanel } from "@/components/FlowEditorPanel";
 import { ReasoningPage } from "@/pages/ReasoningPage";
 import { Layout } from "@/components/Layout";
 import { GraphCanvas, GraphCanvasRef } from "@/components/GraphCanvas";
@@ -119,6 +120,7 @@ export default function App() {
     import("@/types/view").CompanyViewState | null
   >(null);
   const [importMessage, setImportMessage] = useState<string | null>(null);
+  const [flowEditorOpen, setFlowEditorOpen] = useState(false);
   const [viewManagerOpen, setViewManagerOpen] = useState(false);
   const [viewManagerWorkspace, setViewManagerWorkspace] = useState<import("@/types/view").WorkspaceType>("industrial");
   const [loadedIndustrialView, setLoadedIndustrialView] = useState<import("@/types/view").SavedView | null>(null);
@@ -129,6 +131,7 @@ export default function App() {
   const handleChangeMainView = useCallback(
     (view: MainView) => {
       setMainView(view);
+      setFlowEditorOpen(false);
       viewHistory.reset(view === "company_graph" ? "company" : "industrial");
     },
     [viewHistory.reset]
@@ -138,6 +141,7 @@ export default function App() {
     (engine: GraphEngine) => {
       if (engine === graphEngine) return;
       setGraphEngine(engine);
+      setFlowEditorOpen(false);
       // 主界面保持不变，只切换数据源；选择/过滤/子图重置为该引擎默认状态。
       industrial.switchEngine(engine);
       // 引擎切换后回到图工作区，方便看到新引擎的图。
@@ -576,6 +580,7 @@ export default function App() {
               industrial.setActiveFilters(filters);
             }}
             engine={graphEngine}
+            onOpenFlowEditor={() => setFlowEditorOpen(true)}
           />
         ) : (
           <IndustrialSidebar
@@ -757,7 +762,19 @@ export default function App() {
           }}
         />
       }
-      rightPanel={industrialRightPanel}
+      rightPanel={
+        isFlowEngine && flowEditorOpen ? (
+          <FlowEditorPanel
+            onClose={() => setFlowEditorOpen(false)}
+            onSaved={() => {
+              // Refresh the flow graph after save so the main canvas reflects changes.
+              industrial.recompileSelectedFlows();
+            }}
+          />
+        ) : (
+          industrialRightPanel
+        )
+      }
     />
   );
 

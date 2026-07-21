@@ -14,6 +14,7 @@ interface FlowSidebarPanelProps {
   activeFilters: IndustrialFiltersState;
   onChangeFilters: (filters: IndustrialFiltersState) => void;
   engine?: string;
+  onOpenFlowEditor?: () => void;
 }
 
 /**
@@ -28,6 +29,7 @@ export function FlowSidebarPanel({
   activeFilters,
   onChangeFilters,
   engine = "arachne_flow",
+  onOpenFlowEditor,
 }: FlowSidebarPanelProps) {
   const { data: flows = [], isLoading } = useQuery({
     queryKey: ["flows"],
@@ -106,7 +108,7 @@ export function FlowSidebarPanel({
         </div>
       </div>
 
-      {/* Recompile action */}
+      {/* Recompile + edit actions */}
       <div className="border-t border-slate-800 p-3 space-y-2">
         <button
           onClick={onRecompile}
@@ -115,6 +117,12 @@ export function FlowSidebarPanel({
         >
           <RotateCcw className={`h-3.5 w-3.5 ${recompiling ? "animate-spin" : ""}`} />
           {recompiling ? "编译中..." : `重新编译${selectedFlowIds.length > 0 ? ` (${selectedFlowIds.length})` : ""}`}
+        </button>
+        <button
+          onClick={onOpenFlowEditor}
+          className="flex w-full items-center justify-center gap-1.5 rounded-md border border-cyan-700 bg-cyan-900/30 px-3 py-2 text-sm text-cyan-200 transition-colors hover:bg-cyan-900/50"
+        >
+          编辑流程
         </button>
         <div className="text-[10px] text-slate-600">
           共 {flows.length} 个流程文件；勾选后自动加载合并子图
