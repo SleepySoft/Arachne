@@ -15,6 +15,7 @@ from pydantic import BaseModel
 
 from app.database_postgres import get_postgres_pool
 from app.engines.arachne_flow.parser import FlowParseError, parse_flow_file
+from app.engines.arachne_flow.formatter import format_flow_yaml
 from app.engines.arachne_flow.preview import preview_flow_graph, resolve_include_flow_ids
 from app.engines.arachne_flow import storage
 from app.models.core import GraphEdge, GraphNode, SubgraphResult
@@ -76,6 +77,16 @@ class FlowPreviewResponse(BaseModel):
 class FlowContentResponse(BaseModel):
     flow_id: str
     content: str
+
+
+class FlowFormatRequest(BaseModel):
+    content: str
+
+
+class FlowFormatResponse(BaseModel):
+    valid: bool
+    formatted: str = ""
+    errors: List[str] = []
 
 
 async def _scan_flow_files() -> List[dict]:
@@ -276,6 +287,16 @@ async def preview_flow(request: FlowPreviewRequest):
         warnings=warnings,
         includes=includes,
     )
+
+
+@router.post("/format", response_model=FlowFormatResponse)
+async def format_flow(request: FlowFormatRequest):
+    """Format arachne-flow YAML content with edges in compact triple form."""
+    try:
+        formatted = format_flow_yaml(request.content)
+        return FlowFormatResponse(valid=True, formatted=formatted)
+    except FlowParseError as exc:
+        return FlowFormatResponse(valid=False, errors=[str(exc)])
 
 
 @router.get("/{flow_id}/content", response_model=FlowContentResponse)

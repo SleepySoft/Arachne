@@ -3,6 +3,7 @@ import { GraphCanvas, GraphCanvasRef } from "@/components/GraphCanvas";
 import { adaptFlowEdge, adaptFlowNode } from "@/lib/flowAdapters";
 import { collapsePreviewGraph } from "@/lib/flowCollapse";
 import {
+  formatFlow,
   getFlowContent,
   listFlows,
   listNodes,
@@ -304,10 +305,17 @@ export function FlowEditorPage() {
   }, []);
 
   const handleFormat = useCallback(() => {
-    // Very light YAML tidy: ensure document ends with newline and edges are
-    // indented consistently (best-effort, non-destructive).
-    setContent((c) => c.replace(/\t/g, "  ").replace(/\s+$/g, "") + "\n");
-  }, []);
+    formatFlow(content)
+      .then((r) => {
+        if (r.valid) {
+          setContent(r.formatted);
+          setError(null);
+        } else {
+          setError(r.errors.join("\n"));
+        }
+      })
+      .catch((e) => setError(String(e)));
+  }, [content]);
 
   return (
     <div className="flex h-full w-full bg-slate-950">

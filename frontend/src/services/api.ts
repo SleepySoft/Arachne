@@ -355,6 +355,14 @@ export const getFlowContent = async (
   return res.data;
 };
 
+/** 将 YAML 内容格式化为紧凑三元组形式。 */
+export const formatFlow = async (
+  content: string
+): Promise<{ valid: boolean; formatted: string; errors: string[] }> => {
+  const res = await client.post("/flows/format", { content });
+  return res.data;
+};
+
 export const getConflicts = async (): Promise<unknown[]> => {
   const res = await client.get("/query/conflicts");
   return res.data;
