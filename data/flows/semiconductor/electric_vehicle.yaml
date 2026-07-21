@@ -5,12 +5,6 @@ include:
 - semiconductor_chip_manufacturing.yaml
 local: {}
 edges:
-- - chip
-  - feedstock
-  - act_integrate_electric_vehicle
-- - act_integrate_electric_vehicle
-  - ref
-  - integration_of_electric_vehicle
-- - act_integrate_electric_vehicle
-  - primary_result
-  - electric_vehicle
+- [chip, feedstock, act_integrate_electric_vehicle]
+- [act_integrate_electric_vehicle, ref, integration_of_electric_vehicle]
+- [act_integrate_electric_vehicle, primary_result, electric_vehicle]

@@ -121,6 +121,8 @@ export default function App() {
   >(null);
   const [importMessage, setImportMessage] = useState<string | null>(null);
   const [flowEditorOpen, setFlowEditorOpen] = useState(false);
+  const [flowEditorWidth, setFlowEditorWidth] = useState(384);
+  const [editorHighlightIds, setEditorHighlightIds] = useState<string[]>([]);
   const [viewManagerOpen, setViewManagerOpen] = useState(false);
   const [viewManagerWorkspace, setViewManagerWorkspace] = useState<import("@/types/view").WorkspaceType>("industrial");
   const [loadedIndustrialView, setLoadedIndustrialView] = useState<import("@/types/view").SavedView | null>(null);
@@ -633,7 +635,11 @@ export default function App() {
             connectTargetNodeId={industrial.connectTarget?.node_id || null}
             filters={industrial.activeFilters}
             highlightNodeId={industrial.selectedNode?.node_id}
-            highlightNodeIds={industrial.highlightNodeIds}
+            highlightNodeIds={
+              flowEditorOpen && editorHighlightIds.length > 0
+                ? editorHighlightIds
+                : industrial.highlightNodeIds
+            }
             sourceData={industrial.subgraphData}
             editMode={industrial.editMode}
             connectSourceNodeId={industrial.connectSource?.node_id || null}
@@ -770,10 +776,31 @@ export default function App() {
               // Refresh the flow graph after save so the main canvas reflects changes.
               industrial.recompileSelectedFlows();
             }}
+            onPreviewChange={(result) => {
+              if (!result) {
+                setEditorHighlightIds([]);
+                return;
+              }
+              const includeSet = new Set(result.includes || []);
+              const ids = new Set<string>();
+              for (const e of result.edges) {
+                const fid = (e.properties?.flow_id as string) || "";
+                // Current flow edges are those not belonging to included flows.
+                if (!includeSet.has(fid)) {
+                  ids.add(e.from_node);
+                  ids.add(e.to_node);
+                }
+              }
+              setEditorHighlightIds(Array.from(ids));
+            }}
           />
         ) : (
           industrialRightPanel
         )
+      }
+      rightPanelWidth={isFlowEngine && flowEditorOpen ? flowEditorWidth : undefined}
+      onRightPanelResize={
+        isFlowEngine && flowEditorOpen ? setFlowEditorWidth : undefined
       }
     />
   );

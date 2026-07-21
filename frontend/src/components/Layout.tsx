@@ -6,6 +6,10 @@ interface LayoutProps {
   centerCanvas: ReactNode;
   searchPanel: ReactNode;
   rightPanel: ReactNode;
+  /** Optional custom width for the right panel (px). */
+  rightPanelWidth?: number;
+  /** Called when the user drags the right-panel resize handle. */
+  onRightPanelResize?: (width: number) => void;
 }
 
 export function Layout({
@@ -14,7 +18,10 @@ export function Layout({
   centerCanvas,
   searchPanel,
   rightPanel,
+  rightPanelWidth,
+  onRightPanelResize,
 }: LayoutProps) {
+  const width = rightPanelWidth ?? 320;
   return (
     <div className="flex h-full w-full flex-col bg-slate-950">
       {/* TopBar */}
@@ -46,7 +53,30 @@ export function Layout({
 
         {/* Right Panel */}
         {rightPanel && (
-          <div className="w-80 shrink-0 border-l border-slate-800 bg-slate-900 overflow-y-auto">
+          <div
+            className="relative shrink-0 border-l border-slate-800 bg-slate-900 overflow-y-auto"
+            style={{ width }}
+          >
+            {onRightPanelResize && (
+              <div
+                className="absolute left-0 top-0 z-10 h-full w-1 cursor-col-resize bg-transparent hover:bg-cyan-500/50"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  const startX = e.clientX;
+                  const startWidth = width;
+                  const onMove = (ev: MouseEvent) => {
+                    const delta = startX - ev.clientX;
+                    onRightPanelResize(Math.max(240, Math.min(900, startWidth + delta)));
+                  };
+                  const onUp = () => {
+                    document.removeEventListener("mousemove", onMove);
+                    document.removeEventListener("mouseup", onUp);
+                  };
+                  document.addEventListener("mousemove", onMove);
+                  document.addEventListener("mouseup", onUp);
+                }}
+              />
+            )}
             {rightPanel}
           </div>
         )}

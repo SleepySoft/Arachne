@@ -128,7 +128,26 @@ function NodeCombobox({ label, value, nodes, placeholder, onChange }: NodeCombob
   );
 }
 
-export function FlowEditorPage() {
+interface FlowEditorPageProps {
+  /** Whether to show the right-hand preview canvas (default true). */
+  showPreview?: boolean;
+  /** Called whenever the active preview result changes (valid or last-good). */
+  onPreviewChange?: (result: FlowPreviewResult | null) => void;
+  /** Optional close handler for panel mode. */
+  onClose?: () => void;
+  /** Called after a flow is successfully saved/created. */
+  onSaved?: (flowId: string) => void;
+  /** Compact layout for narrow side panels. */
+  compact?: boolean;
+}
+
+export function FlowEditorPage({
+  showPreview = true,
+  onPreviewChange,
+  onClose,
+  onSaved,
+  compact: _compact = false,
+}: FlowEditorPageProps) {
   const [flows, setFlows] = useState<FlowSummary[]>([]);
   const [selectedFlowId, setSelectedFlowId] = useState<string>("");
   const [content, setContent] = useState<string>(DEFAULT_TEMPLATE);
@@ -241,6 +260,12 @@ export function FlowEditorPage() {
     };
   }, [preview, lastGood, collapseIncludes, selectedFlowId]);
 
+  // Notify parent when the active preview result changes (for highlight/diff).
+  const activePreview = preview?.valid ? preview : lastGood;
+  useEffect(() => {
+    onPreviewChange?.(activePreview);
+  }, [activePreview, onPreviewChange]);
+
   // Center the preview graph after each render.
   useEffect(() => {
     if (!graphData) return;
@@ -325,6 +350,7 @@ export function FlowEditorPage() {
             `已保存并编译：${result.flow_id}（${result.resources}资源/${result.actions}动作/${result.edges}边）`
           );
           listFlows().then(setFlows).catch(() => {});
+          onSaved?.(result.flow_id);
         } else {
           setError(result.errors.join("\n"));
         }
@@ -337,6 +363,7 @@ export function FlowEditorPage() {
           setSaveMessage(`已创建并编译：${result.flow_id}`);
           setSelectedFlowId(result.flow_id);
           listFlows().then(setFlows).catch(() => {});
+          onSaved?.(result.flow_id);
         } else {
           setError(result.errors.join("\n"));
         }
@@ -364,7 +391,7 @@ export function FlowEditorPage() {
   return (
     <div className="flex h-full w-full bg-slate-950">
       {/* Left: editor */}
-      <div className="flex w-1/2 flex-col border-r border-slate-800">
+      <div className={`flex flex-col ${showPreview ? "w-1/2 border-r border-slate-800" : "flex-1"}`}>
         {/* Toolbar */}
         <div className="flex items-center gap-2 border-b border-slate-800 bg-slate-900 p-2">
           <select
@@ -417,6 +444,15 @@ export function FlowEditorPage() {
           )}
           {previewing && (
             <span className="text-xs text-cyan-500">预览中...</span>
+          )}
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="ml-auto h-8 rounded border border-slate-700 bg-slate-800 px-2 text-xs text-slate-300 hover:bg-slate-700"
+              title="关闭编辑器"
+            >
+              关闭
+            </button>
           )}
         </div>
 
@@ -518,28 +554,30 @@ export function FlowEditorPage() {
       </div>
 
       {/* Right: preview */}
-      <div className="relative w-1/2">
-        {graphData ? (
-          <GraphCanvas
-            ref={canvasRef}
-            key={`preview-${previewVersion}-${collapseIncludes ? "collapsed" : "full"}`}
-            onNodeClick={() => {}}
-            onEdgeClick={() => {}}
-            filters={EDITOR_FILTERS}
-            sourceData={graphData}
-            engine="arachne_flow"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-sm text-slate-500">
-            输入 YAML 后右侧将实时渲染预览图
-          </div>
-        )}
-        {preview && !preview.valid && lastGood && (
-          <div className="absolute bottom-2 left-2 rounded bg-slate-800/90 px-2 py-1 text-[11px] text-slate-400">
-            当前显示：最后一次正确的图
-          </div>
-        )}
-      </div>
+      {showPreview && (
+        <div className="relative w-1/2">
+          {graphData ? (
+            <GraphCanvas
+              ref={canvasRef}
+              key={`preview-${previewVersion}-${collapseIncludes ? "collapsed" : "full"}`}
+              onNodeClick={() => {}}
+              onEdgeClick={() => {}}
+              filters={EDITOR_FILTERS}
+              sourceData={graphData}
+              engine="arachne_flow"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-sm text-slate-500">
+              输入 YAML 后右侧将实时渲染预览图
+            </div>
+          )}
+          {preview && !preview.valid && lastGood && (
+            <div className="absolute bottom-2 left-2 rounded bg-slate-800/90 px-2 py-1 text-[11px] text-slate-400">
+              当前显示：最后一次正确的图
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

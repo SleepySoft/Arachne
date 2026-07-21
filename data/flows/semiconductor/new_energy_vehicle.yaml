@@ -6,12 +6,6 @@ include:
 - printed_circuit_board_fabrication.yaml
 local: {}
 edges:
-- - pcb_board
-  - feedstock
-  - act_electronics_system_integration
-- - act_electronics_system_integration
-  - ref
-  - electronics_system_integration
-- - act_electronics_system_integration
-  - primary_result
-  - new_energy_vehicle
+- [pcb_board, feedstock, act_electronics_system_integration]
+- [act_electronics_system_integration, ref, electronics_system_integration]
+- [act_electronics_system_integration, primary_result, new_energy_vehicle]
