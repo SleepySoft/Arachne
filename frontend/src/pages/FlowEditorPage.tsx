@@ -133,6 +133,7 @@ export function FlowEditorPage() {
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loadingContent, setLoadingContent] = useState(false);
   const [previewing, setPreviewing] = useState(false);
+  const [previewVersion, setPreviewVersion] = useState(0);
   const [nodeOptions, setNodeOptions] = useState<NodeOption[]>([]);
   const [tripleDraft, setTripleDraft] = useState({
     source: "",
@@ -197,6 +198,8 @@ export function FlowEditorPage() {
             setPreview(result);
             setLastGood(result);
             setError(null);
+            // Bump version to force GraphCanvas remount with the new data.
+            setPreviewVersion((v) => v + 1);
           } else {
             setError(result.errors.join("\n"));
           }
@@ -226,9 +229,9 @@ export function FlowEditorPage() {
     if (!graphData) return;
     const timer = setTimeout(() => {
       canvasRef.current?.fitToView(40);
-    }, 150);
+    }, 500);
     return () => clearTimeout(timer);
-  }, [graphData]);
+  }, [graphData, previewVersion]);
 
   const lineCount = useMemo(() => content.split("\n").length, [content]);
   const lineNumbers = useMemo(
@@ -434,7 +437,7 @@ export function FlowEditorPage() {
         {graphData ? (
           <GraphCanvas
             ref={canvasRef}
-            key={selectedFlowId || "new"}
+            key={`preview-${previewVersion}`}
             onNodeClick={() => {}}
             onEdgeClick={() => {}}
             filters={EDITOR_FILTERS}
