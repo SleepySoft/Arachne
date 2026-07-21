@@ -25,7 +25,7 @@ from app.engines.arachne_flow import storage
 
 
 ROOT = Path(__file__).resolve().parents[2]
-FLOW_DIR = ROOT / "data" / "flows" / "semiconductor"
+FLOW_DIR = ROOT / "data" / "flows"
 
 
 async def _upsert_status(
@@ -114,7 +114,11 @@ async def load_all():
         print(f"[error] flow directory not found: {FLOW_DIR}")
         return
 
-    files = sorted(p for p in FLOW_DIR.glob("*.yaml") if p.name != "manifest.yaml")
+    files = sorted(
+        p
+        for p in FLOW_DIR.rglob("*.yaml")
+        if p.name != "manifest.yaml" and "legacy" not in p.parts
+    )
     print(f"[info] found {len(files)} flow files in {FLOW_DIR}\n")
 
     builder = FlowGraphBuilder()

@@ -38,6 +38,15 @@ export function FlowSidebarPanel({
 
   const selectedFlows = flows.filter((f) => selectedFlowIds.includes(f.flow_id));
 
+  // Group flows by category (folder under data/flows)
+  const flowsByCategory = flows.reduce<Record<string, FlowSummary[]>>((acc, flow) => {
+    const cat = flow.category || "未分类";
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(flow);
+    return acc;
+  }, {});
+  const categories = Object.keys(flowsByCategory).sort();
+
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Active selection chips */}
@@ -73,13 +82,20 @@ export function FlowSidebarPanel({
             {!isLoading && flows.length === 0 && (
               <div className="px-2 py-1 text-xs text-slate-500">未找到流程文件</div>
             )}
-            {flows.map((flow) => (
-              <FlowListItem
-                key={flow.flow_id}
-                flow={flow}
-                checked={selectedFlowIds.includes(flow.flow_id)}
-                onToggle={() => onToggleFlow(flow.flow_id)}
-              />
+            {categories.map((category) => (
+              <div key={category}>
+                <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  {category}
+                </div>
+                {flowsByCategory[category].map((flow) => (
+                  <FlowListItem
+                    key={flow.flow_id}
+                    flow={flow}
+                    checked={selectedFlowIds.includes(flow.flow_id)}
+                    onToggle={() => onToggleFlow(flow.flow_id)}
+                  />
+                ))}
+              </div>
             ))}
           </div>
         </CollapsibleSection>

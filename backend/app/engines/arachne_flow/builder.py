@@ -155,10 +155,14 @@ class FlowGraphBuilder:
         directory: Path,
         exclude: Optional[Set[str]] = None,
     ) -> "FlowGraphBuilder":
-        """Parse all ``*.yaml`` files in a directory and build a unified graph."""
+        """Parse all ``*.yaml`` files under a directory (recursively) and build a unified graph."""
         builder = cls()
         exclude = exclude or {"manifest.yaml"}
-        paths = sorted(p for p in directory.glob("*.yaml") if p.name not in exclude)
+        paths = sorted(
+            p
+            for p in directory.rglob("*.yaml")
+            if p.name not in exclude and "legacy" not in p.parts
+        )
         for path in paths:
             parsed = parse_flow_file(path)
             builder.add_parsed_flow(parsed)

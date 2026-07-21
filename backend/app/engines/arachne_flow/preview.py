@@ -23,7 +23,24 @@ from app.engines.arachne_flow.schemas import (
 from app.models.core import GraphEdge, GraphNode
 from app.services import node_storage
 
-FLOW_DIR = Path(__file__).resolve().parents[4] / "data" / "flows" / "semiconductor"
+FLOW_DIR = Path(__file__).resolve().parents[4] / "data" / "flows"
+
+
+def _find_flow_file(name_or_id: str, base_dir: Optional[Path] = None) -> Optional[Path]:
+    """Find a flow YAML file by name or stem, searching recursively under FLOW_DIR."""
+    if "/" in name_or_id or "\\" in name_or_id:
+        for base in (base_dir, FLOW_DIR):
+            if base is None:
+                continue
+            candidate = (base / name_or_id).resolve()
+            if candidate.exists() and candidate.is_file():
+                return candidate
+        return None
+    stem = name_or_id if not name_or_id.endswith(".yaml") else name_or_id[:-5]
+    for path in FLOW_DIR.rglob("*.yaml"):
+        if path.stem == stem:
+            return path
+    return None
 
 
 async def flow_graph_to_graph_elements(graph: FlowGraph) -> Tuple[List[GraphNode], List[GraphEdge]]:
@@ -182,8 +199,8 @@ def _add_with_includes(
     seen.add(parsed.flow_id)
     builder.add_parsed_flow(parsed)
     for include_name in parsed.includes:
-        include_path = FLOW_DIR / include_name
-        if not include_path.exists():
+        include_path = _find_flow_file(include_name, base_dir=None)
+        if include_path is None:
             errors.append(f"include file not found: {include_name}")
             continue
         try:
@@ -209,8 +226,8 @@ def resolve_include_flow_ids(content: str, flow_id: str = "preview") -> List[str
         seen.add(p.flow_id)
         order.append(p.flow_id)
         for name in p.includes:
-            include_path = FLOW_DIR / name
-            if not include_path.exists():
+            include_path = _find_flow_file(name, base_dir=None)
+            if include_path is None:
                 continue
             try:
                 visit(parse_flow_file(include_path))

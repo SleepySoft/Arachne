@@ -407,10 +407,21 @@ export function FlowEditorPage({
             className="h-8 rounded border border-slate-700 bg-slate-900 px-2 text-xs text-slate-200 outline-none focus:border-cyan-500"
           >
             <option value="">新建流程...</option>
-            {flows.map((f) => (
-              <option key={f.flow_id} value={f.flow_id}>
-                {f.title || f.flow_id}
-              </option>
+            {Object.entries(
+              flows.reduce<Record<string, FlowSummary[]>>((acc, f) => {
+                const cat = f.category || "未分类";
+                if (!acc[cat]) acc[cat] = [];
+                acc[cat].push(f);
+                return acc;
+              }, {})
+            ).map(([category, items]) => (
+              <optgroup key={category} label={category}>
+                {items.map((f) => (
+                  <option key={f.flow_id} value={f.flow_id}>
+                    {f.title || f.flow_id}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
           <button

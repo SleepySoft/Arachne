@@ -760,6 +760,7 @@ export interface FlowSummary {
   root_product: string;
   file: string;
   triples: number;
+  category?: string;
   status?: string;
   md5?: string;
   compiled_at?: string;

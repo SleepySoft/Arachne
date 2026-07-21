@@ -24,7 +24,7 @@ from app.models.core import GraphEdge, GraphNode, SubgraphResult
 router = APIRouter()
 
 ROOT = Path(__file__).resolve().parents[3]
-FLOW_DIR = ROOT / "data" / "flows" / "semiconductor"
+FLOW_DIR = ROOT / "data" / "flows"
 MANIFEST_FILE = FLOW_DIR / "manifest.yaml"
 
 
@@ -34,6 +34,7 @@ class FlowListItem(BaseModel):
     root_product: str
     file: str
     triples: int
+    category: str = ""
     status: Optional[str] = None
     md5: Optional[str] = None
     compiled_at: Optional[str] = None
@@ -91,6 +92,7 @@ class FlowSaveRequest(BaseModel):
 class FlowCreateRequest(BaseModel):
     flow_id: str
     content: str
+    category: str = ""
 
 
 class FlowSaveResponse(BaseModel):
@@ -110,28 +112,69 @@ class FlowFormatResponse(BaseModel):
     errors: List[str] = []
 
 
-async def _scan_flow_files() -> List[dict]:
-    """Return flow metadata from the manifest or by scanning YAML files."""
-    if MANIFEST_FILE.exists():
-        with MANIFEST_FILE.open("r", encoding="utf-8") as f:
-            manifest = yaml.safe_load(f) or {}
-        return manifest.get("files", [])
+def _find_flow_file(name_or_id: str, base_dir: Optional[Path] = None) -> Optional[Path]:
+    """Find a flow YAML file by name or stem, searching recursively under FLOW_DIR.
 
+    Supports both plain file names (``smartphone.yaml`` / ``smartphone``) and
+    relative paths (``semiconductor/smartphone.yaml``).
+    """
+    # Relative path with directory component
+    if "/" in name_or_id or "\\" in name_or_id:
+        for base in (base_dir, FLOW_DIR):
+            if base is None:
+                continue
+            candidate = (base / name_or_id).resolve()
+            if candidate.exists() and candidate.is_file():
+                return candidate
+        return None
+
+    # Plain name/stem: search recursively
+    stem = name_or_id if not name_or_id.endswith(".yaml") else name_or_id[:-5]
+    for path in FLOW_DIR.rglob("*.yaml"):
+        if path.stem == stem:
+            return path
+    return None
+
+
+def _flow_category(path: Path) -> str:
+    """Return the category (relative directory) of a flow file under FLOW_DIR."""
+    try:
+        rel = path.parent.relative_to(FLOW_DIR)
+        return str(rel) if str(rel) != "." else ""
+    except ValueError:
+        return ""
+
+
+async def _scan_flow_files() -> List[dict]:
+    """Return flow metadata by recursively scanning YAML files under FLOW_DIR."""
     files = []
-    for path in sorted(FLOW_DIR.glob("*.yaml")):
+    for path in sorted(FLOW_DIR.rglob("*.yaml")):
         if path.name == "manifest.yaml":
             continue
+        category = _flow_category(path)
         try:
             parsed = parse_flow_file(path)
             files.append(
                 {
                     "product": parsed.flow_id,
-                    "file": path.name,
+                    "file": str(path.relative_to(FLOW_DIR)),
                     "triples": len(parsed.triples),
+                    "category": category,
+                    "title": parsed.title or parsed.flow_id,
+                    "root_product": parsed.root_product or parsed.flow_id,
                 }
             )
         except FlowParseError:
-            files.append({"product": path.stem, "file": path.name, "triples": 0})
+            files.append(
+                {
+                    "product": path.stem,
+                    "file": str(path.relative_to(FLOW_DIR)),
+                    "triples": 0,
+                    "category": category,
+                    "title": path.stem,
+                    "root_product": path.stem,
+                }
+            )
     return files
 
 
@@ -177,9 +220,10 @@ async def list_flows():
             FlowListItem(
                 flow_id=flow_id,
                 title=title,
-                root_product=item.get("product", flow_id),
+                root_product=item.get("root_product", flow_id),
                 file=item["file"],
                 triples=item.get("triples", 0),
+                category=item.get("category", ""),
                 status=status.get("status"),
                 md5=status.get("md5"),
                 compiled_at=status.get("compiled_at"),
@@ -191,8 +235,8 @@ async def list_flows():
 @router.post("/{flow_id}/compile", response_model=FlowCompileResult)
 async def compile_flow(flow_id: str):
     """Parse and compile a single flow file into the Neo4j flow graph."""
-    file_path = FLOW_DIR / f"{flow_id}.yaml"
-    if not file_path.exists():
+    file_path = _find_flow_file(flow_id)
+    if file_path is None:
         raise HTTPException(status_code=404, detail=f"flow file not found: {flow_id}")
 
     try:
@@ -231,8 +275,7 @@ async def get_flows_subgraph(request: FlowSubgraphRequest):
         raise HTTPException(status_code=400, detail="flow_ids cannot be empty")
 
     for flow_id in request.flow_ids:
-        file_path = FLOW_DIR / f"{flow_id}.yaml"
-        if not file_path.exists():
+        if _find_flow_file(flow_id) is None:
             raise HTTPException(status_code=404, detail=f"flow file not found: {flow_id}")
 
     flow_ids = request.flow_ids
@@ -257,7 +300,7 @@ def _get_include_graph() -> Dict[str, List[str]]:
     if _include_graph_cache is not None:
         return _include_graph_cache
     graph: Dict[str, List[str]] = {}
-    for path in sorted(FLOW_DIR.glob("*.yaml")):
+    for path in sorted(FLOW_DIR.rglob("*.yaml")):
         if path.name == "manifest.yaml":
             continue
         try:
@@ -323,8 +366,8 @@ async def format_flow(request: FlowFormatRequest):
 @router.get("/{flow_id}/content", response_model=FlowContentResponse)
 async def get_flow_content(flow_id: str):
     """Return the raw YAML content of a flow file."""
-    file_path = FLOW_DIR / f"{flow_id}.yaml"
-    if not file_path.exists():
+    file_path = _find_flow_file(flow_id)
+    if file_path is None:
         raise HTTPException(status_code=404, detail=f"flow file not found: {flow_id}")
     return FlowContentResponse(flow_id=flow_id, content=file_path.read_text(encoding="utf-8"))
 
@@ -340,29 +383,11 @@ def _validate_flow_id(flow_id: str) -> None:
         )
 
 
-def _update_manifest(flow_id: str, triples: int) -> None:
-    """Update manifest.yaml with the triple count for a flow, adding it if new."""
-    if not MANIFEST_FILE.exists():
-        return
-    with MANIFEST_FILE.open("r", encoding="utf-8") as f:
-        manifest = yaml.safe_load(f) or {}
-    files = manifest.get("files", [])
-    for item in files:
-        if item.get("product") == flow_id:
-            item["triples"] = triples
-            break
-    else:
-        files.append({"product": flow_id, "file": f"{flow_id}.yaml", "triples": triples})
-    manifest["files"] = files
-    with MANIFEST_FILE.open("w", encoding="utf-8") as f:
-        yaml.safe_dump(manifest, f, allow_unicode=True, sort_keys=False, default_flow_style=False)
-
-
 @router.put("/{flow_id}", response_model=FlowSaveResponse)
 async def save_flow(flow_id: str, request: FlowSaveRequest):
     """Save YAML content to an existing flow file and recompile it."""
-    file_path = FLOW_DIR / f"{flow_id}.yaml"
-    if not file_path.exists():
+    file_path = _find_flow_file(flow_id)
+    if file_path is None:
         raise HTTPException(status_code=404, detail=f"flow file not found: {flow_id}")
 
     try:
@@ -371,7 +396,6 @@ async def save_flow(flow_id: str, request: FlowSaveRequest):
         return FlowSaveResponse(valid=False, flow_id=flow_id, errors=[str(exc)])
 
     file_path.write_text(request.content, encoding="utf-8")
-    _update_manifest(flow_id, len(parsed.triples))
 
     counts = await storage.compile_parsed_flow(parsed, clear_existing=True)
     return FlowSaveResponse(
@@ -389,9 +413,11 @@ async def save_flow(flow_id: str, request: FlowSaveRequest):
 async def create_flow(request: FlowCreateRequest):
     """Create a new flow file and compile it."""
     _validate_flow_id(request.flow_id)
-    file_path = FLOW_DIR / f"{request.flow_id}.yaml"
-    if file_path.exists():
+    if _find_flow_file(request.flow_id) is not None:
         raise HTTPException(status_code=409, detail=f"flow file already exists: {request.flow_id}")
+    category_dir = FLOW_DIR / request.category if request.category else FLOW_DIR
+    category_dir.mkdir(parents=True, exist_ok=True)
+    file_path = category_dir / f"{request.flow_id}.yaml"
 
     try:
         parsed = parse_flow_content(request.content, request.flow_id)
@@ -399,7 +425,6 @@ async def create_flow(request: FlowCreateRequest):
         return FlowSaveResponse(valid=False, flow_id=request.flow_id, errors=[str(exc)])
 
     file_path.write_text(request.content, encoding="utf-8")
-    _update_manifest(request.flow_id, len(parsed.triples))
 
     counts = await storage.compile_parsed_flow(parsed, clear_existing=True)
     return FlowSaveResponse(

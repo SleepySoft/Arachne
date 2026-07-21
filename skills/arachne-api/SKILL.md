@@ -618,6 +618,7 @@ Arachne-flow 是独立的流程图引擎，使用 `data/flows/semiconductor/*.ya
 - `include` 是**依赖声明**，不是复制粘贴：被 include 的流程独立编译，当前文件通过共享 RESOURCE 与它们连接。
 - 公共上游链应抽成共享流程文件（如 `semiconductor_chip_manufacturing.yaml`、`wafer_fabrication_processes.yaml`），产品流程只写自己的集成环节并 `include` 它们。
 - 使用 `POST /api/v1/flows/preview` 验证 YAML 后再保存；保存会自动重新编译。
+- 流程文件按目录归类（如 `data/flows/semiconductor/*.yaml`），后端会递归扫描所有子目录；界面上按目录分组显示。新增产业时新建一个目录即可。
 
 ## CLI 未直接覆盖的操作
 
