@@ -363,6 +363,35 @@ export const formatFlow = async (
   return res.data;
 };
 
+export interface FlowSaveResult {
+  valid: boolean;
+  flow_id: string;
+  errors: string[];
+  resources: number;
+  actions: number;
+  methods: number;
+  edges: number;
+  dual: number;
+}
+
+/** 保存已有流程文件并重新编译。 */
+export const saveFlow = async (
+  flowId: string,
+  content: string
+): Promise<FlowSaveResult> => {
+  const res = await client.put(`/flows/${flowId}`, { content });
+  return res.data;
+};
+
+/** 创建新流程文件并编译。 */
+export const createFlow = async (
+  flowId: string,
+  content: string
+): Promise<FlowSaveResult> => {
+  const res = await client.post("/flows", { flow_id: flowId, content });
+  return res.data;
+};
+
 export const getConflicts = async (): Promise<unknown[]> => {
   const res = await client.get("/query/conflicts");
   return res.data;

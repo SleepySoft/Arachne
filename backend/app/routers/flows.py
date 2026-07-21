@@ -6,6 +6,7 @@ the backend to (re)compile a flow into the Neo4j flow graph.
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 
@@ -14,7 +15,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app.database_postgres import get_postgres_pool
-from app.engines.arachne_flow.parser import FlowParseError, parse_flow_file
+from app.engines.arachne_flow.parser import FlowParseError, parse_flow_content, parse_flow_file
 from app.engines.arachne_flow.formatter import format_flow_yaml
 from app.engines.arachne_flow.preview import preview_flow_graph, resolve_include_flow_ids
 from app.engines.arachne_flow import storage
@@ -81,6 +82,26 @@ class FlowContentResponse(BaseModel):
 
 class FlowFormatRequest(BaseModel):
     content: str
+
+
+class FlowSaveRequest(BaseModel):
+    content: str
+
+
+class FlowCreateRequest(BaseModel):
+    flow_id: str
+    content: str
+
+
+class FlowSaveResponse(BaseModel):
+    valid: bool
+    flow_id: str
+    errors: List[str] = []
+    resources: int = 0
+    actions: int = 0
+    methods: int = 0
+    edges: int = 0
+    dual: int = 0
 
 
 class FlowFormatResponse(BaseModel):
@@ -306,6 +327,90 @@ async def get_flow_content(flow_id: str):
     if not file_path.exists():
         raise HTTPException(status_code=404, detail=f"flow file not found: {flow_id}")
     return FlowContentResponse(flow_id=flow_id, content=file_path.read_text(encoding="utf-8"))
+
+
+_FLOW_ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+
+
+def _validate_flow_id(flow_id: str) -> None:
+    if not _FLOW_ID_RE.match(flow_id):
+        raise HTTPException(
+            status_code=400,
+            detail="flow_id must be snake_case (lowercase letters, digits, underscores)",
+        )
+
+
+def _update_manifest(flow_id: str, triples: int) -> None:
+    """Update manifest.yaml with the triple count for a flow, adding it if new."""
+    if not MANIFEST_FILE.exists():
+        return
+    with MANIFEST_FILE.open("r", encoding="utf-8") as f:
+        manifest = yaml.safe_load(f) or {}
+    files = manifest.get("files", [])
+    for item in files:
+        if item.get("product") == flow_id:
+            item["triples"] = triples
+            break
+    else:
+        files.append({"product": flow_id, "file": f"{flow_id}.yaml", "triples": triples})
+    manifest["files"] = files
+    with MANIFEST_FILE.open("w", encoding="utf-8") as f:
+        yaml.safe_dump(manifest, f, allow_unicode=True, sort_keys=False, default_flow_style=False)
+
+
+@router.put("/{flow_id}", response_model=FlowSaveResponse)
+async def save_flow(flow_id: str, request: FlowSaveRequest):
+    """Save YAML content to an existing flow file and recompile it."""
+    file_path = FLOW_DIR / f"{flow_id}.yaml"
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail=f"flow file not found: {flow_id}")
+
+    try:
+        parsed = parse_flow_content(request.content, flow_id)
+    except FlowParseError as exc:
+        return FlowSaveResponse(valid=False, flow_id=flow_id, errors=[str(exc)])
+
+    file_path.write_text(request.content, encoding="utf-8")
+    _update_manifest(flow_id, len(parsed.triples))
+
+    counts = await storage.compile_parsed_flow(parsed, clear_existing=True)
+    return FlowSaveResponse(
+        valid=True,
+        flow_id=flow_id,
+        resources=counts["resources"],
+        actions=counts["actions"],
+        methods=counts["methods"],
+        edges=counts["edges"],
+        dual=counts.get("dual", 0),
+    )
+
+
+@router.post("", response_model=FlowSaveResponse)
+async def create_flow(request: FlowCreateRequest):
+    """Create a new flow file and compile it."""
+    _validate_flow_id(request.flow_id)
+    file_path = FLOW_DIR / f"{request.flow_id}.yaml"
+    if file_path.exists():
+        raise HTTPException(status_code=409, detail=f"flow file already exists: {request.flow_id}")
+
+    try:
+        parsed = parse_flow_content(request.content, request.flow_id)
+    except FlowParseError as exc:
+        return FlowSaveResponse(valid=False, flow_id=request.flow_id, errors=[str(exc)])
+
+    file_path.write_text(request.content, encoding="utf-8")
+    _update_manifest(request.flow_id, len(parsed.triples))
+
+    counts = await storage.compile_parsed_flow(parsed, clear_existing=True)
+    return FlowSaveResponse(
+        valid=True,
+        flow_id=request.flow_id,
+        resources=counts["resources"],
+        actions=counts["actions"],
+        methods=counts["methods"],
+        edges=counts["edges"],
+        dual=counts.get("dual", 0),
+    )
 
 
 class MergedFlowGraphResult(BaseModel):

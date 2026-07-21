@@ -3,11 +3,13 @@ import { GraphCanvas, GraphCanvasRef } from "@/components/GraphCanvas";
 import { adaptFlowEdge, adaptFlowNode } from "@/lib/flowAdapters";
 import { collapsePreviewGraph } from "@/lib/flowCollapse";
 import {
+  createFlow,
   formatFlow,
   getFlowContent,
   listFlows,
   listNodes,
   previewFlow,
+  saveFlow,
   FlowPreviewResult,
 } from "@/services/api";
 import {
@@ -139,6 +141,8 @@ export function FlowEditorPage() {
   const [previewVersion, setPreviewVersion] = useState(0);
   const [collapseIncludes, setCollapseIncludes] = useState(false);
   const [nodeOptions, setNodeOptions] = useState<NodeOption[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [tripleDraft, setTripleDraft] = useState({
     source: "",
     predicate: "feedstock",
@@ -302,7 +306,47 @@ export function FlowEditorPage() {
     setLastGood(null);
     setError(null);
     setWarnings([]);
+    setSaveMessage(null);
   }, []);
+
+  const extractRootProduct = useCallback((text: string): string | null => {
+    const match = text.match(/^root_product:\s*([a-z][a-z0-9_]*)\s*$/m);
+    return match ? match[1] : null;
+  }, []);
+
+  const handleSave = useCallback(async () => {
+    setSaving(true);
+    setSaveMessage(null);
+    try {
+      if (selectedFlowId) {
+        const result = await saveFlow(selectedFlowId, content);
+        if (result.valid) {
+          setSaveMessage(
+            `已保存并编译：${result.flow_id}（${result.resources}资源/${result.actions}动作/${result.edges}边）`
+          );
+          listFlows().then(setFlows).catch(() => {});
+        } else {
+          setError(result.errors.join("\n"));
+        }
+      } else {
+        const suggested = extractRootProduct(content) || "new_flow";
+        const flowId = window.prompt("请输入新流程的 flow_id（蛇形命名）", suggested);
+        if (!flowId) return;
+        const result = await createFlow(flowId.trim(), content);
+        if (result.valid) {
+          setSaveMessage(`已创建并编译：${result.flow_id}`);
+          setSelectedFlowId(result.flow_id);
+          listFlows().then(setFlows).catch(() => {});
+        } else {
+          setError(result.errors.join("\n"));
+        }
+      }
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setSaving(false);
+    }
+  }, [selectedFlowId, content, extractRootProduct]);
 
   const handleFormat = useCallback(() => {
     formatFlow(content)
@@ -358,6 +402,16 @@ export function FlowEditorPage() {
           >
             折叠 include
           </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="h-8 rounded bg-emerald-700 px-3 text-xs font-medium text-white hover:bg-emerald-600 disabled:opacity-40"
+          >
+            {saving ? "保存中..." : "保存"}
+          </button>
+          {saveMessage && (
+            <span className="text-xs text-emerald-400">{saveMessage}</span>
+          )}
           {loadingContent && (
             <span className="text-xs text-slate-500">加载文件...</span>
           )}
