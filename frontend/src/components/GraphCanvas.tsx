@@ -2004,6 +2004,13 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     async function init() {
       try {
         setLoading(true);
+        // Destroy any existing Cytoscape instance before creating a new one
+        // (prevents duplicated rendering under React StrictMode double-mount).
+        const existing = cyRef.current as unknown as { destroyed?: () => boolean; destroy?: () => void } | null;
+        if (existing && !(existing.destroyed?.() ?? false)) {
+          existing.destroy?.();
+        }
+        cyRef.current = null;
         let nodesData: { items: IndustrialNode[] };
         let edgesData: { items: GraphEdge[] };
         if (sourceData) {
