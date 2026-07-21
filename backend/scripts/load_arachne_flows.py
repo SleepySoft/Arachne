@@ -163,6 +163,22 @@ async def load_all():
         f"{counts['actions']} actions ({counts['dual']} dual), {counts['edges']} edges"
     )
 
+    # Verify persistence: count nodes/edges actually present in Neo4j.
+    driver = storage.get_flow_async_driver()
+    async with driver.session() as session:
+        result = await session.run("MATCH (n:ArachneFlowNode) RETURN count(n) AS c")
+        db_nodes = (await result.single())["c"]
+        result = await session.run("MATCH ()-[r:ARACHNE_FLOW]->() RETURN count(r) AS c")
+        db_edges = (await result.single())["c"]
+    expected_nodes = counts["resources"] + counts["methods"] + counts["actions"] - counts["dual"]
+    if db_nodes != expected_nodes or db_edges != counts["edges"]:
+        print(
+            f"[warn] persistence mismatch: expected {expected_nodes} nodes / {counts['edges']} edges, "
+            f"but Neo4j has {db_nodes} nodes / {db_edges} edges"
+        )
+    else:
+        print(f"[verify] Neo4j persisted {db_nodes} nodes / {db_edges} edges")
+
     for flow_id, file_path, md5 in parsed_ok:
         await _upsert_status(pool, flow_id, file_path, md5, "COMPILED")
         print(f"[status] {flow_id}: COMPILED")
