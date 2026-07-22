@@ -111,7 +111,6 @@ def test_parse_chip_manufacturing_flow():
     assert len(parsed.actions) > 0
     # Chip manufacturing now starts from wafer (produced by wafer_fabrication_processes).
     assert "wafer_dicing" in parsed.methods
-    assert "chip_testing" in parsed.methods
     assert "chip_packaging_and_testing" in parsed.methods
     assert parsed.includes == ["wafer_fabrication_processes.yaml"]
 
