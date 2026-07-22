@@ -22,7 +22,6 @@ edges:
 - [test_equipment, tool, act_chip_testing]
 - [probe_card, feedstock, act_chip_testing]
 - [act_chip_testing, ref, chip_testing]
-- [act_chip_testing, primary_result, tested_chip]
 - [act_chip_testing, primary_result, chip]
 - [molded_chip, feedstock, act_chip_packaging_and_testing]
 - [osat, tool, act_chip_packaging_and_testing]
@@ -30,5 +29,4 @@ edges:
 - [leadframe, feedstock, act_chip_packaging_and_testing]
 - [packaging_material, feedstock, act_chip_packaging_and_testing]
 - [act_chip_packaging_and_testing, ref, chip_packaging_and_testing]
-- [act_chip_packaging_and_testing, primary_result, tested_chip]
 - [act_chip_packaging_and_testing, primary_result, chip]
