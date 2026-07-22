@@ -3,7 +3,7 @@ title: 'Semiconductor flow: chip design (shared)'
 root_product: chip_design_output
 include: []
 local:
-  chip_design_output: process 产出
+  chip_design_output: 芯片设计图
 edges:
 - [integrated_device_manufacturer, tool, act_chip_design]
 - [eda_software, tool, act_chip_design]
