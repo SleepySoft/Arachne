@@ -19,14 +19,66 @@ FLOW_DIR = Path(__file__).resolve().parents[2] / "data" / "flows" / "semiconduct
 
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def _wipe_flow_test_data():
-    """Ensure arachne-flow tests start from an empty flow graph."""
+    """Ensure arachne-flow tests start from an empty flow graph.
+
+    Backs up any existing arachne-flow data before the session and restores it
+    afterwards, so running tests does not wipe the shared development database.
+    """
     from app.database_flow import get_flow_async_driver
 
+    def _serialize(value):
+        if value is None:
+            return None
+        if hasattr(value, "to_native"):
+            return value.to_native()
+        if isinstance(value, list):
+            return [_serialize(v) for v in value]
+        if isinstance(value, dict):
+            return {k: _serialize(v) for k, v in value.items()}
+        return value
+
     driver = get_flow_async_driver()
+    backup_nodes = []
+    backup_edges = []
+    async with driver.session() as session:
+        # Back up existing data
+        nodes_result = await session.run("MATCH (n:ArachneFlowNode) RETURN n, labels(n) AS labels")
+        async for record in nodes_result:
+            props = {k: _serialize(v) for k, v in dict(record["n"]).items()}
+            backup_nodes.append({"labels": record["labels"], "properties": props})
+        edges_result = await session.run(
+            "MATCH (a)-[r:ARACHNE_FLOW]->(b) RETURN a.node_id AS from_id, b.node_id AS to_id, r"
+        )
+        async for record in edges_result:
+            props = {k: _serialize(v) for k, v in dict(record["r"]).items()}
+            backup_edges.append(
+                {"from_id": record["from_id"], "to_id": record["to_id"], "properties": props}
+            )
+
+        # Clear for tests
+        await session.run("MATCH ()-[r:ARACHNE_FLOW]->() DELETE r")
+        await session.run("MATCH (n:ArachneFlowNode) DELETE n")
+
+    yield
+
+    # Restore backed-up data after the test session
     async with driver.session() as session:
         await session.run("MATCH ()-[r:ARACHNE_FLOW]->() DELETE r")
         await session.run("MATCH (n:ArachneFlowNode) DELETE n")
-    yield
+        for node in backup_nodes:
+            labels = ":".join(node["labels"])
+            await session.run(f"CREATE (n:{labels} $props)", {"props": node["properties"]})
+        for edge in backup_edges:
+            await session.run(
+                "MATCH (a:ArachneFlowNode {node_id: $from_id}), "
+                "(b:ArachneFlowNode {node_id: $to_id}) "
+                "CREATE (a)-[r:ARACHNE_FLOW $props]->(b)",
+                {
+                    "from_id": edge["from_id"],
+                    "to_id": edge["to_id"],
+                    "props": edge["properties"],
+                },
+            )
 
 
 # ---------------------------------------------------------------------------
