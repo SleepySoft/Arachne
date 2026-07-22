@@ -6,5 +6,5 @@ include:
 local: {}
 edges:
 - [chip_die, feedstock, act_nand_flash_chip_packaging_and_testing]
-- [act_nand_flash_chip_packaging_and_testing, ref, chip_packaging_and_testing]
+- [act_nand_flash_chip_packaging_and_testing, ref, nand_flash_packaging_and_testing]
 - [act_nand_flash_chip_packaging_and_testing, primary_result, nand_flash_chip]
