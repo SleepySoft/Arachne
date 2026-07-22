@@ -30,6 +30,7 @@ edges:
 - [photoresist_coated_wafer, feedstock, act_exposure_process]
 - [lithography_machine, tool, act_exposure_process]
 - [photomask, feedstock, act_exposure_process]
+- [chip_design_output, subject, act_exposure_process]
 - [act_exposure_process, ref, exposure_process]
 - [act_exposure_process, primary_result, exposed_wafer]
 - [exposed_wafer, feedstock, act_development_process]
@@ -101,9 +102,7 @@ edges:
 - [act_post_cmp_cleaning, primary_result, cmp_cleaned_wafer]
 # Metrology and final wafer output
 - [cmp_cleaned_wafer, feedstock, act_metrology_inspection]
-- [annealed_wafer, feedstock, act_metrology_inspection]
 - [metrology_equipment, tool, act_metrology_inspection]
-- [chip_design_output, subject, act_metrology_inspection]
 - [act_metrology_inspection, ref, metrology_inspection]
 - [act_metrology_inspection, primary_result, metrology_data]
 - [act_metrology_inspection, primary_result, wafer]
