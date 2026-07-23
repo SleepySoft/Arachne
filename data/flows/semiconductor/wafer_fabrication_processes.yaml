@@ -4,12 +4,14 @@ root_product: wafer
 include:
 - chip_design.yaml
 - silicon_wafer_manufacturing.yaml
+- hydrofluoric_acid_production.yaml
 local: {}
 edges:
 # Initial cleaning and oxidation
 - [silicon_wafer, feedstock, act_initial_wafer_cleaning]
 - [cleaning_equipment, tool, act_initial_wafer_cleaning]
 - [wet_chemicals, feedstock, act_initial_wafer_cleaning]
+- [hydrofluoric_acid, feedstock, act_initial_wafer_cleaning]
 - [act_initial_wafer_cleaning, ref, wafer_cleaning_process]
 - [act_initial_wafer_cleaning, primary_result, initial_cleaned_wafer]
 - [initial_cleaned_wafer, feedstock, act_oxidation_process]
@@ -41,6 +43,7 @@ edges:
 - [patterned_wafer, feedstock, act_etching_process]
 - [etching_machine, tool, act_etching_process]
 - [wet_chemicals, feedstock, act_etching_process]
+- [hydrofluoric_acid, feedstock, act_etching_process]
 - [electronic_special_gases, feedstock, act_etching_process]
 - [act_etching_process, ref, etching_process]
 - [act_etching_process, primary_result, etched_wafer]

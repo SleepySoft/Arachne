@@ -4,6 +4,8 @@ root_product: server
 include:
 - semiconductor_chip_manufacturing.yaml
 - printed_circuit_board_fabrication.yaml
+- dram_chip_manufacturing.yaml
+- advanced_packaging.yaml
 local: {}
 edges:
 - [ai_accelerator, feedstock, act_electronics_system_integration]
@@ -22,6 +24,3 @@ edges:
 - [hbm, component, act_integrate_gpu]
 - [act_integrate_gpu, ref, integration_of_gpu]
 - [act_integrate_gpu, primary_result, gpu]
-- [memory_wafer, feedstock, act_usage_hbm_advanced_packaging]
-- [act_usage_hbm_advanced_packaging, ref, usage_hbm_advanced_packaging]
-- [act_usage_hbm_advanced_packaging, primary_result, hbm]

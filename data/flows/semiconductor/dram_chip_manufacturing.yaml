@@ -1,0 +1,13 @@
+schema: arachne-flow/v0.1
+title: 'Semiconductor flow: DRAM chip manufacturing (shared)'
+root_product: dram_chip
+include:
+- memory_wafer_manufacturing.yaml
+local: {}
+edges:
+- [memory_wafer, feedstock, act_dram_fabrication]
+- [act_dram_fabrication, ref, dram_fabrication]
+- [act_dram_fabrication, primary_result, dram_wafer]
+- [dram_wafer, feedstock, act_dram_packaging_and_testing]
+- [act_dram_packaging_and_testing, ref, dram_packaging_and_testing]
+- [act_dram_packaging_and_testing, primary_result, dram_chip]

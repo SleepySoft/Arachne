@@ -1,0 +1,26 @@
+schema: arachne-flow/v0.1
+title: 'Semiconductor flow: advanced packaging (shared)'
+root_product: hbm
+include:
+- memory_wafer_manufacturing.yaml
+local: {}
+edges:
+- [memory_wafer, feedstock, act_tsv_interconnection]
+- [act_tsv_interconnection, ref, tsv_interconnection]
+- [act_tsv_interconnection, primary_result, tsv_memory_wafer]
+- [tsv_memory_wafer, feedstock, act_bumping_process]
+- [microbump, feedstock, act_bumping_process]
+- [act_bumping_process, ref, bumping_process]
+- [act_bumping_process, primary_result, bumped_die]
+- [bumped_die, feedstock, act_die_stacking]
+- [act_die_stacking, ref, die_stacking]
+- [act_die_stacking, primary_result, stacked_die]
+- [stacked_die, feedstock, act_silicon_interposer_integration]
+- [silicon_interposer, feedstock, act_silicon_interposer_integration]
+- [packaging_substrate, feedstock, act_silicon_interposer_integration]
+- [act_silicon_interposer_integration, ref, silicon_interposer_integration]
+- [act_silicon_interposer_integration, primary_result, integrated_module]
+- [integrated_module, feedstock, act_underfill_process]
+- [underfill, feedstock, act_underfill_process]
+- [act_underfill_process, ref, underfill_process]
+- [act_underfill_process, primary_result, hbm]

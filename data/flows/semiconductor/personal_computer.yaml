@@ -4,6 +4,7 @@ root_product: personal_computer
 include:
 - semiconductor_chip_manufacturing.yaml
 - printed_circuit_board_fabrication.yaml
+- dram_chip_manufacturing.yaml
 local: {}
 edges:
 - [ddr5, feedstock, act_electronics_system_integration]

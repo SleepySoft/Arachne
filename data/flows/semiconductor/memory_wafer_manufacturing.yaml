@@ -1,0 +1,10 @@
+schema: arachne-flow/v0.1
+title: 'Semiconductor flow: memory wafer manufacturing (shared)'
+root_product: memory_wafer
+include:
+- silicon_wafer_manufacturing.yaml
+local: {}
+edges:
+- [silicon_wafer, feedstock, act_memory_wafer_fabrication]
+- [act_memory_wafer_fabrication, ref, memory_wafer_fabrication]
+- [act_memory_wafer_fabrication, primary_result, memory_wafer]

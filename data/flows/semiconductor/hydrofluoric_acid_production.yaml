@@ -1,0 +1,10 @@
+schema: arachne-flow/v0.1
+title: 'Semiconductor flow: hydrofluoric acid production (shared)'
+root_product: hydrofluoric_acid
+include: []
+local: {}
+edges:
+- [fluorite, feedstock, act_hydrofluoric_acid_production]
+- [sulfuric_acid, feedstock, act_hydrofluoric_acid_production]
+- [act_hydrofluoric_acid_production, ref, hydrofluoric_acid_production]
+- [act_hydrofluoric_acid_production, primary_result, hydrofluoric_acid]
