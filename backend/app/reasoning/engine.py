@@ -18,6 +18,7 @@ from app.reasoning.schemas import (
     TaskType,
 )
 from app.reasoning.tasks.association import run_association
+from app.reasoning.tasks.arachne_flow_association import run_arachne_flow_association
 from app.reasoning.tasks.bottleneck_detection import run_bottleneck_detection
 from app.reasoning.tasks.candidate_discovery import run_candidate_discovery
 from app.reasoning.tasks.cross_graph_context import run_cross_graph_context
@@ -94,10 +95,20 @@ async def execute_reasoning_task(task: ReasoningTask) -> ReasoningResultEnvelope
     if missing and task.parameters.get("suggest_similar_on_missing", True):
         suggestions = await _suggest_similar_nodes(missing)
 
-    handler = _TASK_DISPATCH.get(task.task_type)
+    # Engine-specific dispatch: arachne_flow uses its own task handlers.
+    if task.engine == "arachne_flow":
+        if task.task_type == TaskType.ASSOCIATION:
+            handler = run_arachne_flow_association
+        else:
+            handler = None
+    else:
+        handler = _TASK_DISPATCH.get(task.task_type)
+
     if handler is None:
         diagnostics = ReasoningDiagnostics(
-            warnings=[f"Task type '{task.task_type.value}' is not implemented in V0.2"],
+            warnings=[
+                f"Task type '{task.task_type.value}' is not implemented for engine '{task.engine}'"
+            ],
             execution_time_ms=int((datetime.utcnow() - started_at).total_seconds() * 1000),
         )
         return ReasoningResultEnvelope(

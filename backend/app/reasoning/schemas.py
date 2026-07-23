@@ -220,6 +220,7 @@ class ReasoningTask(BaseModel):
     constraints: ReasoningConstraints = Field(default_factory=ReasoningConstraints)
     requested_outputs: List[OutputType] = Field(default_factory=list)
     context: Optional[TaskContext] = None
+    engine: str = Field(default="legacy", description="Graph engine to reason over (legacy or arachne_flow)")
 
 
 # ============================================================================
