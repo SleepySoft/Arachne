@@ -7,10 +7,11 @@ include:
 - hydrofluoric_acid_production.yaml
 local: {}
 edges:
+# Common resources for the wafer cleaning process (shared across all cleaning actions)
+- [cleaning_equipment, tool, wafer_cleaning_process]
+- [wet_chemicals, feedstock, wafer_cleaning_process]
 # Initial cleaning and oxidation
 - [silicon_wafer, feedstock, act_initial_wafer_cleaning]
-- [cleaning_equipment, tool, act_initial_wafer_cleaning]
-- [wet_chemicals, feedstock, act_initial_wafer_cleaning]
 - [hydrofluoric_acid, feedstock, act_initial_wafer_cleaning]
 - [act_initial_wafer_cleaning, ref, wafer_cleaning_process]
 - [act_initial_wafer_cleaning, primary_result, initial_cleaned_wafer]
@@ -19,8 +20,6 @@ edges:
 - [act_oxidation_process, primary_result, oxidized_wafer]
 # Pre-lithography cleaning and photoresist coating
 - [oxidized_wafer, feedstock, act_pre_lithography_wafer_cleaning]
-- [cleaning_equipment, tool, act_pre_lithography_wafer_cleaning]
-- [wet_chemicals, feedstock, act_pre_lithography_wafer_cleaning]
 - [act_pre_lithography_wafer_cleaning, ref, wafer_cleaning_process]
 - [act_pre_lithography_wafer_cleaning, primary_result, lithography_ready_wafer]
 - [lithography_ready_wafer, feedstock, act_photoresist_coating_process]
@@ -42,7 +41,6 @@ edges:
 # Etching and stripping
 - [patterned_wafer, feedstock, act_etching_process]
 - [etching_machine, tool, act_etching_process]
-- [wet_chemicals, feedstock, act_etching_process]
 - [hydrofluoric_acid, feedstock, act_etching_process]
 - [electronic_special_gases, feedstock, act_etching_process]
 - [act_etching_process, ref, etching_process]
@@ -52,8 +50,6 @@ edges:
 - [act_photoresist_stripping_process, primary_result, photoresist_stripped_wafer]
 # Post-etch cleaning, implantation and diffusion
 - [photoresist_stripped_wafer, feedstock, act_post_etch_residue_cleaning]
-- [cleaning_equipment, tool, act_post_etch_residue_cleaning]
-- [wet_chemicals, feedstock, act_post_etch_residue_cleaning]
 - [act_post_etch_residue_cleaning, ref, wafer_cleaning_process]
 - [act_post_etch_residue_cleaning, primary_result, etch_cleaned_wafer]
 - [etch_cleaned_wafer, feedstock, act_ion_implantation_process]
@@ -62,8 +58,6 @@ edges:
 - [act_ion_implantation_process, ref, ion_implantation_process]
 - [act_ion_implantation_process, primary_result, implanted_wafer]
 - [etch_cleaned_wafer, feedstock, act_pre_diffusion_cleaning]
-- [cleaning_equipment, tool, act_pre_diffusion_cleaning]
-- [wet_chemicals, feedstock, act_pre_diffusion_cleaning]
 - [act_pre_diffusion_cleaning, ref, wafer_cleaning_process]
 - [act_pre_diffusion_cleaning, primary_result, diffusion_ready_wafer]
 - [diffusion_ready_wafer, feedstock, act_diffusion_process]
@@ -78,8 +72,6 @@ edges:
 - [act_annealing_process, primary_result, annealed_wafer]
 # Pre-deposition cleaning and thin film deposition
 - [annealed_wafer, feedstock, act_pre_deposition_cleaning]
-- [cleaning_equipment, tool, act_pre_deposition_cleaning]
-- [wet_chemicals, feedstock, act_pre_deposition_cleaning]
 - [act_pre_deposition_cleaning, ref, wafer_cleaning_process]
 - [act_pre_deposition_cleaning, primary_result, deposition_ready_wafer]
 - [deposition_ready_wafer, feedstock, act_thin_film_deposition_process]
@@ -99,8 +91,6 @@ edges:
 - [act_cmp_process, ref, cmp_process]
 - [act_cmp_process, primary_result, planarized_wafer]
 - [planarized_wafer, feedstock, act_post_cmp_cleaning]
-- [cleaning_equipment, tool, act_post_cmp_cleaning]
-- [wet_chemicals, feedstock, act_post_cmp_cleaning]
 - [act_post_cmp_cleaning, ref, wafer_cleaning_process]
 - [act_post_cmp_cleaning, primary_result, cmp_cleaned_wafer]
 # Metrology and final wafer output
