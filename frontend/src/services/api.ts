@@ -321,6 +321,44 @@ export const compileFlows = async (flowIds: string[]): Promise<FlowCompileResult
   return res.data;
 };
 
+export interface FlowCompileAsyncResult {
+  job_id: string;
+  status: string;
+  total_items: number;
+}
+
+/** Start an asynchronous flow compilation job. */
+export const compileFlowsAsync = async (flowIds: string[]): Promise<FlowCompileAsyncResult> => {
+  const res = await client.post("/flows/compile-async", { flow_ids: flowIds });
+  return res.data;
+};
+
+export interface CompileJobStatus {
+  job_id: string;
+  job_type: string;
+  target_id: string;
+  status: string;
+  total_items: number;
+  processed_items: number;
+  result_summary?: Record<string, unknown>;
+  error_message?: string;
+  created_at?: string;
+  started_at?: string;
+  completed_at?: string;
+}
+
+/** Get the status of a computation job. */
+export const getCompileJobStatus = async (jobId: string): Promise<CompileJobStatus> => {
+  const res = await client.get(`/computation-jobs/${jobId}`);
+  return res.data;
+};
+
+/** Get active (pending/running) flow compilation jobs. */
+export const getActiveCompileJobs = async (): Promise<CompileJobStatus[]> => {
+  const res = await client.get("/flows/compile-jobs/active");
+  return res.data;
+};
+
 /** 全量流程图（merge=method 时按方法合并跨流程动作并聚合平行边）。 */
 export const getFlowMergedGraph = async (
   merge: "method" | "none" = "method"

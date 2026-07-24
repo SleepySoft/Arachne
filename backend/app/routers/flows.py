@@ -6,6 +6,7 @@ the backend to (re)compile a flow into the Neo4j flow graph.
 """
 from __future__ import annotations
 
+import asyncio
 import re
 from pathlib import Path
 from typing import Dict, List, Optional, Set
@@ -19,6 +20,14 @@ from app.engines.arachne_flow.parser import FlowParseError, parse_flow_content, 
 from app.engines.arachne_flow.formatter import format_flow_yaml
 from app.engines.arachne_flow.preview import preview_flow_graph, resolve_include_flow_ids
 from app.engines.arachne_flow import storage
+from app.services.computation_jobs import (
+    complete_job,
+    create_job,
+    fail_job,
+    get_job,
+    mark_job_running,
+    update_job_progress,
+)
 from app.models.core import GraphEdge, GraphNode, SubgraphResult
 
 router = APIRouter()
@@ -496,3 +505,98 @@ async def compile_flows_batch(request: FlowCompileBatchRequest):
             )
         )
     return results
+
+
+class FlowCompileAsyncRequest(BaseModel):
+    flow_ids: List[str]
+
+
+class FlowCompileAsyncResponse(BaseModel):
+    job_id: str
+    status: str
+    total_items: int
+
+
+async def _get_active_compile_jobs() -> List[dict]:
+    """Return active (pending/running) flow_compile jobs."""
+    pool = await get_postgres_pool()
+    if pool is None:
+        return []
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT job_id, job_type, target_id, status, total_items, processed_items,
+                   created_at, started_at
+            FROM computation_jobs
+            WHERE job_type = 'flow_compile' AND status IN ('pending', 'running')
+            ORDER BY created_at DESC
+            """
+        )
+    return [dict(row) for row in rows]
+
+
+@router.get("/compile-jobs/active", response_model=List[dict])
+async def get_active_compile_jobs():
+    """Return active (pending/running) flow compilation jobs."""
+    return await _get_active_compile_jobs()
+
+
+async def _run_compile_job(job_id: str, flow_ids: List[str]) -> None:
+    """Background task: compile flows and update job progress."""
+    try:
+        await mark_job_running(job_id)
+        total = len(flow_ids)
+        for idx, flow_id in enumerate(flow_ids, start=1):
+            file_path = _find_flow_file(flow_id)
+            if file_path is None:
+                await update_job_progress(job_id, idx)
+                continue
+            try:
+                parsed = parse_flow_file(file_path)
+                await storage.compile_parsed_flow(parsed, clear_existing=True)
+            except Exception:
+                pass
+            await update_job_progress(job_id, idx)
+        await complete_job(job_id, {"compiled_flows": flow_ids, "total": total})
+    except Exception as exc:
+        await fail_job(job_id, str(exc))
+
+
+@router.post("/compile-async", response_model=FlowCompileAsyncResponse)
+async def compile_flows_async(request: FlowCompileAsyncRequest):
+    """Start an asynchronous flow compilation job.
+
+    Returns a job_id that can be polled via `/api/v1/computation-jobs/{job_id}`.
+    Prevents re-entry by returning 409 if another compile job is already active.
+    """
+    if not request.flow_ids:
+        raise HTTPException(status_code=400, detail="flow_ids cannot be empty")
+
+    # Re-entry prevention: check for active compile jobs
+    active = await _get_active_compile_jobs()
+    if active:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Another compilation job is already running: {active[0]['job_id']}",
+        )
+
+    # Validate flow files exist
+    for flow_id in request.flow_ids:
+        if _find_flow_file(flow_id) is None:
+            raise HTTPException(status_code=404, detail=f"flow file not found: {flow_id}")
+
+    job = await create_job(
+        job_type="flow_compile",
+        target_id=",".join(request.flow_ids),
+        total_items=len(request.flow_ids),
+    )
+    job_id = job["job_id"]
+
+    # Start background compilation
+    asyncio.create_task(_run_compile_job(job_id, request.flow_ids))
+
+    return FlowCompileAsyncResponse(
+        job_id=job_id,
+        status="pending",
+        total_items=len(request.flow_ids),
+    )

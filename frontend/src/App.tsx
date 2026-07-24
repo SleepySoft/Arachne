@@ -577,6 +577,7 @@ export default function App() {
             }}
             onRecompile={industrial.recompileSelectedFlows}
             recompiling={industrial.recompilingFlows}
+            compileProgress={industrial.compileProgress}
             activeFilters={industrial.activeFilters}
             onChangeFilters={(filters) => {
               viewHistory.reset("industrial");

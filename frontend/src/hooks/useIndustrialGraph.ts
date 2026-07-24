@@ -11,8 +11,9 @@ import { EditMode } from "@/components/GraphCanvas";
 
 import { HideState, IndustrialFiltersState } from "@/types/view";
 import {
-  compileFlows,
+  compileFlowsAsync,
   getCompanySubgraph,
+  getCompileJobStatus,
   getFlowsSubgraph,
   getIndustrySubgraph,
   listNodes,
@@ -91,6 +92,7 @@ export function useIndustrialGraph(engine: string = "legacy") {
   );
   const [selectedFlowIds, setSelectedFlowIds] = useState<string[]>([]);
   const [recompilingFlows, setRecompilingFlows] = useState(false);
+  const [compileProgress, setCompileProgress] = useState<{ processed: number; total: number } | null>(null);
   const [graphKey, setGraphKey] = useState(0);
   const [editMode, setEditMode] = useState<EditMode>("default");
   const [connectSource, setConnectSource] = useState<IndustrialNode | null>(null);
@@ -593,12 +595,25 @@ export function useIndustrialGraph(engine: string = "legacy") {
     );
   }, []);
 
-  /** 重新编译选中的流程文件并刷新当前子图。 */
+  /** 重新编译选中的流程文件并刷新当前子图（异步任务 + 进度显示）。 */
   const recompileSelectedFlows = useCallback(async () => {
     if (engine !== "arachne_flow" || selectedFlowIds.length === 0) return;
     setRecompilingFlows(true);
+    setCompileProgress(null);
     try {
-      await compileFlows(selectedFlowIds);
+      const result = await compileFlowsAsync(selectedFlowIds);
+      const jobId = result.job_id;
+      // Poll job status until completed or failed
+      let status = result.status;
+      while (status === "pending" || status === "running") {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        const job = await getCompileJobStatus(jobId);
+        status = job.status;
+        setCompileProgress({
+          processed: job.processed_items,
+          total: job.total_items,
+        });
+      }
       await queryClient.invalidateQueries({ queryKey: ["flows"] });
       const sg = await getFlowsSubgraph(selectedFlowIds, 3);
       setSubgraphData({
@@ -608,6 +623,7 @@ export function useIndustrialGraph(engine: string = "legacy") {
       setGraphKey((k) => k + 1);
     } finally {
       setRecompilingFlows(false);
+      setCompileProgress(null);
     }
   }, [engine, selectedFlowIds, queryClient]);
 
@@ -779,6 +795,7 @@ export function useIndustrialGraph(engine: string = "legacy") {
     toggleFlowId,
     recompileSelectedFlows,
     recompilingFlows,
+    compileProgress,
     switchEngine,
     graphKey,
     setGraphKey,

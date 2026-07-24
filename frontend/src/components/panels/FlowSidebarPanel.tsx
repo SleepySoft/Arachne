@@ -11,6 +11,7 @@ interface FlowSidebarPanelProps {
   onToggleFlow: (flowId: string) => void;
   onRecompile: () => void;
   recompiling: boolean;
+  compileProgress?: { processed: number; total: number } | null;
   activeFilters: IndustrialFiltersState;
   onChangeFilters: (filters: IndustrialFiltersState) => void;
   engine?: string;
@@ -28,6 +29,7 @@ export function FlowSidebarPanel({
   onToggleFlow,
   onRecompile,
   recompiling,
+  compileProgress,
   activeFilters,
   onChangeFilters,
   engine = "arachne_flow",
@@ -136,7 +138,11 @@ export function FlowSidebarPanel({
           className="flex w-full items-center justify-center gap-1.5 rounded-md bg-slate-700 px-3 py-2 text-sm text-slate-100 transition-colors hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-500"
         >
           <RotateCcw className={`h-3.5 w-3.5 ${recompiling ? "animate-spin" : ""}`} />
-          {recompiling ? "编译中..." : `重新编译${selectedFlowIds.length > 0 ? ` (${selectedFlowIds.length})` : ""}`}
+          {recompiling
+            ? compileProgress
+              ? `编译中... ${compileProgress.processed}/${compileProgress.total}`
+              : "编译中..."
+            : `重新编译${selectedFlowIds.length > 0 ? ` (${selectedFlowIds.length})` : ""}`}
         </button>
         <button
           onClick={onOpenFlowEditor}
