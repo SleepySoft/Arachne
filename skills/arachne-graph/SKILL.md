@@ -268,7 +268,9 @@ Arachne-flow 是独立于 legacy 产业图的流程图引擎，使用 YAML 三�
 
 三元组模式：
 - `[RESOURCE, input_role, ACTION]` — 输入（feedstock / component / tool / subject / basis / requirement 等）
+- `[RESOURCE, input_role, METHOD]` — 工艺的通用输入（METHOD 作为模板承载公用资源）
 - `[ACTION, output_role, RESOURCE]` — 输出（primary_result / co_result / intermediate / byproduct 等）
+- `[METHOD, output_role, RESOURCE]` — 工艺的通用输出（METHOD 作为模板承载公用产物）
 - `[ACTION, ref, METHOD]` — 动作引用方法
 - `[ACTION, next, ACTION]` — 动作顺序
 

@@ -600,3 +600,75 @@ async def compile_flows_async(request: FlowCompileAsyncRequest):
         status="pending",
         total_items=len(request.flow_ids),
     )
+
+
+class FlowRebuildResponse(BaseModel):
+    job_id: str
+    status: str
+    total_items: int
+
+
+@router.post("/rebuild", response_model=FlowRebuildResponse)
+async def rebuild_flow_database():
+    """Clear all arachne-flow data and recompile every flow file from scratch.
+
+    Returns a job_id for polling via ``/api/v1/computation-jobs/{job_id}``.
+    Prevents re-entry by returning 409 if another compile job is active.
+    """
+    # Re-entry prevention
+    active = await _get_active_compile_jobs()
+    if active:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Another compilation job is already running: {active[0]['job_id']}",
+        )
+
+    # Scan all flow files
+    all_files = await _scan_flow_files()
+    if not all_files:
+        raise HTTPException(status_code=400, detail="no flow files found")
+
+    all_flow_ids = [f["product"] for f in all_files]
+
+    job = await create_job(
+        job_type="flow_compile",
+        target_id="rebuild_all",
+        total_items=len(all_flow_ids),
+    )
+    job_id = job["job_id"]
+
+    # Start background rebuild: clear + recompile all
+    asyncio.create_task(_run_rebuild_job(job_id, all_flow_ids))
+
+    return FlowRebuildResponse(
+        job_id=job_id,
+        status="pending",
+        total_items=len(all_flow_ids),
+    )
+
+
+async def _run_rebuild_job(job_id: str, flow_ids: List[str]) -> None:
+    """Background task: clear all flow data, then recompile every flow file."""
+    try:
+        await mark_job_running(job_id)
+
+        # Step 1: clear all existing flow data
+        await storage.clear_all_flow_data()
+
+        # Step 2: recompile each flow file
+        total = len(flow_ids)
+        for idx, flow_id in enumerate(flow_ids, start=1):
+            file_path = _find_flow_file(flow_id)
+            if file_path is None:
+                await update_job_progress(job_id, idx)
+                continue
+            try:
+                parsed = parse_flow_file(file_path)
+                await storage.compile_parsed_flow(parsed, clear_existing=False)
+            except Exception:
+                pass
+            await update_job_progress(job_id, idx)
+
+        await complete_job(job_id, {"rebuilt_flows": flow_ids, "total": total})
+    except Exception as exc:
+        await fail_job(job_id, str(exc))

@@ -224,8 +224,9 @@ class FlowGraphBuilder:
             )
 
         # Triples: resolve action IDs to their namespaced form.
+        method_ids = set(parsed.methods.keys())
         for triple in parsed.triples:
-            ns_triple = self._namespace_triple(triple, flow_id, dual_ids)
+            ns_triple = self._namespace_triple(triple, flow_id, dual_ids, method_ids)
             self.graph.triples.append((ns_triple, flow_id))
 
     def _namespace_triple(
@@ -233,13 +234,16 @@ class FlowGraphBuilder:
         triple: FlowTriple,
         flow_id: str,
         dual_ids: Set[str],
+        method_ids: Set[str],
     ) -> FlowTriple:
+        """Namespace ACTION nodes per-flow; leave RESOURCE and METHOD nodes as-is."""
         input_roles = {r.value for r in InputRole}
         output_roles = {r.value for r in OutputRole}
         pred = triple.predicate
 
         def resolve(raw_id: str, role: str) -> str:
-            if raw_id in dual_ids:
+            # RESOURCE and METHOD nodes are global — never namespace them.
+            if raw_id in dual_ids or raw_id in method_ids:
                 return raw_id
             if role == "target" and pred in input_roles:
                 return f"{flow_id}:{raw_id}"

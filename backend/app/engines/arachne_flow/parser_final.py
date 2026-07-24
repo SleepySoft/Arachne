@@ -134,12 +134,6 @@ def _infer_node_kinds(parsed: ParsedFlow) -> None:
     process ID (e.g. ``chip_design``) both as an ACTION and as an information
     input to another ACTION. The compiler creates a single Neo4j node carrying
     both labels for such cases.
-
-    Input-role targets and output-role sources are ambiguous: they could be
-    either ACTION or METHOD.  Definite classifications come from ``next``
-    (always ACTION), ``ref`` source (always ACTION), and ``ref`` target
-    (always METHOD).  When a node appears in both the ambiguous action and
-    method sets, definite evidence resolves the ambiguity.
     """
     # kind -> set of node ids
     kind_hints: Dict[str, Set[str]] = {
@@ -147,8 +141,6 @@ def _infer_node_kinds(parsed: ParsedFlow) -> None:
         "action": set(),
         "method": set(),
     }
-    definite_action: Set[str] = set()
-    definite_method: Set[str] = set()
 
     for triple in parsed.triples:
         pred = triple.predicate
@@ -158,42 +150,20 @@ def _infer_node_kinds(parsed: ParsedFlow) -> None:
             # [RESOURCE, input_role, ACTION] or [RESOURCE, input_role, METHOD]
             kind_hints["resource"].add(src)
             kind_hints["action"].add(tgt)
+            kind_hints["method"].add(tgt)
         elif pred in {r.value for r in OutputRole}:
             # [ACTION, output_role, RESOURCE] or [METHOD, output_role, RESOURCE]
             kind_hints["action"].add(src)
+            kind_hints["method"].add(src)
             kind_hints["resource"].add(tgt)
         elif pred == SpecialRole.NEXT.value:
             # [ACTION, next, ACTION]
             kind_hints["action"].add(src)
             kind_hints["action"].add(tgt)
-            definite_action.add(src)
-            definite_action.add(tgt)
         elif pred == SpecialRole.REF.value:
             # [ACTION, ref, METHOD]
             kind_hints["action"].add(src)
             kind_hints["method"].add(tgt)
-            definite_action.add(src)
-            definite_method.add(tgt)
-
-    # Conflict: a node is unambiguously classified as both ACTION and METHOD.
-    for node_id in definite_action & definite_method:
-        raise FlowParseError(
-            f"node '{node_id}' is used both as an ACTION (via next/ref source) "
-            "and as a METHOD (via ref target)"
-        )
-
-    # Resolve ambiguous nodes using definite evidence.
-    for node_id in list(kind_hints["action"] & kind_hints["method"]):
-        if node_id in definite_method and node_id not in definite_action:
-            kind_hints["action"].discard(node_id)
-        elif node_id in definite_action and node_id not in definite_method:
-            kind_hints["method"].discard(node_id)
-
-    # METHOD/resource conflicts are still disallowed.
-    for node_id in kind_hints["resource"] & kind_hints["method"]:
-        raise FlowParseError(
-            f"node '{node_id}' is used both as a RESOURCE and as a METHOD"
-        )
 
     # Build normalized node objects (dual nodes appear in both dicts)
     resource_ids = kind_hints["resource"]
@@ -227,7 +197,7 @@ def _infer_node_kinds(parsed: ParsedFlow) -> None:
 
 
 def _validate_triple_patterns(parsed: ParsedFlow) -> None:
-    """Ensure every triple matches one of the six allowed patterns."""
+    """Ensure every triple matches one of the four allowed patterns."""
     input_roles = {r.value for r in InputRole}
     output_roles = {r.value for r in OutputRole}
 
@@ -242,44 +212,12 @@ def _validate_triple_patterns(parsed: ParsedFlow) -> None:
         src, tgt = triple.source, triple.target
 
         if pred in input_roles:
-            # Allow [RESOURCE, input_role, ACTION] or [RESOURCE, input_role, METHOD]
-            valid_targets = valid_actions | valid_methods
-            if src not in valid_resources or tgt not in valid_targets:
+            if src not in valid_resources or tgt not in valid_actions:
                 raise FlowParseError(
                     f"invalid input-role triple [{src}, {pred}, {tgt}]: "
-                    "expected [RESOURCE, input_role, ACTION] or [RESOURCE, input_role, METHOD]"
+                    "expected [RESOURCE, input_role, ACTION]"
                 )
         elif pred in output_roles:
-            # Allow [ACTION, output_role, RESOURCE] or [METHOD, output_role, RESOURCE]
-            valid_sources = valid_actions | valid_methods
-            if src not in valid_sources or tgt not in valid_resources:
-                raise FlowParseError(
-                    f"invalid output-role triple [{src}, {pred}, {tgt}]: "
-                    "expected [ACTION, output_role, RESOURCE] or [METHOD, output_role, RESOURCE]"
-                )
-        elif pred == SpecialRole.NEXT.value:
-            if src not in valid_actions or tgt not in valid_actions:
-                raise FlowParseError(
-                    f"invalid next triple [{src}, {pred}, {tgt}]: "
-                    "expected [ACTION, next, ACTION]"
-                )
-        elif pred == SpecialRole.REF.value:
-            if src not in valid_actions or tgt not in valid_methods:
-                raise FlowParseError(
-                    f"invalid ref triple [{src}, {pred}, {tgt}]: "
-                    "expected [ACTION, ref, METHOD]"
-                )
-
-
-def _build_graph(parsed: ParsedFlow) -> Tuple[Dict[str, List[str]], Dict[str, List[str]]]:
-    """Build adjacency lists for directed and undirected graphs."""
-    directed: Dict[str, List[str]] = {node: [] for node in _all_flow_nodes(parsed)}
-    undirected: Dict[str, List[str]] = {node: [] for node in _all_flow_nodes(parsed)}
-
-    input_roles = {r.value for r in InputRole}
-    output_roles = {r.value for r in OutputRole}
-
-    for triple in parsed.triples:
         pred = triple.predicate
         src, tgt = triple.source, triple.target
 
@@ -363,3 +301,31 @@ def _validate_acyclic(parsed: ParsedFlow) -> None:
     for node in adj:
         if color[node] == WHITE:
             visit(node)
+        if pred in input_roles:
+            # Allow [RESOURCE, input_role, ACTION] or [RESOURCE, input_role, METHOD]
+            valid_targets = valid_actions | valid_methods
+            if src not in valid_resources or tgt not in valid_targets:
+                raise FlowParseError(
+                    f"invalid input-role triple [{src}, {pred}, {tgt}]: "
+                    "expected [RESOURCE, input_role, ACTION] or [RESOURCE, input_role, METHOD]"
+                )
+        elif pred in output_roles:
+            # Allow [ACTION, output_role, RESOURCE] or [METHOD, output_role, RESOURCE]
+            valid_sources = valid_actions | valid_methods
+            if src not in valid_sources or tgt not in valid_resources:
+                raise FlowParseError(
+                    f"invalid output-role triple [{src}, {pred}, {tgt}]: "
+                    "expected [ACTION, output_role, RESOURCE] or [METHOD, output_role, RESOURCE]"
+                )
+        elif pred == SpecialRole.NEXT.value:
+            if src not in valid_actions or tgt not in valid_actions:
+                raise FlowParseError(
+                    f"invalid next triple [{src}, {pred}, {tgt}]: "
+                    "expected [ACTION, next, ACTION]"
+                )
+        elif pred == SpecialRole.REF.value:
+            if src not in valid_actions or tgt not in valid_methods:
+                raise FlowParseError(
+                    f"invalid ref triple [{src}, {pred}, {tgt}]: "
+                    "expected [ACTION, ref, METHOD]"
+                )

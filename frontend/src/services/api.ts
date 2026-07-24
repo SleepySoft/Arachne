@@ -359,6 +359,18 @@ export const getActiveCompileJobs = async (): Promise<CompileJobStatus[]> => {
   return res.data;
 };
 
+export interface FlowRebuildResult {
+  job_id: string;
+  status: string;
+  total_items: number;
+}
+
+/** Clear all arachne-flow data and recompile every flow file from scratch. */
+export const rebuildFlowDatabase = async (): Promise<FlowRebuildResult> => {
+  const res = await client.post("/flows/rebuild");
+  return res.data;
+};
+
 /** 全量流程图（merge=method 时按方法合并跨流程动作并聚合平行边）。 */
 export const getFlowMergedGraph = async (
   merge: "method" | "none" = "method"

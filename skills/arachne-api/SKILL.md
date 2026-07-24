@@ -615,6 +615,7 @@ Arachne-flow 是独立的流程图引擎，使用 `data/flows/semiconductor/*.ya
 ### 流程文件编写要点
 
 - RESOURCE / METHOD 是全局共享节点（对应 PG `industrial_nodes`），ACTION 是 `{flow_id}:{action_id}` 的独立实例。
+- **METHOD 可作为工艺模板**：通用资源（如清洗设备、湿化学品）可直接连到 METHOD 上（`[resource, input_role, METHOD]`），所有引用该 METHOD 的 ACTION 共享这些资源，无需在每个 ACTION 上重复声明。
 - `include` 是**依赖声明**，不是复制粘贴：被 include 的流程独立编译，当前文件通过共享 RESOURCE 与它们连接。
 - 公共上游链应抽成共享流程文件（如 `semiconductor_chip_manufacturing.yaml`、`wafer_fabrication_processes.yaml`），产品流程只写自己的集成环节并 `include` 它们。
 - 使用 `POST /api/v1/flows/preview` 验证 YAML 后再保存；保存会自动重新编译。

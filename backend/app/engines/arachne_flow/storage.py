@@ -75,6 +75,7 @@ async def compile_parsed_flow(parsed: ParsedFlow, clear_existing: bool = False) 
         resource_ids = set(parsed.resources.keys())
         action_ids = set(parsed.actions.keys())
         dual_ids = resource_ids & action_ids
+        method_ids = set(parsed.methods.keys())
         resource_only_ids = resource_ids - dual_ids
         action_only_ids = action_ids - dual_ids
 
@@ -173,7 +174,7 @@ async def compile_parsed_flow(parsed: ParsedFlow, clear_existing: bool = False) 
         dual_ids = set(parsed.resources.keys()) & set(parsed.actions.keys())
         for triple in parsed.triples:
             pred = triple.predicate
-            src, tgt = _resolve_node_ids(flow_id, triple, dual_ids)
+            src, tgt = _resolve_node_ids(flow_id, triple, dual_ids, method_ids)
             edge_id = _make_edge_id(flow_id, src, pred, tgt, edge_count)
 
             if pred in input_roles or pred in output_roles or pred == SpecialRole.NEXT.value:
@@ -383,6 +384,12 @@ async def compile_flow_graph(
     }
 
 
+async def clear_all_flow_data() -> None:
+    """Remove every arachne-flow node and edge. Public API for rebuilds."""
+    driver = get_flow_async_driver()
+    await _clear_all_flow_data(driver)
+
+
 async def _clear_all_flow_data(driver) -> None:
     """Remove every arachne-flow node and edge. Used by batch (re)loads."""
     async with driver.session() as session:
@@ -450,25 +457,35 @@ def _resolve_node_ids(
     flow_id: str,
     triple: FlowTriple,
     dual_ids: set,
+    method_ids: Optional[set] = None,
 ) -> Tuple[str, str]:
-    """Map logical triple source/target to actual Neo4j node IDs."""
+    """Map logical triple source/target to actual Neo4j node IDs.
+
+    ACTION nodes are namespaced per-flow (``flow_id:action_id``) unless they
+    are dual-role. RESOURCE and METHOD nodes are global singletons and are
+    never namespaced.
+    """
     input_roles = {r.value for r in InputRole}
     output_roles = {r.value for r in OutputRole}
     pred = triple.predicate
+    method_ids = method_ids or set()
 
-    def action_node_id(action_id: str) -> str:
-        return action_id if action_id in dual_ids else namespaced_action_id(flow_id, action_id)
+    def _resolve_action_or_method(node_id: str) -> str:
+        """Namespace ACTION nodes; leave RESOURCE and METHOD nodes as-is."""
+        if node_id in dual_ids or node_id in method_ids:
+            return node_id
+        return namespaced_action_id(flow_id, node_id)
 
     if pred in input_roles:
-        # [RESOURCE, input_role, ACTION]
-        return triple.source, action_node_id(triple.target)
+        # [RESOURCE, input_role, ACTION] or [RESOURCE, input_role, METHOD]
+        return triple.source, _resolve_action_or_method(triple.target)
     elif pred in output_roles:
-        # [ACTION, output_role, RESOURCE]
-        return action_node_id(triple.source), triple.target
+        # [ACTION, output_role, RESOURCE] or [METHOD, output_role, RESOURCE]
+        return _resolve_action_or_method(triple.source), triple.target
     elif pred == SpecialRole.NEXT.value:
-        return action_node_id(triple.source), action_node_id(triple.target)
+        return _resolve_action_or_method(triple.source), _resolve_action_or_method(triple.target)
     elif pred == SpecialRole.REF.value:
-        return action_node_id(triple.source), triple.target
+        return _resolve_action_or_method(triple.source), triple.target
     return triple.source, triple.target
 
 

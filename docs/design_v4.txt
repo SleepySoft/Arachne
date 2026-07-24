@@ -364,7 +364,9 @@ arachne-flow --> neo4j引擎实现说明：
     文件描述的是边，每个边固定是三元组。
     三元组的组合只可能是以下情况：
         - [<RESOURCE>, <input_role>, <ACTION>]
+        - [<RESOURCE>, <input_role>, <METHOD>]
         - [<ACTION>, <output_role>, <RESOURCE>]
+        - [<METHOD>, <output_role>, <RESOURCE>]
         - [<ACTION>, 'next', <ACTION>]
         - [<ACTION>, 'ref', <METHOD>]
     载入文件时分析关系并建立上下游，遇到以下情况报错：

@@ -5,10 +5,12 @@ import { collapsePreviewGraph } from "@/lib/flowCollapse";
 import {
   createFlow,
   formatFlow,
+  getCompileJobStatus,
   getFlowContent,
   listFlows,
   listNodes,
   previewFlow,
+  rebuildFlowDatabase,
   saveFlow,
   FlowPreviewResult,
 } from "@/services/api";
@@ -162,6 +164,8 @@ export function FlowEditorPage({
   const [nodeOptions, setNodeOptions] = useState<NodeOption[]>([]);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [rebuilding, setRebuilding] = useState(false);
+  const [rebuildMsg, setRebuildMsg] = useState<string | null>(null);
   const [tripleDraft, setTripleDraft] = useState({
     source: "",
     predicate: "feedstock",
@@ -375,12 +379,58 @@ export function FlowEditorPage({
     }
   }, [selectedFlowId, content, extractRootProduct]);
 
+  const handleRebuild = useCallback(async () => {
+    if (!window.confirm("确定要重新生成整个 arachne-flow 数据库吗？\n\n这将清除所有现有流程数据并重新编译所有流程文件，操作不可撤销。")) {
+      return;
+    }
+    setRebuilding(true);
+    setRebuildMsg(null);
+    try {
+      const { job_id, total_items } = await rebuildFlowDatabase();
+      setRebuildMsg(`正在重建... 0 / ${total_items}`);
+
+      // Poll job status until complete
+      let done = false;
+      while (!done) {
+        await new Promise((r) => setTimeout(r, 1000));
+        try {
+          const job = await getCompileJobStatus(job_id);
+          if (job.status === "completed") {
+            setRebuildMsg(`重建完成，共编译 ${job.total_items} 个流程`);
+            done = true;
+          } else if (job.status === "failed") {
+            setRebuildMsg(`重建失败: ${job.error_message || "未知错误"}`);
+            done = true;
+          } else {
+            setRebuildMsg(`正在重建... ${job.processed_items} / ${job.total_items}`);
+          }
+        } catch {
+          // keep polling
+        }
+      }
+
+      // Refresh flow list
+      listFlows().then(setFlows).catch(() => {});
+    } catch (e) {
+      setRebuildMsg(`重建失败: ${String(e)}`);
+    } finally {
+      setRebuilding(false);
+    }
+  }, []);
+
   // Auto-hide the save success message after a few seconds.
   useEffect(() => {
     if (!saveMessage) return;
     const timer = setTimeout(() => setSaveMessage(null), 3000);
     return () => clearTimeout(timer);
   }, [saveMessage]);
+
+  // Auto-hide the rebuild message after 10 seconds.
+  useEffect(() => {
+    if (!rebuildMsg) return;
+    const timer = setTimeout(() => setRebuildMsg(null), 10000);
+    return () => clearTimeout(timer);
+  }, [rebuildMsg]);
 
   const handleFormat = useCallback(() => {
     formatFlow(content)
@@ -454,6 +504,14 @@ export function FlowEditorPage({
           >
             {saving ? "保存中..." : "保存"}
           </button>
+          <button
+            onClick={handleRebuild}
+            disabled={rebuilding}
+            className="h-8 rounded border border-amber-700 bg-amber-900/60 px-3 text-xs font-medium text-amber-200 hover:bg-amber-800 disabled:opacity-40"
+            title="清除所有 arachne-flow 数据并重新编译全部流程文件"
+          >
+            {rebuilding ? "重建中..." : "重新生成"}
+          </button>
           {loadingContent && (
             <span className="text-xs text-slate-500">加载文件...</span>
           )}
@@ -475,6 +533,13 @@ export function FlowEditorPage({
         {saveMessage && (
           <div className="border-b border-emerald-800 bg-emerald-950 px-3 py-2 text-xs text-emerald-200 transition-opacity duration-500">
             {saveMessage}
+          </div>
+        )}
+
+        {/* Rebuild progress banner */}
+        {rebuildMsg && (
+          <div className="border-b border-amber-800 bg-amber-950 px-3 py-2 text-xs text-amber-200 transition-opacity duration-500">
+            {rebuildMsg}
           </div>
         )}
 
