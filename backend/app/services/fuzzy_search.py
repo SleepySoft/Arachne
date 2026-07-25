@@ -96,7 +96,9 @@ async def fuzzy_search_nodes(
     4. Return top results above the threshold.
     """
     q = _normalize(query)
-    if len(q) < 2:
+    # 单字符查询对拉丁字母意义不大，但中文名单字符很常见（如 镓/锗/硅），
+    # CJK 字符允许单字符查询。
+    if len(q) < 2 and not any("\u4e00" <= ch <= "\u9fff" for ch in q):
         return []
 
     # Step 1: substring candidates (usually the most relevant)

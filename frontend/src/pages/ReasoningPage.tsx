@@ -95,6 +95,11 @@ const TASK_OPTIONS: { value: TaskType; label: string }[] = [
   { value: "cross_graph_context", label: "跨图上下文" },
 ];
 
+const ENGINE_OPTIONS: { value: string; label: string }[] = [
+  { value: "arachne_flow", label: "流程图（arachne-flow）" },
+  { value: "legacy", label: "产业图（legacy）" },
+];
+
 const OUTPUT_OPTIONS: { value: OutputType; label: string }[] = [
   { value: "subgraph", label: "子图" },
   { value: "temporary_graph", label: "临时推理图" },
@@ -234,6 +239,8 @@ export function ReasoningPage() {
   };
 
   // ----- Task configuration -----
+  const [engine, setEngine] = useState<string>("arachne_flow");
+  const isFlowEngine = engine === "arachne_flow";
   const [taskType, setTaskType] = useState<TaskType>("association");
   const [maxDepth, setMaxDepth] = useState(2);
   const [maxPaths, setMaxPaths] = useState(50);
@@ -246,9 +253,20 @@ export function ReasoningPage() {
   const [outputs, setOutputs] = useState<OutputType[]>(DEFAULT_OUTPUTS);
 
   useEffect(() => {
+    // arachne_flow 引擎目前仅支持 association 任务
+    if (isFlowEngine && taskType !== "association") {
+      setTaskType("association");
+    }
+  }, [isFlowEngine, taskType]);
+
+  useEffect(() => {
     // Suggest sensible defaults per task type
     if (taskType === "association") {
-      setOutputs(["subgraph", "paths", "evidence_chains", "feature_tables"]);
+      setOutputs(
+        isFlowEngine
+          ? ["temporary_graph", "paths"]
+          : ["subgraph", "paths", "evidence_chains", "feature_tables"]
+      );
     } else if (taskType === "impact_propagation") {
       setOutputs([
         "temporary_graph",
@@ -267,7 +285,7 @@ export function ReasoningPage() {
     } else if (taskType === "cross_graph_context") {
       setOutputs(["temporary_graph", "paths"]);
     }
-  }, [taskType]);
+  }, [taskType, isFlowEngine]);
 
   const toggleOutput = (o: OutputType) => {
     setOutputs((prev) => (prev.includes(o) ? prev.filter((x) => x !== o) : [...prev, o]));
@@ -302,7 +320,6 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
       setQueryText("芯片");
       setQueryScope("industrial_node");
       setTaskType("association");
-      setOutputs(["subgraph", "paths", "evidence_chains", "feature_tables"]);
 
       const queryRes = await queryReasoningObjects({
         query_id: "example",
@@ -317,6 +334,10 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
       }
       setSources([{ object_id: chip.object_id, label: chip.canonical_name || chip.object_id }]);
 
+      const exampleOutputs: OutputType[] = isFlowEngine
+        ? ["temporary_graph", "paths"]
+        : ["subgraph", "paths", "evidence_chains", "feature_tables"];
+      setOutputs(exampleOutputs);
       const payload: ReasoningTask = {
         task_id: "example_run",
         task_type: "association",
@@ -331,7 +352,8 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
           max_nodes: 200,
           traversal_direction: "forward",
         },
-        requested_outputs: ["subgraph", "paths", "evidence_chains", "feature_tables"],
+        requested_outputs: exampleOutputs,
+        engine,
       };
       const res = await executeReasoning(payload);
       setResult(res);
@@ -379,6 +401,7 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
         traversal_direction: traversalDirection,
       },
       requested_outputs: outputs,
+      engine,
     };
 
     executeMutation.mutate(payload);
@@ -627,11 +650,26 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
               <p className="text-xs text-slate-500">
                 选择任务类型、遍历约束和希望返回的输出内容，然后运行推理。
               </p>
+              <FormField label="推理引擎">
+                <select
+                  value={engine}
+                  onChange={(e) => setEngine(e.target.value)}
+                  className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
+                >
+                  {ENGINE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
               <FormField label="任务类型">
                 <select
                   value={taskType}
                   onChange={(e) => setTaskType(e.target.value as TaskType)}
-                  className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
+                  disabled={isFlowEngine}
+                  className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {TASK_OPTIONS.map((t) => (
                     <option key={t.value} value={t.value}>
@@ -639,6 +677,11 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
                     </option>
                   ))}
                 </select>
+                {isFlowEngine && (
+                  <p className="mt-1 text-[10px] text-slate-500">
+                    流程图引擎目前仅支持关联扩展任务
+                  </p>
+                )}
               </FormField>
 
               {taskType === "impact_propagation" && (
@@ -698,24 +741,26 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
                 </FormField>
               </div>
 
-              <FormField label="拓扑扩展">
-                <label
-                  className={cn(
-                    "flex cursor-pointer items-center gap-2 rounded border px-2 py-1.5 text-xs transition-colors",
-                    expandOntology
-                      ? "border-cyan-700/50 bg-cyan-900/20 text-cyan-200"
-                      : "border-slate-800 bg-slate-900 text-slate-400 hover:bg-slate-800"
-                  )}
-                >
-                  <input
-                    type="checkbox"
-                    checked={expandOntology}
-                    onChange={() => setExpandOntology((v) => !v)}
-                    className="h-3 w-3 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-0"
-                  />
-                  通过本体关系扩展起点（is_a / part_of）
-                </label>
-              </FormField>
+              {!isFlowEngine && (
+                <FormField label="拓扑扩展">
+                  <label
+                    className={cn(
+                      "flex cursor-pointer items-center gap-2 rounded border px-2 py-1.5 text-xs transition-colors",
+                      expandOntology
+                        ? "border-cyan-700/50 bg-cyan-900/20 text-cyan-200"
+                        : "border-slate-800 bg-slate-900 text-slate-400 hover:bg-slate-800"
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={expandOntology}
+                      onChange={() => setExpandOntology((v) => !v)}
+                      className="h-3 w-3 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-0"
+                    />
+                    通过本体关系扩展起点（is_a / part_of）
+                  </label>
+                </FormField>
+              )}
 
               <FormField label="输出内容">
                 <div className="grid grid-cols-2 gap-2">

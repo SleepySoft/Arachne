@@ -238,6 +238,7 @@ async def import_neo4j(input_dir: Path, clear: bool) -> None:
 
 # Tables in dependency order (referenced tables first)
 POSTGRES_IMPORT_ORDER = [
+    "industrial_nodes",
     "industries",
     "companies",
     "persons",
@@ -245,6 +246,7 @@ POSTGRES_IMPORT_ORDER = [
     "company_node_exposures",
     "factual_relations",
     "computation_jobs",
+    "arachne_flow_files",
 ]
 
 POSTGRES_TRUNCATE_ORDER = [
@@ -255,6 +257,8 @@ POSTGRES_TRUNCATE_ORDER = [
     "persons",
     "companies",
     "industries",
+    "arachne_flow_files",
+    "industrial_nodes",
 ]
 
 
@@ -322,6 +326,14 @@ async def import_postgres(input_dir: Path, clear: bool) -> None:
         return
 
     pg_dir = input_dir / "postgres"
+
+    if (pg_dir / "industrial_nodes.json").exists() is False:
+        print(
+            "  WARNING: postgres/industrial_nodes.json 不存在（旧版导出）。"
+            "v2 架构下节点元数据唯一来源是 PG industrial_nodes 表，"
+            "导入后节点名将缺失。请运行 backend/scripts/migrate_nodes_to_postgres.py "
+            "从 Neo4j 重建该表。"
+        )
 
     if clear:
         await clear_postgres(pool)

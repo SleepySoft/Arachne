@@ -16,6 +16,8 @@ import {
   getCompileJobStatus,
   getFlowsSubgraph,
   getIndustrySubgraph,
+  listCompanyExposures,
+  listIndustryMappings,
   listNodes,
   listEdges,
 } from "@/services/api";
@@ -556,6 +558,41 @@ export function useIndustrialGraph(engine: string = "legacy") {
     loadMergedSubgraph();
   }, [engine, selectedIndustries, selectedCompanies]);
 
+  // arachne_flow 引擎：行业/公司选择不加载子图（flow 图是 DAG，裁剪会破坏连通性），
+  // 而是把映射/曝光到的 legacy 节点 id 集合转为画布高亮。
+  // RESOURCE/METHOD 的 node_id 与 legacy id 一致；ACTION 节点由 GraphCanvas 按 method_ref 匹配。
+  useEffect(() => {
+    if (engine !== "arachne_flow") return;
+    if (selectedIndustries.length === 0 && selectedCompanies.length === 0) {
+      setHighlightNodeIds(undefined);
+      return;
+    }
+    let cancelled = false;
+    async function loadHighlightIds() {
+      try {
+        const [mappingPages, exposurePages] = await Promise.all([
+          Promise.all(
+            selectedIndustries.map((i) => listIndustryMappings(i.industry_id, 1, 1000))
+          ),
+          Promise.all(
+            selectedCompanies.map((c) => listCompanyExposures(c.company_id, 1, 1000))
+          ),
+        ]);
+        if (cancelled) return;
+        const ids = new Set<string>();
+        mappingPages.forEach((p) => p.items.forEach((m) => ids.add(m.node_id)));
+        exposurePages.forEach((p) => p.items.forEach((e) => ids.add(e.node_id)));
+        setHighlightNodeIds(ids.size > 0 ? Array.from(ids) : undefined);
+      } catch {
+        // Silently ignore
+      }
+    }
+    loadHighlightIds();
+    return () => {
+      cancelled = true;
+    };
+  }, [engine, selectedIndustries, selectedCompanies]);
+
   // Load merged flow subgraph whenever selected flow files change（arachne_flow 引擎）
   const prevFlowCountRef = useRef(0);
   useEffect(() => {
@@ -745,11 +782,10 @@ export function useIndustrialGraph(engine: string = "legacy") {
     setPendingEdgePrefill(null);
   }, []);
 
-  /** 切换引擎时重置工作区：选择、过滤、子图、编辑模式全部回到该引擎默认状态。 */
+  /** 切换引擎时重置工作区：子图、高亮、编辑模式等回到该引擎默认状态。
+   *  行业/公司选择跨引擎保留（两种引擎下都生效：legacy 加载子图，flow 高亮节点）。 */
   const switchEngine = useCallback(
     (nextEngine: string) => {
-      setSelectedIndustries([]);
-      setSelectedCompanies([]);
       setSelectedFlowIds([]);
       setSubgraphData(undefined);
       setHighlightNodeIds(undefined);

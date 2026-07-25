@@ -108,7 +108,9 @@ async def fetch_arachne_flow_paths(
                 from_node: startNode(rel).node_id,
                 to_node: endNode(rel).node_id,
                 flow_id: rel.flow_id,
-                created_at: rel.created_at
+                // toString：rel.created_at 是 neo4j.time.DateTime，直接返回会导致
+                // FastAPI/Pydantic 序列化 500
+                created_at: toString(rel.created_at)
            }}] AS rels
     LIMIT $limit
     """

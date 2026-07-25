@@ -60,14 +60,20 @@ def _evidence_from_db(raw) -> List[Evidence]:
         return []
     out = []
     for item in items:
-        if not item:
+        if not item or not isinstance(item, dict):
+            continue
+        # 防御：跳过缺键/空值的脏数据（如旧格式 source/description），
+        # 避免单条非法 evidence 让整个节点查询抛 validation error。
+        source_title = item.get("source_title")
+        quote = item.get("quote")
+        if not source_title or not quote:
             continue
         url = item.get("source_url")
         out.append(
             Evidence(
-                source_title=item.get("source_title", ""),
+                source_title=source_title,
                 source_url=url if url else None,
-                quote=item.get("quote", ""),
+                quote=quote,
             )
         )
     return out

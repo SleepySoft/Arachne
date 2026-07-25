@@ -109,6 +109,8 @@ export interface ReasoningTask {
   constraints: ReasoningConstraints;
   requested_outputs: OutputType[];
   context?: Record<string, unknown>;
+  /** 推理目标图引擎；缺省后端按 legacy 处理。arachne_flow 目前仅支持 association。 */
+  engine?: string;
 }
 
 export interface ReasoningDiagnostics {

@@ -16,11 +16,15 @@ Output structure:
             industrial_flow_edges.json
             ontology_edges.json
         postgres/
+            industrial_nodes.json     # v2: 节点元数据（名称/定义等）的唯一来源
             industries.json
             industry_node_mappings.json
             companies.json
             company_node_exposures.json
+            persons.json
+            factual_relations.json
             computation_jobs.json
+            arachne_flow_files.json
 """
 
 from __future__ import annotations
@@ -135,11 +139,17 @@ async def export_neo4j(output_dir: Path) -> None:
 # ---------------------------------------------------------------------------
 
 POSTGRES_TABLES = [
+    # v2 架构：IndustrialNode 元数据（名称/定义/状态等）的唯一来源在 PG，
+    # 漏导出此表会导致导入后节点名全部消失。
+    "industrial_nodes",
     "industries",
     "industry_node_mappings",
     "companies",
     "company_node_exposures",
+    "persons",
+    "factual_relations",
     "computation_jobs",
+    "arachne_flow_files",
 ]
 
 
@@ -157,7 +167,12 @@ async def export_postgres(output_dir: Path) -> None:
             filepath = pg_dir / f"{table}.json"
             print(f"  Exporting PostgreSQL {table} ...", end=" ")
 
-            rows = await conn.fetch(f"SELECT * FROM {table}")
+            try:
+                rows = await conn.fetch(f"SELECT * FROM {table}")
+            except Exception as e:
+                # 表可能尚未在旧实例上创建（如 arachne_flow_files），跳过而非中断整个导出
+                print(f"SKIPPED ({e.__class__.__name__}: {e})")
+                continue
             data = [record_to_dict(row) for row in rows]
 
             with open(filepath, "w", encoding="utf-8") as f:

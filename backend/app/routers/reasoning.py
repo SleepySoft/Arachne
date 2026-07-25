@@ -140,20 +140,20 @@ async def _query_industrial_nodes(
     return candidates[: req.limit], suggestions[: req.limit]
 
 
-async def _query_companies(req: ObjectQueryRequest) -> List[ObjectCandidate]:
+async def _query_companies(req: ObjectQueryRequest) -> tuple[List[ObjectCandidate], List[ObjectCandidate]]:
     items, _ = await company_storage.list_companies(
         search=req.query_text,
         limit=req.limit,
     )
-    return [_company_candidate(c, MatchType.KEYWORD) for c in items]
+    return [_company_candidate(c, MatchType.KEYWORD) for c in items], []
 
 
-async def _query_industries(req: ObjectQueryRequest) -> List[ObjectCandidate]:
+async def _query_industries(req: ObjectQueryRequest) -> tuple[List[ObjectCandidate], List[ObjectCandidate]]:
     items, _ = await industry_storage.list_industries(
         search=req.query_text,
         limit=req.limit,
     )
-    return [_industry_candidate(i, MatchType.KEYWORD) for i in items]
+    return [_industry_candidate(i, MatchType.KEYWORD) for i in items], []
 
 
 async def _query_factual_nodes(

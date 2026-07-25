@@ -562,6 +562,20 @@ export default function App() {
             onRecompile={industrial.recompileSelectedFlows}
             recompiling={industrial.recompilingFlows}
             compileProgress={industrial.compileProgress}
+            selectedIndustries={industrial.selectedIndustries}
+            selectedCompanies={industrial.selectedCompanies}
+            onToggleIndustry={(industry) => {
+              viewHistory.reset("industrial");
+              industrial.handleToggleIndustry(industry);
+            }}
+            onSelectIndustry={industrial.handleSelectIndustryDetail}
+            onToggleCompany={(company) => {
+              viewHistory.reset("industrial");
+              industrial.handleToggleCompany(company);
+            }}
+            onSelectCompany={industrial.handleSelectCompanyDetail}
+            onCreateIndustry={() => industrial.pushPanel({ panel: "industry-create" })}
+            onCreateCompany={() => industrial.pushPanel({ panel: "company-create" })}
             activeFilters={industrial.activeFilters}
             onChangeFilters={(filters) => {
               viewHistory.reset("industrial");

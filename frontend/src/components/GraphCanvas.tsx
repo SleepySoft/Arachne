@@ -2982,6 +2982,24 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         const el = cy.getElementById(id);
         if (el.length) targets.merge(el);
       });
+      // arachne_flow：行业/公司映射存的是 legacy node_id。
+      // ACTION 节点 id 是命名空间化的（flow_id:action_id），需按 method_ref 回配；
+      // 合并视图中的 merged_action:<method_ref> 合成节点按前缀剥离后匹配。
+      const idSet = new Set(highlightNodeIds);
+      const MERGED_PREFIX = "merged_action:";
+      cy.nodes().forEach((n) => {
+        if (targets.has(n)) return;
+        const raw = n.data("raw") as { properties?: Record<string, unknown> } | undefined;
+        const methodRef = raw?.properties?.method_ref;
+        if (typeof methodRef === "string" && idSet.has(methodRef)) {
+          targets.merge(n);
+          return;
+        }
+        const nid = n.id();
+        if (nid.startsWith(MERGED_PREFIX) && idSet.has(nid.slice(MERGED_PREFIX.length))) {
+          targets.merge(n);
+        }
+      });
       if (targets.length > 0) {
         targets.addClass("highlighted");
         // Also highlight edges between selected nodes
@@ -2991,7 +3009,9 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         // 仅高亮，不移动/缩放相机
       }
     }
-  }, [highlightNodeIds]);
+    // loading 变为 false（画布初始化/重挂载完成）时重走高亮，
+    // 否则 flow 模式下选择流程文件导致画布重建后行业/公司高亮会丢失。
+  }, [highlightNodeIds, loading]);
 
   return (
     <div className="relative h-full w-full bg-slate-950">
