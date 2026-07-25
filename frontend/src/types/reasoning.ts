@@ -76,6 +76,7 @@ export interface ObjectQueryResult {
   query_id: string;
   status: ResultStatus;
   candidates: ObjectCandidate[];
+  suggestions?: ObjectCandidate[];
   diagnostics: Record<string, unknown>;
 }
 

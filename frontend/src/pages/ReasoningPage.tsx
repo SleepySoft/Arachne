@@ -110,6 +110,9 @@ const OUTPUT_OPTIONS: { value: OutputType; label: string }[] = [
   { value: "feature_tables", label: "特征表" },
 ];
 
+/** arachne_flow 引擎的关联任务实际会产出的输出类型。 */
+const FLOW_OUTPUTS: OutputType[] = ["temporary_graph", "paths", "node_scores"];
+
 const DEFAULT_OUTPUTS: OutputType[] = [
   "subgraph",
   "paths",
@@ -196,6 +199,7 @@ export function ReasoningPage() {
   const [queryScope, setQueryScope] = useState<QueryScope>("industrial_node");
   const [factualNodeType, setFactualNodeType] = useState<"" | "person" | "company">("");
   const [candidates, setCandidates] = useState<ObjectCandidate[]>([]);
+  const [suggestions, setSuggestions] = useState<ObjectCandidate[]>([]);
   const [queryError, setQueryError] = useState<string | null>(null);
 
   const queryMutation = useMutation({
@@ -203,6 +207,7 @@ export function ReasoningPage() {
     onSuccess: (data) => {
       setQueryError(null);
       setCandidates(data.candidates);
+      setSuggestions(data.suggestions ?? []);
     },
     onError: (err) => setQueryError(formatError(err, "对象查询失败")),
   });
@@ -264,7 +269,7 @@ export function ReasoningPage() {
     if (taskType === "association") {
       setOutputs(
         isFlowEngine
-          ? ["temporary_graph", "paths"]
+          ? [...FLOW_OUTPUTS]
           : ["subgraph", "paths", "evidence_chains", "feature_tables"]
       );
     } else if (taskType === "impact_propagation") {
@@ -616,6 +621,53 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
                   ))}
                 </div>
               )}
+
+              {candidates.length === 0 && suggestions.length === 0 && !queryMutation.isPending && (
+                <p className="text-[10px] text-slate-600">
+                  输入名称并查询后，此处会列出匹配与相似的节点。
+                </p>
+              )}
+
+              {suggestions.length > 0 && (
+                <div>
+                  <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    相似建议（可添加为起点）
+                  </div>
+                  <div className="max-h-56 overflow-y-auto rounded border border-slate-800/60">
+                    {suggestions.map((c) => (
+                      <div
+                        key={c.object_id}
+                        className="flex items-center gap-2 border-b border-slate-800/60 px-2 py-1.5 last:border-0 hover:bg-slate-800/40"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate text-xs text-slate-300">
+                              {c.canonical_name || c.object_id}
+                            </span>
+                            {c.entity_type && <Badge color="slate">{c.entity_type}</Badge>}
+                            {c.match_score !== undefined && (
+                              <Badge color="amber">{(c.match_score * 100).toFixed(0)}%</Badge>
+                            )}
+                          </div>
+                          <div className="truncate text-[10px] text-slate-500">{c.object_id}</div>
+                        </div>
+                        <button
+                          onClick={() => addSource(c)}
+                          disabled={sources.some((s) => s.object_id === c.object_id)}
+                          className="flex shrink-0 items-center gap-1 rounded bg-slate-800 px-2 py-1 text-[10px] text-slate-300 hover:bg-slate-700 disabled:opacity-40"
+                        >
+                          {sources.some((s) => s.object_id === c.object_id) ? (
+                            <Check className="h-3 w-3" />
+                          ) : (
+                            <Plus className="h-3 w-3" />
+                          )}
+                          添加
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
 
@@ -764,7 +816,10 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
 
               <FormField label="输出内容">
                 <div className="grid grid-cols-2 gap-2">
-                  {OUTPUT_OPTIONS.map((o) => (
+                  {(isFlowEngine
+                    ? OUTPUT_OPTIONS.filter((o) => FLOW_OUTPUTS.includes(o.value))
+                    : OUTPUT_OPTIONS
+                  ).map((o) => (
                     <label
                       key={o.value}
                       className={cn(
@@ -784,6 +839,11 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
                     </label>
                   ))}
                 </div>
+                {isFlowEngine && (
+                  <p className="mt-1 text-[10px] text-slate-500">
+                    流程图引擎输出：临时推理图 / 路径 / 节点得分（主线-支线结构）
+                  </p>
+                )}
               </FormField>
 
               <FormField label="公司暴露">
@@ -831,7 +891,8 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
               <button
                 onClick={handleRun}
                 disabled={executeMutation.isPending || sources.length === 0}
-                className="flex w-full items-center justify-center gap-2 rounded bg-cyan-600 py-2 text-xs font-medium text-white hover:bg-cyan-500 disabled:opacity-50"
+                title={sources.length === 0 ? "请先在上方搜索并添加至少一个起点" : undefined}
+                className="flex w-full items-center justify-center gap-2 rounded bg-cyan-600 py-2 text-xs font-medium text-white hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {executeMutation.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -840,6 +901,11 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
                 )}
                 运行推理（{sources.length} 个起点）
               </button>
+              {sources.length === 0 && (
+                <p className="text-center text-[10px] text-slate-600">
+                  按钮不可用：还没有起点。请在“1. 搜索对象”中查询并点击“添加”。
+                </p>
+              )}
             </div>
           </Card>
         </div>
