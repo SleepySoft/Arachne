@@ -40,6 +40,7 @@ import {
   applyIndustrialSnapshot,
   buildCompanySnapshot,
   applyCompanySnapshot,
+  scaleCameraToContainer,
   GraphCameraController,
 } from "@/lib/viewSerializer";
 import { IndustrialViewState, CompanyViewState, SavedView } from "@/types/view";
@@ -312,28 +313,11 @@ export default function App() {
     state: IndustrialViewState | CompanyViewState,
     toSize?: { width: number; height: number }
   ) {
-    const fromSize = state.containerSize;
-    if (!fromSize || !toSize || fromSize.width <= 0 || fromSize.height <= 0) {
-      return { camera: state.camera, nodePositions: state.nodePositions };
-    }
-    const scaleX = toSize.width / fromSize.width;
-    const scaleY = toSize.height / fromSize.height;
-    const scale = Math.min(scaleX, scaleY);
-    if (!isFinite(scale) || scale <= 0) {
-      return { camera: state.camera, nodePositions: state.nodePositions };
-    }
-    const scaledPositions: import("@/types/view").NodePositions = {};
-    if (state.nodePositions) {
-      Object.entries(state.nodePositions).forEach(([id, pos]) => {
-        scaledPositions[id] = { x: pos.x * scale, y: pos.y * scale };
-      });
-    }
+    // 与视图载入路径一致：只缩放相机（pan + zoom），不缩放节点坐标，
+    // 避免跨屏幕/系统缩放恢复后节点变“挤”。
     return {
-      camera: {
-        pan: { x: state.camera.pan.x * scale, y: state.camera.pan.y * scale },
-        zoom: state.camera.zoom,
-      },
-      nodePositions: state.nodePositions ? scaledPositions : undefined,
+      camera: scaleCameraToContainer(state.camera, state.containerSize, toSize),
+      nodePositions: state.nodePositions,
     };
   }
 

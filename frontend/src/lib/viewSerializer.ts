@@ -22,29 +22,44 @@ export interface GraphCameraController {
   getContainerSize: () => { width: number; height: number } | null;
 }
 
-function scaleStateToContainer(
-  state: IndustrialViewState | CompanyViewState,
+/** 跨容器适配比例的安全区间，避免保存时容器尺寸异常导致 zoom 过大/过小。 */
+const MIN_VIEW_SCALE = 0.25;
+const MAX_VIEW_SCALE = 4;
+
+/**
+ * 计算跨容器（跨屏幕/系统缩放）适配比例：取较小方向的比例以保持宽高比，
+ * 并钳制在 [MIN_VIEW_SCALE, MAX_VIEW_SCALE] 区间。无效输入返回 null。
+ */
+function computeViewScale(
+  fromSize?: { width: number; height: number },
   toSize?: { width: number; height: number }
-) {
-  const fromSize = state.containerSize;
-  if (!fromSize || !toSize || fromSize.width <= 0 || fromSize.height <= 0) return;
-
-  const scaleX = toSize.width / fromSize.width;
-  const scaleY = toSize.height / fromSize.height;
+): number | null {
+  if (!fromSize || !toSize || fromSize.width <= 0 || fromSize.height <= 0) return null;
   // Use the smaller scale to preserve aspect ratio and avoid distorting the layout.
-  const scale = Math.min(scaleX, scaleY);
-  if (!isFinite(scale) || scale <= 0) return;
+  const scale = Math.min(toSize.width / fromSize.width, toSize.height / fromSize.height);
+  if (!isFinite(scale) || scale <= 0) return null;
+  return Math.min(MAX_VIEW_SCALE, Math.max(MIN_VIEW_SCALE, scale));
+}
 
-  if (state.nodePositions) {
-    const scaled: NodePositions = {};
-    Object.entries(state.nodePositions).forEach(([id, pos]) => {
-      scaled[id] = { x: pos.x * scale, y: pos.y * scale };
-    });
-    state.nodePositions = scaled;
-  }
-
-  state.camera.pan.x *= scale;
-  state.camera.pan.y *= scale;
+/**
+ * 按容器尺寸差异缩放相机（纯函数，不修改入参）。
+ *
+ * 注意：配套地，nodePositions 不应被缩放——节点尺寸是固定模型单位（样式里写死的
+ * width/height），缩放坐标会改变节点大小与间距的相对关系，导致在不同分辨率/系统
+ * 缩放的电脑上载入后节点变“挤”。只缩放相机（pan + zoom），让整个画面按比例映射
+ * 到新容器，取景效果与缩放坐标等价，但布局几何保持不变。
+ */
+export function scaleCameraToContainer(
+  camera: CameraState,
+  fromSize?: { width: number; height: number },
+  toSize?: { width: number; height: number }
+): CameraState {
+  const scale = computeViewScale(fromSize, toSize);
+  if (scale === null) return camera;
+  return {
+    pan: { x: camera.pan.x * scale, y: camera.pan.y * scale },
+    zoom: camera.zoom * scale,
+  };
 }
 
 export interface IndustrialSnapshotDeps {
@@ -216,13 +231,12 @@ export function applyIndustrialSnapshot(
   // Bump graph key to force canvas re-init with the new merged subgraph / full graph.
   deps.setGraphKey((k) => k + 1);
 
-  // Scale camera/positions to the current container so the view looks similar
-  // across different screen sizes and zoom levels.
-  scaleStateToContainer(state, toContainerSize);
-
-  // Hand the saved camera/positions up to the parent so the canvas can apply them
-  // after it has re-initialized and finished its layout.
-  deps.onSetRestored(state);
+  // Scale the camera to the current container so the view looks similar across
+  // different screen sizes and OS display scaling. Node positions are NOT scaled
+  // (see scaleCameraToContainer). Use a copied state so the cached SavedView is
+  // never mutated and repeated loads stay idempotent.
+  const scaledCamera = scaleCameraToContainer(state.camera, state.containerSize, toContainerSize);
+  deps.onSetRestored({ ...state, camera: scaledCamera });
 
   return {
     restored: true,
@@ -290,12 +304,12 @@ export function applyCompanySnapshot(
   // Preview data is derived; clear it so it can be recomputed if needed.
   deps.setPreviewData(null);
 
-  // Scale camera/positions to the current container so the view looks similar
-  // across different screen sizes and zoom levels.
-  scaleStateToContainer(state, toContainerSize);
-
-  // Hand camera/positions up to the parent to apply after the canvas is ready.
-  deps.onSetRestored(state);
+  // Scale the camera to the current container so the view looks similar across
+  // different screen sizes and OS display scaling. Node positions are NOT scaled
+  // (see scaleCameraToContainer). Use a copied state so the cached SavedView is
+  // never mutated and repeated loads stay idempotent.
+  const scaledCamera = scaleCameraToContainer(state.camera, state.containerSize, toContainerSize);
+  deps.onSetRestored({ ...state, camera: scaledCamera });
 
   return { restored: true };
 }
