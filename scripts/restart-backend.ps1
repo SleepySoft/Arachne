@@ -24,7 +24,12 @@ function Wait-ForPort($port, $label, $timeoutSec = 60) {
 $procs = Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*uvicorn*' }
 foreach ($proc in $procs) {
     Write-Host "Stopping backend PID $($proc.ProcessId)" -ForegroundColor Yellow
-    Stop-Process -Id $proc.ProcessId -Force
+    try {
+        Stop-Process -Id $proc.ProcessId -Force -ErrorAction Stop
+    } catch {
+        # 进程可能已自行退出，忽略
+        Write-Host "  PID $($proc.ProcessId) already exited" -ForegroundColor DarkGray
+    }
 }
 
 # Wait briefly for port release

@@ -4,20 +4,15 @@ root_product: smartphone
 include:
 - semiconductor_chip_manufacturing.yaml
 - printed_circuit_board_fabrication.yaml
+- dram_chip_manufacturing.yaml
 local: {}
 edges:
-- - chip
-  - feedstock
-  - act_electronics_system_integration
-- - lpddr5
-  - component
-  - act_electronics_system_integration
-- - pcb_board
-  - feedstock
-  - act_electronics_system_integration
-- - act_electronics_system_integration
-  - ref
-  - electronics_system_integration
-- - act_electronics_system_integration
-  - primary_result
-  - smartphone
+- [chip, feedstock, act_electronics_system_integration]
+- [lpddr5, component, act_electronics_system_integration]
+- [pcb_board, feedstock, act_electronics_system_integration]
+- [act_electronics_system_integration, ref, electronics_system_integration]
+- [act_electronics_system_integration, primary_result, smartphone]
+# LPDDR5 由 DRAM 芯片封装集成而来（修复 lpddr5 无上游的断链）
+- [dram_chip, component, act_integrate_lpddr5]
+- [act_integrate_lpddr5, ref, integration_of_lpddr5]
+- [act_integrate_lpddr5, primary_result, lpddr5]

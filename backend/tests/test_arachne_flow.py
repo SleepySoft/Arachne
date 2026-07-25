@@ -99,6 +99,7 @@ def test_parse_smartphone_flow():
     assert parsed.includes == [
         "semiconductor_chip_manufacturing.yaml",
         "printed_circuit_board_fabrication.yaml",
+        "dram_chip_manufacturing.yaml",
     ]
 
 

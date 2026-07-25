@@ -46,7 +46,11 @@ from app.services import node_storage
 # 每个 METHOD 最多展开的兄弟 ACTION 数（支线广度上限）
 DEFAULT_BRANCH_PER_METHOD = 5
 # 支线关联物料总量上限
-DEFAULT_BRANCH_LIMIT = 30
+DEFAULT_BRANCH_LIMIT = 20
+# 单个资源在每个阶段最多展开的主线 ACTION 数（广度收敛，防止枢纽资源爆图）
+DEFAULT_MAX_ACTIONS_PER_RESOURCE = 4
+# 每个主线 ACTION 最多挂出的协同投入叶子数
+DEFAULT_MAX_SUPPORT_PER_ACTION = 8
 # 每个资源节点最多携带的路径数（防止路径组合爆炸）
 MAX_PATHS_PER_NODE = 3
 
@@ -201,6 +205,62 @@ async def _node_kinds(node_ids: List[str]) -> Dict[str, str]:
         return kinds
 
 
+async def _suggest_flow_nodes(query_ids: List[str], limit: int = 6) -> List[Dict[str, Any]]:
+    """种子不在 flow 图中时，推荐图内真实存在的相似 RESOURCE/METHOD 节点。
+
+    flow 引擎的种子必须来自已编译流程文件；用户从 PG 产业节点表里选来的种子
+    很可能不在 flow 图中（如 foundry）。这里对图内节点做轻量相似匹配
+    （id 子串 + PG 中文名子串 + SequenceMatcher），给出可直接点击的替代起点。
+    """
+    if not query_ids:
+        return []
+    from difflib import SequenceMatcher
+
+    driver = get_flow_async_driver()
+    async with driver.session() as session:
+        result = await session.run(
+            """
+            MATCH (n:ArachneFlowNode)
+            WHERE n:ArachneFlowResource OR n:ArachneFlowMethod
+            RETURN n.node_id AS id
+            """
+        )
+        flow_ids = [record["id"] async for record in result]
+    if not flow_ids:
+        return []
+
+    name_map: Dict[str, str] = {}
+    try:
+        pg_nodes = await node_storage.get_nodes_by_ids(flow_ids)
+        for nid, pn in pg_nodes.items():
+            name_map[nid] = pn.canonical_name_zh or ""
+    except Exception:
+        pass
+
+    def score(nid: str) -> float:
+        name = name_map.get(nid, "")
+        best = 0.0
+        for q in query_ids:
+            q = q.lower()
+            if not q:
+                continue
+            if q in nid.lower() or (name and q in name.lower()):
+                best = max(best, 1.0)
+            else:
+                best = max(
+                    best,
+                    SequenceMatcher(None, q, nid.lower()).ratio(),
+                    SequenceMatcher(None, q, name.lower()).ratio() if name else 0.0,
+                )
+        return best
+
+    scored = sorted(flow_ids, key=score, reverse=True)[:limit]
+    return [
+        {"node_id": nid, "label": name_map.get(nid) or nid, "score": round(score(nid), 3)}
+        for nid in scored
+    ]
+
+
 # ---------------------------------------------------------------------------
 # Main task
 # ---------------------------------------------------------------------------
@@ -224,6 +284,12 @@ async def run_arachne_flow_association(
     branch_enabled = bool(params.get("expand_method_ref", True))
     branch_per_method = int(params.get("branch_per_method", DEFAULT_BRANCH_PER_METHOD))
     branch_limit = int(params.get("branch_limit", DEFAULT_BRANCH_LIMIT))
+    max_actions_per_resource = int(
+        params.get("max_actions_per_resource", DEFAULT_MAX_ACTIONS_PER_RESOURCE)
+    )
+    max_support_per_action = int(
+        params.get("max_support_per_action", DEFAULT_MAX_SUPPORT_PER_ACTION)
+    )
 
     # ---- 1. 种子校验与归类 ------------------------------------------------
     existing, missing = await validate_arachne_flow_sources(task.source_nodes)
@@ -231,6 +297,9 @@ async def run_arachne_flow_association(
         warnings.append(f"Missing source nodes in arachne_flow graph: {missing}")
         diagnostics.dangling_reference_count += len(missing)
     if not existing:
+        suggestions = await _suggest_flow_nodes(missing)
+        if suggestions:
+            warnings.append("流程图内的相似可用起点见 missing_flow_suggestions")
         diagnostics.warnings = warnings
         diagnostics.execution_time_ms = int((datetime.utcnow() - started_at).total_seconds() * 1000)
         return ReasoningResultEnvelope(
@@ -241,7 +310,7 @@ async def run_arachne_flow_association(
             generated_at=datetime.utcnow(),
             input_fingerprint="",
             output_types=[o.value for o in task.requested_outputs],
-            result_payload={},
+            result_payload={"missing_flow_suggestions": suggestions},
             diagnostics=diagnostics,
         )
 
@@ -272,6 +341,9 @@ async def run_arachne_flow_association(
     resource_actions: Dict[str, Set[str]] = {}  # 资源 -> 相邻主线 ACTION（评分用）
     branch_links: Dict[str, Set[str]] = {}  # 资源/method -> 支线连接（评分用）
     main_actions: Set[str] = set()
+    capped_action_count = 0  # 因广度上限被丢弃的主线 ACTION 数
+    # 资源的“流程血统”：产出它的 ACTION 所属 flow_id；同 flow 延续优先于跨 flow 跳转
+    resource_lineage: Dict[str, Optional[str]] = {rid: None for rid in seed_resources}
     # 每个资源携带的路径（nodes/edges 交替 id 列表），条数受限
     path_carriers: Dict[str, List[Tuple[List[str], List[str]]]] = {}
     main_paths: List[Tuple[List[str], List[str]]] = []
@@ -347,8 +419,11 @@ async def run_arachne_flow_association(
 
     visited_main: Set[str] = set(seed_resources)
 
+    def action_flow(action_id: str) -> str:
+        return action_id.split(":", 1)[0] if ":" in action_id else ""
+
     async def bfs(direction_: str, frontier: Set[str], stage_offset: int) -> None:
-        nonlocal truncated
+        nonlocal truncated, capped_action_count
         current = sorted(frontier)
         for stage in range(stage_offset + 1, max_depth + 1 + stage_offset):
             if not current:
@@ -358,59 +433,76 @@ async def run_arachne_flow_association(
                 warnings.append("Node collection truncated due to max_nodes")
                 break
             rows = await _stage_expand(current, direction_)
-            next_frontier: Set[str] = set()
+            # 按资源分组：同 flow 延续优先，跨 flow 跳转靠后；超出单资源广度上限的丢弃
+            by_resource: Dict[str, List[Dict[str, Any]]] = {}
             for row in rows:
-                rid = row["rid"]
-                action = row["action"]
-                main_actions.add(action)
-                add_node(action, line="main", stage=stage, direction=direction_, kind="action")
-                resource_actions.setdefault(rid, set()).add(action)
-                if direction_ == "forward":
-                    add_edge(row["main_edge"], rid, action, row["main_role"], "main")
-                else:
-                    add_edge(row["main_edge"], action, rid, row["main_role"], "main")
-
-                # 主线延续资源（下一阶段）
-                for e in row["outputs"]:
-                    dst = e["node_id"]
-                    if not dst:
-                        continue
-                    add_node(dst, line="main", stage=stage, direction=direction_, kind="resource")
+                by_resource.setdefault(row["rid"], []).append(row)
+            next_frontier: Set[str] = set()
+            for rid, res_rows in by_resource.items():
+                lineage = resource_lineage.get(rid)
+                res_rows.sort(
+                    key=lambda r: 0 if (lineage and action_flow(r["action"]) == lineage) else 1
+                )
+                kept = res_rows[:max_actions_per_resource]
+                capped_action_count += len(res_rows) - len(kept)
+                for row in kept:
+                    action = row["action"]
+                    main_actions.add(action)
+                    add_node(action, line="main", stage=stage, direction=direction_, kind="action")
+                    resource_actions.setdefault(rid, set()).add(action)
                     if direction_ == "forward":
-                        add_edge(e["edge_id"], action, dst, e["role"], "main")
+                        add_edge(row["main_edge"], rid, action, row["main_role"], "main")
                     else:
-                        add_edge(e["edge_id"], dst, action, e["role"], "main")
-                    resource_actions.setdefault(dst, set()).add(action)
-                    # 路径传递
-                    carriers = path_carriers.get(rid, [])
-                    for pn, pe in carriers[:MAX_PATHS_PER_NODE]:
-                        if len(main_paths) >= max_paths:
-                            break
+                        add_edge(row["main_edge"], action, rid, row["main_role"], "main")
+
+                    # 主线延续资源（下一阶段）
+                    for e in row["outputs"]:
+                        dst = e["node_id"]
+                        if not dst:
+                            continue
+                        add_node(dst, line="main", stage=stage, direction=direction_, kind="resource")
                         if direction_ == "forward":
-                            newp = (pn + [action, dst], pe + [row["main_edge"], e["edge_id"]])
+                            add_edge(e["edge_id"], action, dst, e["role"], "main")
                         else:
-                            newp = ([dst, action] + pn, [e["edge_id"], row["main_edge"]] + pe)
-                        main_paths.append(newp)
-                        path_carriers.setdefault(dst, []).append(newp)
-                    if dst not in visited_main:
-                        visited_main.add(dst)
-                        next_frontier.add(dst)
+                            add_edge(e["edge_id"], dst, action, e["role"], "main")
+                        resource_actions.setdefault(dst, set()).add(action)
+                        resource_lineage.setdefault(dst, action_flow(action))
+                        # 路径传递
+                        carriers = path_carriers.get(rid, [])
+                        for pn, pe in carriers[:MAX_PATHS_PER_NODE]:
+                            if len(main_paths) >= max_paths:
+                                break
+                            if direction_ == "forward":
+                                newp = (pn + [action, dst], pe + [row["main_edge"], e["edge_id"]])
+                            else:
+                                newp = ([dst, action] + pn, [e["edge_id"], row["main_edge"]] + pe)
+                            main_paths.append(newp)
+                            path_carriers.setdefault(dst, []).append(newp)
+                        if dst not in visited_main:
+                            visited_main.add(dst)
+                            next_frontier.add(dst)
 
-                # 协同投入/产出（叶子，不再扩展）
-                for e in row["co_resources"]:
-                    cid = e["node_id"]
-                    if not cid:
-                        continue
-                    add_node(
-                        cid, line="support", stage=stage, direction=direction_,
-                        kind="resource", via_action=action,
-                    )
-                    if direction_ == "forward":
-                        add_edge(e["edge_id"], cid, action, e["role"], "support")
-                    else:
-                        add_edge(e["edge_id"], action, cid, e["role"], "support")
-                    resource_actions.setdefault(cid, set()).add(action)
+                    # 协同投入/产出（叶子，不再扩展，限量）
+                    for e in row["co_resources"][:max_support_per_action]:
+                        cid = e["node_id"]
+                        if not cid:
+                            continue
+                        add_node(
+                            cid, line="support", stage=stage, direction=direction_,
+                            kind="resource", via_action=action,
+                        )
+                        if direction_ == "forward":
+                            add_edge(e["edge_id"], cid, action, e["role"], "support")
+                        else:
+                            add_edge(e["edge_id"], action, cid, e["role"], "support")
+                        resource_actions.setdefault(cid, set()).add(action)
             current = sorted(next_frontier)
+
+    if capped_action_count:
+        warnings.append(
+            f"广度收敛：{capped_action_count} 个主线 ACTION 因单资源每阶段最多 "
+            f"{max_actions_per_resource} 个的上限被省略"
+        )
 
     if direction in ("forward", "both"):
         await bfs("forward", frontier_forward, 0)
@@ -617,10 +709,15 @@ async def run_arachne_flow_association(
             "stages": max_depth,
             "actions": len(main_actions),
             "methods": len(method_ids),
+            "capped_actions": capped_action_count,
         },
         "branch": {
             "enabled": branch_enabled,
             "materials": sum(1 for n in nodes.values() if n["line"] == "branch" and n["kind"] == "resource"),
+        },
+        "node_counts": {
+            line: sum(1 for n in nodes.values() if n["line"] == line)
+            for line in ("seed", "main", "method", "support", "branch")
         },
     }
     if OutputType.TEMPORARY_GRAPH in task.requested_outputs or not task.requested_outputs:

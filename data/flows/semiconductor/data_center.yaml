@@ -6,6 +6,7 @@ include:
 - printed_circuit_board_fabrication.yaml
 - dram_chip_manufacturing.yaml
 - advanced_packaging.yaml
+- ssd.yaml
 local: {}
 edges:
 - [ai_accelerator, feedstock, act_electronics_system_integration]

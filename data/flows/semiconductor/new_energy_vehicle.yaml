@@ -4,8 +4,11 @@ root_product: new_energy_vehicle
 include:
 - semiconductor_chip_manufacturing.yaml
 - printed_circuit_board_fabrication.yaml
+- power_semiconductor_manufacturing.yaml
 local: {}
 edges:
 - [pcb_board, feedstock, act_electronics_system_integration]
+# 功率器件（IGBT 等）用于电驱/电控（修复 power_device 无下游的断链）
+- [power_device, feedstock, act_electronics_system_integration]
 - [act_electronics_system_integration, ref, electronics_system_integration]
 - [act_electronics_system_integration, primary_result, new_energy_vehicle]

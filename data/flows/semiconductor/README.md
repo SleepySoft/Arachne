@@ -35,6 +35,16 @@ The generator in `temp/generate_arachne_flow.py` follows `docs/design_v4.txt`:
     loop for multi-layer processing. Since arachne-flow requires a DAG, the
     generator removes the back-edge that closes each cycle.
 
+## Manual additions (2026-07-25, not in generator)
+
+生成器之后的的手工补链，重新运行生成器时注意保留：
+
+1. `ssd.yaml`：新增三个变体集成（`ssd → act_integrate_{nvme,consumer,enterprise}_ssd → *_ssd`），修复 ssd 无下游、三个变体无上游。
+2. `server.yaml` / `data_center.yaml` / `personal_computer.yaml`：includes 增加 `ssd.yaml`。
+3. `smartphone.yaml`：includes 增加 `dram_chip_manufacturing.yaml`，新增 `dram_chip → act_integrate_lpddr5 → lpddr5`（修复 lpddr5 无上游）。
+4. `new_energy_vehicle.yaml`：includes 增加 `power_semiconductor_manufacturing.yaml`，新增 `power_device` 作为电驱/电控投入（修复 power_device 无下游）。
+5. `wafer_fabrication_processes.yaml` / `dram_chip_manufacturing.yaml` / `power_semiconductor_manufacturing.yaml`：新增 `foundry` 和 `integrated_device_manufacturer` 作为 `tool` 角色的商业模式主体（晶圆代工/IDM 提供制造服务，同 osat 惯例），foundry 此前在 flow 图中完全缺失。
+
 ## Validation
 
 All generated files were checked with `temp/validate_flows.py`:

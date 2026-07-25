@@ -6,6 +6,8 @@ include:
 local: {}
 edges:
 - [memory_wafer, feedstock, act_dram_fabrication]
+- [foundry, tool, act_dram_fabrication]
+- [integrated_device_manufacturer, tool, act_dram_fabrication]
 - [act_dram_fabrication, ref, dram_fabrication]
 - [act_dram_fabrication, primary_result, dram_wafer]
 - [dram_wafer, feedstock, act_dram_packaging_and_testing]

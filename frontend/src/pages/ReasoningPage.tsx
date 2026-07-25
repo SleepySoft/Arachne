@@ -265,6 +265,11 @@ export function ReasoningPage() {
   }, [isFlowEngine, taskType]);
 
   useEffect(() => {
+    // flow 引擎有独立的广度收敛（单资源 ACTION 上限），节点预算可以给得更紧
+    setMaxNodes(isFlowEngine ? 120 : 200);
+  }, [isFlowEngine]);
+
+  useEffect(() => {
     // Suggest sensible defaults per task type
     if (taskType === "association") {
       setOutputs(
@@ -299,7 +304,7 @@ export function ReasoningPage() {
   // ----- Execution -----
   const [result, setResult] = useState<ReasoningResultEnvelope | null>(null);
   const [executeError, setExecuteError] = useState<string | null>(null);
-type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
+type ResultTab = OutputType | "overview" | "visual" | "company_exposures" | "story";
 
   const [activeTab, setActiveTab] = useState<ResultTab>("overview");
 
@@ -308,10 +313,13 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
     onSuccess: (data, variables) => {
       setExecuteError(null);
       setResult(data);
+      const hasStory =
+        ((data.result_payload.paths as unknown[] | undefined)?.length ?? 0) > 0 ||
+        ((data.result_payload.node_scores as unknown[] | undefined)?.length ?? 0) > 0;
       const hasGraph =
         variables.requested_outputs.includes("subgraph") ||
         variables.requested_outputs.includes("temporary_graph");
-      setActiveTab(hasGraph ? "visual" : "overview");
+      setActiveTab(hasStory ? "story" : hasGraph ? "visual" : "overview");
     },
     onError: (err) => setExecuteError(formatError(err, "推理执行失败")),
   });
@@ -362,7 +370,7 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
       };
       const res = await executeReasoning(payload);
       setResult(res);
-      setActiveTab("visual");
+      setActiveTab("story");
     } catch (err) {
       setExecuteError(formatError(err, "运行示例失败"));
     } finally {
@@ -370,17 +378,7 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
     }
   };
 
-  const handleRun = () => {
-    if (sources.length === 0) {
-      setExecuteError("请至少选择一个起点对象");
-      return;
-    }
-    if (outputs.length === 0) {
-      setExecuteError("请至少选择一项输出");
-      return;
-    }
-    setExecuteError(null);
-
+  const buildPayload = (sourceIds: string[]): ReasoningTask => {
     const parameters: Record<string, unknown> = {};
     if (taskType === "impact_propagation") {
       parameters.propagation_profile = propagationProfile;
@@ -394,10 +392,10 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
       parameters.expand_ontology = true;
     }
 
-    const payload: ReasoningTask = {
+    return {
       task_id: `rt_${Date.now()}`,
       task_type: taskType,
-      source_nodes: sources.map((s) => s.object_id),
+      source_nodes: sourceIds,
       parameters,
       constraints: {
         max_depth: maxDepth,
@@ -408,8 +406,27 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
       requested_outputs: outputs,
       engine,
     };
+  };
 
-    executeMutation.mutate(payload);
+  const handleRun = () => {
+    if (sources.length === 0) {
+      setExecuteError("请至少选择一个起点对象");
+      return;
+    }
+    if (outputs.length === 0) {
+      setExecuteError("请至少选择一项输出");
+      return;
+    }
+    setExecuteError(null);
+    executeMutation.mutate(buildPayload(sources.map((s) => s.object_id)));
+  };
+
+  /** 以某个结果节点为新起点直接深入推理（“讲故事”的下一步操作）。 */
+  const deepDive = (nodeId: string, label: string) => {
+    setSources([{ object_id: nodeId, label }]);
+    setQueryText(label);
+    setExecuteError(null);
+    executeMutation.mutate(buildPayload([nodeId]));
   };
 
   const resultGraph: ReasoningSubgraph | TemporaryReasoningGraph | null = useMemo(() => {
@@ -452,10 +469,19 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
     return (result?.result_payload.company_exposures as CompanyExposuresOutput) || null;
   }, [result]);
 
+  const resultNodeCounts = useMemo<Record<string, number> | null>(() => {
+    return (result?.result_payload.node_counts as Record<string, number>) || null;
+  }, [result]);
+
   const availableTabs = useMemo(() => {
     const set = new Set<ResultTab>(["overview"]);
     if (!result) return set;
     const payload = result.result_payload;
+    if (
+      ((payload.paths as unknown[] | undefined)?.length ?? 0) > 0 ||
+      ((payload.node_scores as unknown[] | undefined)?.length ?? 0) > 0
+    )
+      set.add("story");
     if (payload.subgraph || payload.temporary_graph) set.add("visual");
     if (payload.subgraph) set.add("subgraph");
     if (payload.temporary_graph) set.add("temporary_graph");
@@ -469,6 +495,7 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
   }, [result]);
 
   const tabLabel = (t: ResultTab) => {
+    if (t === "story") return "解读";
     if (t === "overview") return "概览";
     if (t === "visual") return "可视化图";
     if (t === "company_exposures") return "公司暴露";
@@ -938,7 +965,9 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
             <>
               {/* Tabs */}
               <div className="flex items-center gap-1 border-b border-slate-800 bg-slate-900/50 px-4 py-2">
-                {(["overview", ...Array.from(availableTabs).filter((t) => t !== "overview")] as ResultTab[]).map((t) => (
+                {(["story", "overview", ...Array.from(availableTabs).filter((t) => t !== "overview" && t !== "story")] as ResultTab[])
+                  .filter((t) => availableTabs.has(t))
+                  .map((t) => (
                   <button
                     key={t}
                     onClick={() => setActiveTab(t)}
@@ -956,7 +985,30 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
 
               {/* Tab content */}
               <div className="flex-1 overflow-auto p-6">
-                {activeTab === "overview" && (
+                {result.status !== "success" && (
+                  <NoResultView
+                    result={result}
+                    isFlowEngine={isFlowEngine}
+                    onDeepDive={deepDive}
+                    onRunWithEngine={(eng) => {
+                      setEngine(eng);
+                      setExecuteError(null);
+                      executeMutation.mutate({
+                        ...buildPayload(sources.map((s) => s.object_id)),
+                        engine: eng,
+                      });
+                    }}
+                  />
+                )}
+                {result.status === "success" && activeTab === "story" && (
+                  <StoryView
+                    result={result}
+                    onDeepDive={deepDive}
+                    onShowCompanies={() => setActiveTab("company_exposures")}
+                    onShowGraph={() => setActiveTab("visual")}
+                  />
+                )}
+                {result.status === "success" && activeTab === "overview" && (
                   <div className="space-y-4">
                     <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
                       <h4 className="mb-1 text-sm font-medium text-slate-200">结果说明</h4>
@@ -1033,8 +1085,34 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures";
                 )}
 
                 {activeTab === "visual" && resultGraph && (
-                  <div className="h-[calc(100%-1rem)] rounded-lg border border-slate-800 bg-slate-900/60 p-2">
-                    <ResultGraph graph={resultGraph} isTemp={"temp_graph_id" in resultGraph} />
+                  <div className="flex h-[calc(100%-1rem)] flex-col gap-2">
+                    {"temp_graph_id" in resultGraph && resultNodeCounts && (
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-[10px] text-slate-400">
+                        <span>
+                          主线 <b className="text-slate-200">{resultNodeCounts.main ?? 0}</b>
+                        </span>
+                        <span>
+                          工艺 <b className="text-violet-300">{resultNodeCounts.method ?? 0}</b>
+                        </span>
+                        <span>
+                          协同投入 <b className="text-slate-200">{resultNodeCounts.support ?? 0}</b>
+                        </span>
+                        <span>
+                          支线关联 <b className="text-sky-300">{resultNodeCounts.branch ?? 0}</b>
+                        </span>
+                        {resultCompanyExposures && (
+                          <span>
+                            关联公司 <b className="text-amber-300">{resultCompanyExposures.total_companies}</b>
+                          </span>
+                        )}
+                        <span className="text-slate-600">
+                          黄框为起点；沿主线从左到右阅读，支线/协同为辅助信息
+                        </span>
+                      </div>
+                    )}
+                    <div className="min-h-0 flex-1 rounded-lg border border-slate-800 bg-slate-900/60 p-2">
+                      <ResultGraph graph={resultGraph} isTemp={"temp_graph_id" in resultGraph} />
+                    </div>
                   </div>
                 )}
 
@@ -1223,6 +1301,7 @@ function ResultGraph({
             label: n.label,
             type: n.node_type,
             score: n.score,
+            line: n.properties?.line as string | undefined,
           },
         }))
       : (graph as ReasoningSubgraph).nodes.map((n) => ({
@@ -1240,6 +1319,7 @@ function ResultGraph({
             target: e.to_temp_node_id,
             type: e.edge_type,
             weight: e.weight,
+            line: e.properties?.line as string | undefined,
           },
         }))
       : (graph as ReasoningSubgraph).edges.map((e) => ({
@@ -1298,6 +1378,68 @@ function ResultGraph({
             "text-background-shape": "roundrectangle",
           } as unknown as cytoscape.Css.Edge,
         },
+        // ---- 主线/支线视觉编码（仅 flow 临时图带 line 属性）----
+        {
+          selector: 'edge[line = "branch"]',
+          style: {
+            label: "",
+            "line-style": "dashed",
+            "line-color": "#38bdf8",
+            "target-arrow-color": "#38bdf8",
+            opacity: 0.65,
+            width: 1,
+          } as unknown as cytoscape.Css.Edge,
+        },
+        {
+          selector: 'edge[line = "support"]',
+          style: {
+            label: "",
+            "line-color": "#475569",
+            "target-arrow-color": "#475569",
+            opacity: 0.5,
+            width: 1,
+          } as unknown as cytoscape.Css.Edge,
+        },
+        {
+          selector: 'edge[line = "method"]',
+          style: {
+            "line-style": "dashed",
+            "line-color": "#a78bfa",
+            "target-arrow-color": "#a78bfa",
+            width: 1,
+          } as unknown as cytoscape.Css.Edge,
+        },
+        {
+          selector: 'node[line = "seed"]',
+          style: {
+            "border-color": "#facc15",
+            "border-width": 4,
+          } as unknown as cytoscape.Css.Node,
+        },
+        {
+          selector: 'node[line = "support"]',
+          style: {
+            width: 16,
+            height: 16,
+            opacity: 0.75,
+            "font-size": "8px",
+          } as unknown as cytoscape.Css.Node,
+        },
+        {
+          selector: 'node[line = "branch"]',
+          style: {
+            width: 18,
+            height: 18,
+            "border-color": "#38bdf8",
+            "font-size": "9px",
+          } as unknown as cytoscape.Css.Node,
+        },
+        {
+          selector: 'node[line = "method"]',
+          style: {
+            shape: "hexagon",
+          } as unknown as cytoscape.Css.Node,
+        },
       ],
       minZoom: 0.1,
       maxZoom: 3,
@@ -1312,7 +1454,7 @@ function ResultGraph({
     // Explicitly run the layout; the `layout` init option does not always execute.
     const layout = cy.layout({
       name: "dagre",
-      rankDir: "TB",
+      rankDir: "LR",
       padding: 20,
       animate: false,
       fit: false,
@@ -1330,7 +1472,44 @@ function ResultGraph({
     };
   }, [elements]);
 
-  return <div ref={containerRef} className="h-full w-full" />;
+  return (
+    <div className="relative h-full w-full">
+      <div ref={containerRef} className="h-full w-full" />
+      {isTemp && (
+        <div className="pointer-events-none absolute left-2 top-2 space-y-1 rounded bg-slate-950/80 px-2 py-1.5 text-[10px] text-slate-400">
+          <div className="flex items-center gap-1.5">
+            <span className="inline-block h-0.5 w-4 rounded" style={{ backgroundColor: "#64748b" }} />
+            主线（物料转化链，1 阶段 = 资源→动作→资源）
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span
+              className="inline-block h-0 w-4 border-t border-dashed"
+              style={{ borderColor: "#a78bfa" }}
+            />
+            工艺引用（动作 → 方法）
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="inline-block h-0.5 w-4 rounded" style={{ backgroundColor: "#475569" }} />
+            协同投入（该阶段还需要的物料/设备）
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span
+              className="inline-block h-0 w-4 border-t border-dashed"
+              style={{ borderColor: "#38bdf8" }}
+            />
+            支线（同工艺的其他流程及其物料）
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span
+              className="inline-block h-2.5 w-2.5 rounded-full border-2"
+              style={{ borderColor: "#facc15" }}
+            />
+            起点
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function PathsView({ paths }: { paths: ReasoningPath[] }) {
@@ -1593,5 +1772,311 @@ function formatScore(value: number | null | undefined, digits = 3): string {
 function Empty({ message }: { message: string }) {
   return (
     <div className="flex flex-1 items-center justify-center text-sm text-slate-500">{message}</div>
+  );
+}
+
+// ============================================================
+// StoryView：把推理结果转译成可读的“故事”
+// ============================================================
+
+interface StoryFinding {
+  nodeId: string;
+  name: string;
+  text: string;
+  color: "cyan" | "amber" | "emerald";
+}
+
+function StoryView({
+  result,
+  onDeepDive,
+  onShowCompanies,
+  onShowGraph,
+}: {
+  result: ReasoningResultEnvelope;
+  onDeepDive: (nodeId: string, label: string) => void;
+  onShowCompanies: () => void;
+  onShowGraph: () => void;
+}) {
+  const payload = result.result_payload;
+  const paths = (payload.paths as ReasoningPath[] | undefined) ?? [];
+  const scores = (payload.node_scores as NodeScore[] | undefined) ?? [];
+  const counts = (payload.node_counts as Record<string, number> | undefined) ?? null;
+  const companies =
+    (payload.company_exposures as CompanyExposuresOutput | undefined) ?? null;
+  const tempGraph = (payload.temporary_graph as TemporaryReasoningGraph | undefined) ?? null;
+
+  // 名称解析：路径 name_map + 得分 + 临时图 label
+  const nameOf = (() => {
+    const map = new Map<string, string>();
+    paths.forEach((p) => {
+      Object.entries(p.node_name_map || {}).forEach(([nid, info]) => {
+        const nm = info?.canonical_name_zh || info?.canonical_name_en;
+        if (nm && !map.has(nid)) map.set(nid, nm);
+      });
+    });
+    scores.forEach((s) => {
+      const nm = s.canonical_name_zh || s.canonical_name_en;
+      if (nm && !map.has(s.node_id)) map.set(s.node_id, nm);
+    });
+    tempGraph?.nodes.forEach((n) => {
+      if (n.label && !map.has(n.temp_node_id)) map.set(n.temp_node_id, n.label);
+    });
+    return (nid: string) => map.get(nid) || nid.split(":").pop() || nid;
+  })();
+
+  const seedIds = (payload.seed_nodes as string[] | undefined) ?? [];
+  const seedNames = seedIds.map(nameOf).join("、");
+
+  // 主线链：最长的 3 条路径，按终点去重
+  const mainChains = [...paths]
+    .sort((a, b) => b.node_sequence.length - a.node_sequence.length)
+    .filter((p, i, arr) => arr.findIndex((q) => q.end_node_id === p.end_node_id) === i)
+    .slice(0, 3);
+
+  // 关键发现
+  const findings: StoryFinding[] = [];
+  const hubResources = scores.filter(
+    (s) =>
+      (s.score_components?.line === "main" || s.score_components?.line === "seed") &&
+      ((s.score_components?.main_actions as number | undefined) ?? 0) >= 2
+  );
+  hubResources.slice(0, 3).forEach((s) => {
+    findings.push({
+      nodeId: s.node_id,
+      name: nameOf(s.node_id),
+      text: `连接 ${s.score_components?.main_actions} 个主线环节，是多条产品链的交汇点。它的供应波动会沿多条链传导。`,
+      color: "cyan",
+    });
+  });
+  const sharedMethods = scores.filter(
+    (s) =>
+      s.score_components?.line === "method" &&
+      ((s.score_components?.branch_links as number | undefined) ?? 0) >= 1
+  );
+  sharedMethods.slice(0, 2).forEach((s) => {
+    findings.push({
+      nodeId: s.node_id,
+      name: nameOf(s.node_id),
+      text: `共享工艺：被 ${s.score_components?.branch_links} 个流程使用。同一工艺横向迁移可能带来新的应用市场。`,
+      color: "amber",
+    });
+  });
+  const branchMaterials = scores.filter((s) => s.score_components?.line === "branch");
+  if (branchMaterials.length > 0) {
+    findings.push({
+      nodeId: branchMaterials[0].node_id,
+      name: nameOf(branchMaterials[0].node_id),
+      text: `支线共发现 ${branchMaterials.length} 种关联物料（来自同工艺的其他流程），可作为替代与协同线索。`,
+      color: "emerald",
+    });
+  }
+
+  const topCompanies = [...(companies?.companies ?? [])]
+    .sort((a, b) => (b.exposed_nodes?.length ?? 0) - (a.exposed_nodes?.length ?? 0))
+    .slice(0, 5);
+
+  return (
+    <div className="max-w-3xl space-y-4">
+      {/* 一句话概览 */}
+      <div className="rounded-lg border border-cyan-900/40 bg-cyan-950/20 p-4">
+        <p className="text-sm leading-6 text-slate-200">
+          以 <span className="font-semibold text-cyan-300">「{seedNames}」</span> 为起点
+          {counts ? (
+            <>
+              ，主线覆盖 <b>{counts.main ?? 0}</b> 个环节、<b>{counts.method ?? 0}</b> 种工艺，
+              另有 <b>{counts.support ?? 0}</b> 项协同投入和 <b>{counts.branch ?? 0}</b> 项支线关联物料
+            </>
+          ) : (
+            <>，共发现 {paths.length} 条关联路径</>
+          )}
+          {companies && (
+            <>
+              ，涉足这些环节的公司共 <b>{companies.total_companies}</b> 家
+            </>
+          )}
+          。
+        </p>
+      </div>
+
+      {/* 主线故事 */}
+      {mainChains.length > 0 && (
+        <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+          <h4 className="mb-2 text-sm font-medium text-slate-200">主线讲了什么</h4>
+          <div className="space-y-2">
+            {mainChains.map((p) => (
+              <div key={p.path_id} className="flex flex-wrap items-center gap-1 text-xs">
+                <Badge color="slate">{Math.max(1, Math.floor((p.node_sequence.length - 1) / 2))} 阶段</Badge>
+                {p.node_sequence.map((nid, idx) => (
+                  <span key={idx} className="flex items-center gap-1">
+                    <span
+                      className={cn(
+                        "rounded px-1.5 py-0.5",
+                        idx % 2 === 1
+                          ? "bg-orange-900/30 text-orange-300"
+                          : "bg-slate-800 text-slate-200"
+                      )}
+                      title={nid}
+                    >
+                      {nameOf(nid)}
+                    </span>
+                    {idx < p.node_sequence.length - 1 && (
+                      <ChevronRight className="h-3 w-3 text-slate-600" />
+                    )}
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+          <p className="mt-2 text-[10px] text-slate-500">
+            橙色为工艺动作，其余为物料/产品；完整路径见「路径」标签页。
+          </p>
+        </div>
+      )}
+
+      {/* 关键发现 */}
+      {findings.length > 0 && (
+        <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+          <h4 className="mb-2 text-sm font-medium text-slate-200">关键发现</h4>
+          <div className="space-y-2">
+            {findings.map((f, i) => (
+              <div key={i} className="flex items-start justify-between gap-3 text-xs leading-5">
+                <p className="text-slate-300">
+                  <Badge color={f.color}>{f.name}</Badge>{" "}
+                  <span className="text-slate-400">{f.text}</span>
+                </p>
+                <button
+                  onClick={() => onDeepDive(f.nodeId, f.name)}
+                  className="shrink-0 rounded bg-slate-800 px-2 py-1 text-[10px] text-cyan-300 hover:bg-slate-700"
+                >
+                  以此为起点深入
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 产业玩家 */}
+      {topCompanies.length > 0 && (
+        <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+          <h4 className="mb-2 text-sm font-medium text-slate-200">产业玩家</h4>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            {topCompanies.map((c) => (
+              <span key={c.company_id} className="rounded bg-amber-900/20 px-2 py-1 text-amber-300">
+                {c.name_zh || c.company_id}
+                <span className="ml-1 text-amber-500/70">×{c.exposed_nodes?.length ?? 0}</span>
+              </span>
+            ))}
+            <button
+              onClick={onShowCompanies}
+              className="rounded bg-slate-800 px-2 py-1 text-[10px] text-slate-300 hover:bg-slate-700"
+            >
+              查看全部 {companies?.total_companies} 家 →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 怎么用 */}
+      <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+        <h4 className="mb-2 text-sm font-medium text-slate-200">接下来怎么用</h4>
+        <ul className="list-inside list-disc space-y-1 text-xs leading-5 text-slate-400">
+          <li>
+            点{" "}
+            <button onClick={onShowGraph} className="text-cyan-400 hover:underline">
+              「可视化图」
+            </button>{" "}
+            沿主线从左到右阅读：实线是物料转化链，紫色六边形是工艺，灰点是协同投入，蓝虚线是支线。
+          </li>
+          <li>对某个发现感兴趣？点「以此为起点深入」，会以它为新种子重新推理，看到它的专属故事。</li>
+          <li>想看上游供应就切「遍历方向 = backward」，看下游应用就切 forward；调「最大深度」控制故事长度。</li>
+          <li>「节点得分」标签页按关联强度排序，得分越高越是枢纽（瓶颈/替代分析优先看它们）。</li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// NoResultView：NO_RESULT / FAILED 的明确说明与可操作建议
+// ============================================================
+
+interface FlowSuggestion {
+  node_id: string;
+  label: string;
+  score?: number;
+}
+
+function NoResultView({
+  result,
+  isFlowEngine,
+  onDeepDive,
+  onRunWithEngine,
+}: {
+  result: ReasoningResultEnvelope;
+  isFlowEngine: boolean;
+  onDeepDive: (nodeId: string, label: string) => void;
+  onRunWithEngine: (engine: string) => void;
+}) {
+  const warnings = result.diagnostics?.warnings ?? [];
+  const suggestions =
+    (result.result_payload?.missing_flow_suggestions as FlowSuggestion[] | undefined) ?? [];
+
+  return (
+    <div className="max-w-2xl space-y-4">
+      <div className="rounded-lg border border-amber-900/40 bg-amber-950/20 p-4">
+        <h4 className="mb-1 flex items-center gap-2 text-sm font-medium text-amber-300">
+          <AlertTriangle className="h-4 w-4" />
+          {result.status === "no_result" ? "没有找到关联结果" : "推理执行失败"}
+        </h4>
+        {warnings.length > 0 ? (
+          <ul className="list-inside list-disc space-y-1 text-xs leading-5 text-slate-400">
+            {warnings.map((w, i) => (
+              <li key={i}>{w}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-xs text-slate-400">起点在当前图中没有任何可遍历的关联。</p>
+        )}
+      </div>
+
+      {suggestions.length > 0 && (
+        <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+          <h4 className="mb-2 text-sm font-medium text-slate-200">
+            流程图内存在的相似起点，点击直接推理
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {suggestions.map((s) => (
+              <button
+                key={s.node_id}
+                onClick={() => onDeepDive(s.node_id, s.label)}
+                className="rounded bg-cyan-900/30 px-2 py-1 text-xs text-cyan-300 hover:bg-cyan-900/50"
+                title={s.node_id}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isFlowEngine && (
+        <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4 text-xs leading-5 text-slate-400">
+          <p>
+            流程图（arachne-flow）引擎只覆盖已编译流程文件（data/flows/）中的资源与工艺，
+            产业图谱中的很多节点（如行业角色、商业模式类节点）不在其中。
+          </p>
+          <p className="mt-1">
+            想对该起点做全产业图推理？
+            <button
+              onClick={() => onRunWithEngine("legacy")}
+              className="ml-1 rounded bg-slate-800 px-2 py-0.5 text-cyan-300 hover:bg-slate-700"
+            >
+              切换到产业图（legacy）重跑
+            </button>
+          </p>
+        </div>
+      )}
+    </div>
   );
 }

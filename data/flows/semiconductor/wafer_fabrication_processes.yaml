@@ -10,6 +10,9 @@ edges:
 # Common resources for the wafer cleaning process (shared across all cleaning actions)
 - [cleaning_equipment, tool, wafer_cleaning_process]
 - [wet_chemicals, feedstock, wafer_cleaning_process]
+# 商业模式主体：晶圆代工 / IDM 提供前道制造服务（作用于整条前道链，同 osat 惯例用 tool 角色）
+- [foundry, tool, act_initial_wafer_cleaning]
+- [integrated_device_manufacturer, tool, act_initial_wafer_cleaning]
 # Initial cleaning and oxidation
 - [silicon_wafer, feedstock, act_initial_wafer_cleaning]
 - [hydrofluoric_acid, feedstock, act_initial_wafer_cleaning]
