@@ -1919,10 +1919,16 @@ function StoryView({
               title={c.nodes.map((n) => n.label).join("、")}
             >
               {c.name_zh || c.company_id}
-              <span className="ml-1 opacity-60">×{c.nodes.length}</span>
+              <span className="ml-1 opacity-70">
+                · {c.nodes.slice(0, 2).map((n) => n.label).join("、")}
+                {c.nodes.length > 2 ? ` +${c.nodes.length - 2}` : ""}
+              </span>
             </button>
           ))}
         </div>
+        <p className="mt-2 text-[10px] text-slate-600">
+          公司名后为其暴露的环节；同一家公司可能因多环节布局同时出现在多个分类中（纵向一体化）。
+        </p>
       </div>
     ) : null;
 
