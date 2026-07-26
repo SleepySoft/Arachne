@@ -123,6 +123,42 @@ async def test_arachne_flow_association_task():
 
 
 @pytest.mark.asyncio(loop_scope="session")
+async def test_arachne_flow_company_context_task():
+    """公司产业上下文：从公司出发，解析暴露节点 -> flow 推理 -> 公司分类。"""
+    from app.services import company_storage
+
+    # 数据守卫：该测试依赖开发库中沪硅产业(nsig)的暴露记录
+    company = await company_storage.get_company("nsig")
+    if company is None:
+        pytest.skip("nsig company not present in this database")
+
+    parsed = parse_flow_file(FLOW_DIR / "silicon_wafer_manufacturing.yaml")
+    await storage.compile_parsed_flow(parsed, clear_existing=True)
+
+    try:
+        task = ReasoningTask(
+            task_id="test_af_company_ctx",
+            task_type=TaskType.CROSS_GRAPH_CONTEXT,
+            source_nodes=["nsig"],
+            parameters={},
+            constraints=ReasoningConstraints(
+                max_depth=2, max_paths=10, traversal_direction=TraversalDirection.BOTH
+            ),
+            requested_outputs=[OutputType.PATHS, OutputType.TEMPORARY_GRAPH],
+            engine="arachne_flow",
+        )
+        result = await execute_reasoning_task(task)
+        assert result.status == ResultStatus.SUCCESS
+        cc = result.result_payload.get("company_context", {})
+        assert cc.get("seed_companies"), "应返回种子公司的产业位置"
+        assert cc["seed_companies"][0]["position"], "种子公司应有暴露节点位置"
+        for key in ("peers", "upstream_companies", "downstream_companies"):
+            assert key in cc
+    finally:
+        await storage.clear_flow("silicon_wafer_manufacturing")
+
+
+@pytest.mark.asyncio(loop_scope="session")
 async def test_arachne_flow_association_missing_source():
     task = ReasoningTask(
         task_id="test_af_assoc_missing",

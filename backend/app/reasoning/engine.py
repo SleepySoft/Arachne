@@ -19,6 +19,7 @@ from app.reasoning.schemas import (
 )
 from app.reasoning.tasks.association import run_association
 from app.reasoning.tasks.arachne_flow_association import run_arachne_flow_association
+from app.reasoning.tasks.arachne_flow_company_context import run_arachne_flow_company_context
 from app.reasoning.tasks.bottleneck_detection import run_bottleneck_detection
 from app.reasoning.tasks.candidate_discovery import run_candidate_discovery
 from app.reasoning.tasks.cross_graph_context import run_cross_graph_context
@@ -99,6 +100,8 @@ async def execute_reasoning_task(task: ReasoningTask) -> ReasoningResultEnvelope
     if task.engine == "arachne_flow":
         if task.task_type == TaskType.ASSOCIATION:
             handler = run_arachne_flow_association
+        elif task.task_type == TaskType.CROSS_GRAPH_CONTEXT:
+            handler = run_arachne_flow_company_context
         else:
             handler = None
     else:

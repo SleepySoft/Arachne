@@ -39,13 +39,7 @@ import cytoscapeDagre from "cytoscape-dagre";
 
 cytoscape.use(cytoscapeDagre);
 
-// Reasoning tasks take node-like objects as sources; edge/claim scopes are not valid here.
-// factual_node already covers both persons and companies, so a separate company scope is unnecessary.
-const SCOPE_OPTIONS: { value: QueryScope; label: string }[] = [
-  { value: "industrial_node", label: "产业节点" },
-  { value: "factual_node", label: "事实节点" },
-  { value: "industry", label: "行业" },
-];
+// 起点范围由任务决定（见 seedSpec），不再需要手工选择范围；scopeHint 仍用于输入框占位/示例。
 
 function scopeHint(scope: QueryScope): {
   label: string;
@@ -99,6 +93,41 @@ const ENGINE_OPTIONS: { value: string; label: string }[] = [
   { value: "arachne_flow", label: "流程图（arachne-flow）" },
   { value: "legacy", label: "产业图（legacy）" },
 ];
+
+/** arachne_flow 引擎支持的任务类型。 */
+const FLOW_TASK_OPTIONS: { value: TaskType; label: string }[] = [
+  { value: "association", label: "关联扩展" },
+  { value: "cross_graph_context", label: "公司产业上下文" },
+];
+
+/** 各任务的一句话说明（选择任务时展示，让用户知道该输什么、能得到什么）。 */
+const TASK_DESC: Record<string, string> = {
+  association: "从产业节点出发，沿物料转化链展开上下游，适合回答“它从哪来、到哪去”。",
+  impact_propagation: "量化上游扰动（断供/涨价）沿供应链向下游传递的强度。",
+  bottleneck_detection: "找出被多条路径共享、替代来源少的关键节点（卡脖子环节）。",
+  substitution_search: "基于物料谱系与结构相似性，为节点寻找可替代对象。",
+  candidate_discovery: "识别图中可能缺失的工艺节点或关系。",
+  cross_graph_context: "把产业节点关联到公司、行业和关键人员。",
+};
+
+const FLOW_TASK_DESC: Record<string, string> = {
+  association:
+    "从产业节点出发：展开主线（物料转化链）与支线（同工艺关联），讲述产品的制造故事。起点：产业节点。",
+  cross_graph_context:
+    "从公司出发：解析公司暴露的产业节点，展开它在产业链中的位置，并找出同业、上游、下游与相关公司。起点：公司。",
+};
+
+/** 任务 -> 起点类型。页面为任务优先设计：先选任务，起点搜索范围随之固定。 */
+function seedSpec(taskType: TaskType, isFlowEngine: boolean): {
+  label: string;
+  scope: QueryScope;
+  factualType: "" | "person" | "company";
+} {
+  if (isFlowEngine && taskType === "cross_graph_context") {
+    return { label: "公司（事实节点）", scope: "factual_node", factualType: "company" };
+  }
+  return { label: "产业节点", scope: "industrial_node", factualType: "" };
+}
 
 const OUTPUT_OPTIONS: { value: OutputType; label: string }[] = [
   { value: "subgraph", label: "子图" },
@@ -258,8 +287,8 @@ export function ReasoningPage() {
   const [outputs, setOutputs] = useState<OutputType[]>(DEFAULT_OUTPUTS);
 
   useEffect(() => {
-    // arachne_flow 引擎目前仅支持 association 任务
-    if (isFlowEngine && taskType !== "association") {
+    // arachne_flow 引擎仅支持部分任务类型，切换引擎时回落到受支持的任务
+    if (isFlowEngine && !FLOW_TASK_OPTIONS.some((t) => t.value === taskType)) {
       setTaskType("association");
     }
   }, [isFlowEngine, taskType]);
@@ -268,6 +297,13 @@ export function ReasoningPage() {
     // flow 引擎有独立的广度收敛（单资源 ACTION 上限），节点预算可以给得更紧
     setMaxNodes(isFlowEngine ? 120 : 200);
   }, [isFlowEngine]);
+
+  useEffect(() => {
+    // 任务决定起点类型：选公司产业上下文则搜索公司，其余搜索产业节点
+    const spec = seedSpec(taskType, isFlowEngine);
+    setQueryScope(spec.scope);
+    setFactualNodeType(spec.factualType);
+  }, [taskType, isFlowEngine]);
 
   useEffect(() => {
     // Suggest sensible defaults per task type
@@ -537,40 +573,50 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures" | "sto
       <div className="flex flex-1 overflow-hidden">
         {/* Left: input */}
         <div className="flex w-[420px] shrink-0 flex-col gap-4 overflow-y-auto border-r border-slate-800 bg-slate-950 p-4">
-          {/* Query */}
-          <Card title="1. 搜索对象" icon={<Search className="h-4 w-4" />}>
+          {/* Step 1: 选择任务（任务优先：先定任务，起点类型随之确定） */}
+          <Card title="1. 选择任务" icon={<Brain className="h-4 w-4" />}>
             <div className="space-y-3">
-              <p className="text-xs text-slate-500">
-                选择查询范围后，输入对应对象的名称/别名/ID 片段，点击“添加”将其加入推理起点。
-              </p>
-              <FormField label="查询范围">
-                <select
-                  value={queryScope}
-                  onChange={(e) => setQueryScope(e.target.value as QueryScope)}
-                  className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
-                >
-                  {SCOPE_OPTIONS.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-
-              {queryScope === "factual_node" && (
-                <FormField label="事实节点类型">
+              <div className="grid grid-cols-2 gap-3">
+                <FormField label="推理引擎">
                   <select
-                    value={factualNodeType}
-                    onChange={(e) => setFactualNodeType(e.target.value as "" | "person" | "company")}
+                    value={engine}
+                    onChange={(e) => setEngine(e.target.value)}
                     className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
                   >
-                    <option value="">全部（人员 + 公司）</option>
-                    <option value="person">仅人员</option>
-                    <option value="company">仅公司</option>
+                    {ENGINE_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
                   </select>
                 </FormField>
-              )}
+                <FormField label="任务类型">
+                  <select
+                    value={taskType}
+                    onChange={(e) => setTaskType(e.target.value as TaskType)}
+                    className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
+                  >
+                    {(isFlowEngine ? FLOW_TASK_OPTIONS : TASK_OPTIONS).map((t) => (
+                      <option key={t.value} value={t.value}>
+                        {t.label}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+              </div>
+              <p className="rounded bg-slate-900 px-2 py-1.5 text-xs leading-5 text-slate-400">
+                {(isFlowEngine ? FLOW_TASK_DESC : TASK_DESC)[taskType] ?? ""}
+              </p>
+            </div>
+          </Card>
 
+          {/* Step 2: 添加起点 */}
+          <Card title="2. 添加起点" icon={<Search className="h-4 w-4" />}>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-slate-500">起点类型</span>
+                <Badge color="cyan">{seedSpec(taskType, isFlowEngine).label}</Badge>
+              </div>
               <FormField label={scopeHint(queryScope).label}>
                 <div className="flex gap-2">
                   <input
@@ -699,7 +745,7 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures" | "sto
           </Card>
 
           {/* Selected sources */}
-          <Card title="2. 已选起点" icon={<Layers className="h-4 w-4" />}>
+          <Card title="3. 已选起点" icon={<Layers className="h-4 w-4" />}>
             {sources.length === 0 ? (
               <div className="text-xs text-slate-500">推理需要至少一个起点。请先在上方搜索并添加。</div>
             ) : (
@@ -724,45 +770,8 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures" | "sto
           </Card>
 
           {/* Task config */}
-          <Card title="3. 配置推理任务" icon={<Brain className="h-4 w-4" />}>
+          <Card title="4. 参数与输出" icon={<Brain className="h-4 w-4" />}>
             <div className="space-y-3">
-              <p className="text-xs text-slate-500">
-                选择任务类型、遍历约束和希望返回的输出内容，然后运行推理。
-              </p>
-              <FormField label="推理引擎">
-                <select
-                  value={engine}
-                  onChange={(e) => setEngine(e.target.value)}
-                  className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
-                >
-                  {ENGINE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-
-              <FormField label="任务类型">
-                <select
-                  value={taskType}
-                  onChange={(e) => setTaskType(e.target.value as TaskType)}
-                  disabled={isFlowEngine}
-                  className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {TASK_OPTIONS.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
-                {isFlowEngine && (
-                  <p className="mt-1 text-[10px] text-slate-500">
-                    流程图引擎目前仅支持关联扩展任务
-                  </p>
-                )}
-              </FormField>
-
               {taskType === "impact_propagation" && (
                 <FormField label="传播策略">
                   <select
@@ -945,10 +954,9 @@ type ResultTab = OutputType | "overview" | "visual" | "company_exposures" | "sto
               <div className="max-w-md space-y-2 text-center text-sm">
                 <p>使用流程：</p>
                 <ol className="list-inside list-decimal space-y-1 text-xs text-slate-400">
-                  <li>在左侧搜索节点/公司/行业</li>
-                  <li>点击“添加”将其设为推理起点</li>
-                  <li>选择任务类型（关联扩展 / 影响传播）和输出内容</li>
-                  <li>点击“运行推理”，在右侧查看结果</li>
+                  <li>选择任务（引擎 + 类型），按提示搜索并添加起点</li>
+                  <li>调整遍历约束与输出内容，点击“运行推理”</li>
+                  <li>在「解读」标签页阅读结果故事，或点“以此为起点深入”继续探索</li>
                 </ol>
               </div>
             </div>
@@ -1875,6 +1883,49 @@ function StoryView({
     .sort((a, b) => (b.exposed_nodes?.length ?? 0) - (a.exposed_nodes?.length ?? 0))
     .slice(0, 5);
 
+  // 公司产业上下文（cross_graph_context 任务）
+  interface CtxCompany {
+    company_id: string;
+    name_zh?: string | null;
+    stock_codes?: string[];
+    nodes: { node_id: string; label: string; activity_type?: string | null }[];
+  }
+  const companyCtx = payload.company_context as
+    | {
+        seed_companies: ({
+          position: { node_id: string; label: string; activity_type?: string | null }[];
+          in_flow_node_count: number;
+          exposed_node_count: number;
+        } & CtxCompany)[];
+        peers: CtxCompany[];
+        related_companies?: CtxCompany[];
+        upstream_companies: CtxCompany[];
+        downstream_companies: CtxCompany[];
+      }
+    | undefined;
+
+  const companySection = (title: string, items: CtxCompany[] | undefined, color: string) =>
+    items && items.length > 0 ? (
+      <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+        <h4 className="mb-2 text-sm font-medium text-slate-200">
+          {title} <span className="text-slate-500">（{items.length}）</span>
+        </h4>
+        <div className="flex flex-wrap gap-2 text-xs">
+          {items.slice(0, 12).map((c) => (
+            <button
+              key={c.company_id}
+              onClick={() => onDeepDive(c.company_id, c.name_zh || c.company_id)}
+              className={`rounded px-2 py-1 ${color} hover:brightness-125`}
+              title={c.nodes.map((n) => n.label).join("、")}
+            >
+              {c.name_zh || c.company_id}
+              <span className="ml-1 opacity-60">×{c.nodes.length}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    ) : null;
+
   return (
     <div className="max-w-3xl space-y-4">
       {/* 一句话概览 */}
@@ -1897,6 +1948,38 @@ function StoryView({
           。
         </p>
       </div>
+
+      {/* 公司产业位置（公司上下文任务） */}
+      {companyCtx?.seed_companies?.map((sc) => (
+        <div key={sc.company_id} className="rounded-lg border border-amber-900/40 bg-amber-950/20 p-4">
+          <h4 className="mb-2 text-sm font-medium text-amber-300">
+            {sc.name_zh || sc.company_id} 的产业位置
+            <span className="ml-2 text-[10px] font-normal text-slate-500">
+              暴露 {sc.exposed_node_count} 个节点，其中 {sc.in_flow_node_count} 个在流程图中
+            </span>
+          </h4>
+          <div className="flex flex-wrap gap-2 text-xs">
+            {sc.position.map((p) => (
+              <button
+                key={p.node_id}
+                onClick={() => onDeepDive(p.node_id, p.label)}
+                className="rounded bg-slate-800 px-2 py-1 text-slate-200 hover:bg-slate-700"
+                title={p.node_id}
+              >
+                {p.label}
+                {p.activity_type && (
+                  <span className="ml-1 text-amber-500/80">{String(p.activity_type)}</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {companySection("同业公司（同环节同活动）", companyCtx?.peers, "bg-cyan-900/30 text-cyan-300")}
+      {companySection("上游公司", companyCtx?.upstream_companies, "bg-emerald-900/30 text-emerald-300")}
+      {companySection("下游公司", companyCtx?.downstream_companies, "bg-sky-900/30 text-sky-300")}
+      {companySection("相关公司（同工艺/支线配套）", companyCtx?.related_companies, "bg-violet-900/30 text-violet-300")}
 
       {/* 主线故事 */}
       {mainChains.length > 0 && (
