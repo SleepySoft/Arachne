@@ -44,6 +44,17 @@ The generator in `temp/generate_arachne_flow.py` follows `docs/design_v4.txt`:
 3. `smartphone.yaml`：includes 增加 `dram_chip_manufacturing.yaml`，新增 `dram_chip → act_integrate_lpddr5 → lpddr5`（修复 lpddr5 无上游）。
 4. `new_energy_vehicle.yaml`：includes 增加 `power_semiconductor_manufacturing.yaml`，新增 `power_device` 作为电驱/电控投入（修复 power_device 无下游）。
 5. `wafer_fabrication_processes.yaml` / `dram_chip_manufacturing.yaml` / `power_semiconductor_manufacturing.yaml`：新增 `foundry` 和 `integrated_device_manufacturer` 作为 `tool` 角色的商业模式主体（晶圆代工/IDM 提供制造服务，同 osat 惯例），foundry 此前在 flow 图中完全缺失。
+6. 角色语义修正：ssd 三个变体、lpddr5 的投入角色由 `component` 改为 `basis`（以通用平台/芯片为基础衍生的规格变体，并非物料组装）；`dram_chip → ddr5` 保留 `component`（芯片实装为模组）。
+7. `data_center.yaml` 重构为 include `server.yaml` 并删除与 server 重复的系统集成/ai_accelerator/gpu/ddr5 集成边（消除跨文件重复），文件从 29 行减到 13 行。
+
+## 建模惯例（新增内容时遵守）
+
+- **物料转化**：`[原料, feedstock/component, ACTION]` + `[ACTION, primary_result/intermediate, 产物]`。
+- **变体/规格衍生**（企业级 SSD、LPDDR5 这类 is_a 关系）：用 `basis` 角色，从抽象父节点指向变体的集成 ACTION。
+- **设备/商业主体**（光刻机、foundry、osat、IDM）：用 `tool` 角色，挂在它们支撑/执行的 ACTION 上。
+- **设计/信息输入**：用 `subject` 角色。
+- **一个文件 = 一条产品链**；被多个产品复用的子链抽成 shared 文件（如 `semiconductor_chip_manufacturing.yaml`）由各方 include，禁止跨文件复制同一组集成边。
+- 改之前先跑上下文工具：`backend/scripts/flow_context.py <词>`（查重/找位置/看上下游），改完跑 `--dangling` 看断链变化。
 
 ## Validation
 

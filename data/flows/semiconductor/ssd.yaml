@@ -8,13 +8,14 @@ edges:
 - [nand_flash_chip, component, act_integrate_ssd]
 - [act_integrate_ssd, ref, integration_of_ssd]
 - [act_integrate_ssd, primary_result, ssd]
-# SSD 按应用形态集成出变体（修复 ssd 无下游、三个变体无上游的断链）
-- [ssd, component, act_integrate_nvme_ssd]
+# SSD 按应用形态衍生出变体。用 basis 角色（以通用平台为基础衍生）而非 component：
+# 企业级/消费级 SSD 不是拿通用 SSD 组装的，而是同平台按不同规格制造。
+- [ssd, basis, act_integrate_nvme_ssd]
 - [act_integrate_nvme_ssd, ref, integration_of_nvme_ssd]
 - [act_integrate_nvme_ssd, primary_result, nvme_ssd]
-- [ssd, component, act_integrate_consumer_ssd]
+- [ssd, basis, act_integrate_consumer_ssd]
 - [act_integrate_consumer_ssd, ref, integration_of_consumer_ssd]
 - [act_integrate_consumer_ssd, primary_result, consumer_ssd]
-- [ssd, component, act_integrate_enterprise_ssd]
+- [ssd, basis, act_integrate_enterprise_ssd]
 - [act_integrate_enterprise_ssd, ref, integration_of_enterprise_ssd]
 - [act_integrate_enterprise_ssd, primary_result, enterprise_ssd]

@@ -12,7 +12,7 @@ edges:
 - [pcb_board, feedstock, act_electronics_system_integration]
 - [act_electronics_system_integration, ref, electronics_system_integration]
 - [act_electronics_system_integration, primary_result, smartphone]
-# LPDDR5 由 DRAM 芯片封装集成而来（修复 lpddr5 无上游的断链）
-- [dram_chip, component, act_integrate_lpddr5]
+# LPDDR5 是 DRAM 芯片的一种规格（basis 衍生），不是芯片组装的模组
+- [dram_chip, basis, act_integrate_lpddr5]
 - [act_integrate_lpddr5, ref, integration_of_lpddr5]
 - [act_integrate_lpddr5, primary_result, lpddr5]
