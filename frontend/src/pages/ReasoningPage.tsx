@@ -32,6 +32,7 @@ import {
   QueryScope,
   TaskType,
   TraversalDirection,
+  EDGE_TYPE_LABELS,
 } from "@/types";
 import { queryReasoningObjects, executeReasoning } from "@/services/api";
 import cytoscape from "cytoscape";
@@ -1325,7 +1326,7 @@ function ResultGraph({
             id: e.temp_edge_id,
             source: e.from_temp_node_id,
             target: e.to_temp_node_id,
-            type: e.edge_type,
+            type: EDGE_TYPE_LABELS[e.edge_type] ?? e.edge_type,
             weight: e.weight,
             line: e.properties?.line as string | undefined,
           },
@@ -1335,7 +1336,7 @@ function ResultGraph({
             id: e.edge_id,
             source: e.from_node,
             target: e.to_node,
-            type: e.edge_type,
+            type: EDGE_TYPE_LABELS[e.edge_type ?? ""] ?? e.edge_type,
           },
         }));
     return [...nodes, ...edges];
@@ -1418,10 +1419,14 @@ function ResultGraph({
           } as unknown as cytoscape.Css.Edge,
         },
         {
+          // 起点：空心圆圈（透明填充 + 粗边框 + 加大），在密集图里一眼可辨
           selector: 'node[line = "seed"]',
           style: {
+            "background-fill": "hollow",
             "border-color": "#facc15",
-            "border-width": 4,
+            "border-width": 5,
+            width: 36,
+            height: 36,
           } as unknown as cytoscape.Css.Node,
         },
         {
@@ -1451,7 +1456,7 @@ function ResultGraph({
       ],
       minZoom: 0.1,
       maxZoom: 3,
-      wheelSensitivity: 0.2,
+      wheelSensitivity: 1.0,
     });
 
     // Set node colors after init so we can use our helper
@@ -1512,7 +1517,7 @@ function ResultGraph({
               className="inline-block h-2.5 w-2.5 rounded-full border-2"
               style={{ borderColor: "#facc15" }}
             />
-            起点
+            起点（空心圆圈）
           </div>
         </div>
       )}

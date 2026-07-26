@@ -308,6 +308,8 @@ backend/
 - **Neo4j deployment**: local Windows install (Docker blocked by Zscaler)
 
 ### Recent Changes
+- **推理图边标签中文化**：ResultGraph 边标签从原始 `edge_type`（feedstock/primary_result/material_input 等）改为经 `EDGE_TYPE_LABELS` 映射的中文名（原料/主产物/物料输入/引用方法等），flow 临时图与 legacy 子图都生效。
+- **推理可视化图交互优化**：滚轮缩放 `wheelSensitivity` 0.2→1.0（原慢 5 倍）；起点节点改为空心圆圈（`background-fill: hollow` + 5px 黄框 + 放大到 36px），图例同步。评估后决定推理结果图继续用独立的轻量只读 viewer（ResultGraph），不复用主图 GraphCanvas（理由见会话：3000+ 行编辑器组件含大量写入路径，适配成本与回归风险高于收益）。
 - **公司分类展示消歧**：用户困惑“神工股份是沪硅上游，点神工后沪硅又是其上游”——实为链上交错布局（硅(沪硅)→硅锭(神工)→硅片(两家)），分类按节点位置判定属正常，但 UI 未显示经由节点导致歧义。StoryView 公司区块 chips 现直接显示暴露环节名（最多 2 个 +N），并加注“同一家公司可能因多环节布局同时出现在多个分类中”。另发现数据疑点：沪硅产业暴露 `silicon`（produce）待用户核对。设计文档同步补充分类语义说明。
 - **推理页重构为「任务优先」模型 + 设计文档**：用户反馈“查不到公司”根因是起点范围需手工选择（默认产业节点范围搜公司必然 no_result）。重构左栏为四步：1. 选择任务（引擎+任务类型+任务说明）→ 2. 添加起点（起点类型由任务固定：flow 公司上下文=公司/事实节点，其余=产业节点，不再手工选范围）→ 3. 已选起点 → 4. 参数与输出。`seedSpec()` 集中定义任务→起点类型映射，`TASK_DESC`/`FLOW_TASK_DESC` 提供任务说明，`SCOPE_OPTIONS` 删除。新文档 `docs/reasoning_page_design.md`：页面信息架构、引擎×任务矩阵、公司分类语义、数据流、扩展点、已知边界。
 - **flow 引擎新增「公司产业上下文」任务（cross_graph_context）**：解决“flow 模式下从公司（事实节点）无法推理”。新增 `backend/app/reasoning/tasks/arachne_flow_company_context.py`：公司 → PG `company_node_exposures` 暴露节点（产业位置）→ 过滤 flow 图存在节点 → 复用主线/支线推理（强制双向）→ 相关公司按节点位置分类：peers（同环节同活动，如同为硅片生产商）、upstream_companies（backward 链）、downstream_companies（forward 链）、related_companies（同工艺 METHOD/支线物料配套）。`reasoning/engine.py` flow 分发注册该任务。前端：flow 模式任务类型解锁为两项（关联扩展/公司产业上下文，带用途提示）；StoryView 新增公司位置卡（暴露节点 chips 可 deepDive）与四类专业公司区块（chips 可点击直接以该公司重跑上下文）。实测沪硅产业（nsig，暴露硅片/硅）：同业 14（合晶硅/环球晶圆/Okmetic 等）、上游 1（神工股份）、下游 60（中芯/长存/英飞凌等）、相关 10。新增回归测试 `test_arachne_flow_company_context_task`（带 nsig 数据守卫）。78 个测试通过，后端已重启。
