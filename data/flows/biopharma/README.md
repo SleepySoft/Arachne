@@ -24,14 +24,19 @@ AAV 载体制备、CAR-T 转导、化学合成、中药炮制提取等）。
 
 ## 建模决策（新增内容时遵守）
 
-- **RESOURCE 一律复用 legacy 节点 id**（如 `cell_culture_medium`、`chromatography_resin`、
-  `monoclonal_antibody`），保证 PG 公司暴露/公司上下文推理能关联；新增资源（如 `cho_cell_line`、
-  `plasmid_dna`、`human_plasma`）在 `local:` 中给中文显示名，暂未登记 PG metadata。
+- **RESOURCE/METHOD 复用 legacy 节点 id**：但此前 `local:` 仅用于显示名——自 2026-07-27 起，
+  flow 引用的 RESOURCE/METHOD 已全部登记进 PG/legacy（见下「flow 节点补全」条目），
+  新资源（如 `cho_cell_line`、`plasmid_dna`、`human_plasma`）不再是 local-only。
 - **METHOD 复用 legacy process 节点 id**（`cell_culture_process`、`formulation_process` 等，
   PG 有中文名）；新 METHOD（`chemical_drug_synthesis_process`、`traditional_chinese_medicine_processing`
   源自骨架日志待建清单；`tcm_extraction_process`、`cold_ethanol_fractionation_process`、
-  `viral_vector_production_process`、`gene_transduction_process` 本次新增）暂无 PG 中文名，
-  沿用半导体目录惯例（metadata 待统一补录，本次刻意不动 PG）。
+  `viral_vector_production_process`、`gene_transduction_process`）已于 2026-07-27 通过
+  `batch_flow_node_completion_001.json` 正式登记进 legacy 图（含证据、industrial_flow 边），
+  PG/Neo4j 均有完整 metadata。
+- **RESOURCE 已全部登记进 legacy 图**：本目录 flow 文件引用的所有 RESOURCE（含此前 local-only 的
+  `cho_cell_line`、`plasmid_dna`、`viral_vector`、工艺中间体等 25 个）已于 2026-07-27 通过
+  `batch_flow_node_completion_001.json` 登记（关键实体 HIGH+ACTIVE 带权威证据，工艺中间体
+  MEDIUM+PENDING）。`local:` 中文名保留作为冗余显示名，与 PG canonical_name_zh 一致。
 - **产品变体用 basis**：单抗/疫苗/重组蛋白衍自 `biological_drug`，生物类似药衍自
   `monoclonal_antibody`，麻醉药品衍自 `chemical_drug`，中成药制剂衍自
   `traditional_chinese_medicine`（同 ssd/lpddr5 惯例，不用 component）。
@@ -50,10 +55,10 @@ AAV 载体制备、CAR-T 转导、化学合成、中药炮制提取等）。
 
 ## Validation
 
-- 10 个文件全部通过 `POST /api/v1/flows/preview`（0 errors / 0 warnings），
-  并已编译入 Neo4j flow 图（`temp/preview_biopharma_flows.py` / `temp/compile_biopharma_flows.py`）。
+- 10 个文件全部通过 `scripts/preview_flows.py --category biopharma`（0 errors / 0 warnings），
+  并已编译入 Neo4j flow 图（`scripts/compile_flows.py --category biopharma`）。
 - `--dangling` 检查：无断链中间品；无上游项均为合理源头（原料/细胞株/设备/CDMO），
   无下游项均为终端药品。
-- 推理冒烟（`temp/smoke_biopharma_reasoning.py`）：monoclonal_antibody / vaccine /
+- 推理冒烟（`scripts/smoke_flow_reasoning.py`）：monoclonal_antibody / vaccine /
   chemical_drug / viral_vector 关联推理均 success；wuxi_biologics 公司上下文
   peers 5 / upstream 10 / downstream 21 / related 15。
