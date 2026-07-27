@@ -1,0 +1,29 @@
+schema: arachne-flow/v0.1
+title: 'Robotics flow: humanoid robot manufacturing'
+root_product: humanoid_robot
+include:
+- joint_module_manufacturing.yaml
+- dexterous_hand_manufacturing.yaml
+- robot_control_system.yaml
+- perception_suite.yaml
+local: {}
+edges:
+# 人形机器人本体：关节执行器 + 灵巧手 + 控制系统 + 感知套件 + 电池 + 结构件
+- [joint_module, component, act_integrate_humanoid_robot]
+- [dexterous_hand, component, act_integrate_humanoid_robot]
+- [robot_control_system, component, act_integrate_humanoid_robot]
+- [perception_suite, component, act_integrate_humanoid_robot]
+- [robot_battery, component, act_integrate_humanoid_robot]
+- [lightweight_structure, component, act_integrate_humanoid_robot]
+- [act_integrate_humanoid_robot, ref, robot_body_integration]
+- [act_integrate_humanoid_robot, primary_result, humanoid_robot]
+# 形态变体（basis 衍生）：双足 / 轮足 / 轮臂
+- [humanoid_robot, basis, act_integrate_biped_humanoid]
+- [act_integrate_biped_humanoid, ref, integration_of_biped_humanoid]
+- [act_integrate_biped_humanoid, primary_result, biped_humanoid]
+- [humanoid_robot, basis, act_integrate_wheel_legged_robot]
+- [act_integrate_wheel_legged_robot, ref, integration_of_wheel_legged_robot]
+- [act_integrate_wheel_legged_robot, primary_result, wheel_legged_robot]
+- [humanoid_robot, basis, act_integrate_wheeled_arm_robot]
+- [act_integrate_wheeled_arm_robot, ref, integration_of_wheeled_arm_robot]
+- [act_integrate_wheeled_arm_robot, primary_result, wheeled_arm_robot]

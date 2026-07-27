@@ -1,0 +1,21 @@
+schema: arachne-flow/v0.1
+title: 'Robotics flow: industrial robot manufacturing'
+root_product: industrial_robot
+include:
+- servo_system_manufacturing.yaml
+- robot_control_system.yaml
+local: {}
+edges:
+# 工业机器人本体：减速器 + 伺服 + 控制系统 + 机械臂结构
+- [reducer, component, act_integrate_industrial_robot]
+- [servo_system, component, act_integrate_industrial_robot]
+- [robot_control_system, component, act_integrate_industrial_robot]
+- [robot_arm, component, act_integrate_industrial_robot]
+- [machine_vision, component, act_integrate_industrial_robot]
+- [act_integrate_industrial_robot, ref, robot_body_integration]
+- [act_integrate_industrial_robot, primary_result, industrial_robot]
+# 协作机器人：以工业机器人平台为基础衍生（basis，安全力控变体）
+- [industrial_robot, basis, act_integrate_collaborative_robot]
+- [six_axis_force_sensor, component, act_integrate_collaborative_robot]
+- [act_integrate_collaborative_robot, ref, integration_of_collaborative_robot]
+- [act_integrate_collaborative_robot, primary_result, collaborative_robot]

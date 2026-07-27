@@ -1,0 +1,12 @@
+schema: arachne-flow/v0.1
+title: 'Robotics flow: robot control system (shared)'
+root_product: robot_control_system
+include: []
+local: {}
+edges:
+# 控制系统：主控计算平台（大脑）+ 运动控制器（小脑）+ 控制软件
+- [control_computing_platform, component, act_integrate_control_system]
+- [robot_controller, component, act_integrate_control_system]
+- [robot_control_software, subject, act_integrate_control_system]
+- [act_integrate_control_system, ref, control_system_integration]
+- [act_integrate_control_system, primary_result, robot_control_system]

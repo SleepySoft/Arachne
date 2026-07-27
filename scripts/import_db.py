@@ -5,9 +5,9 @@ Arachne Database Import Script
 Import Neo4j and PostgreSQL data from JSON files produced by export_db.py.
 
 Usage:
-    python scripts/import_db.py --input-dir data/backup/20240115_120000
-    python scripts/import_db.py --input-dir data/backup/20240115_120000 --clear
-    python scripts/import_db.py --input-dir data/backup/20240115_120000 --clear --yes
+    python scripts/import_db.py --input-dir data/ArachneData/newest
+    python scripts/import_db.py --input-dir data/ArachneData/newest --clear
+    python scripts/import_db.py --input-dir data/ArachneData/newest --clear --yes
 
 Options:
     --clear             Drop existing data before import (DESTRUCTIVE)

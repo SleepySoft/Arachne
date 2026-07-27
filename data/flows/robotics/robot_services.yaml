@@ -1,0 +1,19 @@
+schema: arachne-flow/v0.1
+title: 'Robotics flow: robot services (RaaS & maintenance)'
+root_product: raas_service
+include:
+- industrial_robot_manufacturing.yaml
+- humanoid_robot_manufacturing.yaml
+local: {}
+edges:
+# 机器人租赁（RaaS）：以机器人本体为资产提供租赁服务
+- [industrial_robot, basis, act_robot_leasing]
+- [humanoid_robot, basis, act_robot_leasing]
+- [act_robot_leasing, ref, robot_leasing]
+- [act_robot_leasing, primary_result, raas_service]
+# 运维服务：以机器人本体为对象提供运维
+- [industrial_robot, subject, act_robot_maintenance]
+- [humanoid_robot, subject, act_robot_maintenance]
+- [collaborative_robot, subject, act_robot_maintenance]
+- [act_robot_maintenance, ref, robot_maintenance]
+- [act_robot_maintenance, primary_result, robot_maintenance_service]

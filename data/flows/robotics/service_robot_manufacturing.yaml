@@ -1,0 +1,15 @@
+schema: arachne-flow/v0.1
+title: 'Robotics flow: service robot manufacturing'
+root_product: service_robot
+include:
+- servo_system_manufacturing.yaml
+- robot_control_system.yaml
+local: {}
+edges:
+# 服务机器人：伺服 + 控制系统 + 机器视觉 + 电池
+- [servo_system, component, act_integrate_service_robot]
+- [robot_control_system, component, act_integrate_service_robot]
+- [machine_vision, component, act_integrate_service_robot]
+- [robot_battery, component, act_integrate_service_robot]
+- [act_integrate_service_robot, ref, integration_of_service_robot]
+- [act_integrate_service_robot, primary_result, service_robot]

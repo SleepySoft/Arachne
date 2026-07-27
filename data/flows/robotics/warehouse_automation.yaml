@@ -1,0 +1,12 @@
+schema: arachne-flow/v0.1
+title: 'Robotics flow: warehouse automation'
+root_product: automated_warehouse
+include:
+- mobile_robot_manufacturing.yaml
+local: {}
+edges:
+# 仓储自动化：移动机器人 + 控制系统 -> 自动化仓储
+- [mobile_robot, component, act_integrate_automated_warehouse]
+- [robot_control_system, component, act_integrate_automated_warehouse]
+- [act_integrate_automated_warehouse, ref, warehouse_automation_integration]
+- [act_integrate_automated_warehouse, primary_result, automated_warehouse]

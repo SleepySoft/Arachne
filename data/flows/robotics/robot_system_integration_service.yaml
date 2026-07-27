@@ -1,0 +1,15 @@
+schema: arachne-flow/v0.1
+title: 'Robotics flow: robot system integration service'
+root_product: automated_production_line
+include:
+- industrial_robot_manufacturing.yaml
+- humanoid_robot_manufacturing.yaml
+local: {}
+edges:
+# 系统集成：机器人本体 + 周边设备 -> 自动化产线
+- [industrial_robot, component, act_robot_system_integration]
+- [collaborative_robot, component, act_robot_system_integration]
+- [humanoid_robot, component, act_robot_system_integration]
+- [machine_vision, component, act_robot_system_integration]
+- [act_robot_system_integration, ref, robot_system_integration]
+- [act_robot_system_integration, primary_result, automated_production_line]

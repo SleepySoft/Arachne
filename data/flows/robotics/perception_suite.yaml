@@ -1,0 +1,14 @@
+schema: arachne-flow/v0.1
+title: 'Robotics flow: perception suite (shared)'
+root_product: perception_suite
+include: []
+local: {}
+edges:
+# 感知套件：视觉 + 力觉 + 触觉 + IMU + 激光雷达
+- [machine_vision, component, act_integrate_perception_suite]
+- [six_axis_force_sensor, component, act_integrate_perception_suite]
+- [tactile_sensor, component, act_integrate_perception_suite]
+- [imu, component, act_integrate_perception_suite]
+- [lidar, component, act_integrate_perception_suite]
+- [act_integrate_perception_suite, ref, perception_suite_integration]
+- [act_integrate_perception_suite, primary_result, perception_suite]

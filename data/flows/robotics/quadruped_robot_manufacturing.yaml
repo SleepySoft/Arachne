@@ -1,0 +1,16 @@
+schema: arachne-flow/v0.1
+title: 'Robotics flow: quadruped robot manufacturing'
+root_product: quadruped_robot
+include:
+- joint_module_manufacturing.yaml
+- robot_control_system.yaml
+- perception_suite.yaml
+local: {}
+edges:
+# 四足机器人（机器狗）：关节执行器 + 控制系统 + 感知套件 + 电池
+- [joint_module, component, act_integrate_quadruped_robot]
+- [robot_control_system, component, act_integrate_quadruped_robot]
+- [perception_suite, component, act_integrate_quadruped_robot]
+- [robot_battery, component, act_integrate_quadruped_robot]
+- [act_integrate_quadruped_robot, ref, integration_of_quadruped_robot]
+- [act_integrate_quadruped_robot, primary_result, quadruped_robot]

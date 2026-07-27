@@ -1,0 +1,15 @@
+schema: arachne-flow/v0.1
+title: 'Robotics flow: joint module manufacturing (shared)'
+root_product: joint_module
+include: []
+local: {}
+edges:
+# 关节执行器（关节模组）：旋转执行器用减速器+无框电机，线性执行器用丝杠，编码器闭环
+- [harmonic_reducer, component, act_assemble_joint_module]
+- [rv_reducer, component, act_assemble_joint_module]
+- [frameless_motor, component, act_assemble_joint_module]
+- [planetary_roller_screw, component, act_assemble_joint_module]
+- [encoder, component, act_assemble_joint_module]
+- [driver, component, act_assemble_joint_module]
+- [act_assemble_joint_module, ref, joint_module_assembly]
+- [act_assemble_joint_module, primary_result, joint_module]

@@ -1,0 +1,15 @@
+schema: arachne-flow/v0.1
+title: 'Robotics flow: mobile robot manufacturing'
+root_product: mobile_robot
+include:
+- servo_system_manufacturing.yaml
+- robot_control_system.yaml
+local: {}
+edges:
+# 移动机器人（AGV/AMR）：伺服 + 控制系统 + 激光雷达 + 电池
+- [servo_system, component, act_integrate_mobile_robot]
+- [robot_control_system, component, act_integrate_mobile_robot]
+- [lidar, component, act_integrate_mobile_robot]
+- [robot_battery, component, act_integrate_mobile_robot]
+- [act_integrate_mobile_robot, ref, integration_of_mobile_robot]
+- [act_integrate_mobile_robot, primary_result, mobile_robot]

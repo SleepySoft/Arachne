@@ -1,0 +1,12 @@
+schema: arachne-flow/v0.1
+title: 'Robotics flow: dexterous hand manufacturing (shared)'
+root_product: dexterous_hand
+include: []
+local: {}
+edges:
+# 灵巧手：微型电机 + 微型丝杠 + 触觉传感
+- [hollow_cup_motor, component, act_assemble_dexterous_hand]
+- [planetary_roller_screw, component, act_assemble_dexterous_hand]
+- [tactile_sensor, component, act_assemble_dexterous_hand]
+- [act_assemble_dexterous_hand, ref, dexterous_hand_assembly]
+- [act_assemble_dexterous_hand, primary_result, dexterous_hand]

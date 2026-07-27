@@ -1,0 +1,13 @@
+schema: arachne-flow/v0.1
+title: 'Robotics flow: servo system manufacturing (shared)'
+root_product: servo_system
+include: []
+local: {}
+edges:
+# 伺服系统：电机 + 驱动器 + 编码器闭环
+- [servo_motor, component, act_integrate_servo_system]
+- [stepper_motor, component, act_integrate_servo_system]
+- [driver, component, act_integrate_servo_system]
+- [encoder, component, act_integrate_servo_system]
+- [act_integrate_servo_system, ref, servo_system_integration]
+- [act_integrate_servo_system, primary_result, servo_system]
