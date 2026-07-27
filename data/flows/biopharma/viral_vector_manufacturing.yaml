@@ -1,0 +1,23 @@
+schema: arachne-flow/v0.1
+title: 'Biopharma flow: viral_vector_manufacturing'
+root_product: viral_vector
+local:
+  plasmid_dna: 质粒DNA
+  hek293_cell: HEK293细胞
+  viral_vector_bulk: 病毒载体收获液
+  viral_vector: 病毒载体
+edges:
+# 病毒载体（如 AAV/慢病毒）生产：质粒转染 HEK293 细胞 → 培养扩增 → 收获
+- [plasmid_dna, feedstock, act_viral_vector_production]
+- [hek293_cell, feedstock, act_viral_vector_production]
+- [cell_culture_medium, process_material, act_viral_vector_production]
+- [bioreactor, tool, act_viral_vector_production]
+- [act_viral_vector_production, ref, viral_vector_production_process]
+- [act_viral_vector_production, intermediate, viral_vector_bulk]
+# 层析纯化 → 病毒载体成品（供细胞治疗转导、基因治疗制剂使用）
+- [viral_vector_bulk, feedstock, act_vector_purification]
+- [chromatography_resin, process_material, act_vector_purification]
+- [chromatography_system, tool, act_vector_purification]
+- [act_vector_purification, ref, chromatography_purification_process]
+- [act_vector_purification, primary_result, viral_vector]
+- [act_viral_vector_production, next, act_vector_purification]

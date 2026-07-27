@@ -1,0 +1,24 @@
+schema: arachne-flow/v0.1
+title: 'Biopharma flow: traditional_chinese_medicine_manufacturing'
+root_product: traditional_chinese_medicine
+local:
+  chinese_medicinal_materials: 中药材
+  prepared_tcm_slices: 中药饮片
+  tcm_extract: 中药提取物
+edges:
+# 中药主链：中药材 → 炮制（饮片）→ 提取浓缩（提取物）→ 制剂
+- [chinese_medicinal_materials, feedstock, act_tcm_processing]
+- [act_tcm_processing, ref, traditional_chinese_medicine_processing]
+- [act_tcm_processing, intermediate, prepared_tcm_slices]
+- [prepared_tcm_slices, feedstock, act_tcm_extraction]
+- [act_tcm_extraction, ref, tcm_extraction_process]
+- [act_tcm_extraction, intermediate, tcm_extract]
+- [tcm_extract, feedstock, act_tcm_formulation]
+- [excipient, additive, act_tcm_formulation]
+- [act_tcm_formulation, ref, formulation_process]
+- [act_tcm_formulation, primary_result, traditional_chinese_medicine]
+- [act_tcm_processing, next, act_tcm_extraction]
+- [act_tcm_extraction, next, act_tcm_formulation]
+# 中成药制剂是中成药的剂型变体（is_a 衍生用 basis）
+- [traditional_chinese_medicine, basis, act_produce_chinese_patent_medicine]
+- [act_produce_chinese_patent_medicine, primary_result, chinese_patent_medicine]

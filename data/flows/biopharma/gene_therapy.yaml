@@ -1,0 +1,18 @@
+schema: arachne-flow/v0.1
+title: 'Biopharma flow: gene_therapy'
+root_product: gene_therapy_product
+include:
+- viral_vector_manufacturing.yaml
+local:
+  formulated_gene_therapy: 基因治疗待灌装液
+edges:
+# 基因治疗（如 AAV 载体药物）：病毒载体 → 制剂 → 灌装
+- [viral_vector, feedstock, act_gene_therapy_formulation]
+- [excipient, additive, act_gene_therapy_formulation]
+- [act_gene_therapy_formulation, ref, formulation_process]
+- [act_gene_therapy_formulation, intermediate, formulated_gene_therapy]
+- [formulated_gene_therapy, feedstock, act_gene_therapy_fill_finish]
+- [filling_machine, tool, act_gene_therapy_fill_finish]
+- [act_gene_therapy_fill_finish, ref, fill_finish_process]
+- [act_gene_therapy_fill_finish, primary_result, gene_therapy_product]
+- [act_gene_therapy_formulation, next, act_gene_therapy_fill_finish]

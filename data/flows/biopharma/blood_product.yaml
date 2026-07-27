@@ -1,0 +1,30 @@
+schema: arachne-flow/v0.1
+title: 'Biopharma flow: blood_product'
+root_product: blood_product
+local:
+  human_plasma: 原料血浆
+  plasma_protein_fraction: 血浆蛋白组分
+  plasma_derivative_bulk: 血液制品原液
+  formulated_blood_product: 血液制品待灌装液
+edges:
+# 血液制品不走细胞培养路线：原料血浆 → 低温乙醇分离 → 层析精制 → 制剂 → 灌装
+- [human_plasma, feedstock, act_plasma_fractionation]
+- [act_plasma_fractionation, ref, cold_ethanol_fractionation_process]
+- [act_plasma_fractionation, intermediate, plasma_protein_fraction]
+- [plasma_protein_fraction, feedstock, act_plasma_purification]
+- [chromatography_resin, process_material, act_plasma_purification]
+- [act_plasma_purification, ref, chromatography_purification_process]
+- [act_plasma_purification, intermediate, plasma_derivative_bulk]
+- [plasma_derivative_bulk, feedstock, act_blood_product_formulation]
+- [excipient, additive, act_blood_product_formulation]
+- [water_for_injection, carrier, act_blood_product_formulation]
+- [act_blood_product_formulation, ref, formulation_process]
+- [act_blood_product_formulation, intermediate, formulated_blood_product]
+- [formulated_blood_product, feedstock, act_blood_product_fill_finish]
+- [filling_machine, tool, act_blood_product_fill_finish]
+- [freeze_dryer, tool, act_blood_product_fill_finish]
+- [act_blood_product_fill_finish, ref, fill_finish_process]
+- [act_blood_product_fill_finish, primary_result, blood_product]
+- [act_plasma_fractionation, next, act_plasma_purification]
+- [act_plasma_purification, next, act_blood_product_formulation]
+- [act_blood_product_formulation, next, act_blood_product_fill_finish]

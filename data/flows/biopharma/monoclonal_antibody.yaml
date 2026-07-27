@@ -1,0 +1,20 @@
+schema: arachne-flow/v0.1
+title: 'Biopharma flow: monoclonal_antibody'
+root_product: monoclonal_antibody
+include:
+- biologics_manufacturing.yaml
+local:
+  cho_cell_line: CHO细胞（中国仓鼠卵巢细胞）
+  protein_a_resin: Protein A亲和层析填料
+edges:
+# 单抗以生物药公共链（细胞培养→纯化→制剂）为基础衍生（is_a 用 basis，同 lpddr5 惯例），
+# 并标注该产品的特征投入：CHO 表达宿主与 Protein A 亲和层析填料
+- [biological_drug, basis, act_produce_monoclonal_antibody]
+- [cho_cell_line, feedstock, act_produce_monoclonal_antibody]
+- [protein_a_resin, process_material, act_produce_monoclonal_antibody]
+- [act_produce_monoclonal_antibody, ref, biopharmaceutical_manufacturing]
+- [act_produce_monoclonal_antibody, primary_result, monoclonal_antibody]
+# 生物类似药：以已上市单抗为参照药开发的仿制变体（basis 衍生）
+- [monoclonal_antibody, basis, act_produce_biosimilar]
+- [act_produce_biosimilar, ref, biopharmaceutical_manufacturing]
+- [act_produce_biosimilar, primary_result, biosimilar]

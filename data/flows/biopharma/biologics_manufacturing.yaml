@@ -1,0 +1,65 @@
+schema: arachne-flow/v0.1
+title: 'Biopharma flow: biologics_manufacturing'
+root_product: biological_drug
+local:
+  biologic_harvest_fluid: 生物反应收获液
+  clarified_harvest_fluid: 澄清收获液
+  purified_biologic_bulk: 层析纯化原液
+  inactivated_biologic_bulk: 病毒灭活后原液
+  biologic_drug_substance: 生物药原液
+  formulated_biologic: 生物药待灌装液
+edges:
+# 上游：细胞培养（哺乳动物细胞表达路线，如 CHO 细胞表达单抗）
+- [cell_culture_medium, feedstock, act_cell_culture]
+- [culture_serum, additive, act_cell_culture]
+- [single_use_bag, tool, act_cell_culture]
+- [bioreactor, tool, act_cell_culture]
+- [cell_analyzer, tool, act_cell_culture]
+# CDMO 提供生物药代工生产服务（商业主体用 tool 角色，同 foundry/osat 惯例）
+- [contract_manufacturing_organization, tool, act_cell_culture]
+- [act_cell_culture, ref, cell_culture_process]
+- [act_cell_culture, intermediate, biologic_harvest_fluid]
+# 上游：发酵（微生物表达路线，如大肠杆菌/酵母表达重组蛋白），与细胞培养并行产出收获液
+- [cell_culture_medium, feedstock, act_fermentation]
+- [pharmaceutical_intermediate, process_material, act_fermentation]
+- [bioreactor, tool, act_fermentation]
+- [act_fermentation, ref, fermentation_process]
+- [act_fermentation, intermediate, biologic_harvest_fluid]
+# 下游：收获澄清 → 层析纯化 → 病毒灭活 → 超滤透析（浓缩换液）
+- [biologic_harvest_fluid, feedstock, act_harvest_clarification]
+- [filter_membrane, process_material, act_harvest_clarification]
+- [filtration_system, tool, act_harvest_clarification]
+- [act_harvest_clarification, ref, harvest_clarification_process]
+- [act_harvest_clarification, intermediate, clarified_harvest_fluid]
+- [clarified_harvest_fluid, feedstock, act_chromatography_purification]
+- [chromatography_resin, process_material, act_chromatography_purification]
+- [chromatography_system, tool, act_chromatography_purification]
+- [act_chromatography_purification, ref, chromatography_purification_process]
+- [act_chromatography_purification, intermediate, purified_biologic_bulk]
+- [purified_biologic_bulk, feedstock, act_virus_inactivation]
+- [act_virus_inactivation, ref, virus_inactivation_process]
+- [act_virus_inactivation, intermediate, inactivated_biologic_bulk]
+- [inactivated_biologic_bulk, feedstock, act_ultrafiltration_diafiltration]
+- [filter_membrane, process_material, act_ultrafiltration_diafiltration]
+- [filtration_system, tool, act_ultrafiltration_diafiltration]
+- [act_ultrafiltration_diafiltration, ref, ultrafiltration_diafiltration_process]
+- [act_ultrafiltration_diafiltration, intermediate, biologic_drug_substance]
+# 制剂与灌装冻干：原液 + 辅料 + 注射用水 → 待灌装液 → 生物药成品
+- [biologic_drug_substance, feedstock, act_biologic_formulation]
+- [excipient, additive, act_biologic_formulation]
+- [water_for_injection, carrier, act_biologic_formulation]
+- [act_biologic_formulation, ref, formulation_process]
+- [act_biologic_formulation, intermediate, formulated_biologic]
+- [formulated_biologic, feedstock, act_fill_finish]
+- [filling_machine, tool, act_fill_finish]
+- [freeze_dryer, tool, act_fill_finish]
+- [act_fill_finish, ref, fill_finish_process]
+- [act_fill_finish, primary_result, biological_drug]
+# 动作顺序编排
+- [act_cell_culture, next, act_harvest_clarification]
+- [act_fermentation, next, act_harvest_clarification]
+- [act_harvest_clarification, next, act_chromatography_purification]
+- [act_chromatography_purification, next, act_virus_inactivation]
+- [act_virus_inactivation, next, act_ultrafiltration_diafiltration]
+- [act_ultrafiltration_diafiltration, next, act_biologic_formulation]
+- [act_biologic_formulation, next, act_fill_finish]

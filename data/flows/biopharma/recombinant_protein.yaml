@@ -1,0 +1,13 @@
+schema: arachne-flow/v0.1
+title: 'Biopharma flow: recombinant_protein'
+root_product: recombinant_protein
+include:
+- biologics_manufacturing.yaml
+local:
+  microbial_expression_host: 微生物表达宿主菌
+edges:
+# 重组蛋白以生物药公共链（多为发酵路线）为基础衍生，特征投入为工程化表达宿主菌
+- [biological_drug, basis, act_produce_recombinant_protein]
+- [microbial_expression_host, feedstock, act_produce_recombinant_protein]
+- [act_produce_recombinant_protein, ref, biopharmaceutical_manufacturing]
+- [act_produce_recombinant_protein, primary_result, recombinant_protein]

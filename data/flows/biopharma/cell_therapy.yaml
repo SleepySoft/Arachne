@@ -1,0 +1,26 @@
+schema: arachne-flow/v0.1
+title: 'Biopharma flow: cell_therapy'
+root_product: cell_therapy_product
+include:
+- viral_vector_manufacturing.yaml
+local:
+  patient_t_cell: 患者T细胞
+  engineered_t_cell: 基因工程化T细胞
+  expanded_engineered_t_cell: 扩增后的工程化T细胞
+edges:
+# 细胞治疗（如 CAR-T）：患者T细胞 → 病毒载体转导 → 扩增培养 → 灌装
+- [patient_t_cell, feedstock, act_t_cell_transduction]
+# 病毒载体是基因递送载体（carrier 角色），由 include 的病毒载体链提供
+- [viral_vector, carrier, act_t_cell_transduction]
+- [act_t_cell_transduction, ref, gene_transduction_process]
+- [act_t_cell_transduction, intermediate, engineered_t_cell]
+- [engineered_t_cell, feedstock, act_t_cell_expansion]
+- [cell_culture_medium, process_material, act_t_cell_expansion]
+- [bioreactor, tool, act_t_cell_expansion]
+- [act_t_cell_expansion, ref, cell_culture_process]
+- [act_t_cell_expansion, intermediate, expanded_engineered_t_cell]
+- [expanded_engineered_t_cell, feedstock, act_cell_therapy_fill_finish]
+- [act_cell_therapy_fill_finish, ref, fill_finish_process]
+- [act_cell_therapy_fill_finish, primary_result, cell_therapy_product]
+- [act_t_cell_transduction, next, act_t_cell_expansion]
+- [act_t_cell_expansion, next, act_cell_therapy_fill_finish]
