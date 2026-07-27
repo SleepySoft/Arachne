@@ -116,7 +116,13 @@ neo4j_logs/
 # Neo4j (local dev)
 # --------------------------------------------------------
 
-/data/
+# 忽略 data/ 下所有内容，但保留 data/flows（手工维护的流程文件）
+# 和 data/ArachneData（git 子模块）。
+# 注意：不能写 /data/（忽略目录本身会导致 git 不进入目录，! 排除规则不生效），
+# 必须写 /data/* 忽略其内容，再用 ! 逐个加回例外。
+/data/*
+!/data/flows/
+!/data/ArachneData/
 /logs/
 /import/
 /plugins/

@@ -433,3 +433,7 @@ output_roles:
 
 
 
+检查anachne-flow中引用的resource和process，它们在pg中是否有对应节点。再检查pg中哪些节点数据是不完整的，将信息严格补充完全。
+
+
+
