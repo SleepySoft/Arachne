@@ -1179,6 +1179,10 @@ export default function App() {
               graphCanvasRef.current?.autoArrangeSelectedNodes();
               industrial.handleCloseMultiNodeContextMenu();
             }}
+            onSmartArrange={() => {
+              graphCanvasRef.current?.smartArrangeSelectedNodes();
+              industrial.handleCloseMultiNodeContextMenu();
+            }}
             onAlignHorizontal={() => graphCanvasRef.current?.alignSelectedNodes("y")}
             onAlignVertical={() => graphCanvasRef.current?.alignSelectedNodes("x")}
             onDistributeHorizontal={() => graphCanvasRef.current?.distributeSelectedNodes("x")}

@@ -315,6 +315,8 @@ export interface GraphCanvasRef {
   getSelectedNodeIds: () => string[];
   clearNodeSelection: () => void;
   autoArrangeSelectedNodes: () => void;
+  /** Sugiyama 分层布局：按上下游关系自上而下排列选中节点，不影响未选中节点。 */
+  smartArrangeSelectedNodes: () => void;
   alignSelectedNodes: (axis: "x" | "y") => void;
   distributeSelectedNodes: (axis: "x" | "y") => void;
   // Focus / reveal mode
@@ -1477,6 +1479,89 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         const target = pos.get(n.id())!;
         n.animate({ position: target }, { duration: 300, easing: "ease-out" });
       });
+    },
+    smartArrangeSelectedNodes: () => {
+      onBeforeManualLayoutRef.current?.();
+      const cy = cyRef.current;
+      if (!cy) return;
+      const selectedIds = cy.nodes(":selected").map((n) => n.id());
+      if (selectedIds.length < 2) return;
+
+      const selectedSet = new Set(selectedIds);
+      // 选中节点（排除隐藏节点与已选 compound parent 的子节点，与 autoArrange 一致）
+      const nodeCol = cy
+        .nodes(":selected")
+        .filter((n) => !n.hasClass("hidden") && !selectedSet.has(n.data("parent")));
+      if (nodeCol.length < 2) return;
+
+      // 子图：选中节点 + 两端都在选中集内的可见边
+      const subEdges = nodeCol
+        .edgesWith(nodeCol)
+        .filter((e) => !e.hasClass("hidden"));
+      const sub = nodeCol.union(subEdges);
+
+      // 记录选中区质心：排完后整体平移回来，只改结构不改位置，不影响未选中节点
+      let cx = 0;
+      let cySum = 0;
+      nodeCol.forEach((n) => {
+        cx += n.position().x;
+        cySum += n.position().y;
+      });
+      cx /= nodeCol.length;
+      cySum /= nodeCol.length;
+
+      const isMethodNode = (n: cytoscape.NodeSingular) => {
+        const et = (n.data("entity_type") || "") as string;
+        const rawEt = (n.data("raw")?.entity_type || "") as string;
+        return [et, rawEt].some((t) =>
+          ["arachne_flow:method", "process", "technology_capability"].includes(t)
+        );
+      };
+
+      // Sugiyama 分层布局（dagre）：最长路径分层，多上游节点自动取 max(父层)+1，
+      // 每个节点只排一次；多引用节点按重心放置以减少交叉。
+      const layout = sub.layout({
+        name: "dagre",
+        rankDir: "TB",
+        nodeSep: 60,
+        rankSep: 110,
+        edgeSep: 20,
+        animate: false,
+      } as unknown as cytoscape.LayoutOptions);
+
+      layout.one("layoutstop", () => {
+        if (!cyRef.current) return;
+        // 后置修正：ref 边的 METHOD 拉到其 ACTION 同一行（右偏），只调一次
+        const adjusted = new Set<string>();
+        subEdges.forEach((e) => {
+          if (e.data("edge_type") !== "ref") return;
+          const a = e.source();
+          const m = e.target();
+          if (!isMethodNode(m) || adjusted.has(m.id())) return;
+          adjusted.add(m.id());
+          m.position({ x: a.position().x + 90, y: a.position().y });
+        });
+
+        // 质心平移回原位置（保持相对结构，不改变视野与其他节点）
+        let nx = 0;
+        let ny = 0;
+        nodeCol.forEach((n) => {
+          nx += n.position().x;
+          ny += n.position().y;
+        });
+        nx /= nodeCol.length;
+        ny /= nodeCol.length;
+        const dx = cx - nx;
+        const dy = cySum - ny;
+        nodeCol.forEach((n) => {
+          const p = n.position();
+          n.animate(
+            { position: { x: p.x + dx, y: p.y + dy } },
+            { duration: 300, easing: "ease-out" }
+          );
+        });
+      });
+      layout.run();
     },
     alignSelectedNodes: (axis) => {
       onBeforeManualLayoutRef.current?.();

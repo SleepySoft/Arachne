@@ -1,5 +1,6 @@
 import {
   LayoutGrid,
+  Network,
   X,
   MousePointerClick,
   Eye,
@@ -17,6 +18,7 @@ interface MultiNodeContextMenuProps {
   y: number;
   selectedCount: number;
   onAutoArrange: () => void;
+  onSmartArrange?: () => void;
   onAlignHorizontal?: () => void;
   onAlignVertical?: () => void;
   onDistributeHorizontal?: () => void;
@@ -33,6 +35,7 @@ export function MultiNodeContextMenu({
   y,
   selectedCount,
   onAutoArrange,
+  onSmartArrange,
   onAlignHorizontal,
   onAlignVertical,
   onDistributeHorizontal,
@@ -131,15 +134,30 @@ export function MultiNodeContextMenu({
 
           <div className="my-1 border-t border-slate-800" />
 
+          {onSmartArrange && (
+            <button
+              onClick={() => {
+                onSmartArrange();
+                onClose();
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+              title="按上下游关系分层排列（Sugiyama/dagre），METHOD 与其 ACTION 同行，未选中节点不动"
+            >
+              <Network size={14} className="text-cyan-400" />
+              智能排列（分层布局）
+            </button>
+          )}
+
           <button
             onClick={() => {
               onAutoArrange();
               onClose();
             }}
             className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+            title="软斥力去重叠，保持大致位置"
           >
             <LayoutGrid size={14} className="text-emerald-400" />
-            自动排列
+            自动排列（去重叠）
           </button>
 
           <button
