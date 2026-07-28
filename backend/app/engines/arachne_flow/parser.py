@@ -213,6 +213,7 @@ def _infer_node_kinds(parsed: ParsedFlow) -> None:
             action_id=aid,
             action_type=ActionType.OTHER,
             flow_id=parsed.flow_id,
+                    local_name=parsed.locals.get(aid),
         )
 
     for mid in method_ids:

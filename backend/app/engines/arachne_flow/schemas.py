@@ -121,6 +121,7 @@ class FlowAction(BaseModel):
     action_type: ActionType = ActionType.OTHER
     flow_id: str
     method_ref: Optional[str] = None
+    local_name: Optional[str] = None
 
 
 class FlowResource(BaseModel):

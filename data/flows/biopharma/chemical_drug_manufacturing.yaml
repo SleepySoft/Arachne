@@ -3,6 +3,8 @@ title: 'Biopharma flow: chemical_drug_manufacturing'
 root_product: chemical_drug
 local:
   basic_chemical_raw_material: 基础化工原料
+  act_produce_antibiotic: 抗生素生产
+  act_produce_anesthetic: 麻醉药品生产
 edges:
 # 化学药主链：基础化工原料 → 医药中间体 → 原料药（API）→ 制剂
 - [basic_chemical_raw_material, feedstock, act_synthesize_intermediate]
@@ -19,9 +21,9 @@ edges:
 - [act_chemical_drug_formulation, primary_result, chemical_drug]
 - [act_synthesize_intermediate, next, act_synthesize_api]
 - [act_synthesize_api, next, act_chemical_drug_formulation]
-# 典型化学药产品：抗生素直接以 API 为原料生产（与 legacy 边一致）；
-# 麻醉药品是化学药的品类变体（is_a 衍生用 basis，同 ssd/lpddr5 惯例）
-- [active_pharmaceutical_ingredient, feedstock, act_produce_antibiotic]
+# 典型化学药产品：抗生素是化学药的品类变体（is_a 衍生用 basis，同 ssd/lpddr5 惯例），
+# 麻醉药品同理
+- [chemical_drug, basis, act_produce_antibiotic]
 - [act_produce_antibiotic, primary_result, antibiotic]
 - [chemical_drug, basis, act_produce_anesthetic]
 - [act_produce_anesthetic, primary_result, anesthetic_product]

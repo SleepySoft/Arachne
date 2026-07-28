@@ -139,6 +139,7 @@ async def compile_parsed_flow(parsed: ParsedFlow, clear_existing: bool = False) 
                     n.action_type = $action_type,
                     n.original_action_id = $original_action_id,
                     n.method_ref = $method_ref,
+                    n.local_name = $local_name,
                     n.updated_at = datetime()
                 """,
                 {
@@ -147,6 +148,7 @@ async def compile_parsed_flow(parsed: ParsedFlow, clear_existing: bool = False) 
                     "action_type": action.action_type.value,
                     "original_action_id": action.action_id,
                     "method_ref": action.method_ref,
+                    "local_name": action.local_name,
                 },
             )
 
@@ -620,7 +622,7 @@ def _neo4j_node_to_graph_node(record: Dict[str, Any]) -> GraphNode:
         label = n.get("canonical_name_zh") or n.get("local_name") or node_id
     elif kind == "action":
         entity_type = "arachne_flow:action"
-        label = n.get("original_action_id") or node_id
+        label = n.get("canonical_name_zh") or n.get("local_name") or n.get("original_action_id") or node_id
     elif kind == "method":
         entity_type = "arachne_flow:method"
         label = n.get("canonical_name_zh") or n.get("method_name") or node_id

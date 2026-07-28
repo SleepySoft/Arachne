@@ -40,7 +40,14 @@ AAV 载体制备、CAR-T 转导、化学合成、中药炮制提取等）。
 - **产品变体用 basis**：单抗/疫苗/重组蛋白衍自 `biological_drug`，生物类似药衍自
   `monoclonal_antibody`，麻醉药品衍自 `chemical_drug`，中成药制剂衍自
   `traditional_chinese_medicine`（同 ssd/lpddr5 惯例，不用 component）。
-- **抗生素例外**：与 legacy 边一致，直接以 `active_pharmaceutical_ingredient` 为 feedstock。
+- **抗生素与其它化学药一致经制剂**：`act_produce_antibiotic` 以 `active_pharmaceutical_ingredient`
+  为 feedstock（保留与 legacy 边一致）+ `excipient`，并 `ref formulation_process`；
+  不再允许绕过制剂步骤的单独产物分支。
+- **聚合流程 METHOD 不作 method_ref**：`biopharmaceutical_manufacturing` 这类 umbrella 流程
+  被多个产品 action ref 时，merged 视图（按 method_ref 合并跨 flow action）会把它塌缩成枢纽：
+  上游变成各产品特征投入的并集，下游出现「既产出又投入」的自环（单抗既被产出又作 biosimilar
+  的 basis 投入）。产品 stub 与 `act_produce_anesthetic` / `act_produce_chinese_patent_medicine`
+  惯例一致，不写 ref。
 - **CDMO 用 tool 角色**挂在细胞培养与 API 合成 ACTION 上（同 foundry/osat 惯例）。
 - **病毒载体在细胞治疗中是 carrier**（基因递送载体），在基因治疗中是 feedstock（主成分）。
 

@@ -6,10 +6,10 @@ include:
 local:
   vaccine_seed_strain: 疫苗毒种（种子批）
   adjuvant: 疫苗佐剂
+  act_produce_vaccine: 疫苗生产
 edges:
 # 疫苗以生物药公共链为基础衍生，特征投入为毒种（种子批）与佐剂
 - [biological_drug, basis, act_produce_vaccine]
 - [vaccine_seed_strain, feedstock, act_produce_vaccine]
 - [adjuvant, additive, act_produce_vaccine]
-- [act_produce_vaccine, ref, biopharmaceutical_manufacturing]
 - [act_produce_vaccine, primary_result, vaccine]

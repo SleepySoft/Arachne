@@ -5,6 +5,7 @@ local:
   chinese_medicinal_materials: 中药材
   prepared_tcm_slices: 中药饮片
   tcm_extract: 中药提取物
+  act_produce_chinese_patent_medicine: 中成药生产
 edges:
 # 中药主链：中药材 → 炮制（饮片）→ 提取浓缩（提取物）→ 制剂
 - [chinese_medicinal_materials, feedstock, act_tcm_processing]
