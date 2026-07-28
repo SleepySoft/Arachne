@@ -1481,24 +1481,33 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
       });
     },
     smartArrangeSelectedNodes: () => {
-      onBeforeManualLayoutRef.current?.();
       const cy = cyRef.current;
       if (!cy) return;
       const selectedIds = cy.nodes(":selected").map((n) => n.id());
       if (selectedIds.length < 2) return;
 
       const selectedSet = new Set(selectedIds);
-      // 选中节点（排除隐藏节点与已选 compound parent 的子节点，与 autoArrange 一致）
+      // 选中节点：排除隐藏节点与 compound 结构（父节点、以及父节点也被选中的子节点）。
+      // 核心 layoutPositions 明确不写回父节点（其位置由子树包围盒导出），dagre 为父节点
+      // 规划的位置无法生效；若让父节点参与，未生效的规划位置会污染质心平移量，把父节点
+      // 甩到远处。被选中的 compound 子树整体保持原位、充当锚点；
+      // 父节点未被选中的子节点是普通绝对坐标节点，可正常参与。
       const nodeCol = cy
         .nodes(":selected")
-        .filter((n) => !n.hasClass("hidden") && !selectedSet.has(n.data("parent")));
+        .filter(
+          (n) =>
+            !n.hasClass("hidden") && !n.isParent() && !selectedSet.has(n.data("parent"))
+        );
       if (nodeCol.length < 2) return;
 
       // 子图：选中节点 + 两端都在选中集内的可见边
+      //（与全局布局一致排除 ontology 边，避免 is_a/alias 等关系打乱产业流分层）
       const subEdges = nodeCol
         .edgesWith(nodeCol)
-        .filter((e) => !e.hasClass("hidden"));
+        .filter((e) => !e.hasClass("hidden") && e.data("edge_namespace") !== "ontology");
       const sub = nodeCol.union(subEdges);
+
+      onBeforeManualLayoutRef.current?.();
 
       // 记录选中区质心：排完后整体平移回来，只改结构不改位置，不影响未选中节点
       let cx = 0;
@@ -1527,6 +1536,10 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         rankSep: 110,
         edgeSep: 20,
         animate: false,
+        // 必须为 false：cytoscape-dagre 默认 fit:true，核心会在 layoutstop 之前
+        // 把相机强制 fit 到原点附近的 dagre 临时排布区；随后节点平移回原位时
+        // 相机已留在空白区域，表现为“节点全飞不见了”。
+        fit: false,
       } as unknown as cytoscape.LayoutOptions);
 
       layout.one("layoutstop", () => {
