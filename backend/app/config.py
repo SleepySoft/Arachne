@@ -32,6 +32,14 @@ class Settings:
     AUTH_MODE: str = os.getenv("AUTH_MODE", "disabled")
     AUTH_SCOPE_HEADER: str = os.getenv("AUTH_SCOPE_HEADER", "X-Arachne-Scope")
 
+    # JWT verification (used when AUTH_MODE="jwt").
+    # Arachne is the resource server; the integrating system signs tokens.
+    JWT_ISSUER: str = os.getenv("JWT_ISSUER", "")
+    JWT_AUDIENCE: str = os.getenv("JWT_AUDIENCE", "arachne")
+    JWT_JWKS_URL: str = os.getenv("JWT_JWKS_URL", "")
+    JWT_JWKS_REFRESH_SECONDS: int = int(os.getenv("JWT_JWKS_REFRESH_SECONDS", "3600"))
+
+
 
     class Config:
         case_sensitive = True

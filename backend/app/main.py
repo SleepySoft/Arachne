@@ -28,6 +28,7 @@ from app.routers import (
     factual_graph,
     flows,
     industries,
+    integration,
     nodes,
     prov,
     published_views,
@@ -121,6 +122,7 @@ app.include_router(reasoning.router, prefix=f"{settings.API_V1_STR}/reasoning", 
 app.include_router(published_views.router, prefix=f"{settings.API_V1_STR}/published-views", tags=["Published Views"])
 app.include_router(admin.router, prefix=f"{settings.API_V1_STR}/admin", tags=["Admin"])
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["Auth"])
+app.include_router(integration.router, prefix="/integration", tags=["Integration"])
 app.include_router(admin_checks.router, prefix=f"{settings.API_V1_STR}/admin/db-checks", tags=["Admin"])
 
 

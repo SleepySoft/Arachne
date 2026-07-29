@@ -105,6 +105,7 @@ backend/
 │       ├── computation_jobs.py    # /api/v1/computation-jobs
 │       ├── factual_graph.py       # /api/v1/factual-graph (Person + Relations)
 │       ├── auth.py                # /api/v1/auth (permission scope)
+│       ├── integration.py        # /integration/config (local-IP only, hidden from OpenAPI)
 │       ├── explore.py             # /api/v1/explore (cross-domain)
 │       └── query.py               # /api/v1/query (subgraph, neighbors, paths, stats, conflicts)
 └── tests/
@@ -188,6 +189,8 @@ backend/
 - `AUTH_MODE` env: `disabled` (default, standalone) | `header` (read `X-Arachne-Scope` from integrating system) | `custom` (reserved)
 - Read-only mode blocks all mutating endpoints (POST/PUT/DELETE) except a read-only POST allowlist (reasoning, flow preview, queries)
 - Every response includes `X-Arachne-Scope` header; frontend StatsBar shows a read-only badge
+- `GET /integration/config` - **integration manifest** (Arachne-authoritative: auth contract, API surface, embed URL templates, scope model); separate prefix, hidden from OpenAPI, local/private-IP only
+- JWT config: `JWT_ISSUER`, `JWT_AUDIENCE`, `JWT_JWKS_URL`, `JWT_JWKS_REFRESH_SECONDS` env vars (used when `AUTH_MODE=jwt`)
 
 ---
 
