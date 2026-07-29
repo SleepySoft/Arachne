@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
 import { StatsBar, MainView, GraphEngine } from "@/components/StatsBar";
 import { DbChecksPage } from "@/pages/DbChecksPage";
 import { FlowEditorPage } from "@/pages/FlowEditorPage";
@@ -103,7 +104,8 @@ export default function App() {
   );
 
   const currentEngineInfo = getEngineInfo(graphEngine);
-  const isReadOnlyEngine = currentEngineInfo?.is_read_only ?? false;
+  const { isReadOnly: authReadOnly } = useAuth();
+  const isReadOnlyEngine = (currentEngineInfo?.is_read_only ?? false) || authReadOnly;
   const isFlowEngine = currentEngineInfo?.supports_flows ?? graphEngine === "arachne_flow";
 
   const industrial = useIndustrialGraph(graphEngine);
@@ -1007,7 +1009,7 @@ export default function App() {
   const provCount = provCountData?.total ?? 0;
 
   return (
-    <div className="flex h-screen w-full flex-col bg-slate-950">
+      <div className={`flex h-screen w-full flex-col bg-slate-950${authReadOnly ? " app-readonly" : ""}`}>
       <div className="h-14 shrink-0 border-b border-slate-800 bg-slate-900">
         <StatsBar
           mainView={mainView}

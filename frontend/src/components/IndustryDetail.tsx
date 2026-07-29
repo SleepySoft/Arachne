@@ -108,14 +108,14 @@ export function IndustryDetail({
           >
             <Crosshair className="h-3.5 w-3.5" />
           </button>
-          <button
+          <button data-write-only
             onClick={onEdit}
             title="编辑"
             className="flex h-7 w-7 items-center justify-center rounded text-slate-400 hover:bg-slate-800 hover:text-cyan-400"
           >
             <Edit2 className="h-3.5 w-3.5" />
           </button>
-          <button
+          <button data-write-only
             onClick={() => {
               if (confirm("确定删除这个行业？")) deleteMutation.mutate(industry.industry_id);
             }}
@@ -154,7 +154,7 @@ export function IndustryDetail({
             <h4 className="text-xs font-semibold text-slate-300">
               映射节点 ({mappingsData?.total ?? 0})
             </h4>
-            <button
+            <button data-write-only
               onClick={() => {
                 setEditingMapping(null);
                 setShowMappingForm(true);
@@ -175,14 +175,14 @@ export function IndustryDetail({
                   <span className="text-xs font-medium text-slate-200">{m.node_id}</span>
                   <div className="flex items-center gap-1">
                     <span className="text-[10px] text-slate-500">{m.weight.toFixed(2)}</span>
-                    <button
+                    <button data-write-only
                       onClick={() => handleEdit(m)}
                       title="编辑映射"
                       className="rounded p-0.5 text-slate-500 hover:bg-slate-700 hover:text-cyan-400"
                     >
                       <Edit2 className="h-3 w-3" />
                     </button>
-                    <button
+                    <button data-write-only
                       onClick={() => {
                         if (confirm(`确定删除映射 ${m.mapping_id}？`)) {
                           deleteMappingMutation.mutate(m.mapping_id);

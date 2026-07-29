@@ -65,3 +65,9 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
+
+
+/* Read-only mode: hide all editing entry points */
+.app-readonly [data-write-only] {
+  display: none !important;
+}

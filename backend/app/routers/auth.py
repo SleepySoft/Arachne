@@ -15,6 +15,6 @@ _settings = get_settings()
 async def get_auth_scope(request: Request):
     """Return the current permission scope and auth mode."""
     return {
-        "scope": resolve_scope(request).value,
+        "scope": (await resolve_scope(request)).value,
         "auth_mode": _settings.AUTH_MODE,
     }

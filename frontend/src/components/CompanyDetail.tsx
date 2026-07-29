@@ -83,14 +83,14 @@ export function CompanyDetail({
           >
             <Link2 className="h-3.5 w-3.5" />
           </button>
-          <button
+          <button data-write-only
             onClick={onEdit}
             title="编辑"
             className="flex h-7 w-7 items-center justify-center rounded text-slate-400 hover:bg-slate-800 hover:text-cyan-400"
           >
             <Edit2 className="h-3.5 w-3.5" />
           </button>
-          <button
+          <button data-write-only
             onClick={() => {
               if (confirm("确定删除这个公司？")) deleteMutation.mutate(company.company_id);
             }}
@@ -138,7 +138,7 @@ export function CompanyDetail({
             {exposuresError && (
               <span className="text-[10px] text-red-400">加载失败</span>
             )}
-            <button
+            <button data-write-only
               onClick={onAddExposure}
               className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-cyan-400 hover:bg-cyan-900/20"
             >
