@@ -765,3 +765,16 @@ export const createPublishedView = async (body: {
   const res = await client.post("/published-views", body);
   return res.data;
 };
+
+
+// ============================================================
+// Auth scope (permission framework)
+// ============================================================
+
+export const getAuthScope = async (): Promise<{
+  scope: string;
+  auth_mode: string;
+}> => {
+  const res = await client.get("/auth/scope");
+  return res.data;
+};

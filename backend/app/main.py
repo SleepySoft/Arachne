@@ -11,9 +11,11 @@ from app.database_postgres import close_postgres_pool, init_postgres_tables
 from app.engines.arachne_flow.engine import ArachneFlowEngine, ReadOnlyEngineError
 from app.engines.legacy.engine import LegacyEngine
 from app.services.engine_registry import UnknownEngineError, register_engine
+from app.auth import permission_middleware
 from app.routers import (
     admin,
     admin_checks,
+    auth,
     batches,
     business_batches,
     companies,
@@ -57,6 +59,8 @@ app = FastAPI(
     redoc_url=f"{settings.API_V1_STR}/redoc",
     lifespan=lifespan,
 )
+
+app.middleware("http")(permission_middleware)
 
 
 @app.exception_handler(ConnectionResetError)
@@ -116,6 +120,7 @@ app.include_router(query.router, prefix=f"{settings.API_V1_STR}/query", tags=["Q
 app.include_router(reasoning.router, prefix=f"{settings.API_V1_STR}/reasoning", tags=["Reasoning"])
 app.include_router(published_views.router, prefix=f"{settings.API_V1_STR}/published-views", tags=["Published Views"])
 app.include_router(admin.router, prefix=f"{settings.API_V1_STR}/admin", tags=["Admin"])
+app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["Auth"])
 app.include_router(admin_checks.router, prefix=f"{settings.API_V1_STR}/admin/db-checks", tags=["Admin"])
 
 

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Brain, Database, FileCode, GitBranch, Layers, Network } from "lucide-react";
-import { getHealth, getStats, listEngines } from "@/services/api";
+import { Activity, Brain, Database, FileCode, GitBranch, Layers, Lock, Network } from "lucide-react";
+import { getAuthScope, getHealth, getStats, listEngines } from "@/services/api";
 export type MainView =
   | "industrial_graph"
   | "company_graph"
@@ -39,6 +39,12 @@ export function StatsBar({
     queryKey: ["engines"],
     queryFn: listEngines,
     staleTime: 60000,
+  });
+
+  const { data: authScope } = useQuery({
+    queryKey: ["auth-scope"],
+    queryFn: getAuthScope,
+    staleTime: 30000,
   });
 
   const engineOptions = enginesData?.engines ?? [
@@ -109,6 +115,13 @@ export function StatsBar({
         <StatusDot label="Neo4j" status={health?.neo4j === "ok" ? "ok" : "error"} />
         <StatusDot label="PostgreSQL" status={health?.postgres === "ok" ? "ok" : health?.postgres === "not_configured" ? "warning" : "error"} />
       </div>
+
+        {authScope?.scope === "read_only" && (
+          <span className="flex items-center gap-1 rounded bg-amber-900/40 px-2 py-0.5 text-[10px] font-medium text-amber-300">
+            <Lock className="h-3 w-3" />
+            只读
+          </span>
+        )}
 
       {/* Stats — contextual by view */}
       <div className="flex items-center gap-6">

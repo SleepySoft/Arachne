@@ -26,6 +26,13 @@ class Settings:
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Arachne Industrial Ontology Graph"
 
+    # Permission framework: "disabled" (standalone, all allowed),
+    # "header" (read scope from integrating system via HTTP header),
+    # "custom" (reserved for future token-based integration).
+    AUTH_MODE: str = os.getenv("AUTH_MODE", "disabled")
+    AUTH_SCOPE_HEADER: str = os.getenv("AUTH_SCOPE_HEADER", "X-Arachne-Scope")
+
+
     class Config:
         case_sensitive = True
 

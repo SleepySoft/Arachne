@@ -104,6 +104,7 @@ backend/
 │       ├── company_material.py    # /api/v1/companies/{id}/material-connections
 │       ├── computation_jobs.py    # /api/v1/computation-jobs
 │       ├── factual_graph.py       # /api/v1/factual-graph (Person + Relations)
+│       ├── auth.py                # /api/v1/auth (permission scope)
 │       ├── explore.py             # /api/v1/explore (cross-domain)
 │       └── query.py               # /api/v1/query (subgraph, neighbors, paths, stats, conflicts)
 └── tests/
@@ -181,6 +182,12 @@ backend/
 - `GET /api/v1/published-views/{view_id}` - retrieve a published view (auto-expires)
 - `GET /api/v1/published-views` - list published views (paginated)
 - Frontend: `/embed.html?seed=<node_id>&engine=arachne_flow&task_type=association` - standalone embeddable reasoning view; supports `?view=<id>` to load a published view, `&resolve=1` for name-based seed lookup
+
+**Auth / Permission Scope**
+- `GET /api/v1/auth/scope` - returns current permission scope (`read_only` | `read_write`) and `auth_mode`
+- `AUTH_MODE` env: `disabled` (default, standalone) | `header` (read `X-Arachne-Scope` from integrating system) | `custom` (reserved)
+- Read-only mode blocks all mutating endpoints (POST/PUT/DELETE) except a read-only POST allowlist (reasoning, flow preview, queries)
+- Every response includes `X-Arachne-Scope` header; frontend StatsBar shows a read-only badge
 
 ---
 
