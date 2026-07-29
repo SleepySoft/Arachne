@@ -734,3 +734,34 @@ export const executeReasoning = async (
   const res = await client.post("/reasoning/execute", payload);
   return res.data;
 };
+
+
+// ============================================================
+// Published Views (embeddable reasoning view configs)
+// ============================================================
+
+export interface PublishedView {
+  view_id: string;
+  title: string | null;
+  params: Record<string, unknown>;
+  result_snapshot: Record<string, unknown> | null;
+  created_by: string | null;
+  created_at: string | null;
+  expires_at: string | null;
+}
+
+export const getPublishedView = async (viewId: string): Promise<PublishedView> => {
+  const res = await client.get(`/published-views/${viewId}`);
+  return res.data;
+};
+
+export const createPublishedView = async (body: {
+  title?: string;
+  params: Record<string, unknown>;
+  result_snapshot?: Record<string, unknown> | null;
+  created_by?: string;
+  expires_at?: string;
+}): Promise<PublishedView> => {
+  const res = await client.post("/published-views", body);
+  return res.data;
+};

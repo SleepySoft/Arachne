@@ -28,6 +28,7 @@ from app.routers import (
     industries,
     nodes,
     prov,
+    published_views,
     query,
     reasoning,
 )
@@ -113,6 +114,7 @@ app.include_router(flows.router, prefix=f"{settings.API_V1_STR}/flows", tags=["F
 app.include_router(explore.router, prefix=f"{settings.API_V1_STR}/explore", tags=["Explore"])
 app.include_router(query.router, prefix=f"{settings.API_V1_STR}/query", tags=["Query"])
 app.include_router(reasoning.router, prefix=f"{settings.API_V1_STR}/reasoning", tags=["Reasoning"])
+app.include_router(published_views.router, prefix=f"{settings.API_V1_STR}/published-views", tags=["Published Views"])
 app.include_router(admin.router, prefix=f"{settings.API_V1_STR}/admin", tags=["Admin"])
 app.include_router(admin_checks.router, prefix=f"{settings.API_V1_STR}/admin/db-checks", tags=["Admin"])
 

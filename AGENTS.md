@@ -176,6 +176,12 @@ backend/
 - `POST /api/v1/batches` — GraphRegistrationBatch (nodes + edges)
 - `POST /api/v1/business-batches` — BusinessRegistrationBatch (industries + mappings + companies + exposures)
 
+**Published Views (embeddable reasoning)**
+- `POST /api/v1/published-views` - create a view (params + optional result snapshot), returns view_id
+- `GET /api/v1/published-views/{view_id}` - retrieve a published view (auto-expires)
+- `GET /api/v1/published-views` - list published views (paginated)
+- Frontend: `/embed.html?seed=<node_id>&engine=arachne_flow&task_type=association` - standalone embeddable reasoning view; supports `?view=<id>` to load a published view, `&resolve=1` for name-based seed lookup
+
 ---
 
 ## 4. Completed Work

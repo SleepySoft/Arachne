@@ -527,4 +527,25 @@ async def init_postgres_tables() -> None:
             """
         )
 
+        # Published views (embeddable reasoning view configs)
+        await conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS published_views (
+                view_id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                title            VARCHAR(256),
+                params           JSONB NOT NULL DEFAULT '{}'::jsonb,
+                result_snapshot  JSONB,
+                created_by       VARCHAR(128),
+                created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                expires_at       TIMESTAMPTZ
+            )
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_published_views_created_at
+            ON published_views(created_at DESC)
+            """
+        )
+
 
