@@ -571,6 +571,27 @@ async def run_arachne_flow_association(
     except Exception as exc:
         warnings.append(f"PG metadata lookup failed: {exc}")
 
+    # Action nodes: lookup local_name from Neo4j (actions are not in PG).
+    # Actions are per-flow occurrences with synthetic ids; they are not stored
+    # in PostgreSQL, so we query the flow graph directly for their local_name.
+    action_ids = [nid for nid, n in nodes.items() if n["kind"] == "action" and nid not in name_map]
+    if action_ids:
+        try:
+            flow_driver = get_flow_async_driver()
+            async with flow_driver.session() as flow_session:
+                result = await flow_session.run(
+                    """UNWIND $ids AS aid
+                    MATCH (a:ArachneFlowAction {node_id: aid})
+                    RETURN a.node_id AS node_id, a.local_name AS local_name, a.method_ref AS method_ref""",
+                    {"ids": action_ids},
+                )
+                async for record in result:
+                    local_name = record["local_name"]
+                    if local_name:
+                        name_map[record["node_id"]] = local_name
+        except Exception:
+            pass
+
     def node_label(nid: str, kind: str) -> str:
         if nid in name_map:
             return name_map[nid]

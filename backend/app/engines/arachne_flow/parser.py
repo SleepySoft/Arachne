@@ -158,9 +158,11 @@ def _infer_node_kinds(parsed: ParsedFlow) -> None:
             # [RESOURCE, input_role, ACTION] or [RESOURCE, input_role, METHOD]
             kind_hints["resource"].add(src)
             kind_hints["action"].add(tgt)
+            kind_hints["method"].add(tgt)
         elif pred in {r.value for r in OutputRole}:
             # [ACTION, output_role, RESOURCE] or [METHOD, output_role, RESOURCE]
             kind_hints["action"].add(src)
+            kind_hints["method"].add(src)
             kind_hints["resource"].add(tgt)
         elif pred == SpecialRole.NEXT.value:
             # [ACTION, next, ACTION]
@@ -188,6 +190,10 @@ def _infer_node_kinds(parsed: ParsedFlow) -> None:
             kind_hints["action"].discard(node_id)
         elif node_id in definite_action and node_id not in definite_method:
             kind_hints["method"].discard(node_id)
+        else:
+            # Ambiguous: no definite evidence. Default to ACTION so the
+            # node is not simultaneously created as both ACTION and METHOD.
+            kind_hints["method"].discard(node_id)
 
     # METHOD/resource conflicts are still disallowed.
     for node_id in kind_hints["resource"] & kind_hints["method"]:
@@ -213,7 +219,7 @@ def _infer_node_kinds(parsed: ParsedFlow) -> None:
             action_id=aid,
             action_type=ActionType.OTHER,
             flow_id=parsed.flow_id,
-                    local_name=parsed.locals.get(aid),
+            local_name=parsed.locals.get(aid),
         )
 
     for mid in method_ids:

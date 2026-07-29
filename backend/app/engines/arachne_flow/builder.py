@@ -221,6 +221,7 @@ class FlowGraphBuilder:
                 action_type=action.action_type,
                 flow_id=flow_id,
                 method_ref=action.method_ref,
+                local_name=action.local_name,
             )
 
         # Triples: resolve action IDs to their namespaced form.
