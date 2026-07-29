@@ -69,7 +69,7 @@ export function SearchPanel({
             className="w-full rounded-md border border-slate-700 bg-slate-800 py-1.5 pl-8 pr-3 text-sm text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
           />
           {searchData && query && !showDrafts && (
-            <div className="absolute z-50 mt-1 w-full min-w-[420px] rounded-md border border-slate-700 bg-slate-800 shadow-lg">
+            <div className="absolute z-50 mt-1 w-full min-w-[520px] rounded-md border border-slate-700 bg-slate-800 shadow-lg">
               {searchData.items.length === 0 ? (
                 <div className="px-3 py-2 text-sm text-slate-500">无结果</div>
               ) : (
@@ -84,7 +84,7 @@ export function SearchPanel({
                     className="flex w-full min-w-0 items-start gap-2 px-3 py-2 text-left text-sm hover:bg-slate-700"
                   >
                     <span
-                      className="min-w-0 flex-1 whitespace-normal break-all font-medium text-slate-200"
+                      className="min-w-0 flex-1 whitespace-nowrap truncate font-medium text-slate-200"
                       title={displayName(node)}
                     >
                       {displayName(node)}
@@ -109,7 +109,7 @@ export function SearchPanel({
           )}
 
           {showDrafts && (
-            <div className="absolute z-50 mt-1 max-h-64 w-full min-w-[420px] overflow-auto rounded-md border border-slate-700 bg-slate-800 shadow-lg">
+            <div className="absolute z-50 mt-1 max-h-64 w-full min-w-[520px] overflow-auto rounded-md border border-slate-700 bg-slate-800 shadow-lg">
               <div className="sticky top-0 flex items-center justify-between border-b border-slate-700 bg-slate-800 px-3 py-2">
                 <span className="flex items-center gap-1 text-xs font-medium text-amber-400">
                   <AlertCircle className="h-3.5 w-3.5" />
@@ -136,7 +136,7 @@ export function SearchPanel({
                   >
                     <div className="flex w-full min-w-0 items-start gap-2">
                       <span
-                        className="min-w-0 flex-1 whitespace-normal break-all font-medium text-slate-200"
+                        className="min-w-0 flex-1 whitespace-nowrap truncate font-medium text-slate-200"
                         title={displayName(node)}
                       >{displayName(node)}</span>
                       <span className="shrink-0 text-[10px] text-slate-500">{node.node_id}</span>

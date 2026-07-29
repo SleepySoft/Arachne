@@ -450,7 +450,7 @@ export function FlowEditorPage({
       {/* Left: editor */}
       <div className={`flex flex-col ${showPreview ? "w-1/2 border-r border-slate-800" : "flex-1"}`}>
         {/* Toolbar */}
-        <div className="flex items-center gap-2 border-b border-slate-800 bg-slate-900 p-2">
+        <div className="flex flex-wrap items-center gap-2 border-b border-slate-800 bg-slate-900 p-2">
           <select
             value={selectedFlowId}
             onChange={(e) => setSelectedFlowId(e.target.value)}
@@ -476,19 +476,19 @@ export function FlowEditorPage({
           </select>
           <button
             onClick={handleNewFlow}
-            className="h-8 rounded border border-slate-700 bg-slate-800 px-2 text-xs text-slate-300 hover:bg-slate-700"
+            className="h-8 shrink-0 whitespace-nowrap rounded border border-slate-700 bg-slate-800 px-2 text-xs text-slate-300 hover:bg-slate-700"
           >
             新建
           </button>
           <button
             onClick={handleFormat}
-            className="h-8 rounded border border-slate-700 bg-slate-800 px-2 text-xs text-slate-300 hover:bg-slate-700"
+            className="h-8 shrink-0 whitespace-nowrap rounded border border-slate-700 bg-slate-800 px-2 text-xs text-slate-300 hover:bg-slate-700"
           >
             整理格式
           </button>
           <button
             onClick={() => setCollapseIncludes((v) => !v)}
-            className={`h-8 rounded border px-2 text-xs ${
+            className={`h-8 shrink-0 whitespace-nowrap rounded border px-2 text-xs ${
               collapseIncludes
                 ? "border-cyan-600 bg-cyan-900/40 text-cyan-200"
                 : "border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700"
@@ -500,14 +500,14 @@ export function FlowEditorPage({
           <button
             onClick={handleSave}
             disabled={saving}
-            className="h-8 rounded bg-emerald-700 px-3 text-xs font-medium text-white hover:bg-emerald-600 disabled:opacity-40"
+            className="h-8 shrink-0 whitespace-nowrap rounded bg-emerald-700 px-3 text-xs font-medium text-white hover:bg-emerald-600 disabled:opacity-40"
           >
             {saving ? "保存中..." : "保存"}
           </button>
           <button
             onClick={handleRebuild}
             disabled={rebuilding}
-            className="h-8 rounded border border-amber-700 bg-amber-900/60 px-3 text-xs font-medium text-amber-200 hover:bg-amber-800 disabled:opacity-40"
+            className="h-8 shrink-0 whitespace-nowrap rounded border border-amber-700 bg-amber-900/60 px-3 text-xs font-medium text-amber-200 hover:bg-amber-800 disabled:opacity-40"
             title="清除所有 arachne-flow 数据并重新编译全部流程文件"
           >
             {rebuilding ? "重建中..." : "重新生成"}
@@ -521,7 +521,7 @@ export function FlowEditorPage({
           {onClose && (
             <button
               onClick={onClose}
-              className="ml-auto h-8 rounded border border-slate-700 bg-slate-800 px-2 text-xs text-slate-300 hover:bg-slate-700"
+              className="ml-auto h-8 shrink-0 whitespace-nowrap rounded border border-slate-700 bg-slate-800 px-2 text-xs text-slate-300 hover:bg-slate-700"
               title="关闭编辑器"
             >
               关闭
@@ -619,7 +619,7 @@ export function FlowEditorPage({
             <button
               onClick={appendTriple}
               disabled={!tripleDraft.source || !tripleDraft.target}
-              className="h-8 rounded bg-cyan-700 px-3 text-xs font-medium text-white hover:bg-cyan-600 disabled:opacity-40"
+              className="h-8 shrink-0 whitespace-nowrap rounded bg-cyan-700 px-3 text-xs font-medium text-white hover:bg-cyan-600 disabled:opacity-40"
             >
               插入
             </button>
