@@ -1,0 +1,17 @@
+schema: arachne-flow/v0.1
+title: 'Upstream flow: petrochemical (ethylene, polyolefins)'
+root_product: polyethylene
+include: []
+local: {}
+edges:
+# 石化：石脑油 -> 乙烯/丙烯 -> 聚乙烯/聚丙烯
+- [naphtha, feedstock, act_ethylene_cracking]
+- [act_ethylene_cracking, ref, steam_cracking_process]
+- [act_ethylene_cracking, primary_result, ethylene]
+- [act_ethylene_cracking, byproduct, propylene]
+- [ethylene, feedstock, act_produce_polyethylene]
+- [act_produce_polyethylene, ref, polymerization_process]
+- [act_produce_polyethylene, primary_result, polyethylene]
+- [propylene, feedstock, act_produce_polypropylene]
+- [act_produce_polypropylene, ref, polymerization_process]
+- [act_produce_polypropylene, primary_result, polypropylene]

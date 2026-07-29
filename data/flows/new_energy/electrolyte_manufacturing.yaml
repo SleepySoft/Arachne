@@ -1,0 +1,13 @@
+schema: arachne-flow/v0.1
+title: 'New energy flow: electrolyte manufacturing (shared)'
+root_product: electrolyte
+include: []
+local:
+  act_produce_electrolyte: 电解液生产
+  electrolyte: 电解液
+edges:
+# 电解液：溶剂+锂盐+添加剂 -> 电解液
+- [organic_solvent, feedstock, act_produce_electrolyte]
+- [lithium_hexafluorophosphate, component, act_produce_electrolyte]
+- [act_produce_electrolyte, ref, electrolyte_production]
+- [act_produce_electrolyte, primary_result, electrolyte]

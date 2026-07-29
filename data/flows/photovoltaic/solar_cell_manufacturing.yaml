@@ -1,0 +1,13 @@
+schema: arachne-flow/v0.1
+title: 'Photovoltaic flow: solar cell manufacturing (shared)'
+root_product: solar_cell
+include: []
+local:
+  act_produce_solar_cell: 电池片制造
+  solar_cell: 光伏电池片
+edges:
+# 电池片：硅片（复用半导体节点）+银浆 -> 光伏电池片
+- [silicon_wafer, feedstock, act_produce_solar_cell]
+- [silver_paste, feedstock, act_produce_solar_cell]
+- [act_produce_solar_cell, ref, solar_cell_fabrication]
+- [act_produce_solar_cell, primary_result, solar_cell]

@@ -1,0 +1,11 @@
+schema: arachne-flow/v0.1
+title: 'Upstream flow: aluminum smelting'
+root_product: aluminum
+include: []
+local: {}
+edges:
+# 炼铝：铝土矿+电（电解铝） -> 铝
+- [bauxite, feedstock, act_aluminum_smelting]
+- [electricity_power, energy, act_aluminum_smelting]
+- [act_aluminum_smelting, ref, aluminum_smelting_process]
+- [act_aluminum_smelting, primary_result, aluminum]

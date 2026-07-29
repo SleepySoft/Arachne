@@ -1,0 +1,19 @@
+schema: arachne-flow/v0.1
+title: 'Upstream flow: energy production (coal, gas, wind, solar, nuclear)'
+root_product: electricity_power
+include: []
+local: {}
+edges:
+# 能源：煤/气/风/核 -> 电力
+- [coal, feedstock, act_coal_power_generation]
+- [act_coal_power_generation, ref, coal_power_generation]
+- [act_coal_power_generation, primary_result, electricity_power]
+- [natural_gas, feedstock, act_gas_power_generation]
+- [act_gas_power_generation, ref, gas_power_generation]
+- [act_gas_power_generation, primary_result, electricity_power]
+- [wind_turbine, tool, act_wind_power_generation]
+- [act_wind_power_generation, ref, wind_power_generation]
+- [act_wind_power_generation, primary_result, electricity_power]
+- [nuclear_fuel, feedstock, act_nuclear_power_generation]
+- [act_nuclear_power_generation, ref, nuclear_power_generation]
+- [act_nuclear_power_generation, primary_result, electricity_power]

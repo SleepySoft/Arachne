@@ -1,0 +1,13 @@
+schema: arachne-flow/v0.1
+title: 'Upstream flow: rare earth & permanent magnet'
+root_product: permanent_magnet
+include: []
+local: {}
+edges:
+# 稀土：稀土矿 -> 稀土材料 -> 钕铁硼永磁（电机关键材料）
+- [rare_earth_ore, feedstock, act_rare_earth_extraction]
+- [act_rare_earth_extraction, ref, rare_earth_extraction_process]
+- [act_rare_earth_extraction, primary_result, rare_earth_material]
+- [rare_earth_material, feedstock, act_produce_permanent_magnet]
+- [act_produce_permanent_magnet, ref, ndfeb_magnet_production]
+- [act_produce_permanent_magnet, primary_result, permanent_magnet]

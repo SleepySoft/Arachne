@@ -1,0 +1,13 @@
+schema: arachne-flow/v0.1
+title: 'New energy flow: cathode material manufacturing (shared)'
+root_product: cathode_material
+include: []
+local:
+  act_produce_cathode_material: 正极材料生产
+  cathode_material: 正极材料
+edges:
+# 正极材料：锂盐+前驱体 -> 磷酸铁锂/三元正极
+- [lithium_carbonate, feedstock, act_produce_cathode_material]
+- [cathode_precursor, feedstock, act_produce_cathode_material]
+- [act_produce_cathode_material, ref, cathode_material_production]
+- [act_produce_cathode_material, primary_result, cathode_material]

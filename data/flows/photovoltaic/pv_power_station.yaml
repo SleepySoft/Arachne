@@ -1,0 +1,14 @@
+schema: arachne-flow/v0.1
+title: 'Photovoltaic flow: PV power station construction'
+root_product: pv_power_station
+include:
+- pv_module_assembly.yaml
+local:
+  act_build_pv_station: 电站建设
+  pv_power_station: 光伏电站
+edges:
+# 电站：组件+逆变器（复用半导体节点） -> 光伏电站
+- [pv_module, component, act_build_pv_station]
+- [photovoltaic_inverter, component, act_build_pv_station]
+- [act_build_pv_station, ref, pv_station_construction]
+- [act_build_pv_station, primary_result, pv_power_station]

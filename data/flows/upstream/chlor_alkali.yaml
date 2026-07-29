@@ -1,0 +1,11 @@
+schema: arachne-flow/v0.1
+title: 'Upstream flow: chlor-alkali'
+root_product: chlor_alkali_product
+include: []
+local: {}
+edges:
+# 氯碱：盐+电 -> 烧碱/氯气/氢气
+- [salt, feedstock, act_chlor_alkali_process]
+- [electricity_power, energy, act_chlor_alkali_process]
+- [act_chlor_alkali_process, ref, chlor_alkali_electrolysis]
+- [act_chlor_alkali_process, primary_result, chlor_alkali_product]

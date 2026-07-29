@@ -8,5 +8,7 @@ edges:
 - [control_computing_platform, component, act_integrate_control_system]
 - [robot_controller, component, act_integrate_control_system]
 - [robot_control_software, subject, act_integrate_control_system]
+# 桥接边：半导体芯片（MCU/SoC）作为控制器核心组件
+- [chip, component, act_integrate_control_system]
 - [act_integrate_control_system, ref, control_system_integration]
 - [act_integrate_control_system, primary_result, robot_control_system]

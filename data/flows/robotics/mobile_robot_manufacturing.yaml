@@ -11,5 +11,7 @@ edges:
 - [robot_control_system, component, act_integrate_mobile_robot]
 - [lidar, component, act_integrate_mobile_robot]
 - [robot_battery, component, act_integrate_mobile_robot]
+# 桥接边：锂电池包（新能源）作为移动机器人动力源
+- [lithium_battery_pack, component, act_integrate_mobile_robot]
 - [act_integrate_mobile_robot, ref, integration_of_mobile_robot]
 - [act_integrate_mobile_robot, primary_result, mobile_robot]

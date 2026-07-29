@@ -1,0 +1,15 @@
+schema: arachne-flow/v0.1
+title: 'New energy flow: EV powertrain integration'
+root_product: ev_powertrain
+include:
+- battery_pack_assembly.yaml
+local:
+  act_integrate_ev_powertrain: 动力总成集成
+  ev_powertrain: 电动汽车动力总成
+edges:
+# 动力总成：电池包+功率半导体（电控）+电机 -> 动力总成
+- [lithium_battery_pack, component, act_integrate_ev_powertrain]
+- [power_semiconductor, component, act_integrate_ev_powertrain]
+- [electric_motor, component, act_integrate_ev_powertrain]
+- [act_integrate_ev_powertrain, ref, ev_powertrain_integration]
+- [act_integrate_ev_powertrain, primary_result, ev_powertrain]

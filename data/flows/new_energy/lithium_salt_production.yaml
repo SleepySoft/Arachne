@@ -1,0 +1,12 @@
+schema: arachne-flow/v0.1
+title: 'New energy flow: lithium salt production (shared)'
+root_product: lithium_carbonate
+include: []
+local: {}
+edges:
+# 锂盐生产：锂辉石/盐湖卤水 -> 碳酸锂/氢氧化锂
+- [spodumene, feedstock, act_lithium_extraction]
+- [salt_lake_brine, feedstock, act_lithium_extraction]
+- [act_lithium_extraction, ref, lithium_extraction_process]
+- [act_lithium_extraction, primary_result, lithium_carbonate]
+- [act_lithium_extraction, primary_result, lithium_hydroxide]

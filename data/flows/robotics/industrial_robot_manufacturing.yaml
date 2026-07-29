@@ -12,6 +12,8 @@ edges:
 - [robot_control_system, component, act_integrate_industrial_robot]
 - [robot_arm, component, act_integrate_industrial_robot]
 - [machine_vision, component, act_integrate_industrial_robot]
+# 桥接边：钢材（上游）用于机器人结构件
+- [steel, component, act_integrate_industrial_robot]
 - [act_integrate_industrial_robot, ref, robot_body_integration]
 - [act_integrate_industrial_robot, primary_result, industrial_robot]
 # 协作机器人：以工业机器人平台为基础衍生（basis，安全力控变体）

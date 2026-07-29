@@ -1,0 +1,15 @@
+schema: arachne-flow/v0.1
+title: 'New energy flow: lithium battery pack assembly'
+root_product: lithium_battery_pack
+include:
+- battery_cell_manufacturing.yaml
+local:
+  act_assemble_battery_pack: 电池封装
+  lithium_battery_pack: 锂电池包
+edges:
+# 电池包：电芯+BMS芯片+结构件 -> 锂电池包
+- [battery_cell, component, act_assemble_battery_pack]
+- [chip, component, act_assemble_battery_pack]
+- [battery_structure_part, component, act_assemble_battery_pack]
+- [act_assemble_battery_pack, ref, battery_pack_assembly]
+- [act_assemble_battery_pack, primary_result, lithium_battery_pack]

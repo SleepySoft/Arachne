@@ -1,0 +1,19 @@
+schema: arachne-flow/v0.1
+title: 'New energy flow: battery cell manufacturing (shared)'
+root_product: battery_cell
+include: []
+local:
+  act_produce_battery_cell: 电芯制造
+  battery_cell: 电芯
+edges:
+# 电芯制造：正极+负极+电解液+隔膜 -> 电芯
+- [cathode_material, component, act_produce_battery_cell]
+- [anode_material, component, act_produce_battery_cell]
+- [electrolyte, component, act_produce_battery_cell]
+- [battery_separator, component, act_produce_battery_cell]
+# 桥接边：铜箔（上游）用于负极集流体
+- [copper, component, act_produce_battery_cell]
+# 桥接边：铝箔（上游）用于正极集流体
+- [aluminum, component, act_produce_battery_cell]
+- [act_produce_battery_cell, ref, battery_cell_production]
+- [act_produce_battery_cell, primary_result, battery_cell]

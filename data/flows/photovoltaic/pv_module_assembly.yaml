@@ -1,0 +1,18 @@
+schema: arachne-flow/v0.1
+title: 'Photovoltaic flow: PV module assembly'
+root_product: pv_module
+include:
+- solar_cell_manufacturing.yaml
+local:
+  act_assemble_pv_module: 组件封装
+  pv_module: 光伏组件
+edges:
+# 组件：电池片+玻璃+EVA+边框 -> 光伏组件
+- [solar_cell, component, act_assemble_pv_module]
+- [pv_glass, component, act_assemble_pv_module]
+- [eva_film, component, act_assemble_pv_module]
+- [aluminum_frame, component, act_assemble_pv_module]
+# 桥接边：铝材（上游）用于组件边框
+- [aluminum, component, act_assemble_pv_module]
+- [act_assemble_pv_module, ref, pv_module_assembly]
+- [act_assemble_pv_module, primary_result, pv_module]

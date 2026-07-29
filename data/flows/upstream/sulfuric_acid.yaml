@@ -1,0 +1,10 @@
+schema: arachne-flow/v0.1
+title: 'Upstream flow: sulfuric acid'
+root_product: sulfuric_acid
+include: []
+local: {}
+edges:
+# 硫酸：硫磺 -> 硫酸
+- [sulfur, feedstock, act_sulfuric_acid_production]
+- [act_sulfuric_acid_production, ref, sulfuric_acid_process]
+- [act_sulfuric_acid_production, primary_result, sulfuric_acid]

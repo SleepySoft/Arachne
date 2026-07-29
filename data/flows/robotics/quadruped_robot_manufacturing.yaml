@@ -12,5 +12,7 @@ edges:
 - [robot_control_system, component, act_integrate_quadruped_robot]
 - [perception_suite, component, act_integrate_quadruped_robot]
 - [robot_battery, component, act_integrate_quadruped_robot]
+# 桥接边：锂电池包（新能源）作为四足机器人动力源
+- [lithium_battery_pack, component, act_integrate_quadruped_robot]
 - [act_integrate_quadruped_robot, ref, integration_of_quadruped_robot]
 - [act_integrate_quadruped_robot, primary_result, quadruped_robot]

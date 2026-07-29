@@ -1,0 +1,14 @@
+schema: arachne-flow/v0.1
+title: 'New energy flow: energy storage system integration'
+root_product: energy_storage_system
+include:
+- battery_pack_assembly.yaml
+local:
+  act_integrate_ess: 储能系统集成
+  energy_storage_system: 储能系统
+edges:
+# 储能系统：电池包+功率半导体（逆变器） -> 储能系统
+- [lithium_battery_pack, component, act_integrate_ess]
+- [power_semiconductor, component, act_integrate_ess]
+- [act_integrate_ess, ref, ess_integration]
+- [act_integrate_ess, primary_result, energy_storage_system]

@@ -1,0 +1,11 @@
+schema: arachne-flow/v0.1
+title: 'Upstream flow: steel making'
+root_product: steel
+include: []
+local: {}
+edges:
+# 炼钢：铁矿石+煤（焦炭） -> 钢
+- [iron_ore, feedstock, act_steel_making]
+- [coal, energy, act_steel_making]
+- [act_steel_making, ref, steel_making_process]
+- [act_steel_making, primary_result, steel]

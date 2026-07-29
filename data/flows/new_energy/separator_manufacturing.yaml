@@ -1,0 +1,13 @@
+schema: arachne-flow/v0.1
+title: 'New energy flow: separator manufacturing (shared)'
+root_product: battery_separator
+include: []
+local:
+  act_produce_separator: 隔膜生产
+  battery_separator: 电池隔膜
+edges:
+# 隔膜：PE/PP -> 电池隔膜
+- [polyethylene, feedstock, act_produce_separator]
+- [polypropylene, feedstock, act_produce_separator]
+- [act_produce_separator, ref, separator_production]
+- [act_produce_separator, primary_result, battery_separator]

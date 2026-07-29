@@ -9,5 +9,9 @@ edges:
 - [stepper_motor, component, act_integrate_servo_system]
 - [driver, component, act_integrate_servo_system]
 - [encoder, component, act_integrate_servo_system]
+# 桥接边：功率半导体（IGBT/SiC）用于伺服驱动
+- [power_semiconductor, component, act_integrate_servo_system]
+# 桥接边：稀土永磁（上游）用于伺服电机
+- [permanent_magnet, component, act_integrate_servo_system]
 - [act_integrate_servo_system, ref, servo_system_integration]
 - [act_integrate_servo_system, primary_result, servo_system]

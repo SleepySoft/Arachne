@@ -1,0 +1,10 @@
+schema: arachne-flow/v0.1
+title: 'Upstream flow: copper smelting'
+root_product: copper
+include: []
+local: {}
+edges:
+# 炼铜：铜矿石 -> 铜
+- [copper_ore, feedstock, act_copper_smelting]
+- [act_copper_smelting, ref, copper_smelting_process]
+- [act_copper_smelting, primary_result, copper]

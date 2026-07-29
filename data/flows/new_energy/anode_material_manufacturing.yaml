@@ -1,0 +1,13 @@
+schema: arachne-flow/v0.1
+title: 'New energy flow: anode material manufacturing (shared)'
+root_product: anode_material
+include: []
+local:
+  act_produce_anode_material: 负极材料生产
+  anode_material: 负极材料
+edges:
+# 负极材料：石墨/硅碳 -> 负极材料
+- [natural_graphite, feedstock, act_produce_anode_material]
+- [silicon_oxide, additive, act_produce_anode_material]
+- [act_produce_anode_material, ref, anode_material_production]
+- [act_produce_anode_material, primary_result, anode_material]

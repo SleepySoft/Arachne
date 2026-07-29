@@ -8,5 +8,7 @@ edges:
 - [hollow_cup_motor, component, act_assemble_dexterous_hand]
 - [planetary_roller_screw, component, act_assemble_dexterous_hand]
 - [tactile_sensor, component, act_assemble_dexterous_hand]
+# 桥接边：半导体芯片用于指尖控制与触觉处理IC
+- [chip, component, act_assemble_dexterous_hand]
 - [act_assemble_dexterous_hand, ref, dexterous_hand_assembly]
 - [act_assemble_dexterous_hand, primary_result, dexterous_hand]

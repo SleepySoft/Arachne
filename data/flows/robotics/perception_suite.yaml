@@ -10,5 +10,7 @@ edges:
 - [tactile_sensor, component, act_integrate_perception_suite]
 - [imu, component, act_integrate_perception_suite]
 - [lidar, component, act_integrate_perception_suite]
+# 桥接边：AI加速芯片用于边缘视觉推理
+- [ai_accelerator, component, act_integrate_perception_suite]
 - [act_integrate_perception_suite, ref, perception_suite_integration]
 - [act_integrate_perception_suite, primary_result, perception_suite]
