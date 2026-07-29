@@ -31,6 +31,7 @@ class _MockSettings:
     JWT_AUDIENCE = "arachne"
     JWT_JWKS_URL = "https://test-host/.well-known/jwks.json"
     JWT_JWKS_REFRESH_SECONDS = 3600
+    JWT_LOCAL_BYPASS = False
 
 
 class _MockCache:

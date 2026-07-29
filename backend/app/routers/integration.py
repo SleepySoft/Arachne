@@ -10,26 +10,13 @@ to prevent external discovery.
 
 from __future__ import annotations
 
-import ipaddress
-
 from fastapi import APIRouter, HTTPException, Request
 
-from app.auth import READ_ONLY_POST_PATHS, PermissionScope
+from app.auth import READ_ONLY_POST_PATHS, PermissionScope, _is_local_ip
 from app.config import get_settings
 
 router = APIRouter(include_in_schema=False)
 _settings = get_settings()
-
-
-def _is_local_ip(host: str | None) -> bool:
-    """True for loopback or private-network addresses."""
-    if not host:
-        return False
-    try:
-        ip = ipaddress.ip_address(host)
-        return ip.is_loopback or ip.is_private
-    except (ValueError, TypeError):
-        return False
 
 
 @router.get("/config")

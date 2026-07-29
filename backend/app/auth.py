@@ -19,6 +19,7 @@ AUTH_MODE settings (see config.py):
 from __future__ import annotations
 
 import asyncio
+import ipaddress
 import time
 from enum import Enum
 from typing import Any, Awaitable, Callable
@@ -48,6 +49,17 @@ READ_ONLY_POST_PATHS: set[str] = {
 }
 
 WRITE_METHODS = {"POST", "PUT", "DELETE", "PATCH"}
+
+
+def _is_local_ip(host: str | None) -> bool:
+    """True for loopback or private-network addresses."""
+    if not host:
+        return False
+    try:
+        ip = ipaddress.ip_address(host)
+        return ip.is_loopback or ip.is_private
+    except (ValueError, TypeError):
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -182,6 +194,12 @@ async def resolve_scope(request: Request) -> PermissionScope:
         return PermissionScope.READ_ONLY
 
     if mode == "jwt":
+        # Local bypass: standalone/admin access from localhost gets full access.
+        # Disable (JWT_LOCAL_BYPASS=false) when behind a reverse proxy.
+        if settings.JWT_LOCAL_BYPASS:
+            client_host = request.client.host if request.client else None
+            if _is_local_ip(client_host):
+                return PermissionScope.READ_WRITE
         return await _verify_jwt(request)
 
     # mode == "custom": reserved for future integration.

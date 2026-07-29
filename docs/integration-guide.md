@@ -145,8 +145,21 @@ GET /integration/config
 | 有效 JWT + `scope: read_write` | 读写 |
 | 有效 JWT + `scope: read_only` | 只读 |
 | 过期/无效 JWT | **只读**（降级，不拒绝） |
+| 本地 IP + `JWT_LOCAL_BYPASS=true` | **读写**（独立运行/管理） |
 
 这意味着：**即使不做任何鉴权，嵌入的视图也能正常展示推理结果**。鉴权仅用于升级到可写权限。
+
+### 4.3.1 独立运行（本地绕过）
+
+`AUTH_MODE=jwt` 模式下，`JWT_LOCAL_BYPASS=true`（默认）时，来自本地/私有 IP 的请求自动获得 `read_write` 权限，无需 JWT。
+
+| 部署场景 | 配置 | 本地访问 | 外部访问 |
+|---------|------|---------|---------|
+| 纯独立运行 | `AUTH_MODE=disabled` | 读写 | 读写（无鉴权） |
+| 独立 + 远程只读 | `AUTH_MODE=jwt`（默认 bypass） | 读写（本地绕过） | 只读（需 JWT 升级） |
+| nginx 代理集成 | `AUTH_MODE=jwt` + `JWT_LOCAL_BYPASS=false` | 需 JWT | 需 JWT |
+
+> **nginx 场景必须设 `JWT_LOCAL_BYPASS=false`**：nginx 转发的请求源 IP 是本机，否则所有请求都会获得读写权限，鉴权形同虚设。
 
 ### 4.4 Arachne 侧配置
 
@@ -338,6 +351,7 @@ curl https://arachne-host/api/v1/published-views \
 | `JWT_AUDIENCE` | `arachne` | 期望的 JWT 受众 |
 | `JWT_JWKS_URL` | (空) | JWKS 端点 URL |
 | `JWT_JWKS_REFRESH_SECONDS` | `3600` | JWKS 缓存刷新间隔 |
+| `JWT_LOCAL_BYPASS` | `true` | jwt 模式下本地 IP 是否自动获得读写权限（nginx 后必须设 `false`） |
 
 **`AUTH_MODE=disabled`**：独立运行模式，全部读写，无鉴权（开发/单机部署默认）。
 **`AUTH_MODE=jwt`**：生产集成模式，无 token = 只读，有效 JWT 升级权限。

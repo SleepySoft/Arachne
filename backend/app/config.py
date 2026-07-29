@@ -38,6 +38,10 @@ class Settings:
     JWT_AUDIENCE: str = os.getenv("JWT_AUDIENCE", "arachne")
     JWT_JWKS_URL: str = os.getenv("JWT_JWKS_URL", "")
     JWT_JWKS_REFRESH_SECONDS: int = int(os.getenv("JWT_JWKS_REFRESH_SECONDS", "3600"))
+    # When AUTH_MODE=jwt, local/private-IP requests bypass JWT and get read_write.
+    # Set to False when behind a reverse proxy (nginx) where all traffic appears local.
+    JWT_LOCAL_BYPASS: bool = os.getenv("JWT_LOCAL_BYPASS", "true").lower() in ("true", "1", "yes")
+
 
 
 
