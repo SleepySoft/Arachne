@@ -151,6 +151,11 @@ class Company(BaseModel):
         description="股票代码，可空"
     )
 
+    listing_market: Optional[str] = Field(
+        default=None,
+        description="上市市场代码（SSE/SZSE/STAR/ChiNext/BSE/HKEX/NASDAQ/NYSE/TSE 等）；None 表示非上市公司",
+    )
+
     description: Optional[str] = None
 
     country: str = Field(default="CN")

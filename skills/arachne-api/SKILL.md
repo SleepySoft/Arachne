@@ -153,6 +153,8 @@ python cli/arachne_cli.py business-batch business_batch_001.json
       "company_id": "hesai_technology",
       "name_zh": "禾赛科技",
       "country": "CN",
+      "stock_codes": ["HAI"],
+      "listing_market": "NASDAQ",
       "company_type": "public",
       "status": "ACTIVE"
     }
@@ -328,9 +330,12 @@ python cli/arachne_cli.py quick-edge --from battery_cell --to electric_vehicle \
 
 ### 5. 单独管理公司
 
+公司元数据字段：`country`（国别）、`stock_codes`（股票代码）、`listing_market`（上市市场：SSE/SZSE/STAR/ChiNext/BSE/HKEX/NASDAQ/NYSE/TSE，缺省 None=非上市）。这三个字段会随推理结果的 `company_exposures` / `company_context` 返回，供界面按国别/上市市场/股票代码过滤。
+
 ```bash
-# 列出公司
+# 列出公司（可按 country / listing-market / type 过滤）
 python cli/arachne_cli.py company list --search 禾赛
+python cli/arachne_cli.py company list --country CN --listing-market SSE
 
 # 查看公司详情
 python cli/arachne_cli.py company get hesai_technology

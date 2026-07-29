@@ -142,7 +142,7 @@ def cmd_industry_del_mapping(industry_id: str, mapping_id: str):
 # ========================================================================
 
 def cmd_company_list(search: str = None, company_type: str = None, status: str = None,
-                     country: str = None, page: int = 1, page_size: int = 20):
+                     country: str = None, listing_market: str = None, page: int = 1, page_size: int = 20):
     params = {"page": page, "page_size": page_size}
     if search:
         params["search"] = search
@@ -152,6 +152,8 @@ def cmd_company_list(search: str = None, company_type: str = None, status: str =
         params["status"] = status
     if country:
         params["country"] = country
+    if listing_market:
+        params["listing_market"] = listing_market
     result = _request("GET", "/companies", params=params)
     _print(result)
 
@@ -423,6 +425,7 @@ Examples:
     p_co_list.add_argument("--type", dest="company_type", choices=["public", "private", "state_owned", "startup", "unknown"], help="Filter by type")
     p_co_list.add_argument("--status", choices=["ACTIVE", "PENDING", "REJECTED", "ARCHIVED"], help="Filter by status")
     p_co_list.add_argument("--country", help="Filter by country")
+    p_co_list.add_argument("--listing-market", dest="listing_market", help="Filter by listing market (SSE/SZSE/HKEX/NASDAQ/...; empty=unlisted)")
     p_co_list.add_argument("--page", type=int, default=1)
     p_co_list.add_argument("--page-size", type=int, default=20)
 
@@ -556,7 +559,7 @@ Examples:
             cmd_industry_del_mapping(args.industry_id, args.mapping_id)
     elif args.command == "company":
         if args.subcommand == "list":
-            cmd_company_list(args.search, args.company_type, args.status, args.country, args.page, args.page_size)
+            cmd_company_list(args.search, args.company_type, args.status, args.country, args.listing_market, args.page, args.page_size)
         elif args.subcommand == "get":
             cmd_company_get(args.company_id)
         elif args.subcommand == "create":

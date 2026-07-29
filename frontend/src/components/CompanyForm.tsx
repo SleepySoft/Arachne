@@ -28,6 +28,7 @@ export function CompanyForm({ mode, company, onClose, onSuccess }: CompanyFormPr
     market_cap_cny: company?.market_cap_cny?.toString() ?? "",
     net_profit_cny: company?.net_profit_cny?.toString() ?? "",
     company_type: (company?.company_type ?? "unknown") as CompanyType,
+    listing_market: company?.listing_market ?? "",
     status: (company?.status ?? "ACTIVE") as Company["status"],
     notes: company?.notes ?? "",
   });
@@ -49,6 +50,7 @@ export function CompanyForm({ mode, company, onClose, onSuccess }: CompanyFormPr
         market_cap_cny: form.market_cap_cny ? parseFloat(form.market_cap_cny) : undefined,
         net_profit_cny: form.net_profit_cny ? parseFloat(form.net_profit_cny) : undefined,
         company_type: form.company_type,
+        listing_market: form.listing_market || undefined,
         status: form.status,
         notes: form.notes || undefined,
       };
@@ -120,6 +122,25 @@ export function CompanyForm({ mode, company, onClose, onSuccess }: CompanyFormPr
             placeholder="多个用逗号分隔"
             className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
           />
+        </FormField>
+
+        <FormField label="上市市场">
+          <select
+            value={form.listing_market}
+            onChange={(e) => setForm((f) => ({ ...f, listing_market: e.target.value }))}
+            className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
+          >
+            <option value="">非上市</option>
+            <option value="SSE">上交所 (SSE)</option>
+            <option value="SZSE">深交所 (SZSE)</option>
+            <option value="STAR">科创板 (STAR)</option>
+            <option value="ChiNext">创业板 (ChiNext)</option>
+            <option value="BSE">北交所 (BSE)</option>
+            <option value="HKEX">港交所 (HKEX)</option>
+            <option value="NASDAQ">纳斯达克 (NASDAQ)</option>
+            <option value="NYSE">纽交所 (NYSE)</option>
+            <option value="TSE">东交所 (TSE)</option>
+          </select>
         </FormField>
 
         <div className="grid grid-cols-2 gap-2">

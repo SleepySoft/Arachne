@@ -195,6 +195,8 @@ async def build_company_exposures(
                 name_zh=company.name_zh,
                 name_en=company.name_en,
                 stock_codes=company.stock_codes or [],
+                listing_market=company.listing_market,
+                country=company.country,
                 company_type=company.company_type.value if company.company_type else None,
                 exposed_nodes=[],
             )

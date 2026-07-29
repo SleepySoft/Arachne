@@ -54,6 +54,7 @@ def sample_company() -> Company:
         name_en="LONGi Green Energy",
         aliases=["隆基", "隆基股份"],
         stock_codes=["601012.SH"],
+        listing_market="SSE",
         description="全球最大单晶硅片生产商",
         country="CN",
         province="陕西",
@@ -135,6 +136,29 @@ class TestCompanyCRUD:
         )
         assert total >= 1
         assert any(c.company_id == sample_company.company_id for c in items)
+
+    async def test_listing_market_roundtrip_and_filter(self, sample_company):
+        if not await _postgres_available():
+            pytest.skip("PostgreSQL not available")
+
+        await company_storage.create_company(sample_company)
+        fetched = await company_storage.get_company(sample_company.company_id)
+        assert fetched is not None
+        assert fetched.listing_market == "SSE"
+
+        # filter by listing_market
+        items, total = await company_storage.list_companies(
+            listing_market="SSE", search=sample_company.name_zh
+        )
+        assert total >= 1
+        assert any(c.company_id == sample_company.company_id for c in items)
+
+        # update listing_market
+        updated = await company_storage.update_company(
+            sample_company.company_id, {"listing_market": "HKEX"}
+        )
+        assert updated is not None
+        assert updated.listing_market == "HKEX"
 
 
 class TestExposureCRUD:

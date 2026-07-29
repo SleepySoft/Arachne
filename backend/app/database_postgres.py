@@ -196,6 +196,17 @@ async def init_postgres_tables() -> None:
         )
         await conn.execute(
             """
+            ALTER TABLE companies ADD COLUMN IF NOT EXISTS listing_market VARCHAR(32)
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_companies_listing_market
+            ON companies(listing_market)
+            """
+        )
+        await conn.execute(
+            """
             CREATE INDEX IF NOT EXISTS idx_companies_is_test
             ON companies(is_test)
             """

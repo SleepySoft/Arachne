@@ -376,6 +376,8 @@ class CompanyExposureInfo(BaseModel):
     name_zh: Optional[str] = None
     name_en: Optional[str] = None
     stock_codes: List[str] = Field(default_factory=list)
+    listing_market: Optional[str] = None
+    country: Optional[str] = None
     company_type: Optional[str] = None
     exposed_nodes: List[ExposedNodeInfo] = Field(default_factory=list)
 

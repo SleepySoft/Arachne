@@ -258,6 +258,8 @@ export interface CompanyExposureInfo {
   name_zh?: string;
   name_en?: string;
   stock_codes: string[];
+  listing_market?: string;
+  country?: string;
   company_type?: string;
   exposed_nodes: ExposedNodeInfo[];
 }

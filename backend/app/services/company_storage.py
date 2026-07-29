@@ -27,6 +27,7 @@ def _row_to_company(row: dict) -> Company:
         name_en=row.get("name_en"),
         aliases=row.get("aliases") or [],
         stock_codes=row.get("stock_codes") or [],
+        listing_market=row.get("listing_market"),
         description=row.get("description"),
         country=row.get("country") or "CN",
         province=row.get("province"),
@@ -87,8 +88,8 @@ async def create_company(data: Company) -> Company:
                 company_id, company_uuid, name_zh, name_en,
                 aliases, stock_codes, description, country, province, city,
                 founded_year, employee_count, revenue_cny, market_cap_cny,
-                net_profit_cny, company_type, status, notes, is_test
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+                net_profit_cny, company_type, status, notes, is_test, listing_market
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
             RETURNING *
             """,
             data.company_id,
@@ -110,6 +111,7 @@ async def create_company(data: Company) -> Company:
             data.status.value,
             data.notes,
             data.is_test,
+            data.listing_market,
         )
         return _row_to_company(row)
 
@@ -154,7 +156,7 @@ async def update_company(company_id: str, data: dict) -> Optional[Company]:
         "name_zh", "name_en", "aliases", "stock_codes", "description",
         "country", "province", "city", "founded_year", "employee_count",
         "revenue_cny", "market_cap_cny", "net_profit_cny",
-        "company_type", "status", "notes", "is_test",
+        "company_type", "status", "notes", "is_test", "listing_market",
     }
     fields = {k: v for k, v in data.items() if k in allowed}
     if not fields:
@@ -193,6 +195,7 @@ async def list_companies(
     limit: int = 20,
     country: Optional[str] = None,
     company_type: Optional[str] = None,
+    listing_market: Optional[str] = None,
     status: Optional[str] = None,
     search: Optional[str] = None,
 ) -> Tuple[List[Company], int]:
@@ -212,6 +215,11 @@ async def list_companies(
     if company_type:
         conditions.append(f"company_type = ${param_idx}")
         params.append(company_type)
+        param_idx += 1
+
+    if listing_market:
+        conditions.append(f"listing_market = ${param_idx}")
+        params.append(listing_market)
         param_idx += 1
 
     if status:

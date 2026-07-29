@@ -362,6 +362,7 @@ export interface Company {
   name_en?: string;
   aliases: string[];
   stock_codes: string[];
+  listing_market?: string;
   description?: string;
   country: string;
   province?: string;

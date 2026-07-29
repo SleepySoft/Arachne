@@ -32,6 +32,7 @@ async def list_companies(
     page_size: int = Query(20, ge=1, le=1000),
     country: Optional[str] = None,
     company_type: Optional[str] = None,
+    listing_market: Optional[str] = None,
     status: Optional[str] = None,
     search: Optional[str] = None,
 ):
@@ -41,6 +42,7 @@ async def list_companies(
         limit=page_size,
         country=country,
         company_type=company_type,
+        listing_market=listing_market,
         status=status,
         search=search,
     )

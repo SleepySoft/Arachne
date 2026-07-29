@@ -33,6 +33,8 @@ def _company_brief(company, nodes: List[Dict[str, Any]]) -> Dict[str, Any]:
         "name_zh": company.name_zh if company else None,
         "name_en": company.name_en if company else None,
         "stock_codes": company.stock_codes if company else [],
+        "listing_market": company.listing_market if company else None,
+        "country": company.country if company else None,
         "nodes": nodes,
     }
 
@@ -62,6 +64,8 @@ async def run_arachne_flow_company_context(
                 "company_id": company.company_id,
                 "name_zh": company.name_zh,
                 "stock_codes": company.stock_codes,
+                "listing_market": company.listing_market,
+                "country": company.country,
                 "exposures": exposures,
             }
         )
@@ -200,6 +204,8 @@ async def run_arachne_flow_company_context(
                 "company_id": sc["company_id"],
                 "name_zh": sc["name_zh"],
                 "stock_codes": sc["stock_codes"],
+                "listing_market": sc.get("listing_market"),
+                "country": sc.get("country"),
                 "position": pos,
                 "exposed_node_count": len(sc["exposures"]),
                 "in_flow_node_count": len([e for e in sc["exposures"] if e.node_id in existing]),
