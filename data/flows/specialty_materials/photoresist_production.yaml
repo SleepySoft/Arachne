@@ -1,0 +1,13 @@
+schema: arachne-flow/v0.1
+title: 'Specialty flow: photoresist production'
+root_product: photoresist
+include: []
+local:
+  act_produce_photoresist: 光刻胶生产
+  photoresist: 光刻胶
+edges:
+# 光刻胶：丙烯(上游)->PGMEA溶剂+酚醛树脂前驱；石脑油->芳烃->DNQ感光剂；桥接上游石化
+- [propylene, feedstock, act_produce_photoresist]
+- [naphtha, feedstock, act_produce_photoresist]
+- [act_produce_photoresist, ref, photoresist_formulation]
+- [act_produce_photoresist, primary_result, photoresist]

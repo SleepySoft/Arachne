@@ -1,0 +1,13 @@
+schema: arachne-flow/v0.1
+title: 'Specialty flow: photovoltaic glass production'
+root_product: pv_glass
+include: []
+local:
+  act_produce_pv_glass: 光伏玻璃生产
+  pv_glass: 光伏玻璃
+edges:
+# 光伏玻璃：低铁硅砂->玻璃熔制(电熔炉)->钢化；桥接上游电力
+- [silica_sand, feedstock, act_produce_pv_glass]
+- [electricity_power, energy, act_produce_pv_glass]
+- [act_produce_pv_glass, ref, glass_melting]
+- [act_produce_pv_glass, primary_result, pv_glass]

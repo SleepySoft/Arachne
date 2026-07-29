@@ -1,0 +1,13 @@
+schema: arachne-flow/v0.1
+title: 'Specialty flow: sputtering target production'
+root_product: sputtering_target
+include: []
+local:
+  act_produce_sputtering_target: 溅射靶材生产
+  sputtering_target: 溅射靶材
+edges:
+# 溅射靶材：高纯铜/铝(上游金属)->真空熔铸->锻造机加工；桥接上游金属
+- [copper, feedstock, act_produce_sputtering_target]
+- [aluminum, feedstock, act_produce_sputtering_target]
+- [act_produce_sputtering_target, ref, target_metallurgy]
+- [act_produce_sputtering_target, primary_result, sputtering_target]

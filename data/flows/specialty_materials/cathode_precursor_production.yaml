@@ -1,0 +1,13 @@
+schema: arachne-flow/v0.1
+title: 'Specialty flow: cathode precursor (NCM) production'
+root_product: cathode_precursor
+include: []
+local:
+  act_produce_cathode_precursor: 正极前驱体生产
+  cathode_precursor: 三元正极前驱体
+edges:
+# 正极前驱体：硫酸(上游,浸出)+氯碱烧碱(上游,共沉淀)->NCM氢氧化物；桥接上游化工
+- [sulfuric_acid, feedstock, act_produce_cathode_precursor]
+- [chlor_alkali_product, component, act_produce_cathode_precursor]
+- [act_produce_cathode_precursor, ref, coprecipitation_process]
+- [act_produce_cathode_precursor, primary_result, cathode_precursor]

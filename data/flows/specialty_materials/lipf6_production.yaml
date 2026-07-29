@@ -1,0 +1,13 @@
+schema: arachne-flow/v0.1
+title: 'Specialty flow: lithium hexafluorophosphate (LiPF6) production'
+root_product: lithium_hexafluorophosphate
+include: []
+local:
+  act_produce_lipf6: 六氟磷酸锂生产
+  lithium_hexafluorophosphate: 六氟磷酸锂
+edges:
+# 六氟磷酸锂：氢氟酸(半导体产出)+碳酸锂(电池产出)->PF5+LiF->LiPF6；桥接半导体+电池
+- [hydrofluoric_acid, feedstock, act_produce_lipf6]
+- [lithium_carbonate, feedstock, act_produce_lipf6]
+- [act_produce_lipf6, ref, lipf6_synthesis]
+- [act_produce_lipf6, primary_result, lithium_hexafluorophosphate]

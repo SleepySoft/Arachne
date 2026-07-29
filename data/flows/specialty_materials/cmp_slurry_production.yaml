@@ -1,0 +1,13 @@
+schema: arachne-flow/v0.1
+title: 'Specialty flow: CMP slurry production'
+root_product: cmp_slurry
+include: []
+local:
+  act_produce_cmp_slurry: CMP抛光液生产
+  cmp_slurry: CMP抛光液
+edges:
+# CMP抛光液：硅砂->胶体二氧化硅+硫酸(pH调节)+氧化剂；桥接上游硫酸
+- [silica_sand, feedstock, act_produce_cmp_slurry]
+- [sulfuric_acid, process_material, act_produce_cmp_slurry]
+- [act_produce_cmp_slurry, ref, cmp_slurry_formulation]
+- [act_produce_cmp_slurry, primary_result, cmp_slurry]

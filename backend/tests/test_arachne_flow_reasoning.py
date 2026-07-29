@@ -172,3 +172,65 @@ async def test_arachne_flow_association_missing_source():
     result = await execute_reasoning_task(task)
     assert result.status == ResultStatus.NO_RESULT
     assert result.diagnostics.dangling_reference_count > 0
+
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_arachne_flow_association_scoring_methods():
+    """Pluggable scoring: purpose / scoring_method change the score_type and ranking."""
+    parsed = parse_flow_file(FLOW_DIR / "semiconductor_chip_manufacturing.yaml")
+    await storage.compile_parsed_flow(parsed, clear_existing=True)
+
+    try:
+        base = dict(
+            task_id="test_af_scoring",
+            task_type=TaskType.ASSOCIATION,
+            source_nodes=["chip"],
+            constraints=ReasoningConstraints(
+                max_depth=2, max_paths=20, traversal_direction=TraversalDirection.BOTH
+            ),
+            requested_outputs=[OutputType.NODE_SCORES, OutputType.TEMPORARY_GRAPH],
+            engine="arachne_flow",
+        )
+
+        # 1. default (no params) -> degree, backward compatible
+        r_default = await execute_reasoning_task(ReasoningTask(parameters={}, **base))
+        assert r_default.status == ResultStatus.SUCCESS
+        assert r_default.result_payload["scoring"]["scoring_method"] == "degree"
+        ns_default = r_default.result_payload["node_scores"]
+        assert ns_default, "default should produce node scores"
+        assert ns_default[0]["score_type"] == "association_strength"
+
+        # 2. purpose=bottleneck -> betweenness
+        r_btw = await execute_reasoning_task(
+            ReasoningTask(parameters={"purpose": "bottleneck"}, **base)
+        )
+        assert r_btw.result_payload["scoring"]["scoring_method"] == "betweenness"
+        assert r_btw.result_payload["scoring"]["score_type"] == "betweenness_centrality"
+        if r_btw.result_payload["node_scores"]:
+            assert r_btw.result_payload["node_scores"][0]["score_type"] == "betweenness_centrality"
+
+        # 3. purpose=supply_risk -> reach forward
+        r_risk = await execute_reasoning_task(
+            ReasoningTask(parameters={"purpose": "supply_risk"}, **base)
+        )
+        assert r_risk.result_payload["scoring"]["scoring_method"] == "reach"
+        assert r_risk.result_payload["scoring"]["score_type"] == "downstream_blast_radius"
+
+        # 4. purpose=importance -> pagerank
+        r_pr = await execute_reasoning_task(
+            ReasoningTask(parameters={"purpose": "importance"}, **base)
+        )
+        assert r_pr.result_payload["scoring"]["scoring_method"] == "pagerank"
+        assert r_pr.result_payload["scoring"]["score_type"] == "personalized_pagerank"
+
+        # 5. explicit scoring_method overrides purpose
+        r_ov = await execute_reasoning_task(
+            ReasoningTask(
+                parameters={"purpose": "supply_risk", "scoring_method": "degree"},
+                **base,
+            )
+        )
+        assert r_ov.result_payload["scoring"]["scoring_method"] == "degree"
+    finally:
+        await storage.clear_flow("semiconductor_chip_manufacturing")

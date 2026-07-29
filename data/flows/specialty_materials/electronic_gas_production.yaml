@@ -1,0 +1,14 @@
+schema: arachne-flow/v0.1
+title: 'Specialty flow: electronic special gas production'
+root_product: electronic_special_gases
+include: []
+local:
+  act_produce_electronic_gas: 电子特气生产
+  electronic_special_gases: 电子特种气体
+edges:
+# 电子特气：氢氟酸(半导体产出)->F2电解->SF6/NF3/CF4；桥接半导体HF+上游电力
+- [hydrofluoric_acid, feedstock, act_produce_electronic_gas]
+- [sulfur, feedstock, act_produce_electronic_gas]
+- [electricity_power, energy, act_produce_electronic_gas]
+- [act_produce_electronic_gas, ref, electronic_gas_synthesis]
+- [act_produce_electronic_gas, primary_result, electronic_special_gases]

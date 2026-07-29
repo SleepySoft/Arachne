@@ -1,0 +1,12 @@
+schema: arachne-flow/v0.1
+title: 'Specialty flow: battery electrolyte solvent production'
+root_product: organic_solvent
+include: []
+local:
+  act_produce_battery_solvent: 电池溶剂生产
+  organic_solvent: 电解液溶剂
+edges:
+# 电解液溶剂：乙烯(上游)->环氧乙烷->碳酸乙烯酯(EC)/碳酸二甲酯(DMC)；桥接上游石化
+- [ethylene, feedstock, act_produce_battery_solvent]
+- [act_produce_battery_solvent, ref, carbonate_synthesis]
+- [act_produce_battery_solvent, primary_result, organic_solvent]

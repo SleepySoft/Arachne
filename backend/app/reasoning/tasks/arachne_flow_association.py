@@ -41,6 +41,11 @@ from app.reasoning.schemas import (
     TemporaryReasoningGraph,
 )
 from app.reasoning.tasks.utils import build_company_exposures
+from app.reasoning.flow_scorers import (
+    FlowScoringContext,
+    NodeScoreResult,
+    select_flow_scorer,
+)
 from app.services import node_storage
 
 # 每个 METHOD 最多展开的兄弟 ACTION 数（支线广度上限）
@@ -290,6 +295,7 @@ async def run_arachne_flow_association(
     max_support_per_action = int(
         params.get("max_support_per_action", DEFAULT_MAX_SUPPORT_PER_ACTION)
     )
+    top_k = int(params.get("top_k", 50))
 
     # ---- 1. 种子校验与归类 ------------------------------------------------
     existing, missing = await validate_arachne_flow_sources(task.source_nodes)
@@ -603,28 +609,38 @@ async def run_arachne_flow_association(
             return nid.split(":", 1)[-1]
         return nid
 
-    # ---- 5. 关联强度评分（启发性排序） -------------------------------------
+    # ---- 5. Pluggable node scoring (purpose / scoring_method) -------------
+    scorer, scoring_meta = select_flow_scorer(params)
+    scoring_ctx = FlowScoringContext(
+        nodes=nodes,
+        edges=edges,
+        seed_resources=seed_resources,
+        seed_actions=seed_actions,
+        direction=direction,
+        name_map=name_map,
+        entity_map=entity_map,
+        resource_actions=resource_actions,
+        branch_links=branch_links,
+    )
+    raw_scores: Dict[str, NodeScoreResult] = scorer.score(scoring_ctx)
     scored: List[NodeScore] = []
     for nid, n in nodes.items():
-        main_deg = len(resource_actions.get(nid, set()))
-        branch_deg = len(branch_links.get(nid, set()))
-        score = main_deg + 0.5 * branch_deg
-        if score <= 0:
+        res = raw_scores.get(nid)
+        if not res or res.score <= 0:
             continue
+        components = dict(res.score_components)
+        components["line"] = n["line"]
         scored.append(
             NodeScore(
                 node_id=nid,
                 graph="arachne_flow",
-                score=score,
+                score=res.score,
                 rank=0,
-                score_type="association_strength",
-                score_components={
-                    "main_actions": main_deg,
-                    "branch_links": branch_deg,
-                    "line": n["line"],
-                },
+                score_type=res.score_type,
+                score_components=components,
                 canonical_name_zh=name_map.get(nid),
                 entity_type=entity_map.get(nid) or n["kind"],
+                flags=res.flags,
             )
         )
     scored.sort(key=lambda s: s.score, reverse=True)
@@ -672,8 +688,7 @@ async def run_arachne_flow_association(
             display_type = "technology_capability"
         else:
             display_type = entity_map.get(nid, "material")
-        main_deg = len(resource_actions.get(nid, set()))
-        branch_deg = len(branch_links.get(nid, set()))
+        res = raw_scores.get(nid)
         temp_nodes.append(
             TempGraphNode(
                 temp_node_id=nid,
@@ -690,8 +705,8 @@ async def run_arachne_flow_association(
                     "via_method": n["via_method"],
                     "canonical_name_zh": name_map.get(nid),
                 },
-                score=(main_deg + 0.5 * branch_deg) or None,
-                score_components={"main_actions": main_deg, "branch_links": branch_deg},
+                score=(res.score if res and res.score > 0 else None),
+                score_components=(res.score_components if res else {}),
             )
         )
 
@@ -725,7 +740,8 @@ async def run_arachne_flow_association(
         "seed_nodes": list(existing),
         "seed_resources": sorted(seed_resources),
         "paths": [p.model_dump() for p in reasoning_paths],
-        "node_scores": [s.model_dump() for s in scored[:50]],
+        "node_scores": [s.model_dump() for s in scored[:top_k]],
+        "scoring": scoring_meta,
         "main_line": {
             "stages": max_depth,
             "actions": len(main_actions),

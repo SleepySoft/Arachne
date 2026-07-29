@@ -459,6 +459,42 @@ curl -X POST http://localhost:8005/api/v1/reasoning/execute \
 - 对象查询返回的 `suggestions` 只是模糊相似项，**不会自动进入执行阶段**。AI 必须显式从 `candidates` 中选择精确 ID。
 - 如果查询不到目标节点，说明数据缺失，应先补数据再推理。
 
+#### arachne-flow 关联推理评分（可插拔）
+
+arachne_flow 引擎的 association 任务支持按**目的**切换评分算法。同一张图不同问法会给出不同（甚至相反）的排名。详见 `docs/flow_scoring_design.md`。
+
+参数（放在 `parameters` 中）：
+- `purpose`：语义意图，绑定默认评分方法
+- `scoring_method`：显式覆盖评分方法（优先级高于 purpose）
+- `scoring`：scorer 专属调参，如 `{"damping": 0.9}`、`{"reach_direction": "forward"}`
+- `top_k`：返回 node_scores 条数（默认 50）
+
+| purpose | scoring_method | 含义 |
+|---|---|---|
+| `exposure`（默认） | degree | 市场暴露广度（度中心性） |
+| `supply_risk` | reach | 上游断供风险（下游 blast radius） |
+| `sourcing_dependency` | reach | 上游依赖广度（方向与 supply_risk 相反） |
+| `bottleneck` | betweenness | 关键卡点（介数中心性） |
+| `importance` | pagerank | 种子相对重要性（个性化 PageRank） |
+
+示例：
+
+```bash
+curl -X POST http://localhost:8005/api/v1/reasoning/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "task_id":"t2",
+    "task_type":"association",
+    "source_nodes":["chip"],
+    "engine":"arachne_flow",
+    "parameters":{"purpose":"bottleneck","top_k":20},
+    "constraints":{"max_depth":3,"traversal_direction":"both"},
+    "requested_outputs":["node_scores","temporary_graph"]
+  }'
+```
+
+结果 `result_payload.scoring` 返回实际使用的评分方法与 score_type；`node_scores` 每项含 `score_type` 与 `score_components`（含 `normalized` 归一化值）。
+
 ### 8. 查询图谱
 
 ```bash
