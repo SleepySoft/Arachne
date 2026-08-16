@@ -27,7 +27,10 @@ def resolve_nodes(base: str, industry: str | None, nodes: list[str]) -> list[str
     r = httpx.get(f"{base}/industries/{industry}/nodes", params={"page_size": 1000}, timeout=60)
     r.raise_for_status()
     d = r.json()
-    items = d.get("items") or d.get("nodes") or []
+    if isinstance(d, list):
+        items = d
+    else:
+        items = d.get("items") or d.get("nodes") or []
     ids = [(n.get("node_id") or n.get("id")) for n in items]
     return [i for i in ids if i]
 

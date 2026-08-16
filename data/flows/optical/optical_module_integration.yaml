@@ -1,0 +1,23 @@
+schema: arachne-flow/v0.1
+title: 'Optical flow: optical module integration'
+root_product: optical_module
+include:
+- optical_subassembly_packaging.yaml
+local: {}
+edges:
+# 光模块集成：TOSA + ROSA + DSP电芯片 + FAU → 光模块（封装与测试）
+- [tosa, component, act_integrate_optical_module]
+- [rosa, component, act_integrate_optical_module]
+- [optical_module_dsp_chip, component, act_integrate_optical_module]
+- [fiber_array_unit, component, act_integrate_optical_module]
+- [act_integrate_optical_module, ref, optical_module_packaging_testing]
+- [act_integrate_optical_module, primary_result, optical_module]
+# 技术变体（basis 衍生）：硅光模块 / LPO光模块
+- [optical_module, basis, act_integrate_silicon_photonics_module]
+- [silicon_photonics_chip, component, act_integrate_silicon_photonics_module]
+- [laser_chip, component, act_integrate_silicon_photonics_module]
+- [act_integrate_silicon_photonics_module, ref, optical_module_packaging_testing]
+- [act_integrate_silicon_photonics_module, primary_result, silicon_photonics_optical_module]
+- [optical_module, basis, act_integrate_lpo_module]
+- [act_integrate_lpo_module, ref, optical_module_packaging_testing]
+- [act_integrate_lpo_module, primary_result, lpo_optical_module]

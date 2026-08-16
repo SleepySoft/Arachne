@@ -1,0 +1,18 @@
+schema: arachne-flow/v0.1
+title: 'Optical flow: optical subassembly (TOSA/ROSA) packaging (shared)'
+root_product: tosa
+include: []
+local: {}
+edges:
+# 光发射组件（TOSA）：激光器芯片 + 光隔离器 + 精密光学元件 + 陶瓷管壳
+- [laser_chip, component, act_assemble_tosa]
+- [optical_isolator, component, act_assemble_tosa]
+- [precision_optical_element, component, act_assemble_tosa]
+- [optical_ceramic_package, component, act_assemble_tosa]
+- [act_assemble_tosa, ref, optical_subassembly_packaging]
+- [act_assemble_tosa, primary_result, tosa]
+# 光接收组件（ROSA）：光探测器芯片 + 陶瓷管壳
+- [photodetector_chip, component, act_assemble_rosa]
+- [optical_ceramic_package, component, act_assemble_rosa]
+- [act_assemble_rosa, ref, optical_subassembly_packaging]
+- [act_assemble_rosa, primary_result, rosa]

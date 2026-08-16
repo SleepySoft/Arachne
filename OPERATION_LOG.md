@@ -853,3 +853,14 @@ aluminum_ingot → electronic_aluminum_foil → etched_foil → formed_foil
   - 展开后自动把视野 fit 到 compound node 及其邻居。
   - 增强 `:parent` 样式：半透明蓝底、3px 虚线边框、加粗标签，让容器更明显。
 - **验证**：`npm run build` 通过。
+
+## 日期：2026-08-15
+
+### 光通信（光模块）产业调研与建库（A 股为主）
+
+- **环境修复**：backend venv 缺 PyJWT 导致后端起不来（`app/auth.py` 依赖），补装后正常；启动 Neo4j + 后端（16060）。
+- **产业图批次**（`data/stock_batches/graph_batch_optical_comm_001/002.json`）：26 新节点 + 37 边。升级草稿节点 `optical_module` 为 ACTIVE/HIGH；新建光芯片族（`optical_chip` 父类 + 激光器/EML/探测器/PLC/AWG/硅光子类，is_a/variant_of）、`inp_substrate`、`optical_module_dsp_chip`、光器件/组件（TOSA/ROSA/FAU/光隔离器/TFLN 调制器/MPO/精密光学元件/陶瓷管壳）、`optical_engine`、`co_packaged_optics`、硅光/LPO 光模块变体、`ethernet_switch`、3 个工艺节点（光组件封装/光模块封装与测试/光引擎集成）。拒绝项：`易中天`、`CPO概念股`（市场概念）；800G/1.6T 速率等级按规格属性处理不建节点。
+- **商业批次**（`data/stock_batches/business_batch_optical_comm_001/002.json`）：新行业 `optical_communication`（formal_industry）+ 30 映射 + 22 新公司 + 49 暴露；更新中际旭创（补 300308.SZ/ChiNext）、新易盛（补 ChiNext）、华工科技（补 000988.SZ/SZSE）等 4 家既有公司。A 股覆盖：中际旭创/新易盛/天孚通信/光迅科技/华工科技/源杰科技/仕佳光子/长光华芯/光库科技/太辰光/联特科技/剑桥科技/德科立/长芯博创/铭普光磁/腾景科技/中瓷电子/云南锗业/三安光电/亨通光电/中天科技/长飞光纤/烽火通信；国际：Coherent/Lumentum/Fabrinet（博通/迈威尔/英伟达复用既有）。
+- **arachne-flow**（`data/flows/optical/`，3 文件 + README）：`optical_subassembly_packaging.yaml`（shared）→ `optical_module_integration.yaml`（含硅光/LPO basis 衍生）、`cpo_integration.yaml`。3 个 METHOD 均为真实工艺节点（GraphRegistrationBatch 登记，非 PG-only）。preview 0 错误 → 重启后端 → 编译入库。
+- **验证**：行业子图 30 节点/37 边；flow 推理 `optical_module` association 20n/24e；`inno_light` cross_graph_context seeds=3/peers=9；`extract_flow_pg_gaps.py` 无光学相关缺口；暴露审计 43 家公司覆盖，仅 `ethernet_switch` 与 2 个工艺节点无公司挂接（已知缺口）。
+- **脚本修复**：`scripts/audit_node_company_exposures.py` 兼容 `/industries/{id}/nodes` 返回 list 的新格式。

@@ -1,0 +1,15 @@
+schema: arachne-flow/v0.1
+title: 'Optical flow: optical engine & CPO integration'
+root_product: co_packaged_optics
+include: []
+edges:
+# 光引擎：光芯片 + FAU 高度集成
+- [optical_chip, component, act_integrate_optical_engine]
+- [fiber_array_unit, component, act_integrate_optical_engine]
+- [act_integrate_optical_engine, ref, optical_engine_integration]
+- [act_integrate_optical_engine, primary_result, optical_engine]
+# CPO：光引擎与交换芯片侧共封装（以太网交换机为需求侧对接）
+- [optical_engine, component, act_integrate_cpo]
+- [ethernet_switch, requirement, act_integrate_cpo]
+- [act_integrate_cpo, ref, optical_engine_integration]
+- [act_integrate_cpo, primary_result, co_packaged_optics]
