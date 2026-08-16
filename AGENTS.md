@@ -191,7 +191,7 @@ backend/
 - Every response includes `X-Arachne-Scope` header; frontend StatsBar shows a read-only badge
 - `GET /integration/config` - **integration manifest** (Arachne-authoritative: auth contract, API surface, embed URL templates, scope model); separate prefix, hidden from OpenAPI, local/private-IP only
 - JWT config: `JWT_ISSUER`, `JWT_AUDIENCE`, `JWT_JWKS_URL`, `JWT_JWKS_REFRESH_SECONDS` env vars (used when `AUTH_MODE=jwt`)
-- **Full integration guide**: `docs/integration-guide.md` (AI-oriented, step-by-step)
+- **Full integration guide**: `docs/integration-guide.md` (AI-oriented, step-by-step); 设计思想与决策依据见 `docs/integration_design.md`（三级暴露粒度、默认只读、local bypass 陷阱、快照取舍）
 - JWT verification implemented: `AUTH_MODE=jwt` verifies Bearer JWT via JWKS (RS256); no token = read_only default; PyJWT required
 
 ---
