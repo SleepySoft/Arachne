@@ -8,7 +8,7 @@ local:
   lithium_battery_pack: 锂电池包
 edges:
 # 电池包：电芯+BMS芯片+结构件 -> 锂电池包
-- [battery_cell, component, act_assemble_battery_pack]
+- [lithium_ion_battery, component, act_assemble_battery_pack]
 - [chip, component, act_assemble_battery_pack]
 - [battery_structure_part, component, act_assemble_battery_pack]
 - [act_assemble_battery_pack, ref, battery_pack_assembly]

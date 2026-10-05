@@ -1,0 +1,55 @@
+{
+  "batch_id": "batch_lithium_ion_battery_process_20261005",
+  "task_description": "归一锂离子电池电芯流程：沿用已有 lithium_ion_battery 节点，将电芯制造登记为其稳定工艺，并补足工艺输出关系。",
+  "nodes_to_upsert": [
+    {
+      "node_id": "battery_cell_production",
+      "canonical_name_zh": "锂离子电池电芯制造",
+      "canonical_name_en": "lithium-ion battery cell production",
+      "aliases": ["电芯制造", "锂电池电芯生产"],
+      "definition": "将正极、负极、隔膜和电解液等部件经电极制造、电芯装配、注液、化成和分容等工序制成可充放电锂离子电池电芯的制造过程。",
+      "entity_type": "process",
+      "evidence": [
+        {
+          "source_title": "DOE/EA-1709: Lithium-ion polymer battery cell manufacturing process",
+          "source_url": "https://www.energy.gov/documents/ea-1709-fea-2010pdf",
+          "quote": "The cell manufacturing process is highly automated and consists of three main operations, including Electrode Manufacturing; Cell Assembly; and Formation and Grading."
+        }
+      ],
+      "confidence": "HIGH",
+      "status": "ACTIVE"
+    }
+  ],
+  "edges_to_upsert": [
+    {
+      "edge_namespace": "industrial_flow",
+      "edge_id": "battery_cell_production_to_lithium_ion_battery",
+      "from_node": "battery_cell_production",
+      "to_node": "lithium_ion_battery",
+      "edge_type": "process_output",
+      "description": "锂离子电池电芯制造工艺产出可充放电的锂离子电池电芯。",
+      "evidence": [
+        {
+          "source_title": "DOE/EA-1709: Lithium-ion polymer battery cell manufacturing process",
+          "source_url": "https://www.energy.gov/documents/ea-1709-fea-2010pdf",
+          "quote": "The cell manufacturing process is highly automated and consists of three main operations, including Electrode Manufacturing; Cell Assembly; and Formation and Grading."
+        }
+      ],
+      "confidence": "HIGH"
+    }
+  ],
+  "rejected_or_pending": [
+    {
+      "term": "battery_cell",
+      "reason": "与现有 lithium_ion_battery 的别名“锂电芯”指代同一锂离子电池电芯实体，重复新建会割裂流程和公司暴露。",
+      "suggested_action": "merge_to_existing",
+      "evidence": [
+        {
+          "source_title": "现有节点 lithium_ion_battery",
+          "quote": "aliases 包含“锂电芯”。"
+        }
+      ],
+      "notes": "流程资源统一使用 lithium_ion_battery。"
+    }
+  ]
+}

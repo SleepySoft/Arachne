@@ -1,10 +1,10 @@
 schema: arachne-flow/v0.1
 title: 'New energy flow: battery cell manufacturing (shared)'
-root_product: battery_cell
+root_product: lithium_ion_battery
 include: []
 local:
   act_produce_battery_cell: 电芯制造
-  battery_cell: 电芯
+  lithium_ion_battery: 锂离子电池（电芯）
 edges:
 # 电芯制造：正极+负极+电解液+隔膜 -> 电芯
 - [cathode_material, component, act_produce_battery_cell]
@@ -16,4 +16,4 @@ edges:
 # 桥接边：铝箔（上游）用于正极集流体
 - [aluminum, component, act_produce_battery_cell]
 - [act_produce_battery_cell, ref, battery_cell_production]
-- [act_produce_battery_cell, primary_result, battery_cell]
+- [act_produce_battery_cell, primary_result, lithium_ion_battery]
