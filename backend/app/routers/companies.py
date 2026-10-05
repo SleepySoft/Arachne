@@ -49,6 +49,23 @@ async def list_companies(
     return {"total": total, "page": page, "page_size": page_size, "items": items}
 
 
+@router.get("/resolve/by-stock-code", response_model=Company)
+async def resolve_company_by_stock_code(stock_code: str = Query(..., min_length=1, max_length=32)):
+    """Resolve one company by an exact, normalized stock code."""
+    companies = await company_storage.find_companies_by_stock_code(stock_code)
+    if not companies:
+        raise HTTPException(status_code=404, detail="Company not found for stock code")
+    if len(companies) > 1:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "message": "Multiple companies share this stock code",
+                "company_ids": [company.company_id for company in companies],
+            },
+        )
+    return companies[0]
+
+
 @router.get("/{company_id}", response_model=Company)
 async def get_company(company_id: str):
     company = await company_storage.get_company(company_id)

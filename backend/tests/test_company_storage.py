@@ -160,6 +160,19 @@ class TestCompanyCRUD:
         assert updated is not None
         assert updated.listing_market == "HKEX"
 
+    async def test_find_by_normalized_stock_code(self, sample_company):
+        if not await _postgres_available():
+            pytest.skip("PostgreSQL not available")
+
+        await company_storage.create_company(sample_company)
+        matches = await company_storage.find_companies_by_stock_code(" 601012.sh ")
+        assert any(c.company_id == sample_company.company_id for c in matches)
+
+
+async def test_normalize_stock_code():
+    assert company_storage.normalize_stock_code(" 601012.sh ") == "601012.SH"
+    assert company_storage.normalize_stock_code("00 700.hk") == "00700.HK"
+
 
 class TestExposureCRUD:
     async def test_create_and_list_by_company(self, sample_company):

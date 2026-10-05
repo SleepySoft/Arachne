@@ -76,6 +76,11 @@ async def get_integration_config(request: Request):
                     "path": f"{_settings.API_V1_STR}/nodes/fuzzy-search",
                     "scope": "read_only",
                 },
+                "company_by_stock_code": {
+                    "method": "GET",
+                    "path": f"{_settings.API_V1_STR}/companies/resolve/by-stock-code?stock_code={{stock_code}}",
+                    "scope": "read_only",
+                },
                 "published_views": {
                     "method": "GET",
                     "path": f"{_settings.API_V1_STR}/published-views",

@@ -8,6 +8,7 @@ All functions return Pydantic models from company_schema.
 from __future__ import annotations
 
 import json
+import re
 from typing import List, Optional, Tuple
 from uuid import UUID
 
@@ -72,6 +73,10 @@ def _row_to_exposure(row: dict) -> CompanyNodeExposure:
 # ---------------------------------------------------------------------------
 # Company CRUD
 # ---------------------------------------------------------------------------
+
+def normalize_stock_code(stock_code: str) -> str:
+    """Normalize a market-qualified stock code for exact matching."""
+    return re.sub(r"\s+", "", stock_code).upper()
 
 async def create_company(data: Company) -> Company:
     pool = await get_postgres_pool()
@@ -145,6 +150,33 @@ async def get_company_by_name_zh(name_zh: str) -> Optional[Company]:
         if row is None:
             return None
         return _row_to_company(row)
+
+
+async def find_companies_by_stock_code(stock_code: str) -> List[Company]:
+    """Return companies whose stock_codes contain the normalized exact code."""
+    normalized = normalize_stock_code(stock_code)
+    if not normalized:
+        return []
+
+    pool = await get_postgres_pool()
+    if pool is None:
+        return []
+
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT *
+            FROM companies
+            WHERE EXISTS (
+                SELECT 1
+                FROM unnest(COALESCE(stock_codes, ARRAY[]::TEXT[])) AS code
+                WHERE UPPER(REGEXP_REPLACE(code, '\\s+', '', 'g')) = $1
+            )
+            ORDER BY company_id
+            """,
+            normalized,
+        )
+        return [_row_to_company(row) for row in rows]
 
 
 async def update_company(company_id: str, data: dict) -> Optional[Company]:
