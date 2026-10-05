@@ -94,8 +94,8 @@ if (Test-Port 3000) {
     # FinanceDashboard embeds this app below /arachne/.  Configure Vite's asset
     # and API roots before it starts so embed.html never requests the host
     # application's /src or /api paths.
-    $frontendCommand = "/c set VITE_PUBLIC_BASE=/arachne/^& set VITE_API_BASE=/arachne/api/v1^& npx vite --host"
-    Start-Process -FilePath "cmd.exe" -ArgumentList $frontendCommand -WindowStyle Hidden -WorkingDirectory $frontendDir
+    $frontendCommand = 'set "VITE_PUBLIC_BASE=/arachne/" && set "VITE_API_BASE=/arachne/api/v1" && npx vite --host'
+    Start-Process -FilePath "cmd.exe" -ArgumentList @("/d", "/c", $frontendCommand) -WindowStyle Hidden -WorkingDirectory $frontendDir
     if (-not (Wait-ForPort 3000 "Frontend" 30)) { exit 1 }
 }
 
