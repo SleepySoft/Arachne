@@ -121,7 +121,7 @@ export function ReasoningResultViewer({
   };
 
   return (
-            <>
+            <div className="flex h-full min-h-0 flex-col">
               {/* Tabs */}
               <div className="flex items-center gap-1 border-b border-slate-800 bg-slate-900/50 px-4 py-2">
                 {(["story", "overview", ...Array.from(availableTabs).filter((t) => t !== "overview" && t !== "story")] as ResultTab[])
@@ -143,7 +143,7 @@ export function ReasoningResultViewer({
               </div>
 
               {/* Tab content */}
-              <div className="flex-1 overflow-auto p-6">
+              <div className="min-h-0 flex-1 overflow-auto p-6">
                 {result.status !== "success" && (
                   <NoResultView
                     result={result}
@@ -281,7 +281,7 @@ export function ReasoningResultViewer({
                   <CompanyExposuresView data={resultCompanyExposures} />
                 )}
               </div>
-            </>
+            </div>
   );
 }
 
