@@ -168,6 +168,17 @@ class TestCompanyCRUD:
         matches = await company_storage.find_companies_by_stock_code(" 601012.sh ")
         assert any(c.company_id == sample_company.company_id for c in matches)
 
+    async def test_find_by_exact_name_or_alias(self, sample_company):
+        if not await _postgres_available():
+            pytest.skip("PostgreSQL not available")
+
+        await company_storage.create_company(sample_company)
+        by_name = await company_storage.find_companies_by_exact_name(sample_company.name_zh)
+        by_alias = await company_storage.find_companies_by_exact_name("隆基股份")
+
+        assert any(c.company_id == sample_company.company_id for c in by_name)
+        assert any(c.company_id == sample_company.company_id for c in by_alias)
+
 
 async def test_normalize_stock_code():
     assert company_storage.normalize_stock_code(" 601012.sh ") == "601012.SH"

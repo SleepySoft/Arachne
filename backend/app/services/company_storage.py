@@ -179,6 +179,35 @@ async def find_companies_by_stock_code(stock_code: str) -> List[Company]:
         return [_row_to_company(row) for row in rows]
 
 
+async def find_companies_by_exact_name(company_name: str) -> List[Company]:
+    """Return companies with an exact canonical name or alias match."""
+    normalized = company_name.strip()
+    if not normalized:
+        return []
+
+    pool = await get_postgres_pool()
+    if pool is None:
+        return []
+
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT *
+            FROM companies
+            WHERE LOWER(BTRIM(name_zh)) = LOWER(BTRIM($1))
+               OR LOWER(BTRIM(COALESCE(name_en, ''))) = LOWER(BTRIM($1))
+               OR EXISTS (
+                    SELECT 1
+                    FROM unnest(COALESCE(aliases, ARRAY[]::TEXT[])) AS alias
+                    WHERE LOWER(BTRIM(alias)) = LOWER(BTRIM($1))
+               )
+            ORDER BY company_id
+            """,
+            normalized,
+        )
+        return [_row_to_company(row) for row in rows]
+
+
 async def update_company(company_id: str, data: dict) -> Optional[Company]:
     pool = await get_postgres_pool()
     if pool is None:

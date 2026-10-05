@@ -50,16 +50,23 @@ async def list_companies(
 
 
 @router.get("/resolve/by-stock-code", response_model=Company)
-async def resolve_company_by_stock_code(stock_code: str = Query(..., min_length=1, max_length=32)):
-    """Resolve one company by an exact, normalized stock code."""
+async def resolve_company_by_stock_code(
+    stock_code: str = Query(..., min_length=1, max_length=32),
+    company_name: Optional[str] = Query(None, min_length=1, max_length=200),
+):
+    """Resolve by stock code, then optionally by an exact company name or alias."""
     companies = await company_storage.find_companies_by_stock_code(stock_code)
+    match_key = "stock code"
+    if not companies and company_name:
+        companies = await company_storage.find_companies_by_exact_name(company_name)
+        match_key = "company name"
     if not companies:
-        raise HTTPException(status_code=404, detail="Company not found for stock code")
+        raise HTTPException(status_code=404, detail="Company not found for stock code or exact name")
     if len(companies) > 1:
         raise HTTPException(
             status_code=409,
             detail={
-                "message": "Multiple companies share this stock code",
+                "message": f"Multiple companies share this {match_key}",
                 "company_ids": [company.company_id for company in companies],
             },
         )
