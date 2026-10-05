@@ -2,29 +2,34 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 import { defineConfig } from "vite";
 
-export default defineConfig({
-  plugins: [react()],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
-  },
-  server: {
-    port: 3000,
-    proxy: {
-      "/api": {
-        target: "http://localhost:16060",
-        changeOrigin: true,
+export default defineConfig(() => {
+  const publicBase = process.env.VITE_PUBLIC_BASE || "/";
+
+  return {
+    base: publicBase,
+    plugins: [react()],
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
       },
     },
-  },
-  build: {
-    outDir: "dist",
-    rollupOptions: {
-      input: {
-        main: path.resolve(__dirname, "index.html"),
-        embed: path.resolve(__dirname, "embed.html"),
+    server: {
+      port: 3000,
+      proxy: {
+        "/api": {
+          target: "http://localhost:16060",
+          changeOrigin: true,
+        },
       },
     },
-  },
+    build: {
+      outDir: "dist",
+      rollupOptions: {
+        input: {
+          main: path.resolve(__dirname, "index.html"),
+          embed: path.resolve(__dirname, "embed.html"),
+        },
+      },
+    },
+  };
 });
