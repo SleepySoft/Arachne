@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from datetime import date
 from uuid import uuid4
 
 import pytest
@@ -264,6 +265,28 @@ class TestExposureCRUD:
         items, total = await company_storage.list_exposures_by_node("polysilicon")
         assert total >= 1
         assert any(e.exposure_id == exp.exposure_id for e in items)
+
+    async def test_update_accepts_json_serialized_as_of_date(self, sample_company):
+        if not await _postgres_available():
+            pytest.skip("PostgreSQL not available")
+
+        await company_storage.create_company(sample_company)
+        exp = CompanyNodeExposure(
+            exposure_id=f"test_exp_{uuid4().hex[:6]}",
+            company_id=sample_company.company_id,
+            node_id="lithium_ion_battery",
+            activity_type=CompanyActivityType.PRODUCE,
+            as_of_date=date(2026, 10, 5),
+            is_test=True,
+        )
+        await company_storage.create_exposure(exp)
+
+        updated = await company_storage.update_exposure(
+            exp.exposure_id, {"as_of_date": "2026-10-06"}
+        )
+
+        assert updated is not None
+        assert updated.as_of_date == date(2026, 10, 6)
 
     async def test_cascade_delete_company_deletes_exposures(self, sample_company):
         if not await _postgres_available():

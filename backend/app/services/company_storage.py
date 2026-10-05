@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import date
 from typing import List, Optional, Tuple
 from uuid import UUID
 
@@ -404,6 +405,12 @@ async def update_exposure(exposure_id: str, data: dict) -> Optional[CompanyNodeE
                 return e
             return e.model_dump(mode='json')
         fields["evidence"] = json.dumps([_evidence_item_to_json(e) for e in fields["evidence"]])
+
+    # Batch updates originate from Pydantic's JSON-mode serialization, which
+    # represents dates as ISO strings. asyncpg expects a Python date for DATE
+    # columns, so normalize that boundary here as well as for direct callers.
+    if isinstance(fields.get("as_of_date"), str):
+        fields["as_of_date"] = date.fromisoformat(fields["as_of_date"])
 
     set_clauses = [f"{k} = ${i + 2}" for i, k in enumerate(fields.keys())]
     sql = f"""
