@@ -38,6 +38,8 @@ def test_config_returns_manifest_for_local(client):
     assert "api" in data
     assert "embed" in data
     assert "published_views" in data
+    company_resolver = data["api"]["key_endpoints"]["company_by_stock_code"]
+    assert "company_name" in company_resolver["optional_query"]
 
 
 def test_config_includes_read_only_post_paths(client):

@@ -79,6 +79,9 @@ async def get_integration_config(request: Request):
                 "company_by_stock_code": {
                     "method": "GET",
                     "path": f"{_settings.API_V1_STR}/companies/resolve/by-stock-code?stock_code={{stock_code}}",
+                    "optional_query": {
+                        "company_name": "exact canonical name or alias fallback when stock code is absent",
+                    },
                     "scope": "read_only",
                 },
                 "published_views": {

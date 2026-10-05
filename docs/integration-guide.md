@@ -269,7 +269,7 @@ https://arachne-host/embed.html?view=4c336bbd-2577-4ec8-9caa-4052b0fd6a65
 | GET | `/api/v1/published-views/{id}` | 获取已发布视图 |
 | GET | `/api/v1/industries` | 列出行业 |
 | GET | `/api/v1/companies` | 列出公司 |
-| GET | `/api/v1/companies/resolve/by-stock-code?stock_code=002430.SZ` | 按规范化证券代码精确解析公司 |
+| GET | `/api/v1/companies/resolve/by-stock-code?stock_code=300346.SZ&company_name=南大光电` | 优先按规范化证券代码精确解析；代码缺失时可按公司标准名称或别名精确兜底 |
 
 ### 6.2 写端点（需要 `scope: read_write`）
 
