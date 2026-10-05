@@ -20,15 +20,18 @@ function Wait-ForPort($port, $label, $timeoutSec = 60) {
     return $false
 }
 
-# Stop existing backend process(es)
-$procs = Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*uvicorn*' }
-foreach ($proc in $procs) {
-    Write-Host "Stopping backend PID $($proc.ProcessId)" -ForegroundColor Yellow
+# Stop only the process listening on Arachne's backend port. Other projects may
+# run Uvicorn on the same machine and must not be interrupted.
+$connections = Get-NetTCPConnection -LocalPort 16060 -State Listen -ErrorAction SilentlyContinue |
+    Where-Object { $_.OwningProcess -ne 0 }
+$processIds = $connections | Select-Object -ExpandProperty OwningProcess -Unique
+foreach ($processId in $processIds) {
+    Write-Host "Stopping Arachne backend PID $processId" -ForegroundColor Yellow
     try {
-        Stop-Process -Id $proc.ProcessId -Force -ErrorAction Stop
+        Stop-Process -Id $processId -Force -ErrorAction Stop
     } catch {
         # 进程可能已自行退出，忽略
-        Write-Host "  PID $($proc.ProcessId) already exited" -ForegroundColor DarkGray
+        Write-Host "  PID $processId already exited" -ForegroundColor DarkGray
     }
 }
 
