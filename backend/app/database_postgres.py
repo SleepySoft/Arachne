@@ -548,4 +548,31 @@ async def init_postgres_tables() -> None:
             """
         )
 
+        # Shared canvas views (separate from embeddable reasoning published_views)
+        await conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS server_views (
+                view_id      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                name         VARCHAR(256) NOT NULL,
+                workspace    VARCHAR(16) NOT NULL CHECK (workspace IN ('industrial', 'company')),
+                view         JSONB NOT NULL,
+                is_default   BOOLEAN NOT NULL DEFAULT FALSE,
+                created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+            """
+        )
+        await conn.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_server_views_one_default_per_workspace
+            ON server_views(workspace) WHERE is_default
+            """
+        )
+        await conn.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_server_views_workspace_updated
+            ON server_views(workspace, updated_at DESC)
+            """
+        )
+
 

@@ -34,6 +34,7 @@ from app.routers import (
     published_views,
     query,
     reasoning,
+    server_views,
 )
 
 settings = get_settings()
@@ -120,6 +121,7 @@ app.include_router(explore.router, prefix=f"{settings.API_V1_STR}/explore", tags
 app.include_router(query.router, prefix=f"{settings.API_V1_STR}/query", tags=["Query"])
 app.include_router(reasoning.router, prefix=f"{settings.API_V1_STR}/reasoning", tags=["Reasoning"])
 app.include_router(published_views.router, prefix=f"{settings.API_V1_STR}/published-views", tags=["Published Views"])
+app.include_router(server_views.router, prefix=f"{settings.API_V1_STR}/server-views", tags=["Server Views"])
 app.include_router(admin.router, prefix=f"{settings.API_V1_STR}/admin", tags=["Admin"])
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["Auth"])
 app.include_router(integration.router, prefix="/integration", tags=["Integration"])
