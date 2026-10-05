@@ -91,7 +91,11 @@ if (Test-Port 3000) {
     Write-Host "  Frontend already running on port 3000" -ForegroundColor Yellow
 } else {
     $frontendDir = Join-Path $projectRoot "frontend"
-    Start-Process -FilePath "cmd.exe" -ArgumentList "/c npx vite --host" -WindowStyle Hidden -WorkingDirectory $frontendDir
+    # FinanceDashboard embeds this app below /arachne/.  Configure Vite's asset
+    # and API roots before it starts so embed.html never requests the host
+    # application's /src or /api paths.
+    $frontendCommand = "/c set VITE_PUBLIC_BASE=/arachne/^& set VITE_API_BASE=/arachne/api/v1^& npx vite --host"
+    Start-Process -FilePath "cmd.exe" -ArgumentList $frontendCommand -WindowStyle Hidden -WorkingDirectory $frontendDir
     if (-not (Wait-ForPort 3000 "Frontend" 30)) { exit 1 }
 }
 
@@ -101,6 +105,6 @@ Write-Host "All services are running!" -ForegroundColor Green
 Write-Host "  Neo4j Browser:  http://localhost:7474"
 Write-Host "  PostgreSQL:     localhost:5433"
 Write-Host "  Backend API:    http://localhost:16060/docs"
-Write-Host "  Frontend App:   http://localhost:3000"
+Write-Host "  Frontend App:   http://localhost:3000/arachne/"
 Write-Host ""
 Write-Host "To stop everything, run: .\scripts\stop-all.ps1" -ForegroundColor DarkGray
