@@ -298,10 +298,10 @@ export default function App() {
       appliedDefaults.current.industrial = true;
       return;
     }
-    if (!catalogsLoaded || !defaultIndustrialView) return;
+    if (mainView !== "industrial_graph" || !catalogsLoaded || !defaultIndustrialView) return;
     appliedDefaults.current.industrial = true;
     loadIndustrialView(defaultIndustrialView.view);
-  }, [catalogsLoaded, defaultIndustrialView, loadIndustrialView, loadedIndustrialView]);
+  }, [catalogsLoaded, defaultIndustrialView, loadIndustrialView, loadedIndustrialView, mainView]);
 
   useEffect(() => {
     if (appliedDefaults.current.company) return;
@@ -309,10 +309,10 @@ export default function App() {
       appliedDefaults.current.company = true;
       return;
     }
-    if (!defaultCompanyView) return;
+    if (mainView !== "company_graph" || !defaultCompanyView) return;
     appliedDefaults.current.company = true;
     loadCompanyView(defaultCompanyView.view);
-  }, [defaultCompanyView, loadCompanyView, loadedCompanyView]);
+  }, [defaultCompanyView, loadCompanyView, loadedCompanyView, mainView]);
 
   const handleSaveCurrentView = useCallback(() => {
     const name = window.prompt("为当前视图命名：");
