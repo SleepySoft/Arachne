@@ -238,6 +238,21 @@ https://arachne-host/embed.html?view=4c336bbd-2577-4ec8-9caa-4052b0fd6a65
 
 可选 `result_snapshot` 字段缓存推理结果，embed 页面直接展示无需重新推理（`&refresh=1` 可强制刷新）。
 
+### 5.4 服务端画布视图
+
+服务端画布视图保存主应用的完整布局状态，与用于嵌入推理结果的 `published_views` 分开。读取接口对所有用户开放，创建、更新、删除和设置默认视图需要 `read_write` 权限。本地浏览器视图仍独立保留。
+
+| 方法 | 路径 | 权限 | 说明 |
+|------|------|------|------|
+| GET | `/api/v1/server-views?workspace=industrial` | read_only | 列出指定工作区的共享视图 |
+| GET | `/api/v1/server-views/default?workspace=company` | read_only | 获取工作区默认视图 |
+| POST | `/api/v1/server-views` | read_write | 推送一个本地视图 |
+| PUT | `/api/v1/server-views/{id}` | read_write | 重命名或更新视图内容 |
+| DELETE | `/api/v1/server-views/{id}` | read_write | 删除视图 |
+| PUT | `/api/v1/server-views/{id}/default` | read_write | 设为该工作区默认视图 |
+
+主前端的“载入”菜单会同时列出本地和服务端视图；默认视图在应用首次加载对应工作区时自动应用。
+
 ---
 
 ## 6. API 调用

@@ -86,6 +86,11 @@ async def get_integration_config(request: Request):
                     "path": f"{_settings.API_V1_STR}/published-views",
                     "scope": "read_only",
                 },
+                "server_views": {
+                    "method": "GET",
+                    "path": f"{_settings.API_V1_STR}/server-views?workspace={{workspace}}",
+                    "scope": "read_only",
+                },
                 "create_node": {
                     "method": "POST",
                     "path": f"{_settings.API_V1_STR}/nodes",
@@ -115,5 +120,15 @@ async def get_integration_config(request: Request):
             "get": f"GET {_settings.API_V1_STR}/published-views/{{view_id}}",
             "list": f"GET {_settings.API_V1_STR}/published-views",
             "note": "Store params + optional result_snapshot; embed page loads by view_id for stable short URLs.",
+        },
+        "server_views": {
+            "list": f"GET {_settings.API_V1_STR}/server-views?workspace={{workspace}}",
+            "get_default": f"GET {_settings.API_V1_STR}/server-views/default?workspace={{workspace}}",
+            "create": f"POST {_settings.API_V1_STR}/server-views",
+            "update": f"PUT {_settings.API_V1_STR}/server-views/{{view_id}}",
+            "delete": f"DELETE {_settings.API_V1_STR}/server-views/{{view_id}}",
+            "set_default": f"PUT {_settings.API_V1_STR}/server-views/{{view_id}}/default",
+            "workspaces": ["industrial", "company"],
+            "note": "Shared canvas layouts. Reads are public; mutations require read_write scope.",
         },
     }
