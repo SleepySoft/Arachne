@@ -26,6 +26,10 @@ interface ReasoningResultViewerProps {
   seedLabels: string[];
   onDeepDive: (nodeId: string, label: string) => void;
   onRunWithEngine: (engine: string) => void;
+  /** Optional replacement for the local reasoning graph in the visual tab. */
+  fullGraph?: ReactNode;
+  /** Prefer the full graph when a result first becomes available. */
+  preferFullGraph?: boolean;
 }
 
 export function ReasoningResultViewer({
@@ -34,6 +38,8 @@ export function ReasoningResultViewer({
   seedLabels,
   onDeepDive,
   onRunWithEngine,
+  fullGraph,
+  preferFullGraph = false,
 }: ReasoningResultViewerProps) {
   const [activeTab, setActiveTab] = useState<ResultTab>("overview");
   const taskType = (result.task_type as TaskType) || "association";
@@ -44,8 +50,8 @@ export function ReasoningResultViewer({
       ((payload.paths as unknown[] | undefined)?.length ?? 0) > 0 ||
       ((payload.node_scores as unknown[] | undefined)?.length ?? 0) > 0;
     const hasGraph = !!payload.subgraph || !!payload.temporary_graph;
-    setActiveTab(hasStory ? "story" : hasGraph ? "visual" : "overview");
-  }, [result]);
+    setActiveTab(preferFullGraph && hasGraph ? "visual" : hasStory ? "story" : hasGraph ? "visual" : "overview");
+  }, [result, preferFullGraph]);
 
   const resultGraph: ReasoningSubgraph | TemporaryReasoningGraph | null = useMemo(() => {
     if (!result) return null;
@@ -115,7 +121,7 @@ export function ReasoningResultViewer({
   const tabLabel = (t: ResultTab) => {
     if (t === "story") return "解读";
     if (t === "overview") return "概览";
-    if (t === "visual") return "可视化图";
+    if (t === "visual") return fullGraph ? "全量图谱" : "可视化图";
     if (t === "company_exposures") return "公司暴露";
     return OUTPUT_OPTIONS.find((o) => o.value === t)?.label || t;
   };
@@ -236,9 +242,9 @@ export function ReasoningResultViewer({
                 </div>
                 )}
 
-                {activeTab === "visual" && resultGraph && (
+                {activeTab === "visual" && (fullGraph || resultGraph) && (
                   <div className="flex h-[calc(100%-1rem)] flex-col gap-2">
-                    {"temp_graph_id" in resultGraph && resultNodeCounts && (
+                    {!fullGraph && "temp_graph_id" in resultGraph! && resultNodeCounts && (
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-[10px] text-slate-400">
                         <span>
                           主线 <b className="text-slate-200">{resultNodeCounts.main ?? 0}</b>
@@ -262,9 +268,11 @@ export function ReasoningResultViewer({
                         </span>
                       </div>
                     )}
-                    <div className="min-h-0 flex-1 rounded-lg border border-slate-800 bg-slate-900/60 p-2">
-                      <ResultGraph graph={resultGraph} isTemp={"temp_graph_id" in resultGraph} />
-                    </div>
+                    {fullGraph ? fullGraph : (
+                      <div className="min-h-0 flex-1 rounded-lg border border-slate-800 bg-slate-900/60 p-2">
+                        <ResultGraph graph={resultGraph!} isTemp={"temp_graph_id" in resultGraph!} />
+                      </div>
+                    )}
                   </div>
                 )}
 

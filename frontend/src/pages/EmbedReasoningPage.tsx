@@ -16,6 +16,7 @@ import {
 import { FLOW_OUTPUTS, DEFAULT_OUTPUTS } from "@/components/reasoning/config";
 import { cn, Badge } from "@/components/reasoning/ui";
 import { ReasoningResultViewer } from "@/components/reasoning/ReasoningResultViewer";
+import { GraphCanvas } from "@/components/GraphCanvas";
 
 interface SeedItem {
   object_id: string;
@@ -77,6 +78,47 @@ function toSearchParams(obj: Record<string, unknown>): URLSearchParams {
     if (v != null) sp.set(k, String(v));
   }
   return sp;
+}
+
+const EMBED_GRAPH_FILTERS = {
+  edgeNamespaces: [],
+  edgeTypes: [],
+  entityTypes: [],
+  status: [],
+  confidence: [],
+  showIsA: true,
+  showPartOf: true,
+  showWeakOntology: true,
+  showDerivedFrom: true,
+};
+
+function companyHighlightNodeIds(result: ReasoningResultEnvelope): string[] {
+  const context = result.result_payload.company_context as
+    | { categories?: { seed_nodes?: unknown } }
+    | undefined;
+  const nodes = context?.categories?.seed_nodes;
+  return Array.isArray(nodes) ? nodes.filter((node): node is string => typeof node === "string") : [];
+}
+
+function EmbeddedCompanyGraph({ nodeIds }: { nodeIds: string[] }) {
+  return (
+    <div className="flex h-full min-h-[420px] flex-col gap-2">
+      <div className="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-xs text-slate-400">
+        显示 Arachne 流程图的全部节点；黄色边框标记该公司的产业暴露节点（{nodeIds.length} 个）。
+      </div>
+      <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-slate-800 bg-slate-900/60 p-2">
+        <GraphCanvas
+          engine="arachne_flow"
+          flowMergeMode="method"
+          filters={EMBED_GRAPH_FILTERS}
+          highlightNodeIds={nodeIds}
+          preserveContextOnHighlight
+          onNodeClick={() => undefined}
+          onEdgeClick={() => undefined}
+        />
+      </div>
+    </div>
+  );
 }
 
 export function EmbedReasoningPage() {
@@ -211,6 +253,7 @@ export function EmbedReasoningPage() {
   );
 
   const isFlowEngine = config?.engine === "arachne_flow";
+  const highlightNodeIds = result ? companyHighlightNodeIds(result) : [];
   const title =
     config?.title ||
     (seeds.length > 0 ? seeds.map((s) => s.label).join("、") : "Arachne 推理");
@@ -260,6 +303,12 @@ export function EmbedReasoningPage() {
             seedLabels={seeds.map((s) => s.label)}
             onDeepDive={handleDeepDive}
             onRunWithEngine={handleRunWithEngine}
+            fullGraph={
+              isFlowEngine && config?.taskType === "cross_graph_context"
+                ? <EmbeddedCompanyGraph nodeIds={highlightNodeIds} />
+                : undefined
+            }
+            preferFullGraph={isFlowEngine && config?.taskType === "cross_graph_context"}
           />
         )}
       </div>

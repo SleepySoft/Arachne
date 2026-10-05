@@ -360,6 +360,8 @@ interface GraphCanvasProps {
   };
   highlightNodeId?: string;
   highlightNodeIds?: string[];
+  /** Keep non-highlighted nodes at their normal opacity while marking a focus set. */
+  preserveContextOnHighlight?: boolean;
   sourceData?: { nodes: IndustrialNode[]; edges: GraphEdge[] };
   editMode?: EditMode;
   connectSourceNodeId?: string | null;
@@ -744,6 +746,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     filters,
     highlightNodeId,
     highlightNodeIds,
+    preserveContextOnHighlight = false,
     sourceData,
     restoredPositions,
     restoredCamera,
@@ -3103,13 +3106,15 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         // Also highlight edges between selected nodes
         const targetEdges = targets.edgesWith(targets);
         targetEdges.addClass("highlighted");
-        cy.elements().not(targets).not(targetEdges).addClass("dimmed");
+        if (!preserveContextOnHighlight) {
+          cy.elements().not(targets).not(targetEdges).addClass("dimmed");
+        }
         // 仅高亮，不移动/缩放相机
       }
     }
     // loading 变为 false（画布初始化/重挂载完成）时重走高亮，
     // 否则 flow 模式下选择流程文件导致画布重建后行业/公司高亮会丢失。
-  }, [highlightNodeIds, loading]);
+  }, [highlightNodeIds, loading, preserveContextOnHighlight]);
 
   return (
     <div className="relative h-full w-full bg-slate-950">
