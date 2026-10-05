@@ -91,3 +91,13 @@ export interface SavedViewFile {
   version: number;
   views: SavedView[];
 }
+
+export interface ServerView {
+  view_id: string;
+  name: string;
+  workspace: WorkspaceType;
+  view: SavedView;
+  is_default: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+}

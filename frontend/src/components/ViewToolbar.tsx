@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Download, FolderOpen, Save, Settings2, Undo2, Upload } from "lucide-react";
+import { useServerViews } from "@/hooks/useServerViews";
 import { SavedView, WorkspaceType } from "@/types/view";
 
 interface ViewToolbarProps {
@@ -41,6 +42,7 @@ export function ViewToolbar({
 }: ViewToolbarProps) {
   const { viewsForWorkspace, saveView, importViews, exportViews } = savedViews;
   const views = viewsForWorkspace(workspace);
+  const serverViews = useServerViews(workspace);
   const [open, setOpen] = useState(false);
   const [savePromptOpen, setSavePromptOpen] = useState(false);
   const [name, setName] = useState("");
@@ -113,9 +115,9 @@ export function ViewToolbar({
       >
         <FolderOpen className="h-3.5 w-3.5" />
         <span>载入</span>
-        {views.length > 0 && (
+        {views.length + (serverViews.data?.length ?? 0) > 0 && (
           <span className="ml-0.5 rounded-full bg-slate-700 px-1.5 py-0 text-[10px] text-slate-300">
-            {views.length}
+            {views.length + (serverViews.data?.length ?? 0)}
           </span>
         )}
       </button>
@@ -166,10 +168,8 @@ export function ViewToolbar({
     <>
       {open && (
         <div className="absolute left-0 top-full z-50 mt-2 w-64 rounded-lg border border-slate-700 bg-slate-900/95 p-2 shadow-xl backdrop-blur">
-          <div className="mb-1 px-1 text-xs font-medium text-slate-400">已保存视图</div>
-          {views.length === 0 ? (
-            <div className="px-1 py-2 text-xs text-slate-500">暂无保存的视图</div>
-          ) : (
+          <div className="mb-1 px-1 text-xs font-medium text-slate-400">本地视图</div>
+          {views.length > 0 ? (
             <ul className="max-h-60 overflow-auto">
               {views.map((view) => (
                 <li key={view.id}>
@@ -189,7 +189,37 @@ export function ViewToolbar({
                 </li>
               ))}
             </ul>
+          ) : (
+            <div className="px-1 py-2 text-xs text-slate-500">暂无本地视图</div>
           )}
+          <div className="my-1 border-t border-slate-800" />
+          <div className="mb-1 flex items-center justify-between px-1 text-xs font-medium text-slate-400">
+            <span>服务端视图</span>
+            {serverViews.isLoading && <span className="text-[10px] text-slate-600">加载中…</span>}
+          </div>
+          {(serverViews.data?.length ?? 0) > 0 ? (
+            <ul className="max-h-60 overflow-auto">
+              {serverViews.data?.map((serverView) => (
+                <li key={serverView.view_id}>
+                  <button
+                    onClick={() => {
+                      onLoad(serverView.view);
+                      setOpen(false);
+                    }}
+                    className="w-full rounded-md px-2 py-1.5 text-left text-xs text-slate-300 transition-colors hover:bg-slate-800 hover:text-slate-100"
+                    title={`更新于 ${serverView.updated_at ? new Date(serverView.updated_at).toLocaleString() : "--"}`}
+                  >
+                    <div className="flex items-center gap-1 truncate font-medium">
+                      <span className="truncate">{serverView.name}</span>
+                      {serverView.is_default && <span className="text-[10px] text-amber-300">默认</span>}
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : !serverViews.isLoading ? (
+            <div className="px-1 py-2 text-xs text-slate-500">暂无服务端视图</div>
+          ) : null}
         </div>
       )}
 

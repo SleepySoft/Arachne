@@ -36,6 +36,7 @@ import {
   ProvStatement,
   SubgraphResult,
 } from "@/types";
+import type { SavedView, ServerView, WorkspaceType } from "@/types/view";
 
 const API_BASE =
   import.meta.env.VITE_API_BASE || `${import.meta.env.BASE_URL}api/v1`;
@@ -764,6 +765,49 @@ export const createPublishedView = async (body: {
   expires_at?: string;
 }): Promise<PublishedView> => {
   const res = await client.post("/published-views", body);
+  return res.data;
+};
+
+
+// ============================================================
+// Server Views (shared canvas layouts)
+// ============================================================
+
+export const listServerViews = async (workspace: WorkspaceType): Promise<ServerView[]> => {
+  const res = await client.get("/server-views", { params: { workspace } });
+  return res.data;
+};
+
+export const getDefaultServerView = async (
+  workspace: WorkspaceType
+): Promise<ServerView | null> => {
+  const res = await client.get("/server-views/default", { params: { workspace } });
+  return res.data;
+};
+
+export const createServerView = async (body: {
+  name: string;
+  workspace: WorkspaceType;
+  view: SavedView;
+}): Promise<ServerView> => {
+  const res = await client.post("/server-views", body);
+  return res.data;
+};
+
+export const updateServerView = async (
+  viewId: string,
+  body: { name?: string; view?: SavedView }
+): Promise<ServerView> => {
+  const res = await client.put(`/server-views/${viewId}`, body);
+  return res.data;
+};
+
+export const deleteServerView = async (viewId: string): Promise<void> => {
+  await client.delete(`/server-views/${viewId}`);
+};
+
+export const setDefaultServerView = async (viewId: string): Promise<ServerView> => {
+  const res = await client.put(`/server-views/${viewId}/default`);
   return res.data;
 };
 

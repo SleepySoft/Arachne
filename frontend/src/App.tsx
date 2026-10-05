@@ -24,7 +24,7 @@ import { CanvasContextMenu } from "@/components/CanvasContextMenu";
 import { EdgeContextMenu } from "@/components/EdgeContextMenu";
 import { ConnectEdgePanel } from "@/components/ConnectEdgePanel";
 import { QuickNodeForm } from "@/components/QuickNodeForm";
-import { deleteEdge, listCompanies, listEngines, listIndustries, listProvStatementsByNode } from "@/services/api";
+import { deleteEdge, getDefaultServerView, listCompanies, listEngines, listIndustries, listProvStatementsByNode } from "@/services/api";
 import type { EngineInfo } from "@/types";
 import { IndustrialSidebar } from "@/components/panels/IndustrialSidebar";
 import { FlowSidebarPanel } from "@/components/panels/FlowSidebarPanel";
@@ -116,6 +116,7 @@ export default function App() {
 
   const [allIndustries, setAllIndustries] = useState<import("@/types").Industry[]>([]);
   const [allCompanies, setAllCompanies] = useState<import("@/types").Company[]>([]);
+  const [catalogsLoaded, setCatalogsLoaded] = useState(false);
   const [industrialViewToRestore, setIndustrialViewToRestore] = useState<
     import("@/types/view").IndustrialViewState | null
   >(null);
@@ -165,6 +166,7 @@ export default function App() {
         if (cancelled) return;
         setAllIndustries(industries.items);
         setAllCompanies(companies.items);
+        setCatalogsLoaded(true);
       })
       .catch(() => {
         // ignore
@@ -191,6 +193,126 @@ export default function App() {
     const timer = setTimeout(() => setCompanyViewToRestore(null), 15000);
     return () => clearTimeout(timer);
   }, [companyViewToRestore]);
+
+  const loadIndustrialView = useCallback((view: SavedView) => {
+    viewHistory.reset("industrial");
+    setLoadedIndustrialView(view);
+    const viewEngine = view.industrial?.engine ?? "legacy";
+    if (viewEngine !== graphEngine) {
+      setGraphEngine(viewEngine);
+      industrial.switchEngine(viewEngine);
+    }
+    const containerSize = graphCanvasRef.current?.getContainerSize();
+    const result = applyIndustrialSnapshot(
+      view,
+      {
+        setSelectedIndustries: industrial.setSelectedIndustries,
+        setSelectedCompanies: industrial.setSelectedCompanies,
+        setSelectedFlowIds: industrial.setSelectedFlowIds,
+        setActiveFilters: industrial.setActiveFilters,
+        setExpandedProcessParents: industrial.setExpandedProcessParents,
+        setFocusState: industrial.setFocusState,
+        setHideState: industrial.setHideState,
+        setGraphKey: industrial.setGraphKey,
+        setSubgraphData: industrial.setSubgraphData,
+        setHighlightNodeIds: industrial.setHighlightNodeIds,
+        allIndustries,
+        allCompanies,
+        onSetRestored: setIndustrialViewToRestore,
+      },
+      containerSize ?? undefined
+    );
+    if (result.missingIndustryIds.length > 0 || result.missingCompanyIds.length > 0) {
+      setImportMessage(
+        `已恢复视图。缺失 ${result.missingIndustryIds.length} 个行业、${result.missingCompanyIds.length} 个公司。`
+      );
+    }
+  }, [
+    allCompanies,
+    allIndustries,
+    graphEngine,
+    industrial.setActiveFilters,
+    industrial.setExpandedProcessParents,
+    industrial.setFocusState,
+    industrial.setGraphKey,
+    industrial.setHideState,
+    industrial.setHighlightNodeIds,
+    industrial.setSelectedCompanies,
+    industrial.setSelectedFlowIds,
+    industrial.setSelectedIndustries,
+    industrial.setSubgraphData,
+    industrial.switchEngine,
+    viewHistory,
+  ]);
+
+  const loadCompanyView = useCallback((view: SavedView) => {
+    viewHistory.reset("company");
+    setLoadedCompanyView(view);
+    const canvasRef =
+      company.companyDisplayMode === "local" && company.companyExploreMode === "manual"
+        ? explorationCanvasRef
+        : companyNetworkCanvasRef;
+    const containerSize = canvasRef.current?.getContainerSize();
+    applyCompanySnapshot(
+      view,
+      {
+        setCompanyDisplayMode: company.setCompanyDisplayMode,
+        setCompanyExploreMode: company.setCompanyExploreMode,
+        setOrderedChain: company.setOrderedChain,
+        setFixedIds: company.setFixedIds,
+        setCurrentFocusId: company.setCurrentFocusId,
+        setExplorationData: company.setExplorationData,
+        setPreviewData: company.setPreviewData,
+        onSetRestored: setCompanyViewToRestore,
+      },
+      containerSize ?? undefined
+    );
+  }, [
+    company.companyDisplayMode,
+    company.companyExploreMode,
+    company.setCompanyDisplayMode,
+    company.setCompanyExploreMode,
+    company.setCurrentFocusId,
+    company.setExplorationData,
+    company.setFixedIds,
+    company.setOrderedChain,
+    company.setPreviewData,
+    viewHistory,
+  ]);
+
+  const { data: defaultIndustrialView } = useQuery({
+    queryKey: ["server-view-default", "industrial"],
+    queryFn: () => getDefaultServerView("industrial"),
+    retry: false,
+  });
+  const { data: defaultCompanyView } = useQuery({
+    queryKey: ["server-view-default", "company"],
+    queryFn: () => getDefaultServerView("company"),
+    retry: false,
+  });
+  const appliedDefaults = useRef({ industrial: false, company: false });
+
+  useEffect(() => {
+    if (appliedDefaults.current.industrial) return;
+    if (loadedIndustrialView) {
+      appliedDefaults.current.industrial = true;
+      return;
+    }
+    if (!catalogsLoaded || !defaultIndustrialView) return;
+    appliedDefaults.current.industrial = true;
+    loadIndustrialView(defaultIndustrialView.view);
+  }, [catalogsLoaded, defaultIndustrialView, loadIndustrialView, loadedIndustrialView]);
+
+  useEffect(() => {
+    if (appliedDefaults.current.company) return;
+    if (loadedCompanyView) {
+      appliedDefaults.current.company = true;
+      return;
+    }
+    if (!defaultCompanyView) return;
+    appliedDefaults.current.company = true;
+    loadCompanyView(defaultCompanyView.view);
+  }, [defaultCompanyView, loadCompanyView, loadedCompanyView]);
 
   const handleSaveCurrentView = useCallback(() => {
     const name = window.prompt("为当前视图命名：");
@@ -694,42 +816,7 @@ export default function App() {
                 name
               )
             }
-            onLoadView={(view) => {
-              viewHistory.reset("industrial");
-              setLoadedIndustrialView(view);
-              // 视图记录了自己的引擎；与当前不一致时先切换引擎（重置工作区），
-              // 再应用视图状态（后面的 setter 会覆盖重置结果）。
-              const viewEngine = view.industrial?.engine ?? "legacy";
-              if (viewEngine !== graphEngine) {
-                setGraphEngine(viewEngine);
-                industrial.switchEngine(viewEngine);
-              }
-              const containerSize = graphCanvasRef.current?.getContainerSize();
-              const result = applyIndustrialSnapshot(
-                view,
-                {
-                  setSelectedIndustries: industrial.setSelectedIndustries,
-                  setSelectedCompanies: industrial.setSelectedCompanies,
-                  setSelectedFlowIds: industrial.setSelectedFlowIds,
-                  setActiveFilters: industrial.setActiveFilters,
-                  setExpandedProcessParents: industrial.setExpandedProcessParents,
-                  setFocusState: industrial.setFocusState,
-                  setHideState: industrial.setHideState,
-                  setGraphKey: industrial.setGraphKey,
-                  setSubgraphData: industrial.setSubgraphData,
-                  setHighlightNodeIds: industrial.setHighlightNodeIds,
-                  allIndustries,
-                  allCompanies,
-                  onSetRestored: setIndustrialViewToRestore,
-                },
-                containerSize ?? undefined
-              );
-              if (result.missingIndustryIds.length > 0 || result.missingCompanyIds.length > 0) {
-                setImportMessage(
-                  `已恢复视图。缺失 ${result.missingIndustryIds.length} 个行业、${result.missingCompanyIds.length} 个公司。`
-                );
-              }
-            }}
+            onLoadView={loadIndustrialView}
             onManageViews={() => {
               setViewManagerWorkspace("industrial");
               setViewManagerOpen(true);
@@ -943,25 +1030,7 @@ export default function App() {
                 name
               )
             }
-            onLoadView={(view) => {
-              viewHistory.reset("company");
-              setLoadedCompanyView(view);
-              const containerSize = activeCompanyCanvasRef.current?.getContainerSize();
-              applyCompanySnapshot(
-                view,
-                {
-                  setCompanyDisplayMode: company.setCompanyDisplayMode,
-                  setCompanyExploreMode: company.setCompanyExploreMode,
-                  setOrderedChain: company.setOrderedChain,
-                  setFixedIds: company.setFixedIds,
-                  setCurrentFocusId: company.setCurrentFocusId,
-                  setExplorationData: company.setExplorationData,
-                  setPreviewData: company.setPreviewData,
-                  onSetRestored: setCompanyViewToRestore,
-                },
-                containerSize ?? undefined
-              );
-            }}
+            onLoadView={loadCompanyView}
             onManageViews={() => {
               setViewManagerWorkspace("company");
               setViewManagerOpen(true);
@@ -1381,60 +1450,13 @@ export default function App() {
           savedViews={savedViews}
           onLoad={(view) => {
             if (viewManagerWorkspace === "industrial") {
-              viewHistory.reset("industrial");
-              setLoadedIndustrialView(view);
-              // 与工具栏加载视图一致：视图记录的引擎与当前不一致时先切换引擎。
-              const viewEngine = view.industrial?.engine ?? "legacy";
-              if (viewEngine !== graphEngine) {
-                setGraphEngine(viewEngine);
-                industrial.switchEngine(viewEngine);
-              }
-              const containerSize = graphCanvasRef.current?.getContainerSize();
-              const result = applyIndustrialSnapshot(
-                view,
-                {
-                  setSelectedIndustries: industrial.setSelectedIndustries,
-                  setSelectedCompanies: industrial.setSelectedCompanies,
-                  setSelectedFlowIds: industrial.setSelectedFlowIds,
-                  setActiveFilters: industrial.setActiveFilters,
-                  setExpandedProcessParents: industrial.setExpandedProcessParents,
-                  setFocusState: industrial.setFocusState,
-                  setHideState: industrial.setHideState,
-                  setGraphKey: industrial.setGraphKey,
-                  setSubgraphData: industrial.setSubgraphData,
-                  setHighlightNodeIds: industrial.setHighlightNodeIds,
-                  allIndustries,
-                  allCompanies,
-                  onSetRestored: setIndustrialViewToRestore,
-                },
-                containerSize ?? undefined
-              );
-              if (result.missingIndustryIds.length > 0 || result.missingCompanyIds.length > 0) {
-                setImportMessage(
-                  `已恢复视图。缺失 ${result.missingIndustryIds.length} 个行业、${result.missingCompanyIds.length} 个公司。`
-                );
-              }
+              loadIndustrialView(view);
             } else {
-              viewHistory.reset("company");
-              setLoadedCompanyView(view);
-              const containerSize = activeCompanyCanvasRef.current?.getContainerSize();
-              applyCompanySnapshot(
-                view,
-                {
-                  setCompanyDisplayMode: company.setCompanyDisplayMode,
-                  setCompanyExploreMode: company.setCompanyExploreMode,
-                  setOrderedChain: company.setOrderedChain,
-                  setFixedIds: company.setFixedIds,
-                  setCurrentFocusId: company.setCurrentFocusId,
-                  setExplorationData: company.setExplorationData,
-                  setPreviewData: company.setPreviewData,
-                  onSetRestored: setCompanyViewToRestore,
-                },
-                containerSize ?? undefined
-              );
+              loadCompanyView(view);
             }
             setViewManagerOpen(false);
           }}
+          canManageServerViews={!authReadOnly}
           onClose={() => setViewManagerOpen(false)}
         />
       )}
