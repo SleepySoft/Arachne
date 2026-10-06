@@ -24,7 +24,7 @@ import { CanvasContextMenu } from "@/components/CanvasContextMenu";
 import { EdgeContextMenu } from "@/components/EdgeContextMenu";
 import { ConnectEdgePanel } from "@/components/ConnectEdgePanel";
 import { QuickNodeForm } from "@/components/QuickNodeForm";
-import { deleteEdge, getDefaultServerView, listCompanies, listEngines, listIndustries, listProvStatementsByNode } from "@/services/api";
+import { deleteEdge, getDefaultServerView, listCompanies, listCompanyExposures, listEngines, listIndustries, listProvStatementsByNode } from "@/services/api";
 import type { EngineInfo } from "@/types";
 import { IndustrialSidebar } from "@/components/panels/IndustrialSidebar";
 import { FlowSidebarPanel } from "@/components/panels/FlowSidebarPanel";
@@ -64,9 +64,15 @@ function getInitialEngine(): GraphEngine {
   return params.get("engine") || "legacy";
 }
 
+function getEmbeddedCompanyId(): string | null {
+  const companyId = new URLSearchParams(window.location.search).get("company");
+  return companyId?.trim() || null;
+}
+
 export default function App() {
   const [mainView, setMainView] = useState<MainView>(getInitialMainView);
   const [graphEngine, setGraphEngine] = useState<GraphEngine>(getInitialEngine);
+  const embeddedCompanyId = getEmbeddedCompanyId();
 
   const { data: enginesData } = useQuery({
     queryKey: ["engines"],
@@ -110,6 +116,7 @@ export default function App() {
 
   const industrial = useIndustrialGraph(graphEngine);
   const company = useCompanyGraph();
+  const [embeddedHighlightNodeIds, setEmbeddedHighlightNodeIds] = useState<string[] | null>(null);
   const graphCanvasRef = useRef<GraphCanvasRef>(null);
   const companyNetworkCanvasRef = useRef<CompanyNetworkCanvasRef>(null);
   const explorationCanvasRef = useRef<ExplorationCanvasRef>(null);
@@ -134,6 +141,25 @@ export default function App() {
   const [loadedCompanyView, setLoadedCompanyView] = useState<import("@/types/view").SavedView | null>(null);
   const savedViews = useSavedViews();
   const viewHistory = useViewStateHistory();
+
+  // FinanceDashboard opens the normal Arachne home workspace with a company
+  // identifier.  Keep the full industrial graph and layer the company's
+  // recorded exposures over it, rather than switching to a reasoning result
+  // or a company-only subgraph.
+  useEffect(() => {
+    if (!embeddedCompanyId) return;
+    let cancelled = false;
+    listCompanyExposures(embeddedCompanyId, 1, 1000)
+      .then((page) => {
+        if (!cancelled) setEmbeddedHighlightNodeIds(page.items.map((exposure) => exposure.node_id));
+      })
+      .catch(() => {
+        if (!cancelled) setEmbeddedHighlightNodeIds([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [embeddedCompanyId]);
 
   const handleChangeMainView = useCallback(
     (view: MainView) => {
@@ -764,7 +790,7 @@ export default function App() {
             highlightNodeIds={
               flowEditorOpen && editorHighlightIds.length > 0
                 ? editorHighlightIds
-                : industrial.highlightNodeIds
+                : embeddedHighlightNodeIds ?? industrial.highlightNodeIds
             }
             sourceData={industrial.subgraphData}
             editMode={industrial.editMode}
