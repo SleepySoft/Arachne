@@ -1,0 +1,17 @@
+schema: arachne-flow/v0.1
+title: 'Healthcare flow: medical device integration and pharmaceutical distribution'
+root_product: pharmaceutical_distribution
+include: []
+local:
+  act_integrate_medical_device: 医疗器械集成
+  act_distribute_healthcare_products: 医药产品分销
+edges:
+# 诊断设备、显示终端和电子控制部件集成为医疗器械产品
+- [x_ray_equipment, component, act_integrate_medical_device]
+- [lcd_monitor, component, act_integrate_medical_device]
+- [chip, component, act_integrate_medical_device]
+- [act_integrate_medical_device, primary_result, medical_device]
+# 药品与医疗器械经批发配送和院内物流进入医药流通服务
+- [pharmaceutical_product, subject, act_distribute_healthcare_products]
+- [medical_device, subject, act_distribute_healthcare_products]
+- [act_distribute_healthcare_products, primary_result, pharmaceutical_distribution]

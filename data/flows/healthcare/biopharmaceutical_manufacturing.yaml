@@ -1,0 +1,15 @@
+schema: arachne-flow/v0.1
+title: 'Healthcare flow: end-to-end biopharmaceutical manufacturing'
+root_product: pharmaceutical_product
+include:
+- biologics_manufacturing.yaml
+local:
+  act_manufacture_biopharmaceutical: 生物制药制造
+edges:
+# 培养基、表达细胞与生物反应设备经端到端生物制药制造形成生物药
+- [cell_culture_medium, feedstock, act_manufacture_biopharmaceutical]
+- [cho_cell_line, feedstock, act_manufacture_biopharmaceutical]
+- [bioreactor, tool, act_manufacture_biopharmaceutical]
+- [contract_manufacturing_organization, tool, act_manufacture_biopharmaceutical]
+- [act_manufacture_biopharmaceutical, ref, biopharmaceutical_manufacturing]
+- [act_manufacture_biopharmaceutical, primary_result, pharmaceutical_product]
