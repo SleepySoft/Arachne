@@ -1,0 +1,16 @@
+schema: arachne-flow/v0.1
+title: 'Optical flow: optical fiber and cable manufacturing'
+root_product: optical_fiber_cable
+include: []
+local:
+  act_draw_optical_fiber: 光纤拉丝制造
+  act_assemble_optical_fiber_cable: 光缆成缆
+edges:
+# 高纯石英材料经预制棒和拉丝工艺形成光纤
+- [quartz_sand, feedstock, act_draw_optical_fiber]
+- [act_draw_optical_fiber, ref, optical_fiber_manufacturing]
+- [act_draw_optical_fiber, primary_result, optical_fiber]
+# 光纤与护套材料经成缆形成通信光缆
+- [optical_fiber, component, act_assemble_optical_fiber_cable]
+- [polyethylene, component, act_assemble_optical_fiber_cable]
+- [act_assemble_optical_fiber_cable, primary_result, optical_fiber_cable]

@@ -1,0 +1,35 @@
+schema: arachne-flow/v0.1
+title: 'Electronic components flow: passive parts, controllers and display terminals'
+root_product: display_terminal
+include: []
+local:
+  act_manufacture_electronic_inductor: 电子电感器制造
+  act_manufacture_electronic_capacitor: 电子电容器制造
+  act_manufacture_quartz_resonator: 石英晶体谐振器制造
+  act_manufacture_mcu: 微控制器制造
+  act_assemble_infrared_detector: 红外探测器装配
+  act_assemble_display_terminal: 显示终端装配
+edges:
+# 磁性材料绕组及电容膜分别形成电感和电容等无源器件
+- [magnetic_material, feedstock, act_manufacture_electronic_inductor]
+- [copper, component, act_manufacture_electronic_inductor]
+- [act_manufacture_electronic_inductor, primary_result, electronic_inductor]
+- [capacitor_film, feedstock, act_manufacture_electronic_capacitor]
+- [aluminum, component, act_manufacture_electronic_capacitor]
+- [act_manufacture_electronic_capacitor, primary_result, electronic_capacitor]
+# 石英材料加工为频率控制用谐振器
+- [quartz_sand, feedstock, act_manufacture_quartz_resonator]
+- [act_manufacture_quartz_resonator, primary_result, quartz_crystal_resonator]
+# 半导体芯片进一步集成为微控制器和红外探测器
+- [chip, basis, act_manufacture_mcu]
+- [act_manufacture_mcu, primary_result, mcu]
+- [photodetector_chip, component, act_assemble_infrared_detector]
+- [chip, component, act_assemble_infrared_detector]
+- [act_assemble_infrared_detector, primary_result, infrared_detector]
+# 显示面板、控制器与无源器件装配为显示终端
+- [tft_lcd, component, act_assemble_display_terminal]
+- [mcu, component, act_assemble_display_terminal]
+- [electronic_inductor, component, act_assemble_display_terminal]
+- [electronic_capacitor, component, act_assemble_display_terminal]
+- [quartz_crystal_resonator, component, act_assemble_display_terminal]
+- [act_assemble_display_terminal, primary_result, display_terminal]

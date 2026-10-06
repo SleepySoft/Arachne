@@ -1,0 +1,12 @@
+schema: arachne-flow/v0.1
+title: 'Consumer goods flow: plastic film manufacturing'
+root_product: plastic_film
+include:
+- petrochemical.yaml
+local:
+  act_extrude_plastic_film: 塑料薄膜挤出成型
+edges:
+# 聚乙烯、聚丙烯树脂经挤出、吹塑或流延形成塑料薄膜
+- [polyethylene, feedstock, act_extrude_plastic_film]
+- [polypropylene, feedstock, act_extrude_plastic_film]
+- [act_extrude_plastic_film, primary_result, plastic_film]

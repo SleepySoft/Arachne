@@ -4,6 +4,7 @@ root_product: lithium_ion_battery
 include: []
 local:
   act_produce_battery_cell: 电芯制造
+  act_assemble_lithium_ion_battery: 锂离子电池单体装配
   lithium_ion_battery: 锂离子电池（电芯）
 edges:
 # 电芯制造：正极+负极+电解液+隔膜 -> 电芯
@@ -16,4 +17,6 @@ edges:
 # 桥接边：铝箔（上游）用于正极集流体
 - [aluminum, component, act_produce_battery_cell]
 - [act_produce_battery_cell, ref, battery_cell_production]
-- [act_produce_battery_cell, primary_result, lithium_ion_battery]
+- [act_produce_battery_cell, primary_result, lithium_battery_cell]
+- [lithium_battery_cell, component, act_assemble_lithium_ion_battery]
+- [act_assemble_lithium_ion_battery, primary_result, lithium_ion_battery]

@@ -4,6 +4,7 @@ root_product: photoresist
 include: []
 local:
   act_produce_photoresist: 光刻胶生产
+  act_formulate_euv_photoresist: EUV光刻胶配制
   photoresist: 光刻胶
 edges:
 # 光刻胶：丙烯(上游)->PGMEA溶剂+酚醛树脂前驱；石脑油->芳烃->DNQ感光剂；桥接上游石化
@@ -11,3 +12,5 @@ edges:
 - [naphtha, feedstock, act_produce_photoresist]
 - [act_produce_photoresist, ref, photoresist_formulation]
 - [act_produce_photoresist, primary_result, photoresist]
+- [photoresist, basis, act_formulate_euv_photoresist]
+- [act_formulate_euv_photoresist, primary_result, euv_photoresist]

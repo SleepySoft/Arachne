@@ -1,0 +1,11 @@
+schema: arachne-flow/v0.1
+title: 'Consumer goods flow: ceramic product manufacturing'
+root_product: ceramic_product
+include: []
+local:
+  act_fire_ceramic_product: 日用陶瓷烧制
+edges:
+# 石英质原料与基础化工辅料经成型和高温烧制形成日用陶瓷
+- [quartz_sand, feedstock, act_fire_ceramic_product]
+- [basic_chemical_raw_material, additive, act_fire_ceramic_product]
+- [act_fire_ceramic_product, primary_result, ceramic_product]
