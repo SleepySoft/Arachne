@@ -1,0 +1,295 @@
+{
+    "batch_id":  "finance_dashboard_new_entity_exposures_20261006",
+    "task_description":  "在新增稳定产业实体后，以 ArachneData 中 Tushare 公司资料为证据，为此前无图谱锚点的 FinanceDashboard 已登记公司建立主营业务暴露。",
+    "company_node_exposures_to_upsert":  [
+                                             {
+                                                 "exposure_id":  "a_share_002138_produce_electronic_inductor",
+                                                 "company_id":  "a_share_002138",
+                                                 "node_id":  "electronic_inductor",
+                                                 "activity_type":  "produce",
+                                                 "role":  "片式电感器和片式压敏电阻器",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：002138.SZ 顺络电子",
+                                                                      "quote":  "主要产品:片式电感器和片式压敏电阻器.主营业务:从事片式电感器和片式压敏电阻器等新型电子元器件的研发,生产和销售."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002179_produce_electrical_connector",
+                                                 "company_id":  "a_share_002179",
+                                                 "node_id":  "electrical_connector",
+                                                 "activity_type":  "produce",
+                                                 "role":  "电连接器及集成互连组件",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：002179.SZ 中航光电",
+                                                                      "quote":  "主要业务为电连接器,光器件和线缆组件的研发,生产和销售.主要生产电连接器和光器件."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002282_produce_diamond_tool",
+                                                 "company_id":  "a_share_002282",
+                                                 "node_id":  "diamond_tool",
+                                                 "activity_type":  "produce",
+                                                 "role":  "金刚石切割、钻削和磨削工具",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：002282.SZ 博深股份",
+                                                                      "quote":  "金刚石工具,小型建筑施工机具,合金工具的生产和销售.主要产品有金刚石圆锯片,金刚石工程薄壁钻头,金刚石磨,金刚石软磨片等金刚石工具,混凝土钻孔机,台式切割机,路面切割机等小型建筑施工机具,硬质合金工具."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002367_produce_elevator_system",
+                                                 "company_id":  "a_share_002367",
+                                                 "node_id":  "elevator_system",
+                                                 "activity_type":  "produce",
+                                                 "role":  "电梯、自动扶梯及自动人行道",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：002367.SZ 康力电梯",
+                                                                      "quote":  "主要产品:电梯,自动扶梯,自动人行道及成套配件.主营业务:电梯,自动扶梯,自动人行道及成套配件产品研发,生产,销售及整机产品的安装和维保."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002430_produce_industrial_gas",
+                                                 "company_id":  "a_share_002430",
+                                                 "node_id":  "industrial_gas",
+                                                 "activity_type":  "produce",
+                                                 "role":  "空分、电子和医疗等工业气体",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：002430.SZ 杭氧股份",
+                                                                      "quote":  "主营业务包括气体,工程与设备,高端装备,并积极布局节能储能,氢能,CCUS等领域,为世界提供绿色装备,气体产品和可持续发展解决方案"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_003816_operate_nuclear_power_generation",
+                                                 "company_id":  "a_share_003816",
+                                                 "node_id":  "nuclear_power_generation",
+                                                 "activity_type":  "operate",
+                                                 "role":  "核电站建设、运营及电力销售",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：003816.SZ 中国广核",
+                                                                      "quote":  "主营业务为建设,运营及管理核电站,销售该等核电站所发电力,组织开发核电站的设计及科研工作.主要产品是电力."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_300319_produce_electronic_inductor",
+                                                 "company_id":  "a_share_300319",
+                                                 "node_id":  "electronic_inductor",
+                                                 "activity_type":  "produce",
+                                                 "role":  "片式功率电感和射频元器件",
+                                                 "weight":  0.9,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：300319.SZ 麦捷科技",
+                                                                      "quote":  "主要产品:高端电子元器件.主要业务:研发,生产及销售片式功率电感,射频元器件等新型电子元器件和LCM显示屏模组器件,并为下游客户提供技术支持服务和元器件整体解决方案."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_300699_produce_carbon_fiber_composite",
+                                                 "company_id":  "a_share_300699",
+                                                 "node_id":  "carbon_fiber_composite",
+                                                 "activity_type":  "produce",
+                                                 "role":  "碳纤维及碳纤维复合材料",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：300699.SZ 光威复材",
+                                                                      "quote":  "主营业务:公司是专业从事碳纤维及碳纤维复合材料的研发,生产与销售的高新技术企业,拥有碳纤维行业的全产业链布局,产品范围从原丝,碳纤维,织物,预浸料到复合材料,碳纤维制品."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_600330_produce_magnetic_material",
+                                                 "company_id":  "a_share_600330",
+                                                 "node_id":  "magnetic_material",
+                                                 "activity_type":  "produce",
+                                                 "role":  "磁性材料和磁电子器件",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：600330.SH 天通股份",
+                                                                      "quote":  "主要产品:从事的的产品为:磁性材料,电子表面贴装产品,ONU,EOC等.主营业务:从事的的业务为:磁性材料,磁电子器件,通信设备终端等的生产和销售,电子制造服务(EMS)."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_600835_produce_elevator_system",
+                                                 "company_id":  "a_share_600835",
+                                                 "node_id":  "elevator_system",
+                                                 "activity_type":  "produce",
+                                                 "role":  "电梯及自动扶梯产品",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：600835.SH 上海机电",
+                                                                      "quote":  "电梯及自动扶梯产品"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_600862_produce_carbon_fiber_composite",
+                                                 "company_id":  "a_share_600862",
+                                                 "node_id":  "carbon_fiber_composite",
+                                                 "activity_type":  "produce",
+                                                 "role":  "航空复合材料",
+                                                 "weight":  0.8,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：600862.SH 中航高科",
+                                                                      "quote":  "航空新材料,高端智能装备,轨道交通,汽车,医疗器械,装备制造,房地产,创新创业投资等."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_600875_produce_power_generation_equipment",
+                                                 "company_id":  "a_share_600875",
+                                                 "node_id":  "power_generation_equipment",
+                                                 "activity_type":  "produce",
+                                                 "role":  "水、火、核、风、气及太阳能发电装备",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：600875.SH 东方电气",
+                                                                      "quote":  "主要产品为火力发电设备,水力发电设备,风力发电设备,核能发电设备以及燃气发电设备等."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_601700_produce_transmission_tower",
+                                                 "company_id":  "a_share_601700",
+                                                 "node_id":  "transmission_tower",
+                                                 "activity_type":  "produce",
+                                                 "role":  "输电线路铁塔和变电构支架",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：601700.SH 风范股份",
+                                                                      "quote":  "主营业务为输电线路铁塔的研发,设计,生产和销售以及变电构支架和通讯铁塔的生产和销售.此外,公司还研发了复合材料绝缘杆塔,首批已挂网运行.主要产品有输电线路铁塔,变电构支架."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_601985_operate_nuclear_power_generation",
+                                                 "company_id":  "a_share_601985",
+                                                 "node_id":  "nuclear_power_generation",
+                                                 "activity_type":  "operate",
+                                                 "role":  "核电项目开发、建设和运营",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：601985.SH 中国核电",
+                                                                      "quote":  "主营业务;核电项目的开发,投资,建设,运营与管理,核电运行安全技术研究及相关技术服务与咨询业务.主要产品:是电力."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_603738_produce_quartz_crystal_resonator",
+                                                 "company_id":  "a_share_603738",
+                                                 "node_id":  "quartz_crystal_resonator",
+                                                 "activity_type":  "produce",
+                                                 "role":  "石英晶体谐振器",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：603738.SH 泰晶科技",
+                                                                      "quote":  "主要产品:各种型号的石英晶体谐振器,产品涵盖DIP和SMD等.主营业务:石英晶体谐振器的研发,生产,销售."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_605117_produce_air_conditioner",
+                                                 "company_id":  "a_share_605117",
+                                                 "node_id":  "air_conditioner",
+                                                 "activity_type":  "produce",
+                                                 "role":  "除湿机和空气源热泵热风机等环境电器",
+                                                 "weight":  0.8,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：605117.SH 德业股份",
+                                                                      "quote":  "主要从事蒸发器,冷凝器和变频控制芯片等部件以及除湿机和空气源热泵热风机等环境电器产品的研发,生产和销售."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_688002_produce_infrared_detector",
+                                                 "company_id":  "a_share_688002",
+                                                 "node_id":  "infrared_detector",
+                                                 "activity_type":  "produce",
+                                                 "role":  "红外MEMS芯片和红外热成像探测器",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：688002.SH 睿创微纳",
+                                                                      "quote":  "公司的主营业务为红外MEMS芯片,探测器,机芯及整机的研发,生产和销售,是一家专业的红外成像整体解决方案提供商.产品主要包括非制冷红外热成像MEMS芯片,红外热成像探测器,红外热成像机芯,红外热像仪及光电系统."
+                                                                  }
+                                                              ]
+                                             }
+                                         ]
+}
