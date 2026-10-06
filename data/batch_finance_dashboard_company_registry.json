@@ -1,0 +1,881 @@
+{
+  "batch_id": "finance_dashboard_company_registry_20261006",
+  "task_description": "登记 FinanceDashboard 已跟踪但尚未在 Arachne 公司库中匹配的 A 股公司。公司资料来自 ArachneData 中的 Tushare 公司资料；ETF 与缺少来源记录的标的未作为 Company 登记。产业暴露将在逐公司业务映射批次中补充。",
+  "companies_to_upsert": [
+    {
+      "company_id": "a_share_001215",
+      "name_zh": "千味央厨",
+      "aliases": [
+        "郑州千味央厨食品股份有限公司"
+      ],
+      "stock_codes": [
+        "001215.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "主营业务为面向餐饮企业的速冻面米制品的研发,生产和销售.主要为餐饮企业(含酒店,团体食堂,乡厨等)提供定制化和标准化的速冻面米制品.",
+      "country": "CN",
+      "province": "河南",
+      "city": "郑州市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (001215.SZ).",
+      "employee_count": 2924
+    },
+    {
+      "company_id": "a_share_002028",
+      "name_zh": "思源电气",
+      "aliases": [
+        "思源电气股份有限公司"
+      ],
+      "stock_codes": [
+        "002028.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "主要产品为电力自动化保护设备,高压开关,高压互感器,电力电容器及电抗器,电力电子成套设备等.",
+      "country": "CN",
+      "province": "上海",
+      "city": "上海市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (002028.SZ).",
+      "employee_count": 9456
+    },
+    {
+      "company_id": "a_share_002032",
+      "name_zh": "苏泊尔",
+      "aliases": [
+        "浙江苏泊尔股份有限公司"
+      ],
+      "stock_codes": [
+        "002032.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "主要产品:电器产品,炊具产品",
+      "country": "CN",
+      "province": "浙江",
+      "city": "台州市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (002032.SZ).",
+      "employee_count": 10745
+    },
+    {
+      "company_id": "a_share_002074",
+      "name_zh": "国轩高科",
+      "aliases": [
+        "国轩高科股份有限公司"
+      ],
+      "stock_codes": [
+        "002074.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "主要产品:本公司的产品包括12kV系列开关柜,40.5kV系列开关柜,126kV系列开关(含GIS组合电器),12kV系列开关,40.5kV系列开关,低压开关设备和轻钢结构等七大系列二十多个品种.",
+      "country": "CN",
+      "province": "安徽",
+      "city": "合肥市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (002074.SZ).",
+      "employee_count": 25575
+    },
+    {
+      "company_id": "a_share_002138",
+      "name_zh": "顺络电子",
+      "aliases": [
+        "深圳顺络电子股份有限公司"
+      ],
+      "stock_codes": [
+        "002138.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "主要产品:片式电感器和片式压敏电阻器.主营业务:从事片式电感器和片式压敏电阻器等新型电子元器件的研发,生产和销售.",
+      "country": "CN",
+      "province": "广东",
+      "city": "深圳市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (002138.SZ).",
+      "employee_count": 9182
+    },
+    {
+      "company_id": "a_share_002162",
+      "name_zh": "悦心健康",
+      "aliases": [
+        "上海悦心健康集团股份有限公司"
+      ],
+      "stock_codes": [
+        "002162.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "主要产品为:陶瓷墙砖,陶瓷地砖,特殊用途地砖,主要用于各类内外墙,各类地面及特殊场所的装饰.",
+      "country": "CN",
+      "province": "上海",
+      "city": "上海市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (002162.SZ).",
+      "employee_count": 724
+    },
+    {
+      "company_id": "a_share_002179",
+      "name_zh": "中航光电",
+      "aliases": [
+        "中航光电科技股份有限公司"
+      ],
+      "stock_codes": [
+        "002179.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "主要业务为电连接器,光器件和线缆组件的研发,生产和销售.主要生产电连接器和光器件.",
+      "country": "CN",
+      "province": "河南",
+      "city": "洛阳市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (002179.SZ).",
+      "employee_count": 19493
+    },
+    {
+      "company_id": "a_share_002216",
+      "name_zh": "三全食品",
+      "aliases": [
+        "三全食品股份有限公司"
+      ],
+      "stock_codes": [
+        "002216.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "主要产品:速冻汤圆,速冻水饺,速冻面点,速冻粽子.主营业务:速冻汤圆,速冻水饺,速冻粽子以及速冻面点等速冻米面食品的生产和销售.",
+      "country": "CN",
+      "province": "河南",
+      "city": "郑州市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (002216.SZ).",
+      "employee_count": 6088
+    },
+    {
+      "company_id": "a_share_002222",
+      "name_zh": "福晶科技",
+      "aliases": [
+        "福建福晶科技股份有限公司"
+      ],
+      "stock_codes": [
+        "002222.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "从事光电子晶体材料及其元器件的研发,生产和销售,主要产品是LBO(三硼酸锂),BBO(低温相偏硼酸钡),KTP(磷酸钛氧钾)等非线性光学晶体元器件,Nd:YVO4(掺钕钒酸钇)等激光晶体元器件,以及激光光学元器件.产品用于激光应用领域,其中主要用于固体激光器制造,是激光系统的核心元器件之一.",
+      "country": "CN",
+      "province": "福建",
+      "city": "福州市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (002222.SZ).",
+      "employee_count": 1941
+    },
+    {
+      "company_id": "a_share_002282",
+      "name_zh": "博深股份",
+      "aliases": [
+        "博深股份有限公司"
+      ],
+      "stock_codes": [
+        "002282.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "金刚石工具,小型建筑施工机具,合金工具的生产和销售.主要产品有金刚石圆锯片,金刚石工程薄壁钻头,金刚石磨,金刚石软磨片等金刚石工具,混凝土钻孔机,台式切割机,路面切割机等小型建筑施工机具,硬质合金工具.",
+      "country": "CN",
+      "province": "河北",
+      "city": "石家庄市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (002282.SZ).",
+      "employee_count": 1734
+    },
+    {
+      "company_id": "a_share_002283",
+      "name_zh": "天润工业",
+      "aliases": [
+        "天润工业技术股份有限公司"
+      ],
+      "stock_codes": [
+        "002283.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "主要产品:曲轴,连杆,毛坯,铸件,锻件.主营业务:重型发动机曲轴,中型发动机曲轴,轻型发动机曲轴和乘用车发动机曲轴,船电大马力曲轴,以及连杆,铸件,锻件主要业务板块.",
+      "country": "CN",
+      "province": "山东",
+      "city": "威海市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (002283.SZ).",
+      "employee_count": 3931
+    },
+    {
+      "company_id": "a_share_002367",
+      "name_zh": "康力电梯",
+      "aliases": [
+        "康力电梯股份有限公司"
+      ],
+      "stock_codes": [
+        "002367.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "主要产品:电梯,自动扶梯,自动人行道及成套配件.主营业务:电梯,自动扶梯,自动人行道及成套配件产品研发,生产,销售及整机产品的安装和维保.",
+      "country": "CN",
+      "province": "江苏",
+      "city": "苏州市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (002367.SZ).",
+      "employee_count": 4700
+    },
+    {
+      "company_id": "a_share_002430",
+      "name_zh": "杭氧股份",
+      "aliases": [
+        "杭氧集团股份有限公司"
+      ],
+      "stock_codes": [
+        "002430.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "主营业务包括气体,工程与设备,高端装备,并积极布局节能储能,氢能,CCUS等领域,为世界提供绿色装备,气体产品和可持续发展解决方案",
+      "country": "CN",
+      "province": "浙江",
+      "city": "杭州市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (002430.SZ).",
+      "employee_count": 5839
+    },
+    {
+      "company_id": "a_share_002522",
+      "name_zh": "浙江众成",
+      "aliases": [
+        "浙江众成包装材料股份有限公司"
+      ],
+      "stock_codes": [
+        "002522.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "主营业务为多层共挤聚烯烃热收缩薄膜(简称POF热收缩膜)产品的研发,生产和销售.产品包括POF普通型膜,POF交联膜和POF高性能膜等3大类8个系列.",
+      "country": "CN",
+      "province": "浙江",
+      "city": "嘉兴市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (002522.SZ).",
+      "employee_count": 1033
+    },
+    {
+      "company_id": "a_share_002606",
+      "name_zh": "大连电瓷",
+      "aliases": [
+        "大连电瓷集团股份有限公司"
+      ],
+      "stock_codes": [
+        "002606.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "主要业务为从事高压输电线路用瓷,复合绝缘子,电站用瓷,复合绝缘子,以及电瓷金具等产品的研发,生产及销售.主要产品为输电线路用瓷,复合绝缘子和电站用瓷,复合绝缘子.绝缘子广泛应用于电力系统,架空输电线路,发电厂和变电站的母线和各种电气设备的外部带电导体均须用绝缘子支持,并使之与地面(或接地物)或其他有电位差的导体绝缘.",
+      "country": "CN",
+      "province": "辽宁",
+      "city": "大连市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (002606.SZ).",
+      "employee_count": 1701
+    },
+    {
+      "company_id": "a_share_002635",
+      "name_zh": "安洁科技",
+      "aliases": [
+        "苏州安洁科技股份有限公司"
+      ],
+      "stock_codes": [
+        "002635.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "主营业务为消费电子和新能源汽车精密功能性器件和精密金属零件.",
+      "country": "CN",
+      "province": "江苏",
+      "city": "苏州市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (002635.SZ).",
+      "employee_count": 6040
+    },
+    {
+      "company_id": "a_share_002661",
+      "name_zh": "克明食品",
+      "aliases": [
+        "陈克明食品股份有限公司"
+      ],
+      "stock_codes": [
+        "002661.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "主要业务为挂面的生产和销售.",
+      "country": "CN",
+      "province": "湖南",
+      "city": "益阳市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (002661.SZ).",
+      "employee_count": 4389
+    },
+    {
+      "company_id": "a_share_003816",
+      "name_zh": "中国广核",
+      "aliases": [
+        "中国广核电力股份有限公司"
+      ],
+      "stock_codes": [
+        "003816.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "主营业务为建设,运营及管理核电站,销售该等核电站所发电力,组织开发核电站的设计及科研工作.主要产品是电力.",
+      "country": "CN",
+      "province": "广东",
+      "city": "深圳市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (003816.SZ).",
+      "employee_count": 22928
+    },
+    {
+      "company_id": "a_share_300319",
+      "name_zh": "麦捷科技",
+      "aliases": [
+        "深圳市麦捷微电子科技股份有限公司"
+      ],
+      "stock_codes": [
+        "300319.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "主要产品:高端电子元器件.主要业务:研发,生产及销售片式功率电感,射频元器件等新型电子元器件和LCM显示屏模组器件,并为下游客户提供技术支持服务和元器件整体解决方案.",
+      "country": "CN",
+      "province": "广东",
+      "city": "深圳市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (300319.SZ).",
+      "employee_count": 4527
+    },
+    {
+      "company_id": "a_share_300408",
+      "name_zh": "三环集团",
+      "aliases": [
+        "潮州三环(集团)股份有限公司"
+      ],
+      "stock_codes": [
+        "300408.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "主要产品:通信部件,半导体部件,电子元件材料,电子元件,压缩机部件,燃料电池部件,新材料等.主要业务:电子陶瓷类电子元件及其基础材料的研发,生产和销售.",
+      "country": "CN",
+      "province": "广东",
+      "city": "潮州市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (300408.SZ).",
+      "employee_count": 17352
+    },
+    {
+      "company_id": "a_share_300433",
+      "name_zh": "蓝思科技",
+      "aliases": [
+        "蓝思科技股份有限公司"
+      ],
+      "stock_codes": [
+        "300433.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "主要业务视窗与外观防护玻璃,蓝宝石,精密陶瓷,精密金属,触控模组,摄像头,按键配件,组装等",
+      "country": "CN",
+      "province": "湖南",
+      "city": "长沙市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (300433.SZ).",
+      "employee_count": 145683
+    },
+    {
+      "company_id": "a_share_300628",
+      "name_zh": "亿联网络",
+      "aliases": [
+        "厦门亿联网络技术股份有限公司"
+      ],
+      "stock_codes": [
+        "300628.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "主要产品:统一通信个人桌面终端及视频会议系统;主营业务:为中小型企业用户提供多款先进的统一通信终端",
+      "country": "CN",
+      "province": "福建",
+      "city": "厦门市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (300628.SZ).",
+      "employee_count": 2169
+    },
+    {
+      "company_id": "a_share_300699",
+      "name_zh": "光威复材",
+      "aliases": [
+        "威海光威复合材料股份有限公司"
+      ],
+      "stock_codes": [
+        "300699.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "主营业务:公司是专业从事碳纤维及碳纤维复合材料的研发,生产与销售的高新技术企业,拥有碳纤维行业的全产业链布局,产品范围从原丝,碳纤维,织物,预浸料到复合材料,碳纤维制品.",
+      "country": "CN",
+      "province": "山东",
+      "city": "威海市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (300699.SZ).",
+      "employee_count": 2263
+    },
+    {
+      "company_id": "a_share_300827",
+      "name_zh": "上能电气",
+      "aliases": [
+        "上能电气股份有限公司"
+      ],
+      "stock_codes": [
+        "300827.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "公司主要从事电力电子设备的研发,生产,销售.专注于电力电子变换技术,运用电力电子变换技术为光伏发电,电化学储能接入电网以及电能质量治理提供解决方案,主要产品包括光伏逆变器(PV Inverter),储能双向变流器(PCS)以及有源滤波器(APF),低压无功补偿器(SVG),智能电能质量矫正装置(SPC)等产品,并提供光伏发电系统和储能系统的集成业务.",
+      "country": "CN",
+      "province": "江苏",
+      "city": "无锡市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (300827.SZ).",
+      "employee_count": 1609
+    },
+    {
+      "company_id": "a_share_300832",
+      "name_zh": "新产业",
+      "aliases": [
+        "深圳市新产业生物医学工程股份有限公司"
+      ],
+      "stock_codes": [
+        "300832.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "主要从事研发,生产及销售系列全自动化学发光免疫分析仪器及配套试剂,公司产品主要用于提供疾病的预防,诊断,治疗监测,预后观察,健康状态评价以及遗传性疾病预测等方面的诊断信息.",
+      "country": "CN",
+      "province": "广东",
+      "city": "深圳市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (300832.SZ).",
+      "employee_count": 2841
+    },
+    {
+      "company_id": "a_share_300973",
+      "name_zh": "立高食品",
+      "aliases": [
+        "立高食品股份有限公司"
+      ],
+      "stock_codes": [
+        "300973.SZ"
+      ],
+      "listing_market": "SZSE",
+      "description": "公司主要从事烘焙食品原料及冷冻烘焙食品的研发,生产和销售.公司主要产品包括奶油,水果制品,酱料,巧克力等烘焙食品原料和冷冻烘焙半成品及成品,此外还生产部分休闲食品.",
+      "country": "CN",
+      "province": "广东",
+      "city": "广州市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (300973.SZ).",
+      "employee_count": 3881
+    },
+    {
+      "company_id": "a_share_600256",
+      "name_zh": "广汇能源",
+      "aliases": [
+        "广汇能源股份有限公司"
+      ],
+      "stock_codes": [
+        "600256.SH"
+      ],
+      "listing_market": "SSE",
+      "description": "主营业务:许可经营项目:煤炭销售.一般经营项目:液化天然气,石油,天然气,煤炭,煤化工,清洁燃料汽车应用,加注站建设的项目投资与技术服务等;煤炭批发经营;一般货物与技术的进出口经营;国内商业购销.",
+      "country": "CN",
+      "province": "新疆",
+      "city": "乌鲁木齐市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (600256.SH).",
+      "employee_count": 6683
+    },
+    {
+      "company_id": "a_share_600312",
+      "name_zh": "平高电气",
+      "aliases": [
+        "河南平高电气股份有限公司"
+      ],
+      "stock_codes": [
+        "600312.SH"
+      ],
+      "listing_market": "SSE",
+      "description": "主营业务:研发,制造,销售高压,超高压,特高压等高端开关设备,控制设备及其配件;技术服务;技术咨询以及公司自产产品及相关技术的进出口业务.主要产品:敞开式SF6断路器,隔离开关及接地开关,全封闭组合电器,备品备件及其他.",
+      "country": "CN",
+      "province": "河南",
+      "city": "平顶山市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (600312.SH).",
+      "employee_count": 4640
+    },
+    {
+      "company_id": "a_share_600330",
+      "name_zh": "天通股份",
+      "aliases": [
+        "天通控股股份有限公司"
+      ],
+      "stock_codes": [
+        "600330.SH"
+      ],
+      "listing_market": "SSE",
+      "description": "主要产品:从事的的产品为:磁性材料,电子表面贴装产品,ONU,EOC等.主营业务:从事的的业务为:磁性材料,磁电子器件,通信设备终端等的生产和销售,电子制造服务(EMS).",
+      "country": "CN",
+      "province": "浙江",
+      "city": "嘉兴市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (600330.SH).",
+      "employee_count": 4696
+    },
+    {
+      "company_id": "a_share_600803",
+      "name_zh": "新奥股份",
+      "aliases": [
+        "新奥天然气股份有限公司"
+      ],
+      "stock_codes": [
+        "600803.SH"
+      ],
+      "listing_market": "SSE",
+      "description": "主营业务:液化天然气生产/销售与投资,能源技术工程服务,甲醇等能源化工产品生产,销售与贸易,煤炭的开采,洗选与贸易,以及生物制农兽药原料药及制剂的生产与销售",
+      "country": "CN",
+      "province": "河北",
+      "city": "石家庄市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (600803.SH).",
+      "employee_count": 37142
+    },
+    {
+      "company_id": "a_share_600835",
+      "name_zh": "上海机电",
+      "aliases": [
+        "上海机电股份有限公司"
+      ],
+      "stock_codes": [
+        "600835.SH"
+      ],
+      "listing_market": "SSE",
+      "description": "电梯及自动扶梯产品",
+      "country": "CN",
+      "province": "上海",
+      "city": "上海市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (600835.SH).",
+      "employee_count": 4397
+    },
+    {
+      "company_id": "a_share_600862",
+      "name_zh": "中航高科",
+      "aliases": [
+        "中航航空高科技股份有限公司"
+      ],
+      "stock_codes": [
+        "600862.SH"
+      ],
+      "listing_market": "SSE",
+      "description": "航空新材料,高端智能装备,轨道交通,汽车,医疗器械,装备制造,房地产,创新创业投资等.",
+      "country": "CN",
+      "province": "江苏",
+      "city": "南通市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (600862.SH).",
+      "employee_count": 1056
+    },
+    {
+      "company_id": "a_share_600875",
+      "name_zh": "东方电气",
+      "aliases": [
+        "东方电气股份有限公司"
+      ],
+      "stock_codes": [
+        "600875.SH"
+      ],
+      "listing_market": "SSE",
+      "description": "主要产品为火力发电设备,水力发电设备,风力发电设备,核能发电设备以及燃气发电设备等.",
+      "country": "CN",
+      "province": "四川",
+      "city": "成都市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (600875.SH).",
+      "employee_count": 18753
+    },
+    {
+      "company_id": "a_share_600893",
+      "name_zh": "航发动力",
+      "aliases": [
+        "中国航发动力股份有限公司"
+      ],
+      "stock_codes": [
+        "600893.SH"
+      ],
+      "listing_market": "SSE",
+      "description": "航空发动机批量制造及修理等",
+      "country": "CN",
+      "province": "陕西",
+      "city": "西安市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (600893.SH).",
+      "employee_count": 30428
+    },
+    {
+      "company_id": "a_share_601006",
+      "name_zh": "大秦铁路",
+      "aliases": [
+        "大秦铁路股份有限公司"
+      ],
+      "stock_codes": [
+        "601006.SH"
+      ],
+      "listing_market": "SSE",
+      "description": "主营业务:煤炭运输",
+      "country": "CN",
+      "province": "山西",
+      "city": "大同市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (601006.SH).",
+      "employee_count": 88072
+    },
+    {
+      "company_id": "a_share_601179",
+      "name_zh": "中国西电",
+      "aliases": [
+        "中国西电电气股份有限公司"
+      ],
+      "stock_codes": [
+        "601179.SH"
+      ],
+      "listing_market": "SSE",
+      "description": "主要产品:公司的主导产品是110kV及以上电压等级的高压开关(GIS,GCB,隔离开关,接地开关),变压器(电力变压器,换流变压器),电抗器(平波电抗器,并联电抗器),电力电容器,互感器(CVT,CT,PT),绝缘子(电站电瓷产品,复合材料绝缘子产品),套管,氧化锌避雷器,直流输电换流阀等.主营业务:本公司的主营业务为输配电及控制设备研发,设计,制造,销售,检测,相关设备成套,技术研究,服务与工程承包,核心业务为高压,超高压及特高压交直流输配电设备制造,研发和检测.",
+      "country": "CN",
+      "province": "陕西",
+      "city": "西安市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (601179.SH).",
+      "employee_count": 8755
+    },
+    {
+      "company_id": "a_share_601700",
+      "name_zh": "风范股份",
+      "aliases": [
+        "常熟风范电力设备股份有限公司"
+      ],
+      "stock_codes": [
+        "601700.SH"
+      ],
+      "listing_market": "SSE",
+      "description": "主营业务为输电线路铁塔的研发,设计,生产和销售以及变电构支架和通讯铁塔的生产和销售.此外,公司还研发了复合材料绝缘杆塔,首批已挂网运行.主要产品有输电线路铁塔,变电构支架.",
+      "country": "CN",
+      "province": "江苏",
+      "city": "苏州市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (601700.SH).",
+      "employee_count": 1801
+    },
+    {
+      "company_id": "a_share_601985",
+      "name_zh": "中国核电",
+      "aliases": [
+        "中国核能电力股份有限公司"
+      ],
+      "stock_codes": [
+        "601985.SH"
+      ],
+      "listing_market": "SSE",
+      "description": "主营业务;核电项目的开发,投资,建设,运营与管理,核电运行安全技术研究及相关技术服务与咨询业务.主要产品:是电力.",
+      "country": "CN",
+      "province": "北京",
+      "city": "北京市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (601985.SH).",
+      "employee_count": 20355
+    },
+    {
+      "company_id": "a_share_603345",
+      "name_zh": "安井食品",
+      "aliases": [
+        "安井食品集团股份有限公司"
+      ],
+      "stock_codes": [
+        "603345.SH"
+      ],
+      "listing_market": "SSE",
+      "description": "主营业务为火锅料制品,速冻面米制品等速冻食品的研发,生产和销售.主要产品为“安井”牌速冻食品,品种达300余种.",
+      "country": "CN",
+      "province": "福建",
+      "city": "厦门市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (603345.SH).",
+      "employee_count": 17100
+    },
+    {
+      "company_id": "a_share_603738",
+      "name_zh": "泰晶科技",
+      "aliases": [
+        "泰晶科技股份有限公司"
+      ],
+      "stock_codes": [
+        "603738.SH"
+      ],
+      "listing_market": "SSE",
+      "description": "主要产品:各种型号的石英晶体谐振器,产品涵盖DIP和SMD等.主营业务:石英晶体谐振器的研发,生产,销售.",
+      "country": "CN",
+      "province": "湖北",
+      "city": "随州市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (603738.SH).",
+      "employee_count": 2034
+    },
+    {
+      "company_id": "a_share_605117",
+      "name_zh": "德业股份",
+      "aliases": [
+        "宁波德业科技股份有限公司"
+      ],
+      "stock_codes": [
+        "605117.SH"
+      ],
+      "listing_market": "SSE",
+      "description": "主要从事蒸发器,冷凝器和变频控制芯片等部件以及除湿机和空气源热泵热风机等环境电器产品的研发,生产和销售.",
+      "country": "CN",
+      "province": "浙江",
+      "city": "宁波市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (605117.SH).",
+      "employee_count": 6044
+    },
+    {
+      "company_id": "a_share_605499",
+      "name_zh": "东鹏饮料",
+      "aliases": [
+        "东鹏饮料(集团)股份有限公司"
+      ],
+      "stock_codes": [
+        "605499.SH"
+      ],
+      "listing_market": "SSE",
+      "description": "主营业务为饮料的研发,生产和销售,主要产品包括东鹏特饮,由柑柠檬茶,陈皮特饮,包装饮用水等,其中东鹏特饮是公司的主导产品.",
+      "country": "CN",
+      "province": "广东",
+      "city": "深圳市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (605499.SH).",
+      "employee_count": 12376
+    },
+    {
+      "company_id": "a_share_688002",
+      "name_zh": "睿创微纳",
+      "aliases": [
+        "烟台睿创微纳技术股份有限公司"
+      ],
+      "stock_codes": [
+        "688002.SH"
+      ],
+      "listing_market": "SSE",
+      "description": "公司的主营业务为红外MEMS芯片,探测器,机芯及整机的研发,生产和销售,是一家专业的红外成像整体解决方案提供商.产品主要包括非制冷红外热成像MEMS芯片,红外热成像探测器,红外热成像机芯,红外热像仪及光电系统.",
+      "country": "CN",
+      "province": "山东",
+      "city": "烟台市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (688002.SH).",
+      "employee_count": 3587
+    },
+    {
+      "company_id": "a_share_688018",
+      "name_zh": "乐鑫科技",
+      "aliases": [
+        "乐鑫信息科技(上海)股份有限公司"
+      ],
+      "stock_codes": [
+        "688018.SH"
+      ],
+      "listing_market": "SSE",
+      "description": "主要产品ESP8266系列芯片,ESP32系列芯片,主要从事物联网Wi-Fi MCU通信芯片及其模组的研发,设计及销售.",
+      "country": "CN",
+      "province": "上海",
+      "city": "上海市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (688018.SH).",
+      "employee_count": 898
+    },
+    {
+      "company_id": "a_share_688278",
+      "name_zh": "特宝生物",
+      "aliases": [
+        "厦门特宝生物工程股份有限公司"
+      ],
+      "stock_codes": [
+        "688278.SH"
+      ],
+      "listing_market": "SSE",
+      "description": "上市产品包括生物制品国家1类新药——聚乙二醇干扰素α-2b注射液(商品名称:“派格宾”),注射用重组人粒细胞巨噬细胞刺激因子(商品名称:“特尔立”),重组人粒细胞刺激因子注射液(商品名称:“特尔津”)和注射用重组人白介素-11(商品名称:“特尔康”).是一家主要从事重组蛋白质及其长效修饰药物研发,生产及销售的创新型生物医药企业.",
+      "country": "CN",
+      "province": "福建",
+      "city": "厦门市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (688278.SH).",
+      "employee_count": 3644
+    },
+    {
+      "company_id": "a_share_688696",
+      "name_zh": "极米科技",
+      "aliases": [
+        "极米科技股份有限公司"
+      ],
+      "stock_codes": [
+        "688696.SH"
+      ],
+      "listing_market": "SSE",
+      "description": "主营业务是智能投影产品的研发,生产及销售,同时向消费者提供围绕智能投影的配件产品及互联网增值服务.",
+      "country": "CN",
+      "province": "四川",
+      "city": "成都市",
+      "company_type": "public",
+      "status": "ACTIVE",
+      "notes": "FinanceDashboard registered stock; source: Tushare company profile (688696.SH).",
+      "employee_count": 1817
+    }
+  ],
+  "company_node_exposures_to_upsert": []
+}
