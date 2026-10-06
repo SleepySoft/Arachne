@@ -1,0 +1,14 @@
+schema: arachne-flow/v0.1
+title: 'Power flow: grid control and protection systems integration'
+root_product: power_automation_system
+include: []
+local:
+  act_integrate_grid_control_systems: 电网控制与保护系统集成
+edges:
+# 控制芯片、通信与计算设备集成为调度、保护和配电自动化系统
+- [chip, component, act_integrate_grid_control_systems]
+- [communication_equipment, component, act_integrate_grid_control_systems]
+- [computer_equipment, tool, act_integrate_grid_control_systems]
+- [act_integrate_grid_control_systems, primary_result, power_automation_system]
+- [act_integrate_grid_control_systems, co_result, power_protection_system]
+- [act_integrate_grid_control_systems, co_result, power_dispatching_system]

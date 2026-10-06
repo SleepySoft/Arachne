@@ -1,0 +1,14 @@
+schema: arachne-flow/v0.1
+title: 'Power flow: power distribution equipment integration'
+root_product: power_distribution_equipment
+include: []
+local:
+  act_integrate_power_distribution_equipment: 配电设备集成
+edges:
+# 变压、开关、限流、绝缘与预装变电单元集成为成套配电设备
+- [transformer, component, act_integrate_power_distribution_equipment]
+- [switchgear, component, act_integrate_power_distribution_equipment]
+- [reactor, component, act_integrate_power_distribution_equipment]
+- [insulator, component, act_integrate_power_distribution_equipment]
+- [packaged_substation, component, act_integrate_power_distribution_equipment]
+- [act_integrate_power_distribution_equipment, primary_result, power_distribution_equipment]

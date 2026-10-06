@@ -1,0 +1,13 @@
+schema: arachne-flow/v0.1
+title: 'New energy flow: stationary energy storage battery assembly'
+root_product: energy_storage_battery
+include:
+- battery_cell_manufacturing.yaml
+local:
+  act_assemble_energy_storage_battery: 储能电池系统装配
+edges:
+# 储能电池：电芯串并联并与电池管理、结构件集成为储能电池系统
+- [lithium_ion_cell, component, act_assemble_energy_storage_battery]
+- [chip, component, act_assemble_energy_storage_battery]
+- [battery_structure_part, component, act_assemble_energy_storage_battery]
+- [act_assemble_energy_storage_battery, primary_result, energy_storage_battery]

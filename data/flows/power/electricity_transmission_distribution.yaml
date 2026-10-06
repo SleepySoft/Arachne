@@ -1,0 +1,23 @@
+schema: arachne-flow/v0.1
+title: 'Power flow: electricity transmission and distribution'
+root_product: electricity_distribution
+include:
+- energy_production.yaml
+- power_distribution_equipment.yaml
+- grid_control_systems.yaml
+local:
+  act_transmit_electricity: 电力输送
+  act_distribute_electricity: 电力配送
+edges:
+# 电力经输电线路送入配电网络，再由配电设备和控制系统配送至终端
+- [electricity_power, subject, act_transmit_electricity]
+- [transmission_tower, tool, act_transmit_electricity]
+- [power_cable, tool, act_transmit_electricity]
+- [act_transmit_electricity, primary_result, electricity_transmission]
+- [electricity_transmission, subject, act_distribute_electricity]
+- [power_distribution_equipment, tool, act_distribute_electricity]
+- [smart_meter, tool, act_distribute_electricity]
+- [power_automation_system, tool, act_distribute_electricity]
+- [power_protection_system, tool, act_distribute_electricity]
+- [power_dispatching_system, tool, act_distribute_electricity]
+- [act_distribute_electricity, primary_result, electricity_distribution]

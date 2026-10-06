@@ -1,5 +1,5 @@
 schema: arachne-flow/v0.1
-title: 'Upstream flow: energy production (coal, gas, wind, solar, nuclear)'
+title: 'Upstream flow: energy production (coal, gas, wind, hydro, nuclear)'
 root_product: electricity_power
 include: []
 local: {}
@@ -14,6 +14,10 @@ edges:
 - [wind_turbine, tool, act_wind_power_generation]
 - [act_wind_power_generation, ref, wind_power_generation]
 - [act_wind_power_generation, primary_result, electricity_power]
+- [generator_set, tool, act_hydro_power_generation]
+- [power_generation_equipment, tool, act_hydro_power_generation]
+- [act_hydro_power_generation, ref, hydro_power_generation]
+- [act_hydro_power_generation, primary_result, electricity_power]
 - [nuclear_fuel, feedstock, act_nuclear_power_generation]
 - [act_nuclear_power_generation, ref, nuclear_power_generation]
 - [act_nuclear_power_generation, primary_result, electricity_power]
