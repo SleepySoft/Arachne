@@ -55,3 +55,28 @@
 ## 提交边界
 
 代码和审计工具提交到 Arachne；节点、边、Flow 文件及数据库导出提交到 ArachneData；Arachne 单独更新 ArachneData 指针；FinanceDashboard 单独更新 Arachne 指针。每个产业批次保持独立提交。
+
+## 2026-10-06 验收结果
+
+FinanceDashboard 当前有 84 个标的，其中 83 个为公司，医疗器械 ETF 作为非公司标的排除。最终审计结果：
+
+- 83/83 公司按证券代码或精确名称解析；
+- 83/83 公司至少有一条产业暴露；
+- 146 条公司产业暴露全部指向有效的 legacy 产业实体；
+- 146/146 暴露均具备 activity type、weight、观察日期、证据和 ACTIVE 状态；
+- 83/83 公司暴露实体全部原生进入 arachne_flow，部分覆盖和零覆盖均为 0；
+- 对单暴露公司按 2025 年报分部收入复核，补充 18 条主要业务暴露，单暴露公司从 57 家降至 46 家；业务集中的剩余公司保留单暴露；
+- 删除两条缺少公司级证据的推断性暴露：风华高科的锂电池电芯、长鑫科技的氢氟酸采购；
+- 新增 12 个稳定产业实体和 12 条 legacy 产业关系，并补齐对应 Flow。
+
+验收命令：
+
+```powershell
+backend\venv\Scripts\python.exe scripts\preview_flows.py
+backend\venv\Scripts\python.exe scripts\audit_company_flow_coverage.py `
+  --finance-data-dir C:\D\code\FinanceDashboard\data `
+  --fail-on-gaps
+backend\venv\Scripts\python.exe scripts\smoke_flow_reasoning.py
+```
+
+`extract_flow_pg_gaps.py` 仍会报告历史 Flow 的 36 个 RESOURCE 和 28 个 METHOD 缺少 PG 元数据。这些节点不属于本证券池的公司暴露实体，本轮没有新增此类缺口；它们作为 Arachne 全局元数据治理任务继续保留。
