@@ -57,6 +57,7 @@
 | 脚本 | 用途 | 写库? |
 |---|---|---|
 | `audit_node_company_exposures.py` | 审计节点→公司暴露覆盖：`--industry biopharma` 或 `--nodes a b c`，列出无暴露节点 | 否 |
+| `audit_company_flow_coverage.py` | 从 FinanceDashboard `data/` 扫描证券池，审计公司解析、暴露完整性、节点引用和 arachne_flow 原生覆盖 | 否 |
 | `cli/arachne_cli.py`（在 cli/ 目录） | 节点/边/行业/公司/映射/暴露的 CRUD 与批量提交，见 `skills/arachne-api/SKILL.md` | 是 |
 
 ## 2. 典型工作流
