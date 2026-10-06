@@ -1,0 +1,47 @@
+{
+    "batch_id":  "finance_dashboard_cxmt_company_20261006",
+    "task_description":  "登记 FinanceDashboard 跟踪的长鑫科技（688825.SH）并以招股说明书披露的主营业务连接至既有 DRAM 芯片产业实体。",
+    "companies_to_upsert":  [
+                                {
+                                    "company_id":  "cxmt",
+                                    "name_zh":  "长鑫科技",
+                                    "name_en":  "CXMT Corporation",
+                                    "aliases":  [
+                                                    "长鑫科技集团股份有限公司",
+                                                    "长鑫存储"
+                                                ],
+                                    "stock_codes":  [
+                                                        "688825.SH"
+                                                    ],
+                                    "listing_market":  "SSE",
+                                    "description":  "DRAM 产品的研发、设计、生产及销售。",
+                                    "country":  "CN",
+                                    "province":  "安徽",
+                                    "city":  "合肥市",
+                                    "founded_year":  2016,
+                                    "company_type":  "public",
+                                    "status":  "ACTIVE",
+                                    "notes":  "FinanceDashboard registered stock; evidence from the 2026 IPO prospectus."
+                                }
+                            ],
+    "company_node_exposures_to_upsert":  [
+                                             {
+                                                 "exposure_id":  "cxmt_manufacture_dram_chip",
+                                                 "company_id":  "cxmt",
+                                                 "node_id":  "dram_chip",
+                                                 "activity_type":  "manufacture",
+                                                 "role":  "DRAM 研发设计制造一体化",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2026-07-22",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "长鑫科技集团股份有限公司首次公开发行股票并在科创板上市招股说明书",
+                                                                      "source_url":  "https://static.cninfo.com.cn/finalpage/2026-07-22/1225435989.PDF",
+                                                                      "quote":  "长鑫科技专注于DRAM产品的研发、设计、生产及销售。"
+                                                                  }
+                                                              ]
+                                             }
+                                         ]
+}
