@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
-import { GraphCanvas } from "@/components/GraphCanvas";
+import { GraphCanvas, type GraphCanvasRef } from "@/components/GraphCanvas";
 import {
   getCompany,
   getCompanySubgraph,
@@ -121,6 +121,7 @@ async function loadExposureGraph(companyId: string): Promise<ExposureGraph> {
 }
 
 export function EmbedCompanyExposurePage({ companyId }: { companyId: string }) {
+  const canvasRef = useRef<GraphCanvasRef>(null);
   const [data, setData] = useState<ExposureGraph | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -155,6 +156,36 @@ export function EmbedCompanyExposurePage({ companyId }: { companyId: string }) {
     () => new Map(data?.nodes.map((node) => [node.node_id, node.canonical_name_zh || node.canonical_name_en || node.node_id])),
     [data],
   );
+
+  useEffect(() => {
+    if (!data || exposureIds.length === 0) return;
+    const timer = window.setTimeout(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const positions: Record<string, { x: number; y: number }> = {};
+      const exposureSet = new Set(exposureIds);
+      const exposedNodes = data.nodes.filter((node) => exposureSet.has(node.node_id));
+      const contextNodes = data.nodes.filter((node) => !exposureSet.has(node.node_id));
+      const exposureColumns = Math.min(5, Math.max(1, exposedNodes.length));
+      exposedNodes.forEach((node, index) => {
+        positions[node.node_id] = {
+          x: (index % exposureColumns) * 180,
+          y: Math.floor(index / exposureColumns) * 150,
+        };
+      });
+      const exposureRows = Math.ceil(exposedNodes.length / exposureColumns);
+      const contextColumns = Math.min(6, Math.max(1, contextNodes.length));
+      contextNodes.forEach((node, index) => {
+        positions[node.node_id] = {
+          x: (index % contextColumns) * 150,
+          y: exposureRows * 150 + 100 + Math.floor(index / contextColumns) * 130,
+        };
+      });
+      canvas.setNodePositions(positions);
+      canvas.fitToView(48);
+    }, 450);
+    return () => window.clearTimeout(timer);
+  }, [data, exposureIds]);
 
   if (loading) {
     return (
@@ -216,6 +247,7 @@ export function EmbedCompanyExposurePage({ companyId }: { companyId: string }) {
         <>
           <section className="min-h-0 flex-1">
             <GraphCanvas
+              ref={canvasRef}
               key={reloadKey}
               engine="legacy"
               filters={EMBED_FILTERS}
