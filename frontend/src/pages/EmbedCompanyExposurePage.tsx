@@ -253,6 +253,12 @@ export function EmbedCompanyExposurePage({ companyId }: { companyId: string }) {
               filters={EMBED_FILTERS}
               sourceData={{ nodes: data.nodes, edges: data.edges }}
               highlightNodeIds={exposureIds}
+              focusState={{
+                active: true,
+                seedNodeIds: exposureIds,
+                visibleNodeIds: data.nodes.map((node) => node.node_id),
+                history: [],
+              }}
               onNodeClick={() => undefined}
               onEdgeClick={() => undefined}
             />
