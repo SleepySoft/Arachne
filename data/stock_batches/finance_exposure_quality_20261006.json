@@ -1,0 +1,1170 @@
+{
+  "batch_id": "finance_exposure_quality_20261006",
+  "task_description": "复核 FinanceDashboard 公司产业暴露的证据、状态与观察日期；移除无公司证据支持的推断性暴露",
+  "industries_to_upsert": [],
+  "industry_node_mappings_to_upsert": [],
+  "companies_to_upsert": [],
+  "company_node_exposures_to_upsert": [
+    {
+      "exposure_uuid": "2144c8dd-5ac8-4280-8aff-92fe53daf2e0",
+      "exposure_id": "pingan_uses_deposit",
+      "company_id": "pingan_bank",
+      "node_id": "public_deposit",
+      "activity_type": "use",
+      "role": "资金来源",
+      "weight": 1.0,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "平安银行2025年年度报告（提炼数据）",
+          "quote": "2025年，吸收存款平均付息率1.65%，同比2024年下降42个基点"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "e776e9d1-671e-4b16-bee6-ad2588391bd8",
+      "exposure_id": "pingan_provides_loan",
+      "company_id": "pingan_bank",
+      "node_id": "loan_service",
+      "activity_type": "provide_service",
+      "role": "核心贷款服务",
+      "weight": 1.0,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "平安银行2025年年度报告（提炼数据）",
+          "quote": "个人贷款 1,727,294 50.9%；企业贷款 1,663,546 49.1%"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "860d3d68-f8bb-415b-9008-b4bc32eebff2",
+      "exposure_id": "pingan_provides_interbank",
+      "company_id": "pingan_bank",
+      "node_id": "interbank_lending_service",
+      "activity_type": "provide_service",
+      "role": "同业拆借服务",
+      "weight": 0.800000011920929,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "Tushare公司资料：000001.SZ 平安银行",
+          "quote": "经营范围包括从事同业拆借。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "68248cc9-6705-41a3-8f67-6861659e5847",
+      "exposure_id": "pingan_provides_bond_inv",
+      "company_id": "pingan_bank",
+      "node_id": "bond_investment_service",
+      "activity_type": "provide_service",
+      "role": "债券投资服务",
+      "weight": 0.699999988079071,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "Tushare公司资料：000001.SZ 平安银行",
+          "quote": "经营范围包括买卖政府债券、金融债券。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "1e35bd06-93e2-4a76-b687-d29cfa131360",
+      "exposure_id": "midea_produce_industrial_robot",
+      "company_id": "midea",
+      "node_id": "industrial_robot",
+      "activity_type": "produce",
+      "role": "库卡母公司，工业机器人布局",
+      "weight": 0.8500000238418579,
+      "confidence": "MEDIUM",
+      "evidence": [
+        {
+          "source_title": "公开产业资料整理（2026）",
+          "source_url": null,
+          "quote": "库卡母公司，工业机器人布局"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "6e8eaf73-2739-4afb-9038-6448b2d7a42e",
+      "exposure_id": "midea_produce_service_robot",
+      "company_id": "midea",
+      "node_id": "service_robot",
+      "activity_type": "produce",
+      "role": "服务机器人整机布局",
+      "weight": 0.800000011920929,
+      "confidence": "MEDIUM",
+      "evidence": [
+        {
+          "source_title": "公开产业资料整理（2026）",
+          "source_url": null,
+          "quote": "服务机器人整机布局"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "e68818cb-ea9e-4964-89d4-15c13e21cec2",
+      "exposure_id": "xj_manufacture_distribution_equip",
+      "company_id": "xj_electric",
+      "node_id": "power_distribution_equipment",
+      "activity_type": "manufacture",
+      "role": "配电设备制造商",
+      "weight": 1.0,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "许继电气2024年年度报告",
+          "source_url": null,
+          "quote": "主要产品包括电力保护及自动化设备、干式变压器、电力开关、继电器及装置等。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "3859d1aa-a9fa-4b14-9596-ca235d6c0348",
+      "exposure_id": "xj_provide_power_dist",
+      "company_id": "xj_electric",
+      "node_id": "electricity_distribution",
+      "activity_type": "provide_service",
+      "role": "配电自动化解决方案提供商",
+      "weight": 0.800000011920929,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "许继电气2024年年度报告",
+          "source_url": null,
+          "quote": "公司主要产品包括电力保护及自动化设备。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "f6eb51ac-c2c6-4841-9e59-b495abbd6bdb",
+      "exposure_id": "xj_manufacture_smart_meter",
+      "company_id": "xj_electric",
+      "node_id": "smart_meter",
+      "activity_type": "manufacture",
+      "role": "智能电表制造商",
+      "weight": 0.800000011920929,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "许继电气2024年年度报告",
+          "source_url": null,
+          "quote": "主要产品包括电能仪表。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "ac83081e-a211-490e-826e-81382f771eca",
+      "exposure_id": "xueda_education_provide_education_service",
+      "company_id": "xueda_education",
+      "node_id": "education_service",
+      "activity_type": "provide_service",
+      "role": "教育培训服务商",
+      "weight": 1.0,
+      "confidence": "LOW",
+      "evidence": [
+        {
+          "source_title": "学大教育2025年年度报告（提炼数据）",
+          "quote": "教育培训服务费收入 3,119,716,159.11，占营业收入96.67%。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "df2cd2d8-8a9b-4f37-af4e-d051fedb3846",
+      "exposure_id": "yuedianli_produce_electricity",
+      "company_id": "yuedianli",
+      "node_id": "electricity_power",
+      "activity_type": "produce",
+      "role": "电力生产商",
+      "weight": 0.8999999761581421,
+      "confidence": "LOW",
+      "evidence": [
+        {
+          "source_title": "粤电力A 2025年年度报告（提炼数据）",
+          "quote": "售电收入 50,555,016,115，占营业收入98.09%。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "601981d1-c292-42cb-bf29-4c3b4b0a8b7c",
+      "exposure_id": "yuedianli_operate_coal_power",
+      "company_id": "yuedianli",
+      "node_id": "coal_power_generation",
+      "activity_type": "operate",
+      "role": "燃煤发电运营商",
+      "weight": 0.699999988079071,
+      "confidence": "LOW",
+      "evidence": [
+        {
+          "source_title": "粤电力A 2025年年度报告（提炼数据）",
+          "quote": "公司电力业务包含火力发电；煤炭为火力发电燃料。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "9bd01177-0467-4019-84c2-343dc1be8864",
+      "exposure_id": "yuedianli_operate_gas_power",
+      "company_id": "yuedianli",
+      "node_id": "gas_power_generation",
+      "activity_type": "operate",
+      "role": "燃气发电运营商",
+      "weight": 0.5,
+      "confidence": "LOW",
+      "evidence": [
+        {
+          "source_title": "粤电力A 2025年年度报告（提炼数据）",
+          "quote": "燃料成本在营业成本中占较大比重，煤炭、天然气价格波动对公司经营业绩影响较大。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "e3ab35b7-54a1-411b-9084-bf4dd41415f0",
+      "exposure_id": "fenghua_manufacture_chip_resistor",
+      "company_id": "fenghua_high_tech",
+      "node_id": "chip_resistor",
+      "activity_type": "manufacture",
+      "role": "片式电阻器制造商",
+      "weight": 0.800000011920929,
+      "confidence": "LOW",
+      "evidence": [
+        {
+          "source_title": "风华高科2025年年度报告（提炼数据）",
+          "quote": "主营产品包括片式电阻器。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "4d56839a-b164-4671-8497-751623f016f1",
+      "exposure_id": "fenghua_manufacture_ceramic_cap",
+      "company_id": "fenghua_high_tech",
+      "node_id": "ceramic_capacitor",
+      "activity_type": "manufacture",
+      "role": "陶瓷电容器制造商",
+      "weight": 0.800000011920929,
+      "confidence": "LOW",
+      "evidence": [
+        {
+          "source_title": "风华高科2025年年度报告（提炼数据）",
+          "quote": "片式多层陶瓷电容器（MLCC）等电子元器件及电子材料占营业收入98.19%。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "5af8697b-855f-4dec-8340-c463a1e9b3f8",
+      "exposure_id": "gree_manufacture_air_conditioner",
+      "company_id": "gree_electric",
+      "node_id": "air_conditioner",
+      "activity_type": "manufacture",
+      "role": "空调制造商",
+      "weight": 0.8999999761581421,
+      "confidence": "LOW",
+      "evidence": [
+        {
+          "source_title": "格力电器2025年年度报告（提炼数据）",
+          "quote": "公司坚守家用空调核心优势，多措并举稳定市场份额。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "50f26a8c-469b-41e5-b508-8a4aba607960",
+      "exposure_id": "gree_manufacture_small_home",
+      "company_id": "gree_electric",
+      "node_id": "small_home_appliance",
+      "activity_type": "manufacture",
+      "role": "小家电制造商",
+      "weight": 0.4000000059604645,
+      "confidence": "LOW",
+      "evidence": [
+        {
+          "source_title": "格力电器2025年年度报告（提炼数据）",
+          "quote": "消费领域覆盖家用空调、暖通设备、冰箱、洗衣机、热水器、厨房电器、环境电器等产品。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "e34f2834-73c3-4d54-96ac-0a4c67c412d1",
+      "exposure_id": "gree_manufacture_refrigerator",
+      "company_id": "gree_electric",
+      "node_id": "refrigerator",
+      "activity_type": "manufacture",
+      "role": "冰箱制造商",
+      "weight": 0.4000000059604645,
+      "confidence": "LOW",
+      "evidence": [
+        {
+          "source_title": "格力电器2025年年度报告（提炼数据）",
+          "quote": "消费领域覆盖家用空调、暖通设备、冰箱、洗衣机、热水器、厨房电器、环境电器等产品。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "5fd067da-3626-4f80-8f1b-84ce59841871",
+      "exposure_id": "gree_manufacture_kitchen",
+      "company_id": "gree_electric",
+      "node_id": "kitchen_appliance",
+      "activity_type": "manufacture",
+      "role": "厨卫电器制造商",
+      "weight": 0.30000001192092896,
+      "confidence": "LOW",
+      "evidence": [
+        {
+          "source_title": "格力电器2025年年度报告（提炼数据）",
+          "quote": "消费领域覆盖家用空调、暖通设备、冰箱、洗衣机、热水器、厨房电器、环境电器等产品。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "11873caa-7cdb-4956-bf3c-2e44725da9ff",
+      "exposure_id": "st_rongkong_operate_real_estate",
+      "company_id": "st_rongkong",
+      "node_id": "real_estate_development",
+      "activity_type": "operate",
+      "role": "房地产开发商",
+      "weight": 0.8999999761581421,
+      "confidence": "LOW",
+      "evidence": [
+        {
+          "source_title": "ST荣控2025年年度报告（提炼数据）",
+          "quote": "房地产销售收入 322,287,922.85，占营业收入79.34%。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "deee251e-3aa1-4610-9c06-978576bbffb4",
+      "exposure_id": "huagong_tech_produce_optical_module",
+      "company_id": "huagong_tech",
+      "node_id": "optical_module",
+      "activity_type": "produce",
+      "role": "华工正源100G-800G覆盖",
+      "weight": 0.800000011920929,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "光通信概念股梳理（新浪财经）",
+          "source_url": "https://www.sina.cn/news/detail/5305673770337989.html",
+          "quote": "华工科技（000988）：旗下华工正源为光模块核心企业，从100G到800G产品覆盖"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "a34b1477-5f6c-45df-8334-474009eca3bb",
+      "exposure_id": "huagong_tech_produce_laser_chip",
+      "company_id": "huagong_tech",
+      "node_id": "laser_chip",
+      "activity_type": "produce",
+      "role": "高端光芯片自研自产",
+      "weight": 0.6000000238418579,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "高速光模块产业链解析",
+          "source_url": "https://www.sina.cn/news/detail/5289053335328167.html",
+          "quote": "华工科技：高端光芯片100% 自研自产"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "a4311152-3567-4fe4-b641-4e77953e321e",
+      "exposure_id": "accelink_produce_optical_chip",
+      "company_id": "accelink",
+      "node_id": "optical_chip",
+      "activity_type": "produce",
+      "role": "25G光芯片国内市占率第一",
+      "weight": 0.8999999761581421,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "全球光模块行业格局解析（C114通信网）",
+          "source_url": "https://m.c114.com.cn/w241-1307670.html",
+          "quote": "光迅科技实现10G及以上高端光芯片自研自产……25G光芯片国内市占率第一"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "247101d8-304e-45b4-90a9-d92fbd31cbff",
+      "exposure_id": "accelink_produce_optical_module",
+      "company_id": "accelink",
+      "node_id": "optical_module",
+      "activity_type": "produce",
+      "role": "数通与电信双线",
+      "weight": 0.8500000238418579,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "全球光模块行业格局解析（C114通信网）",
+          "source_url": "https://m.c114.com.cn/w241-1307670.html",
+          "quote": "光迅科技作为国内唯一具备\"光芯片—器件—模块—子系统\"全产业链垂直整合能力的企业……800G/1.6T模块已实现批量供货国内云厂商"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "0d220814-5e62-4400-af02-13a6e225ce91",
+      "exposure_id": "accelink_produce_rosa",
+      "company_id": "accelink",
+      "node_id": "rosa",
+      "activity_type": "produce",
+      "role": "光器件/组件IDM",
+      "weight": 0.800000011920929,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "全球光模块行业格局解析（C114通信网）",
+          "source_url": "https://m.c114.com.cn/w241-1307670.html",
+          "quote": "光迅科技作为国内唯一具备\"光芯片—器件—模块—子系统\"全产业链垂直整合能力的企业，是光器件/模块IDM龙头。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "766867cd-6001-4139-bd6e-bc1beb9fbbd1",
+      "exposure_id": "accelink_produce_tosa",
+      "company_id": "accelink",
+      "node_id": "tosa",
+      "activity_type": "produce",
+      "role": "光器件/组件IDM",
+      "weight": 0.800000011920929,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "全球光模块行业格局解析（C114通信网）",
+          "source_url": "https://m.c114.com.cn/w241-1307670.html",
+          "quote": "光迅科技作为国内唯一具备\"光芯片—器件—模块—子系统\"全产业链垂直整合能力的企业，是光器件/模块IDM龙头。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "36f9a9e6-f396-41d1-ba8a-f8c29546db5c",
+      "exposure_id": "accelink_produce_photodetector_chip",
+      "company_id": "accelink",
+      "node_id": "photodetector_chip",
+      "activity_type": "produce",
+      "role": "自研PD探测器芯片",
+      "weight": 0.75,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "五大环节对应A股公司清单（2026）",
+          "source_url": "https://www.sina.cn/news/detail/5316742121265376.html",
+          "quote": "光迅科技 002281：国内唯一 InP IDM 全产业链，自研 DFB/EML/PD 全套高速光芯片"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "e5286a9b-b5db-44b7-af4d-8cc354ea5ee6",
+      "exposure_id": "accelink_produce_silicon_photonics_chip",
+      "company_id": "accelink",
+      "node_id": "silicon_photonics_chip",
+      "activity_type": "produce",
+      "role": "自研硅光芯片",
+      "weight": 0.699999988079071,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "五大环节对应A股公司清单（2026）",
+          "source_url": "https://www.sina.cn/news/detail/5316742121265376.html",
+          "quote": "光迅科技 002281：自研硅光芯片，1.6T 硅光模块送样"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "cafe9edb-ae1f-425a-b98a-2a452b0b5ae0",
+      "exposure_id": "exp_xingsen_tech_silicon_inte_069582",
+      "company_id": "xingsen_technology",
+      "node_id": "silicon_interposer",
+      "activity_type": "produce",
+      "role": "硅中介层/IC 载板",
+      "weight": 1.0,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "HBM 产业链补充",
+          "source_url": null,
+          "quote": "xingsen_technology 对 silicon_interposer 的暴露"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "db327d5d-8ea6-4fb8-8ff9-7a47cf1d5836",
+      "exposure_id": "sungrow_exposes_photovoltaic_inverter",
+      "company_id": "sungrow",
+      "node_id": "photovoltaic_inverter",
+      "activity_type": "produce",
+      "role": "光伏逆变器龙头厂商",
+      "weight": 1.0,
+      "confidence": "LOW",
+      "evidence": [
+        {
+          "source_title": "半导体产业链公司与作用完整报告",
+          "source_url": null,
+          "quote": "阳光电源 在 6.6 光伏逆变器与能源电子 中定位为：光伏逆变器龙头厂商"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "be70f50d-5964-46d6-92f8-fc56c79e355b",
+      "exposure_id": "inno_light_exposes_optical_module",
+      "company_id": "inno_light",
+      "node_id": "optical_module",
+      "activity_type": "produce",
+      "role": "全球光模块出货第一",
+      "weight": 1.0,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "财新周刊：谁主AI\"光未来\"",
+          "source_url": "https://weekly.caixin.com/2026-08-08/102472479.html",
+          "quote": "中际旭创（300308.SZ）、新易盛（300502.SZ）……前两者全球出货量排名第一、第二"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "1d02cd07-18c4-4e4b-be1d-a6137e80d4e7",
+      "exposure_id": "inno_light_produce_co_packaged_optics",
+      "company_id": "inno_light",
+      "node_id": "co_packaged_optics",
+      "activity_type": "produce",
+      "role": "全球CPO市占率约42%",
+      "weight": 0.8500000238418579,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "财新：中际旭创股价创新高 A股光模块新技术布局哪家强",
+          "source_url": "https://database.caixin.com/2026-04-13/102433289.html",
+          "quote": "中际旭创800G CPO已实现大规模量产，供货英伟达……公司在全球CPO市占率约42%，1.6T市占率大于50%。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "e89e63db-9501-4e1d-a2c6-c086088f5080",
+      "exposure_id": "inno_light_produce_silicon_photonics_optical_module",
+      "company_id": "inno_light",
+      "node_id": "silicon_photonics_optical_module",
+      "activity_type": "produce",
+      "role": "自研硅光芯片+硅光模块",
+      "weight": 0.800000011920929,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "五大环节对应A股公司清单（2026）",
+          "source_url": "https://www.sina.cn/news/detail/5316742121265376.html",
+          "quote": "中际旭创 300308：自研硅光芯片 + 硅光模块，英伟达硅光 CPO 核心合作伙伴"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "7be88545-2d17-4151-9934-b8a2ffb5b3da",
+      "exposure_id": "nanda_photoelectric_exposes_photoresist",
+      "company_id": "nanda_photoelectric",
+      "node_id": "photoresist",
+      "activity_type": "produce",
+      "role": "光刻胶材料供应商",
+      "weight": 1.0,
+      "confidence": "LOW",
+      "evidence": [
+        {
+          "source_title": "国内半导体产业链公司梳理",
+          "source_url": null,
+          "quote": "南大光电 在 4.2 CMP、湿电子化学品、光刻胶相关/光刻胶、前驱体、电子特气。 中定位为：光刻胶材料供应商"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "b10545c7-c5d6-400a-89d6-78488157dabb",
+      "exposure_id": "nanda_gas",
+      "company_id": "nanda_photoelectric",
+      "node_id": "electronic_special_gases",
+      "activity_type": "produce",
+      "role": "电子特气",
+      "weight": 1.0,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "半导体产业链公司研报",
+          "source_url": null,
+          "quote": "南大光电 ArF 光刻胶、电子特气"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "8ffa8b1d-0824-44fb-a313-b8d058f32046",
+      "exposure_id": "nanda_photoresist",
+      "company_id": "nanda_photoelectric",
+      "node_id": "euv_photoresist",
+      "activity_type": "produce",
+      "role": "ArF 光刻胶",
+      "weight": 0.800000011920929,
+      "confidence": "MEDIUM",
+      "evidence": [
+        {
+          "source_title": "半导体产业链公司研报",
+          "source_url": null,
+          "quote": "南大光电 ArF 光刻胶、电子特气"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "b901e517-1c9a-404f-b204-2ea94cf9a14b",
+      "exposure_id": "tianfu_communication_produce_fiber_array_unit",
+      "company_id": "tianfu_communication",
+      "node_id": "fiber_array_unit",
+      "activity_type": "produce",
+      "role": "高端FAU全球市占率第一",
+      "weight": 1.0,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "财新周刊：AI基建带来光通信需求爆发",
+          "source_url": "https://database.caixin.com/2026-08-08/102472455.html",
+          "quote": "根据LightCounting数据，天孚通信在高端FAU市场拥有超过50%的市占率。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "595a6132-dd64-4b16-a1c0-4ebe437be1bd",
+      "exposure_id": "tianfu_communication_produce_optical_engine",
+      "company_id": "tianfu_communication",
+      "node_id": "optical_engine",
+      "activity_type": "produce",
+      "role": "1.6T光引擎规模量产",
+      "weight": 0.8999999761581421,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "财新：中际旭创股价创新高 A股光模块新技术布局哪家强",
+          "source_url": "https://database.caixin.com/2026-04-13/102433289.html",
+          "quote": "天孚通信年报明确披露，公司成功完成1.6T 光引擎规模量产和CPO配套光器件的研发。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "0046d287-0266-4d9f-9444-02bbda20472e",
+      "exposure_id": "tianfu_communication_produce_optical_isolator",
+      "company_id": "tianfu_communication",
+      "node_id": "optical_isolator",
+      "activity_type": "produce",
+      "role": "无源器件起家",
+      "weight": 0.6000000238418579,
+      "confidence": "MEDIUM",
+      "evidence": [
+        {
+          "source_title": "财新：中际旭创股价创新高 A股光模块新技术布局哪家强",
+          "source_url": "https://database.caixin.com/2026-04-13/102433289.html",
+          "quote": "公司传统业务是无源器件，而业绩增长动力则来自更高附加值的有源器件。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "4e992c81-8c2e-4994-8175-14b2efe90abe",
+      "exposure_id": "eoptolink_produce_optical_module",
+      "company_id": "eoptolink",
+      "node_id": "optical_module",
+      "activity_type": "produce",
+      "role": "全球光模块出货第二",
+      "weight": 0.949999988079071,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "财新周刊：透析科技股结构牛市",
+          "source_url": "https://database.caixin.com/2026-05-16/102444549.html",
+          "quote": "凭借800G光模块全球市占率28%至33%，绑定英伟达、谷歌、Meta、亚马逊、微软五大顶级云厂商"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "2746ed77-7b85-4e20-b63e-c71c050cbcfd",
+      "exposure_id": "eoptolink_produce_lpo_optical_module",
+      "company_id": "eoptolink",
+      "node_id": "lpo_optical_module",
+      "activity_type": "produce",
+      "role": "LPO技术壁垒",
+      "weight": 0.8500000238418579,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "财新周刊：透析科技股结构牛市",
+          "source_url": "https://database.caixin.com/2026-05-16/102444549.html",
+          "quote": "新易盛则被机构认为在LPO（线性驱动可插拔）技术领域具备壁垒。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "57c24ba7-b1bf-499b-abc4-f21b6996c33d",
+      "exposure_id": "cosco_operate_tanker",
+      "company_id": "cosco_shipping_energy",
+      "node_id": "oil_tanker",
+      "activity_type": "operate",
+      "role": "油轮运输运营商",
+      "weight": 0.949999988079071,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "中远海能主营业务",
+          "source_url": null,
+          "quote": "主要业务:石油运输、煤炭运输"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "c993f340-044f-4903-b7e7-044542f61c18",
+      "exposure_id": "sinolink_provide_securities",
+      "company_id": "sinolink",
+      "node_id": "securities_service",
+      "activity_type": "provide_service",
+      "role": "综合证券服务商",
+      "weight": 0.8999999761581421,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "国金证券主营业务",
+          "source_url": null,
+          "quote": "主营业务:证券经纪业务、投资银行业务、证券投资业务、资产管理业务"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "376e4a20-11ec-4cf0-9514-bd616242a66a",
+      "exposure_id": "hengli_produce_planetary_roller_screw",
+      "company_id": "hengli",
+      "node_id": "planetary_roller_screw",
+      "activity_type": "produce",
+      "role": "精密传动与线性执行布局",
+      "weight": 0.800000011920929,
+      "confidence": "MEDIUM",
+      "evidence": [
+        {
+          "source_title": "公开产业资料整理（2026）",
+          "source_url": null,
+          "quote": "精密传动与线性执行布局"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "ee16e289-7891-445a-88fc-72d5ad1e1ef3",
+      "exposure_id": "yofc_produce_optical_fiber_cable",
+      "company_id": "yofc",
+      "node_id": "optical_fiber_cable",
+      "activity_type": "produce",
+      "role": "全球光纤光缆龙头",
+      "weight": 0.949999988079071,
+      "confidence": "HIGH",
+      "evidence": [
+        {
+          "source_title": "国内光模块前十五家龙头公司（头条）",
+          "source_url": "https://m.toutiao.com/w/1851766387078152/",
+          "quote": "长飞光纤（601869）"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "85acbfb0-bb70-41ca-bb1c-7c616b2c675f",
+      "exposure_id": "yofc_produce_optical_fiber",
+      "company_id": "yofc",
+      "node_id": "optical_fiber",
+      "activity_type": "produce",
+      "role": "光纤预制棒-光纤全链",
+      "weight": 0.8999999761581421,
+      "confidence": "MEDIUM",
+      "evidence": [
+        {
+          "source_title": "国内光模块前十五家龙头公司（头条）",
+          "source_url": "https://m.toutiao.com/w/1851766387078152/",
+          "quote": "长飞光纤（601869）"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "a0b189e6-1a96-47da-918e-4ec9e71db3c7",
+      "exposure_id": "nsig_wafer",
+      "company_id": "nsig",
+      "node_id": "silicon_wafer",
+      "activity_type": "produce",
+      "role": "半导体硅片供应商",
+      "weight": 1.0,
+      "confidence": "LOW",
+      "evidence": [
+        {
+          "source_title": "国内半导体产业链公司梳理",
+          "source_url": null,
+          "quote": "沪硅产业 在 4.1 硅片/硅材料/国内 300mm 半导体硅片龙头；官网介绍其旗下上海新昇率先实现 300mm 硅片规模化销售，集团还覆盖 SOI 硅片、MEMS 定制硅片等。 中定位为：半导体硅片供应商"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "a4d2d97b-cc53-4c4e-a0ea-3cc02f088501",
+      "exposure_id": "nsig_silicon",
+      "company_id": "nsig",
+      "node_id": "silicon",
+      "activity_type": "produce",
+      "role": "硅材料",
+      "weight": 0.800000011920929,
+      "confidence": "MEDIUM",
+      "evidence": [
+        {
+          "source_title": "半导体产业链公司研报",
+          "source_url": null,
+          "quote": "沪硅产业硅片材料"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "7a352523-f19c-4ee7-bb0c-e9cd0d1951d3",
+      "exposure_id": "qingyi_optoelectronics_exposes_photomask",
+      "company_id": "qingyi_optoelectronics",
+      "node_id": "photomask",
+      "activity_type": "produce",
+      "role": "清溢光电官网称公司主要从事掩膜版研发、设计、生产和销售，产品应用于平板显示、半导体芯片、触控、电路板等行业，是国内成立较早、规模较大的掩膜版生产企业之一。",
+      "weight": 1.0,
+      "confidence": "LOW",
+      "evidence": [
+        {
+          "source_title": "国内半导体产业链公司梳理",
+          "source_url": null,
+          "quote": "清溢光电 在 五、光罩厂/掩膜版：A 股已经形成清溢、路维、龙图三家核心上市公司 中定位为：清溢光电官网称公司主要从事掩膜版研发、设计、生产和销售，产品应用于平板显示、半导体芯片、触控、电路板等行业，是国内成立较早、规模较大的掩膜版生产企业之一。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "4ed08d46-87fd-4b2c-9772-0cbe11dc5460",
+      "exposure_id": "newway_photomask_exposes_photomask",
+      "company_id": "newway_photomask",
+      "node_id": "photomask",
+      "activity_type": "produce",
+      "role": "路维官网称公司致力于掩膜版研发、生产和销售，为显示厂商、晶圆厂、IC 设计公司、封测厂提供掩膜版产品；其显示掩膜版已实现 G2.5-G11 全世代覆盖，半导体掩膜版应用于 IC 制造、半导体器件、先进封装等领域。",
+      "weight": 1.0,
+      "confidence": "LOW",
+      "evidence": [
+        {
+          "source_title": "国内半导体产业链公司梳理",
+          "source_url": null,
+          "quote": "路维光电 在 五、光罩厂/掩膜版：A 股已经形成清溢、路维、龙图三家核心上市公司 中定位为：路维官网称公司致力于掩膜版研发、生产和销售，为显示厂商、晶圆厂、IC 设计公司、封测厂提供掩膜版产品；其显示掩膜版已实现 G2.5-G11 全世代覆盖，半导体掩膜版应用于 IC 制造、半导体器件、先进封装等领域。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "998bef96-788e-4cfb-83a2-d396a668e591",
+      "exposure_id": "starmask_exposes_photomask",
+      "company_id": "starmask",
+      "node_id": "photomask",
+      "activity_type": "produce",
+      "role": "龙图光罩官网称公司成立于 2010 年，是独立第三方半导体掩模版厂商，主营半导体掩模版研发、生产和销售，工艺节点从 1μm 提升至 130nm，应用于功率半导体、MEMS、IC封装、模拟 IC 等领域；公司 2024 年登陆科创板。",
+      "weight": 1.0,
+      "confidence": "LOW",
+      "evidence": [
+        {
+          "source_title": "国内半导体产业链公司梳理",
+          "source_url": null,
+          "quote": "龙图光罩 在 五、光罩厂/掩膜版：A 股已经形成清溢、路维、龙图三家核心上市公司 中定位为：龙图光罩官网称公司成立于 2010 年，是独立第三方半导体掩模版厂商，主营半导体掩模版研发、生产和销售，工艺节点从 1μm 提升至 130nm，应用于功率半导体、MEMS、IC封装、模拟 IC 等领域；公司 2024 年登陆科创板。"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "0d1fffa3-269e-4440-beb1-37d9ff994cca",
+      "exposure_id": "cxmt_idm_memory",
+      "company_id": "cxmt",
+      "node_id": "integrated_device_manufacturer",
+      "activity_type": "produce",
+      "role": "DRAM 存储 IDM 厂商",
+      "weight": 1.0,
+      "confidence": "LOW",
+      "evidence": [
+        {
+          "source_title": "国内半导体产业链公司梳理（非上市补充）",
+          "source_url": null,
+          "quote": "由报告整理的关键非上市半导体制造公司"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "3963a89c-2135-4fed-8db5-5f50a7d66003",
+      "exposure_id": "unitree_produce_quadruped_robot",
+      "company_id": "unitree",
+      "node_id": "quadruped_robot",
+      "activity_type": "produce",
+      "role": "四足机器狗全球龙头",
+      "weight": 0.949999988079071,
+      "confidence": "MEDIUM",
+      "evidence": [
+        {
+          "source_title": "公开产业资料整理（2026）",
+          "source_url": null,
+          "quote": "四足机器狗全球龙头"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "7bb0122d-1110-4d30-8386-18400a4beb38",
+      "exposure_id": "unitree_produce_humanoid_robot",
+      "company_id": "unitree",
+      "node_id": "humanoid_robot",
+      "activity_type": "produce",
+      "role": "全球人形机器人出货量领先",
+      "weight": 0.949999988079071,
+      "confidence": "MEDIUM",
+      "evidence": [
+        {
+          "source_title": "公开产业资料整理（2026）",
+          "source_url": null,
+          "quote": "全球人形机器人出货量领先"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "248c572e-8b7a-4882-bf57-6b62c6ebf06c",
+      "exposure_id": "unitree_produce_biped_humanoid",
+      "company_id": "unitree",
+      "node_id": "biped_humanoid",
+      "activity_type": "produce",
+      "role": "H/G系列双足人形",
+      "weight": 0.8999999761581421,
+      "confidence": "MEDIUM",
+      "evidence": [
+        {
+          "source_title": "公开产业资料整理（2026）",
+          "source_url": null,
+          "quote": "H/G系列双足人形"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    },
+    {
+      "exposure_uuid": "513dec75-34f2-4231-aac8-26baba1d6cf4",
+      "exposure_id": "unitree_produce_mobile_robot",
+      "company_id": "unitree",
+      "node_id": "mobile_robot",
+      "activity_type": "produce",
+      "role": "四足机器人龙头",
+      "weight": 0.8999999761581421,
+      "confidence": "MEDIUM",
+      "evidence": [
+        {
+          "source_title": "公开产业资料整理（2026）",
+          "source_url": null,
+          "quote": "四足机器人龙头"
+        }
+      ],
+      "status": "ACTIVE",
+      "as_of_date": "2026-10-06",
+      "notes": null,
+      "is_test": false
+    }
+  ]
+}
