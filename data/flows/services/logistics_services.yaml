@@ -1,0 +1,15 @@
+schema: arachne-flow/v0.1
+title: 'Services flow: general logistics and LNG shipping'
+root_product: logistics_service
+include: []
+local:
+  act_provide_logistics_service: 物流服务运营
+  act_provide_lng_shipping: LNG运输运营
+edges:
+- [container, tool, act_provide_logistics_service]
+- [warehouse_service, component, act_provide_logistics_service]
+- [act_provide_logistics_service, primary_result, logistics_service]
+- [lng, subject, act_provide_lng_shipping]
+- [ship, tool, act_provide_lng_shipping]
+- [act_provide_lng_shipping, primary_result, lng_shipping_service]
+- [lng_shipping_service, component, act_provide_logistics_service]

@@ -1,0 +1,12 @@
+schema: arachne-flow/v0.1
+title: 'Industrial equipment flow: air separation and industrial gas production'
+root_product: industrial_gas
+include:
+- energy_production.yaml
+local:
+  act_separate_air: 空气分离
+edges:
+- [air_separation_equipment, tool, act_separate_air]
+- [electricity_power, energy, act_separate_air]
+- [act_separate_air, ref, air_separation_process]
+- [act_separate_air, primary_result, industrial_gas]

@@ -6,7 +6,9 @@ include:
 - power_distribution_equipment.yaml
 local:
   act_assemble_elevator_system: 电梯与自动扶梯系统装配
+  act_service_elevator_system: 电梯安装与维保
   act_manufacture_engine_accessory: 汽车发动机附件制造
+  act_manufacture_suspension_system: 汽车悬架系统制造
   act_assemble_fracturing_equipment: 压裂装备制造
 edges:
 # 电机、配电控制设备和钢结构组成电梯与自动扶梯系统
@@ -14,11 +16,16 @@ edges:
 - [power_distribution_equipment, component, act_assemble_elevator_system]
 - [steel, feedstock, act_assemble_elevator_system]
 - [act_assemble_elevator_system, primary_result, elevator_system]
+- [elevator_system, subject, act_service_elevator_system]
+- [act_service_elevator_system, primary_result, elevator_installation_maintenance_service]
 # 缸套、活塞和钢制件加工为发动机附件
 - [cylinder_liner, component, act_manufacture_engine_accessory]
 - [aluminum_piston, component, act_manufacture_engine_accessory]
 - [steel, feedstock, act_manufacture_engine_accessory]
 - [act_manufacture_engine_accessory, primary_result, automotive_engine_accessory]
+- [steel, feedstock, act_manufacture_suspension_system]
+- [automotive_engine_accessory, component, act_manufacture_suspension_system]
+- [act_manufacture_suspension_system, primary_result, suspension_system]
 # 能源化工装备、动力和钢制承压结构集成为压裂装备
 - [energy_chemical_equipment, component, act_assemble_fracturing_equipment]
 - [electric_motor, component, act_assemble_fracturing_equipment]

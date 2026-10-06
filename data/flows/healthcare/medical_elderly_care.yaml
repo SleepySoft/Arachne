@@ -1,0 +1,10 @@
+schema: arachne-flow/v0.1
+title: 'Healthcare flow: medical elderly care services'
+root_product: medical_elderly_care_service
+include: []
+local:
+  act_provide_medical_elderly_care: 医疗养老服务运营
+edges:
+- [medical_service, component, act_provide_medical_elderly_care]
+- [medical_device, tool, act_provide_medical_elderly_care]
+- [act_provide_medical_elderly_care, primary_result, medical_elderly_care_service]

@@ -1,0 +1,11 @@
+schema: arachne-flow/v0.1
+title: 'Industrial equipment flow: coated and diamond abrasives'
+root_product: coated_abrasive
+include:
+- diamond_tool_manufacturing.yaml
+local:
+  act_manufacture_coated_abrasive: 涂附磨具制造
+edges:
+- [abrasive_material, feedstock, act_manufacture_coated_abrasive]
+- [polymer_material, component, act_manufacture_coated_abrasive]
+- [act_manufacture_coated_abrasive, primary_result, coated_abrasive]

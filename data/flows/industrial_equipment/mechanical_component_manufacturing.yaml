@@ -1,0 +1,26 @@
+schema: arachne-flow/v0.1
+title: 'Industrial equipment flow: engine, rail and hydraulic components'
+root_product: hydraulic_system
+include:
+- steel_making.yaml
+local:
+  act_machine_engine_crankshaft: 发动机曲轴加工
+  act_machine_engine_connecting_rod: 发动机连杆加工
+  act_manufacture_rail_part: 轨交装备零部件制造
+  act_manufacture_hydraulic_cylinder: 液压油缸制造
+  act_manufacture_hydraulic_pump_valve: 液压泵阀及马达制造
+  act_integrate_hydraulic_system: 液压系统集成
+edges:
+- [steel, feedstock, act_machine_engine_crankshaft]
+- [act_machine_engine_crankshaft, primary_result, engine_crankshaft]
+- [steel, feedstock, act_machine_engine_connecting_rod]
+- [act_machine_engine_connecting_rod, primary_result, engine_connecting_rod]
+- [steel, feedstock, act_manufacture_rail_part]
+- [act_manufacture_rail_part, primary_result, rail_transit_equipment_part]
+- [steel, feedstock, act_manufacture_hydraulic_cylinder]
+- [act_manufacture_hydraulic_cylinder, primary_result, hydraulic_cylinder]
+- [steel, feedstock, act_manufacture_hydraulic_pump_valve]
+- [act_manufacture_hydraulic_pump_valve, primary_result, hydraulic_pump_valve]
+- [hydraulic_cylinder, component, act_integrate_hydraulic_system]
+- [hydraulic_pump_valve, component, act_integrate_hydraulic_system]
+- [act_integrate_hydraulic_system, primary_result, hydraulic_system]

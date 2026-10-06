@@ -7,6 +7,7 @@ local:
   act_process_beverage: 饮料加工
   act_prepare_beverage_packaging: 饮料包装制造
   act_package_beverage: 饮料灌装包装
+  act_process_meat_product: 肉类食品加工
 edges:
 # 标准化食品原料经规模化加工形成工业化食品
 - [food_ingredient, feedstock, act_manufacture_industrial_food]
@@ -25,3 +26,6 @@ edges:
 - [vegetable_fruit_beverage, feedstock, act_package_beverage]
 - [beverage_packaging, packaging, act_package_beverage]
 - [act_package_beverage, primary_result, industrial_food]
+- [livestock_breeding, feedstock, act_process_meat_product]
+- [act_process_meat_product, primary_result, meat_product]
+- [meat_product, feedstock, act_manufacture_industrial_food]

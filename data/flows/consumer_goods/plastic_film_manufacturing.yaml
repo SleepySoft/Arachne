@@ -5,8 +5,12 @@ include:
 - petrochemical.yaml
 local:
   act_extrude_plastic_film: 塑料薄膜挤出成型
+  act_compound_thermoplastic_elastomer: 热塑性弹性体混炼
 edges:
 # 聚乙烯、聚丙烯树脂经挤出、吹塑或流延形成塑料薄膜
 - [polyethylene, feedstock, act_extrude_plastic_film]
 - [polypropylene, feedstock, act_extrude_plastic_film]
 - [act_extrude_plastic_film, primary_result, plastic_film]
+- [polypropylene, feedstock, act_compound_thermoplastic_elastomer]
+- [polymer_material, feedstock, act_compound_thermoplastic_elastomer]
+- [act_compound_thermoplastic_elastomer, primary_result, thermoplastic_elastomer]
