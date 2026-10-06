@@ -26,6 +26,10 @@ from typing import Any, Iterable
 import httpx
 
 DEFAULT_BASE = "http://localhost:16060/api/v1"
+GENERIC_EVIDENCE_MARKERS = (
+    "derived from company business scope",
+    "tushare_stock_analysis_batch",
+)
 
 
 def fetch_all(client: httpx.Client, path: str, **params: Any) -> list[dict[str, Any]]:
@@ -94,6 +98,9 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"| Companies partly covered by arachne_flow | {summary['flow_partial_company_count']} |",
         f"| Companies with zero native arachne_flow coverage | {summary['flow_zero_company_count']} |",
         f"| Unique exposure nodes absent from arachne_flow | {summary['flow_missing_unique_node_count']} |",
+        f"| Exposure records passing evidence quality gate | {summary['quality_complete_exposure_count']} |",
+        f"| Exposure records with evidence quality gaps | {summary['quality_gap_exposure_count']} |",
+        f"| Companies with evidence quality gaps | {summary['quality_gap_company_count']} |",
         "",
     ]
     sections = [
@@ -103,6 +110,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         ("Partial arachne_flow coverage", report["flow_partial"]),
         ("Zero native arachne_flow coverage", report["flow_zero"]),
         ("Missing arachne_flow nodes", report["flow_missing_nodes"]),
+        ("Exposure evidence quality gaps", report["exposure_quality_gaps"]),
         ("Excluded non-company instruments", report["excluded_non_company"]),
     ]
     for title, rows in sections:
@@ -152,6 +160,7 @@ def main() -> int:
         invalid_nodes: list[dict[str, Any]] = []
         company_rows: list[dict[str, Any]] = []
         missing_node_companies: dict[str, set[str]] = {}
+        exposure_quality_gaps: list[dict[str, Any]] = []
         exposure_count = 0
 
         for stock in company_stocks:
@@ -187,6 +196,39 @@ def main() -> int:
                     native_count += 1
                 else:
                     missing_node_companies.setdefault(node_id, set()).add(stock["name"])
+                quality_issues: list[str] = []
+                if exposure.get("activity_type") in {None, "", "unknown"}:
+                    quality_issues.append("activity_type")
+                if exposure.get("weight") is None:
+                    quality_issues.append("weight")
+                if not exposure.get("as_of_date"):
+                    quality_issues.append("as_of_date")
+                if exposure.get("status") != "ACTIVE":
+                    quality_issues.append("status")
+                evidence = exposure.get("evidence") or []
+                if not evidence:
+                    quality_issues.append("evidence")
+                else:
+                    evidence_text = " ".join(
+                        f"{item.get('source_title', '')} {item.get('quote', '')}".lower()
+                        for item in evidence
+                        if isinstance(item, dict)
+                    )
+                    if not evidence_text.strip():
+                        quality_issues.append("evidence")
+                    elif any(marker in evidence_text for marker in GENERIC_EVIDENCE_MARKERS):
+                        quality_issues.append("generic_evidence")
+                if quality_issues:
+                    exposure_quality_gaps.append(
+                        {
+                            "code": stock["code"],
+                            "name": stock["name"],
+                            "company_id": company["company_id"],
+                            "exposure_id": exposure["exposure_id"],
+                            "node_id": node_id,
+                            "issues": "/".join(quality_issues),
+                        }
+                    )
             company_rows.append(
                 {
                     "code": stock["code"],
@@ -228,6 +270,11 @@ def main() -> int:
             "flow_partial_company_count": len(flow_partial),
             "flow_zero_company_count": len(flow_zero),
             "flow_missing_unique_node_count": len(missing_nodes),
+            "quality_complete_exposure_count": exposure_count - len(exposure_quality_gaps),
+            "quality_gap_exposure_count": len(exposure_quality_gaps),
+            "quality_gap_company_count": len(
+                {item["company_id"] for item in exposure_quality_gaps}
+            ),
             "exposure_count_distribution": dict(
                 sorted(Counter(row["exposure_count"] for row in company_rows).items())
             ),
@@ -239,6 +286,7 @@ def main() -> int:
         "flow_zero": flow_zero,
         "flow_full": flow_full,
         "flow_missing_nodes": missing_nodes,
+        "exposure_quality_gaps": exposure_quality_gaps,
         "excluded_non_company": excluded,
         "companies": company_rows,
     }
@@ -253,7 +301,14 @@ def main() -> int:
         args.markdown_out.write_text(markdown_text + "\n", encoding="utf-8")
     print(json.dumps(report["summary"], ensure_ascii=False, indent=2))
 
-    has_gaps = bool(unresolved or zero_exposure or invalid_nodes or flow_partial or flow_zero)
+    has_gaps = bool(
+        unresolved
+        or zero_exposure
+        or invalid_nodes
+        or flow_partial
+        or flow_zero
+        or exposure_quality_gaps
+    )
     return 1 if args.fail_on_gaps and has_gaps else 0
 
 
