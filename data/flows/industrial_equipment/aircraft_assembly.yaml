@@ -1,0 +1,19 @@
+schema: arachne-flow/v0.1
+title: 'Industrial equipment flow: aircraft structural parts and assembly'
+root_product: aircraft
+include: []
+local:
+  act_manufacture_aircraft_structure: 航空器结构件制造
+  act_assemble_aircraft: 航空器总装
+edges:
+# 铝型材与碳纤维复合材料加工为航空结构件和精密零部件
+- [aluminum_profile, feedstock, act_manufacture_aircraft_structure]
+- [carbon_fiber_composite, feedstock, act_manufacture_aircraft_structure]
+- [act_manufacture_aircraft_structure, primary_result, aircraft_structural_part]
+- [act_manufacture_aircraft_structure, co_result, aerospace_precision_part]
+# 结构件、发动机零部件和电连接器进入航空器总装
+- [aircraft_structural_part, component, act_assemble_aircraft]
+- [aerospace_precision_part, component, act_assemble_aircraft]
+- [aero_engine_part, component, act_assemble_aircraft]
+- [electrical_connector, component, act_assemble_aircraft]
+- [act_assemble_aircraft, primary_result, aircraft]

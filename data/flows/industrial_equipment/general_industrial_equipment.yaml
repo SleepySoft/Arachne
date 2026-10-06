@@ -1,0 +1,26 @@
+schema: arachne-flow/v0.1
+title: 'Industrial equipment flow: elevators, engine accessories and fracturing equipment'
+root_product: elevator_system
+include:
+- steel_making.yaml
+- power_distribution_equipment.yaml
+local:
+  act_assemble_elevator_system: 电梯与自动扶梯系统装配
+  act_manufacture_engine_accessory: 汽车发动机附件制造
+  act_assemble_fracturing_equipment: 压裂装备制造
+edges:
+# 电机、配电控制设备和钢结构组成电梯与自动扶梯系统
+- [electric_motor, component, act_assemble_elevator_system]
+- [power_distribution_equipment, component, act_assemble_elevator_system]
+- [steel, feedstock, act_assemble_elevator_system]
+- [act_assemble_elevator_system, primary_result, elevator_system]
+# 缸套、活塞和钢制件加工为发动机附件
+- [cylinder_liner, component, act_manufacture_engine_accessory]
+- [aluminum_piston, component, act_manufacture_engine_accessory]
+- [steel, feedstock, act_manufacture_engine_accessory]
+- [act_manufacture_engine_accessory, primary_result, automotive_engine_accessory]
+# 能源化工装备、动力和钢制承压结构集成为压裂装备
+- [energy_chemical_equipment, component, act_assemble_fracturing_equipment]
+- [electric_motor, component, act_assemble_fracturing_equipment]
+- [steel, feedstock, act_assemble_fracturing_equipment]
+- [act_assemble_fracturing_equipment, primary_result, fracturing_equipment]

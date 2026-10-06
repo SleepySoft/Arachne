@@ -1,0 +1,11 @@
+schema: arachne-flow/v0.1
+title: 'Industrial equipment flow: diamond tool manufacturing'
+root_product: diamond_tool
+include: []
+local:
+  act_manufacture_diamond_tool: 金刚石工具制造
+edges:
+# 人造金刚石与超硬材料加工为切削、磨削用金刚石工具
+- [synthetic_diamond, feedstock, act_manufacture_diamond_tool]
+- [superhard_material, feedstock, act_manufacture_diamond_tool]
+- [act_manufacture_diamond_tool, primary_result, diamond_tool]
