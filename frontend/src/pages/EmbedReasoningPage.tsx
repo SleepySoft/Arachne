@@ -104,12 +104,11 @@ function EmbeddedCompanyGraph({ nodeIds }: { nodeIds: string[] }) {
   return (
     <div className="flex h-full min-h-[420px] flex-col gap-2">
       <div className="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-xs text-slate-400">
-        显示 Arachne 流程图的全部节点；黄色边框标记该公司的产业暴露节点（{nodeIds.length} 个）。
+        显示 Arachne 首页产业图的全部节点；黄色边框标记该公司的产业暴露节点（{nodeIds.length} 个）。
       </div>
       <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-slate-800 bg-slate-900/60 p-2">
         <GraphCanvas
-          engine="arachne_flow"
-          flowMergeMode="method"
+          engine="legacy"
           filters={EMBED_GRAPH_FILTERS}
           highlightNodeIds={nodeIds}
           preserveContextOnHighlight

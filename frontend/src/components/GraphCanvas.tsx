@@ -2126,10 +2126,29 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
           nodesData = { items: merged.nodes.map((n) => adaptFlowNode(n)) };
           edgesData = { items: merged.edges.map((e) => adaptFlowEdge(e)) };
         } else {
-          [nodesData, edgesData] = await Promise.all([
+          const [firstNodes, firstEdges] = await Promise.all([
             listNodes(1, 1000, undefined, undefined, undefined, undefined, engine),
             listEdges(1, 1000, undefined, undefined, undefined, undefined, engine),
           ]);
+          const loadRemaining = <T,>(
+            first: { total: number; items: T[] },
+            loadPage: (page: number) => Promise<{ items: T[] }>
+          ) => {
+            const pages = Math.ceil(first.total / 1000);
+            return Promise.all(
+              Array.from({ length: Math.max(0, pages - 1) }, (_, index) => loadPage(index + 2))
+            ).then((rest) => [...first.items, ...rest.flatMap((page) => page.items)]);
+          };
+          const [allNodes, allEdges] = await Promise.all([
+            loadRemaining(firstNodes, (page) =>
+              listNodes(page, 1000, undefined, undefined, undefined, undefined, engine)
+            ),
+            loadRemaining(firstEdges, (page) =>
+              listEdges(page, 1000, undefined, undefined, undefined, undefined, engine)
+            ),
+          ]);
+          nodesData = { items: allNodes };
+          edgesData = { items: allEdges };
         }
         if (!mounted) return;
         if (!containerRef.current) return;
