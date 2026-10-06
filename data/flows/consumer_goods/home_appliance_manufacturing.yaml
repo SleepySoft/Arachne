@@ -1,0 +1,28 @@
+schema: arachne-flow/v0.1
+title: 'Consumer goods flow: home appliance manufacturing'
+root_product: air_conditioner
+include: []
+local:
+  act_assemble_air_conditioner: 空调器装配
+  act_assemble_refrigerator: 电冰箱装配
+  act_assemble_kitchen_appliance: 厨卫电器装配
+  act_assemble_small_home_appliance: 小家电装配
+edges:
+# 制冷压缩机、电机和家电用钢构成空调器及电冰箱的主要设备和结构件
+- [refrigeration_compressor, component, act_assemble_air_conditioner]
+- [electric_motor, component, act_assemble_air_conditioner]
+- [home_appliance_steel, component, act_assemble_air_conditioner]
+- [act_assemble_air_conditioner, primary_result, air_conditioner]
+- [refrigeration_compressor, component, act_assemble_refrigerator]
+- [plastic_resin, component, act_assemble_refrigerator]
+- [steel_sheet, component, act_assemble_refrigerator]
+- [act_assemble_refrigerator, primary_result, refrigerator]
+# 电机、控制芯片和结构件集成为厨卫电器与小家电
+- [electric_motor, component, act_assemble_kitchen_appliance]
+- [chip, component, act_assemble_kitchen_appliance]
+- [home_appliance_steel, component, act_assemble_kitchen_appliance]
+- [act_assemble_kitchen_appliance, primary_result, kitchen_appliance]
+- [electric_motor, component, act_assemble_small_home_appliance]
+- [chip, component, act_assemble_small_home_appliance]
+- [plastic_resin, component, act_assemble_small_home_appliance]
+- [act_assemble_small_home_appliance, primary_result, small_home_appliance]

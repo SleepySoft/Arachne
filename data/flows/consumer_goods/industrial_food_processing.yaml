@@ -1,0 +1,27 @@
+schema: arachne-flow/v0.1
+title: 'Consumer goods flow: industrial food and beverage processing'
+root_product: industrial_food
+include: []
+local:
+  act_manufacture_industrial_food: 工业化食品制造
+  act_process_beverage: 饮料加工
+  act_prepare_beverage_packaging: 饮料包装制造
+  act_package_beverage: 饮料灌装包装
+edges:
+# 标准化食品原料经规模化加工形成工业化食品
+- [food_ingredient, feedstock, act_manufacture_industrial_food]
+- [flour, feedstock, act_manufacture_industrial_food]
+- [food_condiment, additive, act_manufacture_industrial_food]
+- [act_manufacture_industrial_food, primary_result, industrial_food]
+# 农产品与糖等原料经饮料加工形成饮料基液
+- [agricultural_product, feedstock, act_process_beverage]
+- [white_sugar, additive, act_process_beverage]
+- [act_process_beverage, ref, beverage_processing]
+- [act_process_beverage, intermediate, vegetable_fruit_beverage]
+# PET瓶等容器组成饮料包装，并用于终端灌装包装
+- [pet_bottle, component, act_prepare_beverage_packaging]
+- [paper_packaging_product, component, act_prepare_beverage_packaging]
+- [act_prepare_beverage_packaging, primary_result, beverage_packaging]
+- [vegetable_fruit_beverage, feedstock, act_package_beverage]
+- [beverage_packaging, packaging, act_package_beverage]
+- [act_package_beverage, primary_result, industrial_food]
