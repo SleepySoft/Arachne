@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
 import {
   OutputType,
@@ -10,13 +11,19 @@ import {
 } from "@/types";
 import {
   executeReasoning,
+  getDefaultServerView,
   queryReasoningObjects,
   getPublishedView,
 } from "@/services/api";
 import { FLOW_OUTPUTS, DEFAULT_OUTPUTS } from "@/components/reasoning/config";
 import { cn, Badge } from "@/components/reasoning/ui";
 import { ReasoningResultViewer } from "@/components/reasoning/ReasoningResultViewer";
-import { GraphCanvas } from "@/components/GraphCanvas";
+import { GraphCanvas, type GraphCanvasRef } from "@/components/GraphCanvas";
+import { ViewToolbar } from "@/components/ViewToolbar";
+import { ViewManagerModal } from "@/components/ViewManagerModal";
+import { useSavedViews } from "@/hooks/useSavedViews";
+import { useAuth } from "@/contexts/AuthContext";
+import type { IndustrialViewState, SavedView } from "@/types/view";
 
 interface SeedItem {
   object_id: string;
@@ -101,21 +108,100 @@ function companyHighlightNodeIds(result: ReasoningResultEnvelope): string[] {
 }
 
 function EmbeddedCompanyGraph({ nodeIds }: { nodeIds: string[] }) {
+  const canvasRef = useRef<GraphCanvasRef>(null);
+  const savedViews = useSavedViews();
+  const { isReadOnly } = useAuth();
+  const [managerOpen, setManagerOpen] = useState(false);
+  const [restoredView, setRestoredView] = useState<IndustrialViewState | null>(null);
+  const appliedDefault = useRef(false);
+  const { data: defaultServerView } = useQuery({
+    queryKey: ["server-view-default", "industrial"],
+    queryFn: () => getDefaultServerView("industrial"),
+    retry: false,
+  });
+
+  // The embedded graph is deliberately always the complete industrial graph.
+  // A view changes the layout and camera only, so a default configured in the
+  // main Arachne workspace can never hide the company context or trim nodes.
+  const loadView = useCallback((view: SavedView) => {
+    const state = view.industrial;
+    if (!state) return;
+    setRestoredView({
+      ...state,
+      camera: { ...state.camera, pan: { ...state.camera.pan } },
+      nodePositions: state.nodePositions ? { ...state.nodePositions } : undefined,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (appliedDefault.current || !defaultServerView?.view) return;
+    appliedDefault.current = true;
+    loadView(defaultServerView.view);
+  }, [defaultServerView, loadView]);
+
+  const snapshot = useCallback(
+    (name: string): Omit<SavedView, "id" | "base" | "viewVersion" | "created_at" | "updated_at" | "version"> => {
+      const camera = canvasRef.current?.getCamera() ?? { pan: { x: 0, y: 0 }, zoom: 1 };
+      const positions = canvasRef.current?.getNodePositions() ?? {};
+      const containerSize = canvasRef.current?.getContainerSize() ?? undefined;
+      return {
+        name,
+        workspace: "industrial",
+        industrial: {
+          engine: "legacy",
+          selectedFlowIds: [],
+          selectedIndustryIds: [],
+          selectedCompanyIds: [],
+          activeFilters: { ...EMBED_GRAPH_FILTERS },
+          expandedProcessParentIds: [],
+          camera,
+          nodePositions: Object.keys(positions).length > 0 ? positions : undefined,
+          containerSize,
+        },
+      };
+    },
+    [],
+  );
+
   return (
     <div className="flex h-full min-h-[420px] flex-col gap-2">
-      <div className="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-xs text-slate-400">
-        显示 Arachne 首页产业图的全部节点；黄色边框标记该公司的产业暴露节点（{nodeIds.length} 个）。
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-xs text-slate-400">
+        <span>显示 Arachne 首页产业图的全部节点；黄色边框标记该公司的产业暴露节点（{nodeIds.length} 个）。</span>
+        <ViewToolbar
+          workspace="industrial"
+          variant="inline"
+          savedViews={savedViews}
+          onSave={snapshot}
+          onLoad={loadView}
+          onManage={() => setManagerOpen(true)}
+          showUndo={false}
+        />
       </div>
       <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-slate-800 bg-slate-900/60 p-2">
         <GraphCanvas
+          ref={canvasRef}
           engine="legacy"
           filters={EMBED_GRAPH_FILTERS}
           highlightNodeIds={nodeIds}
           preserveContextOnHighlight
+          restoredPositions={restoredView?.nodePositions}
+          restoredCamera={restoredView?.camera}
           onNodeClick={() => undefined}
           onEdgeClick={() => undefined}
         />
       </div>
+      {managerOpen && (
+        <ViewManagerModal
+          workspace="industrial"
+          savedViews={savedViews}
+          onLoad={(view) => {
+            loadView(view);
+            setManagerOpen(false);
+          }}
+          canManageServerViews={!isReadOnly}
+          onClose={() => setManagerOpen(false)}
+        />
+      )}
     </div>
   );
 }
