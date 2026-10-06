@@ -326,8 +326,23 @@ export default function App() {
     }
     if (mainView !== "industrial_graph" || !catalogsLoaded || !defaultIndustrialView) return;
     appliedDefaults.current.industrial = true;
+    if (embeddedCompanyId) {
+      // A company deep link must remain the complete home graph. Restore only
+      // the server default's geometry; saved selections, focus and filters
+      // could otherwise trim the graph into an unrelated subgraph.
+      setLoadedIndustrialView(defaultIndustrialView.view);
+      setIndustrialViewToRestore(defaultIndustrialView.view.industrial ?? null);
+      return;
+    }
     loadIndustrialView(defaultIndustrialView.view);
-  }, [catalogsLoaded, defaultIndustrialView, loadIndustrialView, loadedIndustrialView, mainView]);
+  }, [
+    catalogsLoaded,
+    defaultIndustrialView,
+    embeddedCompanyId,
+    loadIndustrialView,
+    loadedIndustrialView,
+    mainView,
+  ]);
 
   useEffect(() => {
     if (appliedDefaults.current.company) return;
