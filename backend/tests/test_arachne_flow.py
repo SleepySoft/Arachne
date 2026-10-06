@@ -244,6 +244,42 @@ async def test_compile_smartphone_flow():
     await storage.clear_flow(flow_id)
 
 
+@pytest.mark.asyncio(loop_scope="session")
+async def test_clear_flow_keeps_unrelated_orphan_nodes():
+    """Incremental recompilation must not delete nodes owned by other flows."""
+    from app.database_flow import get_flow_async_driver
+
+    driver = get_flow_async_driver()
+    async with driver.session() as session:
+        await session.run(
+            """
+            CREATE (:ArachneFlowNode:ArachneFlowResource {
+                node_id: 'target_flow_orphan', flow_id: 'target_flow'
+            })
+            CREATE (:ArachneFlowNode:ArachneFlowResource {
+                node_id: 'unrelated_flow_orphan', flow_id: 'unrelated_flow'
+            })
+            """
+        )
+
+    await storage.clear_flow("target_flow")
+
+    async with driver.session() as session:
+        result = await session.run(
+            """
+            MATCH (n:ArachneFlowNode)
+            WHERE n.node_id IN ['target_flow_orphan', 'unrelated_flow_orphan']
+            RETURN collect(n.node_id) AS node_ids
+            """
+        )
+        record = await result.single()
+        assert record is not None
+        assert record["node_ids"] == ["unrelated_flow_orphan"]
+        await session.run(
+            "MATCH (n:ArachneFlowNode {node_id: 'unrelated_flow_orphan'}) DELETE n"
+        )
+
+
 # ---------------------------------------------------------------------------
 # Engine tests
 # ---------------------------------------------------------------------------

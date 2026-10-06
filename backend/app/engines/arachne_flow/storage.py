@@ -516,9 +516,11 @@ async def clear_flow(flow_id: str) -> None:
         await session.run(
             """
             MATCH (n:ArachneFlowNode)
-            WHERE NOT (n)-[:ARACHNE_FLOW]-()
+            WHERE n.flow_id = $flow_id
+              AND NOT (n)-[:ARACHNE_FLOW]-()
             DELETE n
             """,
+            {"flow_id": flow_id},
         )
 
 
