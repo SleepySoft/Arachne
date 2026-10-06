@@ -24,8 +24,8 @@ import { CanvasContextMenu } from "@/components/CanvasContextMenu";
 import { EdgeContextMenu } from "@/components/EdgeContextMenu";
 import { ConnectEdgePanel } from "@/components/ConnectEdgePanel";
 import { QuickNodeForm } from "@/components/QuickNodeForm";
-import { deleteEdge, getDefaultServerView, listCompanies, listCompanyExposures, listEngines, listIndustries, listProvStatementsByNode } from "@/services/api";
-import type { EngineInfo } from "@/types";
+import { deleteEdge, getDefaultServerView, getNode, listCompanies, listCompanyExposures, listEngines, listIndustries, listProvStatementsByNode } from "@/services/api";
+import type { EngineInfo, IndustrialNode } from "@/types";
 import { IndustrialSidebar } from "@/components/panels/IndustrialSidebar";
 import { FlowSidebarPanel } from "@/components/panels/FlowSidebarPanel";
 import { IndustrialSearchPanel } from "@/components/panels/IndustrialSearchPanel";
@@ -117,6 +117,7 @@ export default function App() {
   const industrial = useIndustrialGraph(graphEngine);
   const company = useCompanyGraph();
   const [embeddedHighlightNodeIds, setEmbeddedHighlightNodeIds] = useState<string[] | null>(null);
+  const [embeddedExposureNodes, setEmbeddedExposureNodes] = useState<IndustrialNode[]>([]);
   const graphCanvasRef = useRef<GraphCanvasRef>(null);
   const companyNetworkCanvasRef = useRef<CompanyNetworkCanvasRef>(null);
   const explorationCanvasRef = useRef<ExplorationCanvasRef>(null);
@@ -150,16 +151,35 @@ export default function App() {
     if (!embeddedCompanyId) return;
     let cancelled = false;
     listCompanyExposures(embeddedCompanyId, 1, 1000)
-      .then((page) => {
-        if (!cancelled) setEmbeddedHighlightNodeIds(page.items.map((exposure) => exposure.node_id));
+      .then(async (page) => {
+        const nodeIds = Array.from(new Set(page.items.map((exposure) => exposure.node_id)));
+        const nodes = await Promise.all(
+          nodeIds.map((nodeId) => getNode(nodeId, "legacy").catch(() => null))
+        );
+        if (!cancelled) {
+          setEmbeddedHighlightNodeIds(nodeIds);
+          setEmbeddedExposureNodes(nodes.filter((node): node is IndustrialNode => node !== null));
+        }
       })
       .catch(() => {
-        if (!cancelled) setEmbeddedHighlightNodeIds([]);
+        if (!cancelled) {
+          setEmbeddedHighlightNodeIds([]);
+          setEmbeddedExposureNodes([]);
+        }
       });
     return () => {
       cancelled = true;
     };
   }, [embeddedCompanyId]);
+
+  // A company deep link represents the same state as choosing that company
+  // from the normal home-page selector. In arachne_flow the selection keeps
+  // the complete flow graph and highlights its exposure nodes.
+  useEffect(() => {
+    if (!embeddedCompanyId || graphEngine !== "arachne_flow" || !catalogsLoaded) return;
+    const selected = allCompanies.find((item) => item.company_id === embeddedCompanyId);
+    if (selected) industrial.setSelectedCompanies([selected]);
+  }, [allCompanies, catalogsLoaded, embeddedCompanyId, graphEngine, industrial.setSelectedCompanies]);
 
   const handleChangeMainView = useCallback(
     (view: MainView) => {
@@ -787,7 +807,7 @@ export default function App() {
         <div className="relative h-full w-full">
           <GraphCanvas
             ref={graphCanvasRef}
-            key={`${industrial.graphKey}-${flowMergeMode}`}
+            key={`${industrial.graphKey}-${flowMergeMode}-${embeddedCompanyId ?? "none"}-${embeddedExposureNodes.map((node) => node.node_id).join(",")}`}
             onNodeClick={industrial.handleNodeClick}
             onEdgeClick={industrial.handleEdgeClick}
             onNodeContextMenu={industrial.handleNodeContextMenu}
@@ -815,6 +835,7 @@ export default function App() {
                 ? editorHighlightIds
                 : embeddedHighlightNodeIds ?? industrial.highlightNodeIds
             }
+            highlightFallbackNodes={graphEngine === "arachne_flow" ? embeddedExposureNodes : []}
             sourceData={industrial.subgraphData}
             editMode={industrial.editMode}
             connectSourceNodeId={industrial.connectSource?.node_id || null}

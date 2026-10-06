@@ -360,6 +360,8 @@ interface GraphCanvasProps {
   };
   highlightNodeId?: string;
   highlightNodeIds?: string[];
+  /** Legacy exposure nodes to show when the active engine has no matching node. */
+  highlightFallbackNodes?: IndustrialNode[];
   /** Keep non-highlighted nodes at their normal opacity while marking a focus set. */
   preserveContextOnHighlight?: boolean;
   sourceData?: { nodes: IndustrialNode[]; edges: GraphEdge[] };
@@ -746,6 +748,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
     filters,
     highlightNodeId,
     highlightNodeIds,
+    highlightFallbackNodes = [],
     preserveContextOnHighlight = false,
     sourceData,
     restoredPositions,
@@ -770,6 +773,7 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
   const [loading, setLoading] = useState(true);
+  const [canvasReadyVersion, setCanvasReadyVersion] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const onNodeClickRef = useRef(onNodeClick);
@@ -2153,7 +2157,28 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         if (!mounted) return;
         if (!containerRef.current) return;
 
-        const nodeIdSet = new Set(nodesData.items.map((n) => n.node_id));
+        const loadedNodeIds = new Set(nodesData.items.map((n) => n.node_id));
+        const fallbackNodes = highlightFallbackNodes.filter(
+          (node) => !loadedNodeIds.has(node.node_id)
+        );
+        const fallbackNodeIds = new Set(fallbackNodes.map((node) => node.node_id));
+        const highlightIdSet = new Set(highlightNodeIds ?? []);
+        const canvasNodes = [...nodesData.items, ...fallbackNodes];
+        const nodeIdSet = new Set(canvasNodes.map((n) => n.node_id));
+        const fallbackPositions = new Map<string, { x: number; y: number }>();
+        if (fallbackNodes.length > 0 && restoredCamera) {
+          const zoom = Math.max(restoredCamera.zoom, 0.01);
+          const width = containerRef.current.clientWidth / zoom;
+          const height = containerRef.current.clientHeight / zoom;
+          const left = -restoredCamera.pan.x / zoom;
+          const top = -restoredCamera.pan.y / zoom;
+          fallbackNodes.forEach((node, index) => {
+            fallbackPositions.set(node.node_id, {
+              x: left + (width * (index + 1)) / (fallbackNodes.length + 1),
+              y: top + height * 0.1,
+            });
+          });
+        }
         const validEdges = edgesData.items.filter((e) => {
           const ok = nodeIdSet.has(e.from_node) && nodeIdSet.has(e.to_node);
           if (!ok) {
@@ -2175,16 +2200,31 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         const cy = cytoscape({
           container: containerRef.current,
           elements: [
-            ...nodesData.items.map((n) => ({
-              data: {
-                id: n.node_id,
-                label: n.canonical_name_zh,
-                entity_type: n.entity_type,
-                status: n.status,
-                confidence: n.confidence,
-                raw: n,
-              },
-            })),
+            ...canvasNodes.map((n) => {
+              const methodRef = n.properties?.method_ref;
+              const isHighlighted =
+                fallbackNodeIds.has(n.node_id) ||
+                highlightIdSet.has(n.node_id) ||
+                (typeof methodRef === "string" && highlightIdSet.has(methodRef)) ||
+                (n.node_id.startsWith("merged_action:") &&
+                  highlightIdSet.has(n.node_id.slice("merged_action:".length)));
+              return {
+                data: {
+                  id: n.node_id,
+                  label: n.canonical_name_zh,
+                  entity_type: n.entity_type,
+                  status: n.status,
+                  confidence: n.confidence,
+                  company_exposure_overlay: fallbackNodeIds.has(n.node_id) ? "true" : "false",
+                  raw: n,
+                },
+                position: fallbackPositions.get(n.node_id),
+                classes: [
+                  fallbackNodeIds.has(n.node_id) ? "company-exposure-overlay" : "",
+                  isHighlighted ? "highlighted" : "",
+                ].filter(Boolean).join(" "),
+              };
+            }),
             ...validEdges.map((e) => ({
               data: {
                 id: e.edge_id,
@@ -2377,6 +2417,22 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
                 "shadow-blur": 12,
                 "shadow-color": "#facc15",
                 "shadow-opacity": 0.8,
+              } as any,
+            },
+            {
+              selector: "node.company-exposure-overlay.highlighted",
+              style: {
+                shape: "roundrectangle",
+                width: 84,
+                height: 44,
+                "font-size": "38px",
+                "font-weight": 700,
+                "text-valign": "center",
+                "text-margin-y": 0,
+                "background-color": "#d97706",
+                "border-color": "#fde047",
+                "border-width": 6,
+                "z-index": 9999,
               } as any,
             },
             {
@@ -2779,6 +2835,15 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         window.addEventListener("keydown", keyHandler);
 
         cyRef.current = cy;
+        setCanvasReadyVersion((version) => version + 1);
+        const initialHighlights = cy.nodes(".highlighted");
+        if (initialHighlights.length > 0) {
+          const highlightedEdges = initialHighlights.edgesWith(initialHighlights);
+          highlightedEdges.addClass("highlighted");
+          if (!preserveContextOnHighlight) {
+            cy.elements().not(initialHighlights).not(highlightedEdges).addClass("dimmed");
+          }
+        }
 
         // 在 layout 动画前就注册平移/右键处理器，避免右击等待 layout 时无响应
         if (containerRef.current) {
@@ -3033,6 +3098,36 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
   useEffect(() => {
     const cy = cyRef.current;
     if (!cy) return;
+    // Company exposure records use stable legacy node IDs. A flow graph may
+    // not model every exposed product yet, so keep missing registered entities
+    // visible as an explicit overlay instead of silently dropping highlights.
+    cy.nodes('[company_exposure_overlay = "true"]').remove();
+    const missingFallbacks = highlightFallbackNodes.filter(
+      (node) => cy.getElementById(node.node_id).length === 0
+    );
+    if (missingFallbacks.length > 0) {
+      const extent = cy.extent();
+      const width = Math.max(extent.x2 - extent.x1, 1);
+      const y = extent.y1 + Math.max((extent.y2 - extent.y1) * 0.08, 80);
+      missingFallbacks.forEach((node, index) => {
+        cy.add({
+          data: {
+            id: node.node_id,
+            label: node.canonical_name_zh,
+            entity_type: node.entity_type,
+            status: node.status,
+            confidence: node.confidence,
+            company_exposure_overlay: "true",
+            raw: node,
+          },
+          position: {
+            x: extent.x1 + (width * (index + 1)) / (missingFallbacks.length + 1),
+            y,
+          },
+          classes: "company-exposure-overlay",
+        });
+      });
+    }
     cy.elements().removeClass("highlighted dimmed");
     if (highlightNodeId) {
       const target = cy.getElementById(highlightNodeId);
@@ -3131,9 +3226,38 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
         // 仅高亮，不移动/缩放相机
       }
     }
+    // The default view camera can be restored in the same render cycle. Move
+    // exposure-only overlay nodes once more after that restoration so they
+    // remain inside the visible viewport instead of staying at the old extent.
+    const placementTimer = window.setTimeout(() => {
+      const current = cyRef.current;
+      if (!current) return;
+      const overlays = current.nodes('[company_exposure_overlay = "true"]');
+      if (overlays.length === 0) return;
+      const extent = current.extent();
+      const width = Math.max(extent.x2 - extent.x1, 1);
+      const y = extent.y1 + Math.max((extent.y2 - extent.y1) * 0.1, 80);
+      overlays.forEach((node, index) => {
+        node.position({
+          x: extent.x1 + (width * (index + 1)) / (overlays.length + 1),
+          y,
+        });
+        node.removeClass("hidden");
+        node.addClass("highlighted");
+      });
+    }, 250);
     // loading 变为 false（画布初始化/重挂载完成）时重走高亮，
     // 否则 flow 模式下选择流程文件导致画布重建后行业/公司高亮会丢失。
-  }, [highlightNodeIds, loading, preserveContextOnHighlight]);
+    return () => window.clearTimeout(placementTimer);
+  }, [
+    highlightFallbackNodes,
+    highlightNodeIds,
+    loading,
+    canvasReadyVersion,
+    preserveContextOnHighlight,
+    restoredCamera,
+    restoredPositions,
+  ]);
 
   return (
     <div className="relative h-full w-full bg-slate-950">
