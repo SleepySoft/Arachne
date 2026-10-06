@@ -67,7 +67,14 @@ async function loadExposureGraph(companyId: string): Promise<ExposureGraph> {
   const exposures = exposurePage.items;
   const exposureIds = new Set(exposures.map((item) => item.node_id));
   const nodeMap = new Map(companyGraph.nodes.map((node) => [node.node_id, node]));
-  const edgeMap = new Map(companyGraph.edges.map((edge) => [edge.edge_id, edge]));
+  // The compact embed is about the company's position in the value chain.
+  // Ontology edges can turn exposed systems into collapsed compound parents,
+  // which hides the very nodes this view needs to foreground.
+  const edgeMap = new Map<string, GraphEdge>(
+    companyGraph.edges
+      .filter((edge) => edge.edge_namespace === "industrial_flow")
+      .map((edge) => [edge.edge_id, edge]),
+  );
 
   const neighborResults = await Promise.allSettled(
     Array.from(exposureIds).map((nodeId) => getNeighbors(nodeId)),
@@ -93,7 +100,9 @@ async function loadExposureGraph(companyId: string): Promise<ExposureGraph> {
         addedForExposure += 1;
       }
     });
-    candidateEdges.push(...result.value.edges);
+    candidateEdges.push(
+      ...result.value.edges.filter((edge) => edge.edge_namespace === "industrial_flow"),
+    );
   });
 
   candidateEdges.forEach((edge) => {
