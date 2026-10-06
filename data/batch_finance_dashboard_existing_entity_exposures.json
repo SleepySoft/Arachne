@@ -1,0 +1,754 @@
+{
+    "batch_id":  "finance_dashboard_existing_entity_exposures_20261006",
+    "task_description":  "以 2025 年年报或 ArachneData 中 Tushare 公司资料为证据，为 FinanceDashboard 跟踪公司建立可由既有、稳定产业实体承接的主营业务暴露。每条暴露均保留证据；尚缺稳定实体的公司另行通过图谱节点批次处理。",
+    "company_node_exposures_to_upsert":  [
+                                             {
+                                                 "exposure_id":  "a_share_001215_produce_industrial_food",
+                                                 "company_id":  "a_share_001215",
+                                                 "node_id":  "industrial_food",
+                                                 "activity_type":  "produce",
+                                                 "role":  "速冻面米制品、烘焙甜品及冷冻调理菜肴",
+                                                 "weight":  0.9,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "千味央厨 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "公司产品主要可分为主食类、小食类、烘焙甜品类、冷冻调理菜肴类及其他四大类别...报告期内，公司按照产品类别分类的主营业务收入情况如下：...主食类 887,885,371.89... 46.75%..."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002028_produce_switchgear",
+                                                 "company_id":  "a_share_002028",
+                                                 "node_id":  "switchgear",
+                                                 "activity_type":  "produce",
+                                                 "role":  "开关类输配电设备",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "思源电气 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "开关类业务 8,935,235,840.30 41.49% 6,910,322,615.73 44.71% 29.30%"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002028_produce_transformer",
+                                                 "company_id":  "a_share_002028",
+                                                 "node_id":  "transformer",
+                                                 "activity_type":  "produce",
+                                                 "role":  "变压器类输配电设备",
+                                                 "weight":  0.8,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "思源电气 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "开关类业务 8,935,235,840.30 41.49% 6,910,322,615.73 44.71% 29.30%"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002028_produce_power_protection_system",
+                                                 "company_id":  "a_share_002028",
+                                                 "node_id":  "power_protection_system",
+                                                 "activity_type":  "produce",
+                                                 "role":  "保护及自动化设备",
+                                                 "weight":  0.7,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "思源电气 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "开关类业务 8,935,235,840.30 41.49% 6,910,322,615.73 44.71% 29.30%"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002028_produce_power_automation_system",
+                                                 "company_id":  "a_share_002028",
+                                                 "node_id":  "power_automation_system",
+                                                 "activity_type":  "produce",
+                                                 "role":  "保护及自动化设备",
+                                                 "weight":  0.7,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "思源电气 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "开关类业务 8,935,235,840.30 41.49% 6,910,322,615.73 44.71% 29.30%"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002028_produce_energy_storage_battery",
+                                                 "company_id":  "a_share_002028",
+                                                 "node_id":  "energy_storage_battery",
+                                                 "activity_type":  "produce",
+                                                 "role":  "储能系统及元件",
+                                                 "weight":  0.6,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "思源电气 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "开关类业务 8,935,235,840.30 41.49% 6,910,322,615.73 44.71% 29.30%"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002032_produce_kitchen_appliance",
+                                                 "company_id":  "a_share_002032",
+                                                 "node_id":  "kitchen_appliance",
+                                                 "activity_type":  "produce",
+                                                 "role":  "炊具及厨房电器",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "苏泊尔 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "明火炊具及厨房用具品类主要产品：炒锅、压力锅、煎锅、汤奶锅、蒸锅、陶瓷煲、火锅、珐琅锅、水壶、刀具、铲勺、保温提锅、水杯、厨房工具、保鲜盒等"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002032_produce_small_home_appliance",
+                                                 "company_id":  "a_share_002032",
+                                                 "node_id":  "small_home_appliance",
+                                                 "activity_type":  "produce",
+                                                 "role":  "厨房及生活小家电",
+                                                 "weight":  0.8,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "苏泊尔 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "明火炊具及厨房用具品类主要产品：炒锅、压力锅、煎锅、汤奶锅、蒸锅、陶瓷煲、火锅、珐琅锅、水壶、刀具、铲勺、保温提锅、水杯、厨房工具、保鲜盒等"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002074_produce_lithium_ion_battery",
+                                                 "company_id":  "a_share_002074",
+                                                 "node_id":  "lithium_ion_battery",
+                                                 "activity_type":  "produce",
+                                                 "role":  "动力电池系统",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "国轩高科 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "动力电池系统 34,074,009,140.08 75.60% 25,648,234,808.94 72.47% 32.85%"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002074_produce_energy_storage_battery",
+                                                 "company_id":  "a_share_002074",
+                                                 "node_id":  "energy_storage_battery",
+                                                 "activity_type":  "produce",
+                                                 "role":  "储能电池系统",
+                                                 "weight":  0.8,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "国轩高科 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "动力电池系统 34,074,009,140.08 75.60% 25,648,234,808.94 72.47% 32.85%"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002074_produce_power_distribution_equipment",
+                                                 "company_id":  "a_share_002074",
+                                                 "node_id":  "power_distribution_equipment",
+                                                 "activity_type":  "produce",
+                                                 "role":  "输配电产品",
+                                                 "weight":  0.3,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "国轩高科 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "动力电池系统 34,074,009,140.08 75.60% 25,648,234,808.94 72.47% 32.85%"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002162_produce_ceramic_product",
+                                                 "company_id":  "a_share_002162",
+                                                 "node_id":  "ceramic_product",
+                                                 "activity_type":  "produce",
+                                                 "role":  "建筑陶瓷砖",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "悦心健康 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "瓷砖-大理石 366,024,795.92 34.47%"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002216_produce_industrial_food",
+                                                 "company_id":  "a_share_002216",
+                                                 "node_id":  "industrial_food",
+                                                 "activity_type":  "produce",
+                                                 "role":  "速冻面米制品与速冻调制食品",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "三全食品 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "公司速冻和冷藏面米制品主要包括饺子、汤圆、面点、馄饨、粽子、点心等产品；速冻面米制品 5,401,192,446.49 82.58%"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002222_produce_precision_optical_element",
+                                                 "company_id":  "a_share_002222",
+                                                 "node_id":  "precision_optical_element",
+                                                 "activity_type":  "produce",
+                                                 "role":  "晶体元器件、精密光学元件及激光器件",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "福晶科技 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "公司主要从事晶体元器件、精密光学元件和激光器件等产品的研发、生产和销售。"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002283_produce_automotive_engine_accessory",
+                                                 "company_id":  "a_share_002283",
+                                                 "node_id":  "automotive_engine_accessory",
+                                                 "activity_type":  "produce",
+                                                 "role":  "曲轴、连杆等发动机零部件",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "天润工业 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "2025年，公司曲轴业务实现营业收入 23.90 亿元...占公司营业收入比例分别为58.71%..."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002522_produce_plastic_film",
+                                                 "company_id":  "a_share_002522",
+                                                 "node_id":  "plastic_film",
+                                                 "activity_type":  "produce",
+                                                 "role":  "POF热收缩膜",
+                                                 "weight":  0.8,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "浙江众成 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "分产品 POF普通型膜 354,816,970.79 22.07% 371,012,883.93 21.69% -4.37% POF交联膜 342,419,029.88 21.30% 368,200,151.49 21.53% -7.00% POF印刷膜等 138,108,480.36 8.59% 140,911,247.89 8.24% -1.99%"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002606_produce_insulator",
+                                                 "company_id":  "a_share_002606",
+                                                 "node_id":  "insulator",
+                                                 "activity_type":  "produce",
+                                                 "role":  "输电线路及电站绝缘子",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "大连电瓷 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "悬瓷绝缘子 82.81% 1,473,267,959.52 81.97% 1,226,249,056.77"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002635_produce_consumer_electronics",
+                                                 "company_id":  "a_share_002635",
+                                                 "node_id":  "consumer_electronics",
+                                                 "activity_type":  "produce",
+                                                 "role":  "智能终端功能件、精密结构件及模组",
+                                                 "weight":  0.9,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "安洁科技 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "向消费电子智能终端、新能源汽车、信息存储三大战略领域的国内外客户提供精密功能性器件、精密结构件及模组件等产品的设计、研发、制造服务。"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002635_produce_new_energy_vehicle",
+                                                 "company_id":  "a_share_002635",
+                                                 "node_id":  "new_energy_vehicle",
+                                                 "activity_type":  "produce",
+                                                 "role":  "新能源汽车精密功能件和结构件",
+                                                 "weight":  0.7,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "安洁科技 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "向消费电子智能终端、新能源汽车、信息存储三大战略领域的国内外客户提供精密功能性器件、精密结构件及模组件等产品的设计、研发、制造服务。"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_002661_produce_industrial_food",
+                                                 "company_id":  "a_share_002661",
+                                                 "node_id":  "industrial_food",
+                                                 "activity_type":  "produce",
+                                                 "role":  "面条、方便食品",
+                                                 "weight":  0.8,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "克明食品 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "分产品 面条 2,362,882,621.47 54.59%...毛利率 30.34%"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_300408_produce_ceramic_capacitor",
+                                                 "company_id":  "a_share_300408",
+                                                 "node_id":  "ceramic_capacitor",
+                                                 "activity_type":  "produce",
+                                                 "role":  "电子元件及陶瓷材料",
+                                                 "weight":  0.8,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：300408.SZ 三环集团",
+                                                                      "quote":  "主要产品:通信部件,半导体部件,电子元件材料,电子元件,压缩机部件,燃料电池部件,新材料等.主要业务:电子陶瓷类电子元件及其基础材料的研发,生产和销售."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_300433_produce_consumer_electronics",
+                                                 "company_id":  "a_share_300433",
+                                                 "node_id":  "consumer_electronics",
+                                                 "activity_type":  "produce",
+                                                 "role":  "智能手机、电脑及智能穿戴精密零组件",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "蓝思科技 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "智能手机与电脑类业务实现营业收入611.84亿元，同比增长5.94%，毛利率15.41%。"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_300433_produce_humanoid_robot",
+                                                 "company_id":  "a_share_300433",
+                                                 "node_id":  "humanoid_robot",
+                                                 "activity_type":  "produce",
+                                                 "role":  "人形机器人整机",
+                                                 "weight":  0.4,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "蓝思科技 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "智能手机与电脑类业务实现营业收入611.84亿元，同比增长5.94%，毛利率15.41%。"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_300433_produce_mobile_robot",
+                                                 "company_id":  "a_share_300433",
+                                                 "node_id":  "mobile_robot",
+                                                 "activity_type":  "produce",
+                                                 "role":  "四足机器狗整机",
+                                                 "weight":  0.4,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "蓝思科技 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "智能手机与电脑类业务实现营业收入611.84亿元，同比增长5.94%，毛利率15.41%。"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_300628_produce_communication_equipment",
+                                                 "company_id":  "a_share_300628",
+                                                 "node_id":  "communication_equipment",
+                                                 "activity_type":  "produce",
+                                                 "role":  "企业通信终端及协作通信设备",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：300628.SZ 亿联网络",
+                                                                      "quote":  "主要产品:统一通信个人桌面终端及视频会议系统;主营业务:为中小型企业用户提供多款先进的统一通信终端"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_300827_produce_photovoltaic_inverter",
+                                                 "company_id":  "a_share_300827",
+                                                 "node_id":  "photovoltaic_inverter",
+                                                 "activity_type":  "produce",
+                                                 "role":  "光伏逆变器",
+                                                 "weight":  0.9,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：300827.SZ 上能电气",
+                                                                      "quote":  "公司主要从事电力电子设备的研发,生产,销售.专注于电力电子变换技术,运用电力电子变换技术为光伏发电,电化学储能接入电网以及电能质量治理提供解决方案,主要产品包括光伏逆变器(PV Inverter),储能双向变流器(PCS)以及有源滤波器(APF),低压无功补偿器(SVG),智能电能质量矫正装置(SPC)等产品,并提供光伏发电系统和储能系统的集成业务."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_300827_integrate_energy_storage_battery",
+                                                 "company_id":  "a_share_300827",
+                                                 "node_id":  "energy_storage_battery",
+                                                 "activity_type":  "integrate",
+                                                 "role":  "储能变流及系统产品",
+                                                 "weight":  0.6,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：300827.SZ 上能电气",
+                                                                      "quote":  "公司主要从事电力电子设备的研发,生产,销售.专注于电力电子变换技术,运用电力电子变换技术为光伏发电,电化学储能接入电网以及电能质量治理提供解决方案,主要产品包括光伏逆变器(PV Inverter),储能双向变流器(PCS)以及有源滤波器(APF),低压无功补偿器(SVG),智能电能质量矫正装置(SPC)等产品,并提供光伏发电系统和储能系统的集成业务."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_300832_produce_medical_device",
+                                                 "company_id":  "a_share_300832",
+                                                 "node_id":  "medical_device",
+                                                 "activity_type":  "produce",
+                                                 "role":  "体外诊断仪器及试剂",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：300832.SZ 新产业",
+                                                                      "quote":  "主要从事研发,生产及销售系列全自动化学发光免疫分析仪器及配套试剂,公司产品主要用于提供疾病的预防,诊断,治疗监测,预后观察,健康状态评价以及遗传性疾病预测等方面的诊断信息."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_300973_produce_industrial_food",
+                                                 "company_id":  "a_share_300973",
+                                                 "node_id":  "industrial_food",
+                                                 "activity_type":  "produce",
+                                                 "role":  "烘焙食品原料及冷冻烘焙食品",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：300973.SZ 立高食品",
+                                                                      "quote":  "公司主要从事烘焙食品原料及冷冻烘焙食品的研发,生产和销售.公司主要产品包括奶油,水果制品,酱料,巧克力等烘焙食品原料和冷冻烘焙半成品及成品,此外还生产部分休闲食品."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_600256_operate_natural_gas",
+                                                 "company_id":  "a_share_600256",
+                                                 "node_id":  "natural_gas",
+                                                 "activity_type":  "operate",
+                                                 "role":  "天然气业务",
+                                                 "weight":  0.8,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：600256.SH 广汇能源",
+                                                                      "quote":  "主营业务:许可经营项目:煤炭销售.一般经营项目:液化天然气,石油,天然气,煤炭,煤化工,清洁燃料汽车应用,加注站建设的项目投资与技术服务等;煤炭批发经营;一般货物与技术的进出口经营;国内商业购销."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_600256_operate_coal",
+                                                 "company_id":  "a_share_600256",
+                                                 "node_id":  "coal",
+                                                 "activity_type":  "operate",
+                                                 "role":  "煤炭业务",
+                                                 "weight":  0.5,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：600256.SH 广汇能源",
+                                                                      "quote":  "主营业务:许可经营项目:煤炭销售.一般经营项目:液化天然气,石油,天然气,煤炭,煤化工,清洁燃料汽车应用,加注站建设的项目投资与技术服务等;煤炭批发经营;一般货物与技术的进出口经营;国内商业购销."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_600312_produce_switchgear",
+                                                 "company_id":  "a_share_600312",
+                                                 "node_id":  "switchgear",
+                                                 "activity_type":  "produce",
+                                                 "role":  "高压开关及输配电设备",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：600312.SH 平高电气",
+                                                                      "quote":  "主营业务:研发,制造,销售高压,超高压,特高压等高端开关设备,控制设备及其配件;技术服务;技术咨询以及公司自产产品及相关技术的进出口业务.主要产品:敞开式SF6断路器,隔离开关及接地开关,全封闭组合电器,备品备件及其他."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_600803_operate_natural_gas",
+                                                 "company_id":  "a_share_600803",
+                                                 "node_id":  "natural_gas",
+                                                 "activity_type":  "operate",
+                                                 "role":  "天然气综合利用",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：600803.SH 新奥股份",
+                                                                      "quote":  "主营业务:液化天然气生产/销售与投资,能源技术工程服务,甲醇等能源化工产品生产,销售与贸易,煤炭的开采,洗选与贸易,以及生物制农兽药原料药及制剂的生产与销售"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_600893_produce_aero_engine_part",
+                                                 "company_id":  "a_share_600893",
+                                                 "node_id":  "aero_engine_part",
+                                                 "activity_type":  "produce",
+                                                 "role":  "航空发动机及衍生产品",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：600893.SH 航发动力",
+                                                                      "quote":  "航空发动机批量制造及修理等"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_601006_provide_service_rail_transport_service",
+                                                 "company_id":  "a_share_601006",
+                                                 "node_id":  "rail_transport_service",
+                                                 "activity_type":  "provide_service",
+                                                 "role":  "铁路货运与客运服务",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "大秦铁路 2025 年年度报告（主营产品/分产品收入）",
+                                                                      "quote":  "公司主要经营铁路货、客运输业务...铁路货运业务是公司业务收入的主要来源，2025年铁路货运收入占公司主营业务收入的71.09%。"
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_601179_produce_switchgear",
+                                                 "company_id":  "a_share_601179",
+                                                 "node_id":  "switchgear",
+                                                 "activity_type":  "produce",
+                                                 "role":  "高压开关设备",
+                                                 "weight":  0.8,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：601179.SH 中国西电",
+                                                                      "quote":  "主要产品:公司的主导产品是110kV及以上电压等级的高压开关(GIS,GCB,隔离开关,接地开关),变压器(电力变压器,换流变压器),电抗器(平波电抗器,并联电抗器),电力电容器,互感器(CVT,CT,PT),绝缘子(电站电瓷产品,复合材料绝缘子产品),套管,氧化锌避雷器,直流输电换流阀等.主营业务:本公司的主营业务为输配电及控制设备研发,设计,制造,销售,检测,相关设备成套,技术研究,服务与工程承包,核心业务为高压,超高压及特高压交直流输配电设备制造,研发和检测."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_601179_produce_transformer",
+                                                 "company_id":  "a_share_601179",
+                                                 "node_id":  "transformer",
+                                                 "activity_type":  "produce",
+                                                 "role":  "变压器及输变电设备",
+                                                 "weight":  0.7,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：601179.SH 中国西电",
+                                                                      "quote":  "主要产品:公司的主导产品是110kV及以上电压等级的高压开关(GIS,GCB,隔离开关,接地开关),变压器(电力变压器,换流变压器),电抗器(平波电抗器,并联电抗器),电力电容器,互感器(CVT,CT,PT),绝缘子(电站电瓷产品,复合材料绝缘子产品),套管,氧化锌避雷器,直流输电换流阀等.主营业务:本公司的主营业务为输配电及控制设备研发,设计,制造,销售,检测,相关设备成套,技术研究,服务与工程承包,核心业务为高压,超高压及特高压交直流输配电设备制造,研发和检测."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_601179_produce_power_distribution_equipment",
+                                                 "company_id":  "a_share_601179",
+                                                 "node_id":  "power_distribution_equipment",
+                                                 "activity_type":  "produce",
+                                                 "role":  "输配电设备",
+                                                 "weight":  0.8,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：601179.SH 中国西电",
+                                                                      "quote":  "主要产品:公司的主导产品是110kV及以上电压等级的高压开关(GIS,GCB,隔离开关,接地开关),变压器(电力变压器,换流变压器),电抗器(平波电抗器,并联电抗器),电力电容器,互感器(CVT,CT,PT),绝缘子(电站电瓷产品,复合材料绝缘子产品),套管,氧化锌避雷器,直流输电换流阀等.主营业务:本公司的主营业务为输配电及控制设备研发,设计,制造,销售,检测,相关设备成套,技术研究,服务与工程承包,核心业务为高压,超高压及特高压交直流输配电设备制造,研发和检测."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_603345_produce_industrial_food",
+                                                 "company_id":  "a_share_603345",
+                                                 "node_id":  "industrial_food",
+                                                 "activity_type":  "produce",
+                                                 "role":  "速冻调制食品及速冻面米食品",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：603345.SH 安井食品",
+                                                                      "quote":  "主营业务为火锅料制品,速冻面米制品等速冻食品的研发,生产和销售.主要产品为“安井”牌速冻食品,品种达300余种."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_605499_produce_beverage_processing",
+                                                 "company_id":  "a_share_605499",
+                                                 "node_id":  "beverage_processing",
+                                                 "activity_type":  "produce",
+                                                 "role":  "饮料产品",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：605499.SH 东鹏饮料",
+                                                                      "quote":  "主营业务为饮料的研发,生产和销售,主要产品包括东鹏特饮,由柑柠檬茶,陈皮特饮,包装饮用水等,其中东鹏特饮是公司的主导产品."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_605499_produce_beverage_packaging",
+                                                 "company_id":  "a_share_605499",
+                                                 "node_id":  "beverage_packaging",
+                                                 "activity_type":  "produce",
+                                                 "role":  "包装饮料",
+                                                 "weight":  0.8,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：605499.SH 东鹏饮料",
+                                                                      "quote":  "主营业务为饮料的研发,生产和销售,主要产品包括东鹏特饮,由柑柠檬茶,陈皮特饮,包装饮用水等,其中东鹏特饮是公司的主导产品."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_688018_design_mcu",
+                                                 "company_id":  "a_share_688018",
+                                                 "node_id":  "mcu",
+                                                 "activity_type":  "design",
+                                                 "role":  "物联网Wi-Fi MCU通信芯片及模组",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：688018.SH 乐鑫科技",
+                                                                      "quote":  "主要产品ESP8266系列芯片,ESP32系列芯片,主要从事物联网Wi-Fi MCU通信芯片及其模组的研发,设计及销售."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_688278_manufacture_biopharmaceutical_manufacturing",
+                                                 "company_id":  "a_share_688278",
+                                                 "node_id":  "biopharmaceutical_manufacturing",
+                                                 "activity_type":  "manufacture",
+                                                 "role":  "重组蛋白质及其长效修饰药物",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：688278.SH 特宝生物",
+                                                                      "quote":  "上市产品包括生物制品国家1类新药——聚乙二醇干扰素α-2b注射液(商品名称:“派格宾”),注射用重组人粒细胞巨噬细胞刺激因子(商品名称:“特尔立”),重组人粒细胞刺激因子注射液(商品名称:“特尔津”)和注射用重组人白介素-11(商品名称:“特尔康”).是一家主要从事重组蛋白质及其长效修饰药物研发,生产及销售的创新型生物医药企业."
+                                                                  }
+                                                              ]
+                                             },
+                                             {
+                                                 "exposure_id":  "a_share_688696_produce_display_terminal",
+                                                 "company_id":  "a_share_688696",
+                                                 "node_id":  "display_terminal",
+                                                 "activity_type":  "produce",
+                                                 "role":  "智能投影产品",
+                                                 "weight":  1,
+                                                 "confidence":  "HIGH",
+                                                 "status":  "ACTIVE",
+                                                 "as_of_date":  "2025-12-31",
+                                                 "evidence":  [
+                                                                  {
+                                                                      "source_title":  "Tushare 公司资料：688696.SH 极米科技",
+                                                                      "quote":  "主营业务是智能投影产品的研发,生产及销售,同时向消费者提供围绕智能投影的配件产品及互联网增值服务."
+                                                                  }
+                                                              ]
+                                             }
+                                         ]
+}
