@@ -1,0 +1,27 @@
+schema: arachne-flow/v0.1
+title: 'Services flow: banking and securities services'
+root_product: banking_service
+include: []
+local:
+  act_offer_loans: 贷款服务运营
+  act_manage_interbank_lending: 同业拆借运营
+  act_invest_in_bonds: 债券投资运营
+  act_deliver_securities_services: 证券服务运营
+edges:
+# 公众存款构成银行信贷、同业资金和债券投资业务的资金基础
+- [public_deposit, feedstock, act_offer_loans]
+- [act_offer_loans, ref, loan_service]
+- [act_offer_loans, primary_result, banking_service]
+- [public_deposit, feedstock, act_manage_interbank_lending]
+- [act_manage_interbank_lending, ref, interbank_lending_service]
+- [act_manage_interbank_lending, primary_result, banking_service]
+- [public_deposit, feedstock, act_invest_in_bonds]
+- [financial_bond, subject, act_invest_in_bonds]
+- [act_invest_in_bonds, ref, bond_investment_service]
+- [act_invest_in_bonds, primary_result, banking_service]
+# 经纪、承销和自营等能力共同形成综合证券服务
+- [securities_brokerage, component, act_deliver_securities_services]
+- [securities_underwriting, component, act_deliver_securities_services]
+- [securities_proprietary_trading, component, act_deliver_securities_services]
+- [act_deliver_securities_services, primary_result, securities_service]
+- [securities_service, component, act_invest_in_bonds]

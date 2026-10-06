@@ -1,0 +1,14 @@
+schema: arachne-flow/v0.1
+title: 'Services flow: real estate development'
+root_product: commercial_property
+include: []
+local:
+  act_develop_real_estate: 房地产开发
+edges:
+# 土地、建材和前期土地开发服务形成住宅与商业物业
+- [land, feedstock, act_develop_real_estate]
+- [cement, process_material, act_develop_real_estate]
+- [land_development, component, act_develop_real_estate]
+- [act_develop_real_estate, ref, real_estate_development]
+- [act_develop_real_estate, primary_result, residential_property]
+- [act_develop_real_estate, co_result, commercial_property]

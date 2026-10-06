@@ -1,0 +1,13 @@
+schema: arachne-flow/v0.1
+title: 'Services flow: oil tanker shipbuilding'
+root_product: oil_tanker
+include:
+- steel_making.yaml
+local:
+  act_build_oil_tanker: 油轮建造
+edges:
+# 钢材和船舶平台经专业船舶制造形成用于能源运输的油轮
+- [steel, feedstock, act_build_oil_tanker]
+- [ship, basis, act_build_oil_tanker]
+- [act_build_oil_tanker, ref, shipbuilding]
+- [act_build_oil_tanker, primary_result, oil_tanker]

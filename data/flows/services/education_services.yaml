@@ -1,0 +1,12 @@
+schema: arachne-flow/v0.1
+title: 'Services flow: integrated education services'
+root_product: education_service
+include: []
+local:
+  act_integrate_education_services: 综合教育服务运营
+edges:
+# 不同教学形态共同构成面向学生的综合教育服务
+- [early_childhood_education, component, act_integrate_education_services]
+- [remote_education_service, component, act_integrate_education_services]
+- [vocational_education, component, act_integrate_education_services]
+- [act_integrate_education_services, primary_result, education_service]

@@ -1,0 +1,12 @@
+schema: arachne-flow/v0.1
+title: 'Services flow: rail transport operations'
+root_product: rail_logistics
+include: []
+local:
+  act_provide_rail_transport: 铁路运输运营
+edges:
+# 铁路车辆和铁路货车作为运营装备提供铁路物流与运输服务
+- [rail_vehicle, tool, act_provide_rail_transport]
+- [railway_freight_car, tool, act_provide_rail_transport]
+- [act_provide_rail_transport, ref, rail_transport_service]
+- [act_provide_rail_transport, primary_result, rail_logistics]
