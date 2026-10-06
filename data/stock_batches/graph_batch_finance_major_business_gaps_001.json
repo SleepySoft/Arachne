@@ -1,0 +1,153 @@
+{
+  "batch_id": "graph_batch_finance_major_business_gaps_001",
+  "task_description": "补充 FinanceDashboard 单暴露公司年报复核中发现的稳定主营产品、装备、流程与服务实体",
+  "nodes_to_upsert": [
+    {
+      "node_id": "architectural_ceramic_tile",
+      "canonical_name_zh": "建筑陶瓷砖",
+      "canonical_name_en": "architectural ceramic tile",
+      "aliases": ["瓷砖", "建筑陶瓷"],
+      "definition": "用于建筑墙面和地面装饰、防护的陶瓷板材产品。",
+      "entity_type": "material",
+      "evidence": [{"source_title": "悦心健康2025年年度报告（提炼数据）", "quote": "建材业务占营业收入80.43%，主要产品包括瓷砖。"}],
+      "confidence": "MEDIUM",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "engine_crankshaft",
+      "canonical_name_zh": "发动机曲轴",
+      "canonical_name_en": "engine crankshaft",
+      "aliases": ["曲轴"],
+      "definition": "将活塞往复运动转换为旋转运动的发动机核心机械零部件。",
+      "entity_type": "part",
+      "evidence": [{"source_title": "天润工业2025年年度报告（提炼数据）", "quote": "发动机及船级曲轴占营业收入58.71%。"}],
+      "confidence": "MEDIUM",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "engine_connecting_rod",
+      "canonical_name_zh": "发动机连杆",
+      "canonical_name_en": "engine connecting rod",
+      "aliases": ["连杆"],
+      "definition": "连接发动机活塞与曲轴并传递往复载荷的机械零部件。",
+      "entity_type": "part",
+      "evidence": [{"source_title": "天润工业2025年年度报告（提炼数据）", "quote": "连杆占营业收入23.55%。"}],
+      "confidence": "MEDIUM",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "elevator_installation_maintenance_service",
+      "canonical_name_zh": "电梯安装维保服务",
+      "canonical_name_en": "elevator installation and maintenance service",
+      "aliases": ["电梯安装及维保"],
+      "definition": "面向电梯和自动扶梯提供安装、检修、保养与运行保障的服务。",
+      "entity_type": "service",
+      "evidence": [{"source_title": "康力电梯2025年年度报告（提炼数据）", "quote": "安装及维保业务占营业收入14.27%。"}],
+      "confidence": "MEDIUM",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "air_separation_equipment",
+      "canonical_name_zh": "空气分离设备",
+      "canonical_name_en": "air separation equipment",
+      "aliases": ["空分设备"],
+      "definition": "利用低温精馏等方式分离空气并制取氧、氮、氩等工业气体的成套设备。",
+      "entity_type": "equipment",
+      "evidence": [{"source_title": "杭氧股份2025年年度报告（提炼数据）", "quote": "空分设备收入占营业收入32.58%。"}],
+      "confidence": "MEDIUM",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "air_separation_process",
+      "canonical_name_zh": "空气分离工艺",
+      "canonical_name_en": "air separation process",
+      "aliases": ["空分工艺"],
+      "definition": "将空气中的氧、氮、氩等组分分离并形成工业气体产品的生产过程。",
+      "entity_type": "process",
+      "evidence": [{"source_title": "杭氧股份2025年年度报告（提炼数据）", "quote": "公司开展空分设备和气体服务业务。"}],
+      "confidence": "MEDIUM",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "thermoplastic_elastomer",
+      "canonical_name_zh": "热塑性弹性体",
+      "canonical_name_en": "thermoplastic elastomer",
+      "aliases": ["合成橡胶弹性体"],
+      "definition": "兼具橡胶弹性与热塑性塑料加工特性的高分子材料。",
+      "entity_type": "material",
+      "evidence": [{"source_title": "浙江众成2025年年度报告（提炼数据）", "quote": "合成橡胶制造业务占营业收入44.74%。"}],
+      "confidence": "MEDIUM",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "lng_shipping_service",
+      "canonical_name_zh": "LNG运输服务",
+      "canonical_name_en": "LNG shipping service",
+      "aliases": ["液化天然气运输服务"],
+      "definition": "利用专用运输船舶提供液化天然气海上运输的运营服务。",
+      "entity_type": "service",
+      "evidence": [{"source_title": "中远海能2025年年度报告（提炼数据）", "quote": "LNG运输占主营业务收入10.7%。"}],
+      "confidence": "MEDIUM",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "rail_transit_equipment_part",
+      "canonical_name_zh": "轨道交通装备零部件",
+      "canonical_name_en": "rail transit equipment part",
+      "aliases": ["轨交装备零部件"],
+      "definition": "用于轨道车辆、制动和线路装备的机械零部件。",
+      "entity_type": "part",
+      "evidence": [{"source_title": "博深股份2025年年度报告（提炼数据）", "quote": "轨交装备零部件行业占营业收入21.18%。"}],
+      "confidence": "MEDIUM",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "hydraulic_cylinder",
+      "canonical_name_zh": "液压油缸",
+      "canonical_name_en": "hydraulic cylinder",
+      "aliases": ["液压缸"],
+      "definition": "将液压能转换为直线机械运动的执行元件。",
+      "entity_type": "device",
+      "evidence": [{"source_title": "恒立液压2025年年度报告（提炼数据）", "quote": "液压油缸占营业收入48.02%。"}],
+      "confidence": "MEDIUM",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "hydraulic_pump_valve",
+      "canonical_name_zh": "液压泵阀及马达",
+      "canonical_name_en": "hydraulic pump valve and motor",
+      "aliases": ["液压泵阀", "液压马达"],
+      "definition": "用于液压系统供能、控制流量压力并输出旋转动力的泵、阀和马达产品组。",
+      "entity_type": "device",
+      "evidence": [{"source_title": "恒立液压2025年年度报告（提炼数据）", "quote": "液压泵阀及马达占营业收入39.53%。"}],
+      "confidence": "MEDIUM",
+      "status": "ACTIVE"
+    },
+    {
+      "node_id": "hydraulic_system",
+      "canonical_name_zh": "液压系统",
+      "canonical_name_en": "hydraulic system",
+      "aliases": [],
+      "definition": "由液压动力、控制和执行元件组成并传递动力与运动的机电系统。",
+      "entity_type": "system",
+      "evidence": [{"source_title": "恒立液压2025年年度报告（提炼数据）", "quote": "液压系统业务占营业收入3.52%。"}],
+      "confidence": "MEDIUM",
+      "status": "ACTIVE"
+    }
+  ],
+  "edges_to_upsert": [
+    {"edge_namespace": "industrial_flow", "edge_id": "architectural_tile_to_construction", "from_node": "architectural_ceramic_tile", "to_node": "construction_engineering", "edge_type": "material_input", "description": "建筑陶瓷砖是建筑装饰工程使用的饰面材料。", "evidence": [{"source_title": "悦心健康2025年年度报告（提炼数据）", "quote": "公司建材业务主要产品包括瓷砖。"}], "confidence": "MEDIUM"},
+    {"edge_namespace": "industrial_flow", "edge_id": "engine_crankshaft_to_accessory", "from_node": "engine_crankshaft", "to_node": "automotive_engine_accessory", "edge_type": "structural_composition", "description": "发动机曲轴属于发动机机械零部件。", "evidence": [{"source_title": "天润工业2025年年度报告（提炼数据）", "quote": "发动机及船级曲轴占营业收入58.71%。"}], "confidence": "MEDIUM"},
+    {"edge_namespace": "industrial_flow", "edge_id": "engine_rod_to_accessory", "from_node": "engine_connecting_rod", "to_node": "automotive_engine_accessory", "edge_type": "structural_composition", "description": "发动机连杆属于发动机机械零部件。", "evidence": [{"source_title": "天润工业2025年年度报告（提炼数据）", "quote": "连杆占营业收入23.55%。"}], "confidence": "MEDIUM"},
+    {"edge_namespace": "industrial_flow", "edge_id": "elevator_to_installation_service", "from_node": "elevator_system", "to_node": "elevator_installation_maintenance_service", "edge_type": "service_provision", "description": "电梯设备交付后需要配套安装和维保服务。", "evidence": [{"source_title": "康力电梯2025年年度报告（提炼数据）", "quote": "安装及维保业务占营业收入14.27%。"}], "confidence": "MEDIUM"},
+    {"edge_namespace": "industrial_flow", "edge_id": "air_separation_equipment_enable_process", "from_node": "air_separation_equipment", "to_node": "air_separation_process", "edge_type": "equipment_enablement", "description": "空气分离设备使能空气分离工艺。", "evidence": [{"source_title": "杭氧股份2025年年度报告（提炼数据）", "quote": "公司开展空分设备和气体服务业务。"}], "confidence": "MEDIUM"},
+    {"edge_namespace": "industrial_flow", "edge_id": "air_separation_process_output_gas", "from_node": "air_separation_process", "to_node": "industrial_gas", "edge_type": "process_output", "description": "空气分离工艺产出氧、氮、氩等工业气体。", "evidence": [{"source_title": "杭氧股份2025年年度报告（提炼数据）", "quote": "气体销售占营业收入61.04%。"}], "confidence": "MEDIUM"},
+    {"edge_namespace": "ontology", "edge_id": "thermoplastic_elastomer_is_polymer", "from_node": "thermoplastic_elastomer", "to_node": "polymer_material", "edge_type": "is_a", "description": "热塑性弹性体属于高分子材料。", "evidence": [{"source_title": "浙江众成2025年年度报告（提炼数据）", "quote": "公司开展合成橡胶制造业务。"}], "confidence": "MEDIUM"},
+    {"edge_namespace": "ontology", "edge_id": "lng_shipping_is_shipping", "from_node": "lng_shipping_service", "to_node": "shipping_service", "edge_type": "is_a", "description": "LNG运输服务是能源海运服务的一类。", "evidence": [{"source_title": "中远海能2025年年度报告（提炼数据）", "quote": "LNG运输占主营业务收入10.7%。"}], "confidence": "MEDIUM"},
+    {"edge_namespace": "industrial_flow", "edge_id": "rail_part_to_rail_vehicle", "from_node": "rail_transit_equipment_part", "to_node": "rail_vehicle", "edge_type": "structural_composition", "description": "轨道交通装备零部件用于轨道车辆及其制动系统。", "evidence": [{"source_title": "博深股份2025年年度报告（提炼数据）", "quote": "轨交装备零部件行业占营业收入21.18%。"}], "confidence": "MEDIUM"},
+    {"edge_namespace": "industrial_flow", "edge_id": "hydraulic_cylinder_to_system", "from_node": "hydraulic_cylinder", "to_node": "hydraulic_system", "edge_type": "structural_composition", "description": "液压油缸是液压系统的执行元件。", "evidence": [{"source_title": "恒立液压2025年年度报告（提炼数据）", "quote": "液压油缸占营业收入48.02%。"}], "confidence": "MEDIUM"},
+    {"edge_namespace": "industrial_flow", "edge_id": "hydraulic_pump_valve_to_system", "from_node": "hydraulic_pump_valve", "to_node": "hydraulic_system", "edge_type": "structural_composition", "description": "液压泵阀及马达是液压系统的动力和控制元件。", "evidence": [{"source_title": "恒立液压2025年年度报告（提炼数据）", "quote": "液压泵阀及马达占营业收入39.53%。"}], "confidence": "MEDIUM"},
+    {"edge_namespace": "industrial_flow", "edge_id": "hydraulic_system_to_machinery", "from_node": "hydraulic_system", "to_node": "construction_machinery", "edge_type": "structural_composition", "description": "液压系统是工程机械的关键动力与执行系统。", "evidence": [{"source_title": "恒立液压2025年年度报告（提炼数据）", "quote": "机械装备制造业务占营业收入99.23%。"}], "confidence": "MEDIUM"}
+  ],
+  "rejected_or_pending": []
+}
