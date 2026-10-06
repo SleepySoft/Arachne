@@ -53,7 +53,6 @@ const ACTIVITY_LABELS: Record<string, string> = {
 function fullWorkspaceUrl(companyId: string): string {
   const url = new URL("./", window.location.href);
   url.searchParams.set("view", "industrial_graph");
-  url.searchParams.set("engine", "legacy");
   url.searchParams.set("company", companyId);
   return url.toString();
 }

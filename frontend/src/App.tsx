@@ -329,7 +329,13 @@ export default function App() {
     if (embeddedCompanyId) {
       // A company deep link must remain the complete home graph. Restore only
       // the server default's geometry; saved selections, focus and filters
-      // could otherwise trim the graph into an unrelated subgraph.
+      // could otherwise trim the graph into an unrelated subgraph. The engine
+      // is part of the default view and must still be restored.
+      const viewEngine = defaultIndustrialView.view.industrial?.engine ?? "legacy";
+      if (viewEngine !== graphEngine) {
+        setGraphEngine(viewEngine);
+        industrial.switchEngine(viewEngine);
+      }
       setLoadedIndustrialView(defaultIndustrialView.view);
       setIndustrialViewToRestore(defaultIndustrialView.view.industrial ?? null);
       return;
@@ -339,6 +345,8 @@ export default function App() {
     catalogsLoaded,
     defaultIndustrialView,
     embeddedCompanyId,
+    graphEngine,
+    industrial.switchEngine,
     loadIndustrialView,
     loadedIndustrialView,
     mainView,
