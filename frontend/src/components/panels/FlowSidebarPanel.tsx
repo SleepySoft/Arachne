@@ -74,15 +74,17 @@ export function FlowSidebarPanel({
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      {/* Active selection chips */}
-      {(selectedFlows.length > 0 ||
-        selectedIndustries.length > 0 ||
-        selectedCompanies.length > 0) && (
-        <div className="border-b border-slate-800 p-2">
+      {/* Keep this area at a fixed height so checking an item never moves the list. */}
+      <div className="h-16 shrink-0 overflow-y-auto border-b border-slate-800 p-2">
           <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
             当前选择
           </div>
-          <div className="flex flex-wrap gap-1">
+          {selectedFlows.length === 0 &&
+          selectedIndustries.length === 0 &&
+          selectedCompanies.length === 0 ? (
+            <div className="text-[10px] text-slate-600">尚未选择</div>
+          ) : (
+            <div className="flex flex-wrap gap-1">
             {selectedFlows.map((flow) => (
               <span
                 key={flow.flow_id}
@@ -128,9 +130,9 @@ export function FlowSidebarPanel({
                 </button>
               </span>
             ))}
-          </div>
-        </div>
-      )}
+            </div>
+          )}
+      </div>
 
       <div className="flex-1 overflow-y-auto">
         <CollapsibleSection title="流程文件" badge={selectedFlowIds.length}>

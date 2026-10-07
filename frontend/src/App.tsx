@@ -670,6 +670,26 @@ export default function App() {
     return () => window.removeEventListener("keydown", handler);
   }, [handleSaveCurrentView, handleOpenViewManager, handleUndo]);
 
+  useEffect(() => {
+    if (
+      graphEngine !== "arachne_flow" ||
+      !industrial.highlightNodeIds?.length ||
+      (industrial.selectedIndustries.length === 0 && industrial.selectedCompanies.length === 0)
+    ) {
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      graphCanvasRef.current?.fitToNodes(industrial.highlightNodeIds ?? [], 120);
+    }, 100);
+    return () => window.clearTimeout(timer);
+  }, [
+    graphEngine,
+    industrial.highlightNodeIds,
+    industrial.highlightRevision,
+    industrial.selectedCompanies.length,
+    industrial.selectedIndustries.length,
+  ]);
+
   const [quickNodeAt, setQuickNodeAt] = useState<{
     node: { x: number; y: number };
     visible: boolean;
@@ -835,7 +855,13 @@ export default function App() {
                 ? editorHighlightIds
                 : embeddedHighlightNodeIds ?? industrial.highlightNodeIds
             }
-            highlightFallbackNodes={graphEngine === "arachne_flow" ? embeddedExposureNodes : []}
+            highlightFallbackNodes={
+              graphEngine === "arachne_flow"
+                ? embeddedCompanyId
+                  ? embeddedExposureNodes
+                  : industrial.highlightFallbackNodes
+                : []
+            }
             sourceData={industrial.subgraphData}
             editMode={industrial.editMode}
             connectSourceNodeId={industrial.connectSource?.node_id || null}

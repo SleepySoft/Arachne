@@ -296,6 +296,8 @@ export interface GraphCanvasRef {
   setCamera: (camera: { pan: { x: number; y: number }; zoom: number }) => void;
   /** Fit all visible elements into the viewport with optional padding. */
   fitToView: (padding?: number) => void;
+  /** Fit graph nodes matching ids or arachne_flow method references into the viewport. */
+  fitToNodes: (nodeIds: string[], padding?: number) => void;
   getNodePositions: () => Record<string, { x: number; y: number }>;
   setNodePositions: (positions: Record<string, { x: number; y: number }>) => void;
   setNodePosition: (nodeId: string, position: { x: number; y: number }) => void;
@@ -1081,6 +1083,29 @@ export const GraphCanvas = forwardRef<GraphCanvasRef, GraphCanvasProps>(function
       const cy = cyRef.current;
       if (!cy) return;
       cy.fit(cy.elements(), padding);
+    },
+    fitToNodes: (nodeIds, padding = 100) => {
+      const cy = cyRef.current;
+      if (!cy || nodeIds.length === 0) return;
+      const idSet = new Set(nodeIds);
+      let targets = cy.collection();
+      cy.nodes().forEach((node) => {
+        const raw = node.data("raw") as { properties?: Record<string, unknown> } | undefined;
+        const methodRef = raw?.properties?.method_ref;
+        const normalizedId = node.id().startsWith("merged_action:")
+          ? node.id().slice("merged_action:".length)
+          : node.id();
+        if (
+          idSet.has(node.id()) ||
+          idSet.has(normalizedId) ||
+          (typeof methodRef === "string" && idSet.has(methodRef))
+        ) {
+          targets = targets.union(node);
+        }
+      });
+      if (targets.length > 0) {
+        cy.animate({ fit: { eles: targets, padding }, duration: 350, easing: "ease-out" });
+      }
     },
     getNodePositions: () => {
       const cy = cyRef.current;

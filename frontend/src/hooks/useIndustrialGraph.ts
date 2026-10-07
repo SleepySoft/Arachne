@@ -16,6 +16,7 @@ import {
   getCompileJobStatus,
   getFlowsSubgraph,
   getIndustrySubgraph,
+  getNode,
   listCompanyExposures,
   listIndustryMappings,
   listNodes,
@@ -178,6 +179,8 @@ export function useIndustrialGraph(engine: string = "legacy") {
   const [highlightNodeIds, setHighlightNodeIds] = useState<
     string[] | undefined
   >(undefined);
+  const [highlightFallbackNodes, setHighlightFallbackNodes] = useState<IndustrialNode[]>([]);
+  const [highlightRevision, setHighlightRevision] = useState(0);
   const [expandedProcessParents, setExpandedProcessParents] = useState<string[]>([]);
   const [wheelSensitivity, setWheelSensitivity] = useState<number>(0.1);
   const [focusState, setFocusState] = useState<import("@/types/view").FocusState>({
@@ -565,6 +568,7 @@ export function useIndustrialGraph(engine: string = "legacy") {
     if (engine !== "arachne_flow") return;
     if (selectedIndustries.length === 0 && selectedCompanies.length === 0) {
       setHighlightNodeIds(undefined);
+      setHighlightFallbackNodes([]);
       return;
     }
     let cancelled = false;
@@ -582,7 +586,16 @@ export function useIndustrialGraph(engine: string = "legacy") {
         const ids = new Set<string>();
         mappingPages.forEach((p) => p.items.forEach((m) => ids.add(m.node_id)));
         exposurePages.forEach((p) => p.items.forEach((e) => ids.add(e.node_id)));
-        setHighlightNodeIds(ids.size > 0 ? Array.from(ids) : undefined);
+        const nodeIds = Array.from(ids);
+        const fallbackNodes = await Promise.all(
+          nodeIds.map((nodeId) => getNode(nodeId, "legacy").catch(() => null))
+        );
+        if (cancelled) return;
+        setHighlightNodeIds(nodeIds.length > 0 ? nodeIds : undefined);
+        setHighlightFallbackNodes(
+          fallbackNodes.filter((node): node is IndustrialNode => node !== null)
+        );
+        setHighlightRevision((revision) => revision + 1);
       } catch {
         // Silently ignore
       }
@@ -839,6 +852,8 @@ export function useIndustrialGraph(engine: string = "legacy") {
     setSubgraphData,
     highlightNodeIds,
     setHighlightNodeIds,
+    highlightFallbackNodes,
+    highlightRevision,
     nav,
     openNodeDetail,
     openEdgeDetail,

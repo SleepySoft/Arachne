@@ -32,13 +32,15 @@ export function IndustrialSidebar({
 }: IndustrialSidebarProps) {
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      {/* Active selection chips */}
-      {(selectedIndustries.length > 0 || selectedCompanies.length > 0) && (
-        <div className="border-b border-slate-800 p-2">
+      {/* Keep this area at a fixed height so checking an item never moves the list. */}
+      <div className="h-16 shrink-0 overflow-y-auto border-b border-slate-800 p-2">
           <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
             当前选择
           </div>
-          <div className="flex flex-wrap gap-1">
+          {selectedIndustries.length === 0 && selectedCompanies.length === 0 ? (
+            <div className="text-[10px] text-slate-600">尚未选择</div>
+          ) : (
+            <div className="flex flex-wrap gap-1">
             {selectedIndustries.map((ind) => (
               <span
                 key={ind.industry_id}
@@ -69,9 +71,9 @@ export function IndustrialSidebar({
                 </button>
               </span>
             ))}
-          </div>
-        </div>
-      )}
+            </div>
+          )}
+      </div>
 
       <div className="flex-1 overflow-y-auto">
         <CollapsibleSection title="行业" badge={selectedIndustries.length}>
