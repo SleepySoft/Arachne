@@ -89,6 +89,16 @@ iframe 跨域拿不到父页面的登录态，设计两条注入通道：
 - `backend/app/routers/integration.py`：`/integration/config` 清单端点。
 - `backend/app/routers/published_views.py`：published view 的创建/读取/过期。
 
+## 5.1 子路径部署的双路径模型
+
+第三方系统常有两层反向代理。浏览器看到的公网前缀与 Arachne 主机收到的内部前缀可能不同，二者不能混为一个配置。前端资源 URL、API base、iframe 与跳转链接都必须依据浏览器公网前缀构建；内部 Nginx location 只负责接收入口网关重写后的路径。该模型允许 Arachne 同时适配根路径、单层子路径和多层网关子路径。
+
+这是构建期契约：Vite 无法在运行时从上游请求路径可靠推断被入口网关剥离的前缀。因此部署系统必须显式提供 `VITE_PUBLIC_BASE` 和 `VITE_API_BASE`，并从最终用户域名做端到端验证。
+
+## 5.2 默认视图是可迁移的服务状态
+
+本地视图保存在浏览器中；服务端视图及其默认标记保存在 PostgreSQL `server_views`。默认布局不是前端静态配置，也不应依赖某台浏览器。数据库导出和恢复必须包含 `server_views`，否则新环境会退回引擎默认值，表现为布局、引擎或高亮行为与原环境不同。
+
 ## 6. 刻意的取舍（trade-offs）
 
 - **不做细粒度数据级授权**（如按行业/节点授权）：scope 只有 `read_only` / `read_write`

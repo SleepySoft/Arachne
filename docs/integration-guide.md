@@ -16,10 +16,30 @@ Arachne 是一个产业本体图谱系统，提供：
 
 | 方式 | 适合场景 | 实现 |
 |------|---------|------|
-| **nginx 代理** | 自有系统，Arachne 页面和服务直接转发 | 反向代理 + JWT 鉴权 |
+| **nginx 代理** | 自有系统，Arachne 页面和服务直接转发 | 反向代理 + header 或 JWT 鉴权 |
 | **组件嵌入** | 第三方系统，嵌入推理视图 | iframe（embed.html）或 React 组件 |
 
 两种方式共用同一套后端 API 和鉴权机制。
+
+### 1.1 先确定浏览器路径与上游路径
+
+子路径部署必须区分两个地址：
+
+- **浏览器公网前缀**：用户页面实际看到的路径，例如 `/dashboard/arachne/`；
+- **上游内部前缀**：入口网关去掉外层前缀后，Arachne 所在主机收到的路径，例如 `/arachne/`。
+
+Vite 构建参数必须填写浏览器公网路径，不能填写上游内部路径：
+
+```bash
+cd frontend
+VITE_PUBLIC_BASE=/dashboard/arachne/ \
+VITE_API_BASE=/dashboard/arachne/api/v1 \
+npm run build
+```
+
+`VITE_PUBLIC_BASE` 必须以 `/` 结尾；`VITE_API_BASE` 是浏览器请求 API 时使用的完整路径。两者是构建时配置，修改后必须重新构建并发布 `dist/`。如果 HTML 能打开但页面黑屏，首先检查构建产物中的脚本、样式和 API 地址是否仍指向根路径 `/arachne/*`。
+
+入口网关可以去掉 `/dashboard` 再转发，Arachne 主机则继续用 `/arachne/` 提供静态文件和 API。集成方生成 iframe、完整页面和跳转链接时始终使用浏览器公网前缀。
 
 ---
 
@@ -253,6 +273,8 @@ https://arachne-host/embed.html?view=4c336bbd-2577-4ec8-9caa-4052b0fd6a65
 
 主前端的“载入”菜单会同时列出本地和服务端视图；默认视图在应用首次加载对应工作区时自动应用。
 
+服务端视图（包括默认 view 标记）存放在 PostgreSQL 的 `server_views` 表中，不属于前端构建产物，也不等同于浏览器 localStorage 中的本地视图。新建空数据库后，`GET /api/v1/server-views/default?workspace=industrial` 返回 `null` 是正常状态；管理员需要先推送视图并设置默认值，或通过 `scripts/export_db.py` / `scripts/import_db.py` 随数据库快照迁移。部署时只复制静态文件不会带走默认 view。
+
 ---
 
 ## 6. API 调用
@@ -350,10 +372,14 @@ curl https://arachne-host/api/v1/published-views \
   - 响应头 `X-Arachne-Scope` 反映当前权限
 
 - [ ] **步骤 6**（可选）：nginx 代理配置
-  - 代理 `/api/*` -> Arachne 后端
-  - 代理 `/embed.html` -> Arachne 前端
-  - 代理 `/integration/config` -> Arachne 后端
-  - 设置 httpOnly cookie 传递 JWT（或由前端添加 Authorization 头）
+  - 明确浏览器公网前缀和上游内部前缀，并按公网前缀构建前端
+  - API location 必须优先于静态 SPA fallback，避免 API 请求被返回 `index.html`
+  - 代理公网 API 前缀到 Arachne 后端 `/api/v1/`
+  - 代理公网页面前缀到 Arachne 前端构建目录
+  - 使用 JWT 时设置 httpOnly cookie 或由前端添加 `Authorization` 头
+  - 使用 header 模式时，仅允许可信网关注入 scope，并覆盖客户端传入的同名头
+  - `/integration/config` 只允许信任域内访问，不对公网开放
+  - 从最终浏览器域名验证 HTML、JS/CSS、API 和 iframe，而不只测试 Arachne 主机本地地址
 
 ---
 
@@ -368,6 +394,9 @@ curl https://arachne-host/api/v1/published-views \
 | `JWT_JWKS_URL` | (空) | JWKS 端点 URL |
 | `JWT_JWKS_REFRESH_SECONDS` | `3600` | JWKS 缓存刷新间隔 |
 | `JWT_LOCAL_BYPASS` | `true` | jwt 模式下本地 IP 是否自动获得读写权限（nginx 后必须设 `false`） |
+| `VITE_PUBLIC_BASE` | `/` | 前端构建时的浏览器公网前缀，子路径部署必须以 `/` 结尾 |
+| `VITE_API_BASE` | `${VITE_PUBLIC_BASE}api/v1` | 前端构建时的浏览器 API 根路径 |
 
 **`AUTH_MODE=disabled`**：独立运行模式，全部读写，无鉴权（开发/单机部署默认）。
+**`AUTH_MODE=header`**：可信反向代理集成模式，由代理覆盖并注入 `AUTH_SCOPE_HEADER`；Arachne 后端端口不能直接公开。
 **`AUTH_MODE=jwt`**：生产集成模式，无 token = 只读，有效 JWT 升级权限。

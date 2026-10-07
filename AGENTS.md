@@ -564,6 +564,8 @@ Historical batch construction logs list these as future work; none are implement
 - A standalone script is available at `scripts/cleanup_test_data.py` for post-test hooks.
 - After running tests, call one of the cleanup tools to remove residual test data instead of deleting manually.
 
+- **Third-party deployment contract hardening (2026-10-07)**: Subpath deployments now document the distinction between the browser-visible public prefix and the upstream-internal prefix. Production builds must set `VITE_PUBLIC_BASE` and `VITE_API_BASE` from the browser-visible URL. PostgreSQL backup/restore now includes `server_views`, so shared layouts, engine selection, and per-workspace defaults survive deployment. Integration verification must use the final browser origin and cover HTML, assets, API, iframe rendering, auth scope, and default-view restoration.
+
 ### Git Hygiene
 - Do NOT run `git commit`, `git push`, `git reset`, `git rebase` without explicit user confirmation.
 - LF/CRLF warnings are normal on Windows; Git will handle conversion.
