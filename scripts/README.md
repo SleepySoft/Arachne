@@ -36,8 +36,8 @@
 
 | 脚本 | 用途 | 写库? |
 |---|---|---|
-| `export_db.py` | 导出 Neo4j + PG 全量到 JSON（默认 `data/ArachneData/newest`） | 否 |
-| `import_db.py` | 从 export 产物恢复（`--clear --yes` 清库导入，**危险**） | **是** |
+| `export_db.py` | 导出 Neo4j + PG 全量到 JSON（含服务端视图和默认布局；默认 `data/ArachneData/newest`） | 否 |
+| `import_db.py` | 从 export 产物恢复（含 `server_views`；`--clear --yes` 清库导入，**危险**） | **是** |
 | `backup_neo4j_graph.py` | 只备份 Neo4j 节点与边到 JSON | 否 |
 | `cleanup_test_data.py` | 删除 `is_test=true` 的测试数据（`--dry-run` 先看数量） | **是** |
 | `migrate_prov_to_provn.py` | PROV JSON → PROV-N 迁移（PROV 已弃用，仅供参考） | 是 |

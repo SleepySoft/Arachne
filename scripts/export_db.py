@@ -150,6 +150,8 @@ POSTGRES_TABLES = [
     "factual_relations",
     "computation_jobs",
     "arachne_flow_files",
+    # 服务端共享视图及默认布局属于部署所需状态，不能只存在于浏览器或单台数据库。
+    "server_views",
 ]
 
 

@@ -247,9 +247,11 @@ POSTGRES_IMPORT_ORDER = [
     "factual_relations",
     "computation_jobs",
     "arachne_flow_files",
+    "server_views",
 ]
 
 POSTGRES_TRUNCATE_ORDER = [
+    "server_views",
     "computation_jobs",
     "factual_relations",
     "company_node_exposures",
